@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-400/20 text-blue-400">
+                    <i class="fas fa-building text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Biaya Operasional (OPEX Kantor)</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Pengelolaan beban operasional harian: sewa kantor, listrik, internet, ATK, konsumsi, dan utilitas rutin.</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="openOpexModal('create')" class="relative z-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0">
+            <i class="fas fa-plus text-xs"></i> Catat Biaya Operasional
+        </button>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Total OPEX Bulan Ini -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:bg-blue-500/10 transition-colors"></div>
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/60">Total OPEX Bulan Ini</span>
+                <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-extrabold text-slate-900 tracking-tight">Rp 24.850.000</p>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-1.5 font-medium">
+                    <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                    <span>14 transaksi terbayar</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tagihan Rutin Mendatang -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-full pointer-events-none group-hover:bg-amber-500/10 transition-colors"></div>
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60">Tagihan Rutin Mendatang</span>
+                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-extrabold text-slate-900 tracking-tight">Rp 6.200.000</p>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-1.5 font-medium">
+                    <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>Listrik, Internet & Sewa Gedung</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rasio OPEX vs Budget -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full pointer-events-none group-hover:bg-emerald-500/10 transition-colors"></div>
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60">Penggunaan Anggaran</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-extrabold text-slate-900 tracking-tight">62% <span class="text-xs font-normal text-slate-500">dari target budget</span></p>
+                <div class="w-full h-2 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                    <div class="h-full bg-emerald-500 w-[62%] rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="relative flex-1 w-full">
+            <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" placeholder="Cari deskripsi biaya operasional..." class="pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm w-full bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-400">
+        </div>
+        <div class="flex items-center gap-2.5 w-full sm:w-auto">
+            <select class="border border-slate-200 rounded-xl px-3.5 py-2 text-sm bg-slate-50/50 focus:bg-white text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
+                <option>Semua Kategori OPEX</option>
+                <option>Sewa & Gedung</option>
+                <option>Utilitas (Listrik/Air/Internet)</option>
+                <option>Peralatan & ATK</option>
+                <option>Konsumsi & Pantry</option>
+            </select>
+            <select class="border border-slate-200 rounded-xl px-3.5 py-2 text-sm bg-slate-50/50 focus:bg-white text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
+                <option>Semua Status</option>
+                <option>Lunas</option>
+                <option>Menunggu Pembayaran</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Main Data Table Container -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-slate-800">Daftar Biaya Operasional Kantor</span>
+                <span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-100">6 Transaksi</span>
+            </div>
+            <button class="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl shadow-2xs hover:bg-slate-50 flex items-center gap-2 transition-all">
+                <i class="fas fa-file-export text-slate-400"></i> Export Excel
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Nama Transaksi</th>
+                        <th class="px-6 py-3.5">Kategori Biaya</th>
+                        <th class="px-6 py-3.5">Tanggal</th>
+                        <th class="px-6 py-3.5">Penanggung Jawab</th>
+                        <th class="px-6 py-3.5 text-right">Nominal</th>
+                        <th class="px-6 py-3.5">Status</th>
+                        <th class="px-6 py-3.5 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="opex-table-body" class="divide-y divide-slate-100 font-medium">
+                    <!-- Row 1 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                    <i class="fas fa-wifi"></i>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-800 opex-name block">Tagihan WiFi Indihome & Biznet</span>
+                                    <span class="text-[11px] text-slate-400">No. Pelanggan: 12849102</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg border border-slate-200 font-semibold opex-cat">
+                                Utilitas
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-600 opex-date">01 Okt 2026</td>
+                        <td class="px-6 py-4 text-xs text-slate-700 opex-person">Siti Rahma (GA)</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900 opex-amount" data-val="1850000">Rp 1.850.000</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1.5 w-max">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Lunas
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button onclick="openOpexModal('edit', this)" class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-1.5 rounded-lg" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+                                <button onclick="deleteOpex(this)" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg" title="Hapus"><i class="fas fa-trash-alt text-xs"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 2 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-800 opex-name block">Sewa Gedung & Service Charge</span>
+                                    <span class="text-[11px] text-slate-400">Lantai 3 Astacode Tower</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-lg border border-purple-100 font-semibold opex-cat">
+                                Sewa & Gedung
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-600 opex-date">05 Okt 2026</td>
+                        <td class="px-6 py-4 text-xs text-slate-700 opex-person">Finance Team</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900 opex-amount" data-val="15000000">Rp 15.000.000</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center gap-1.5 w-max">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Menunggu Bayar
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1"><i class="fas fa-check text-[10px]"></i> Bayar</button>
+                                <button onclick="openOpexModal('edit', this)" class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-1.5 rounded-lg" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+                                <button onclick="deleteOpex(this)" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg" title="Hapus"><i class="fas fa-trash-alt text-xs"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input / Edit OPEX -->
+<div id="opexModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center backdrop-blur-md transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-slate-100" id="opexModalContent">
+        
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg text-sm">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base" id="opexModalTitle">Catat Biaya Operasional</h3>
+            </div>
+            <button onclick="closeOpexModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nama Transaksi / Pengeluaran</label>
+                <input type="text" id="op-name" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Contoh: Belanja Pantry & Kopi Kantor">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Kategori Biaya</label>
+                    <select id="op-cat" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-slate-700">
+                        <option value="Utilitas">Utilitas (Listrik/Air/Internet)</option>
+                        <option value="Sewa & Gedung">Sewa & Gedung</option>
+                        <option value="Peralatan & ATK">Peralatan & ATK</option>
+                        <option value="Konsumsi & Pantry">Konsumsi & Pantry</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal (Rp)</label>
+                    <input type="number" id="op-amount" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold text-slate-800" placeholder="0">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Penanggung Jawab</label>
+                    <input type="text" id="op-person" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Tim GA / Admin">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Tanggal Pembayaran</label>
+                    <input type="text" id="op-date" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="04 Okt 2026">
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/80 flex justify-end gap-2.5">
+            <button onclick="closeOpexModal()" class="px-4 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors">Batal</button>
+            <button onclick="saveOpexData()" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-500/20 transition-all">Simpan Transaksi</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const opModal = document.getElementById('opexModal');
+    const opModalContent = document.getElementById('opexModalContent');
+    let isEditOp = false;
+    let editOpRow = null;
+
+    function openOpexModal(mode, btn = null) {
+        isEditOp = (mode === 'edit');
+        document.getElementById('opexModalTitle').innerText = isEditOp ? 'Edit Biaya Operasional' : 'Catat Biaya Operasional';
+
+        if (isEditOp && btn) {
+            editOpRow = btn.closest('tr');
+            document.getElementById('op-name').value = editOpRow.querySelector('.opex-name').innerText;
+            document.getElementById('op-cat').value = editOpRow.querySelector('.opex-cat').innerText.trim();
+            document.getElementById('op-date').value = editOpRow.querySelector('.opex-date').innerText;
+            document.getElementById('op-person').value = editOpRow.querySelector('.opex-person').innerText;
+            document.getElementById('op-amount').value = editOpRow.querySelector('.opex-amount').getAttribute('data-val');
+        } else {
+            editOpRow = null;
+            document.getElementById('op-name').value = '';
+            document.getElementById('op-amount').value = '';
+            document.getElementById('op-person').value = '';
+            document.getElementById('op-date').value = '';
+        }
+
+        opModal.classList.remove('hidden');
+        setTimeout(() => {
+            opModal.classList.remove('opacity-0');
+            opModalContent.classList.remove('scale-95');
+        }, 10);
+    }
+
+    function closeOpexModal() {
+        opModal.classList.add('opacity-0');
+        opModalContent.classList.add('scale-95');
+        setTimeout(() => {
+            opModal.classList.add('hidden');
+        }, 200);
+    }
+
+    function saveOpexData() {
+        const name = document.getElementById('op-name').value || 'Pengeluaran OPEX Baru';
+        const cat = document.getElementById('op-cat').value;
+        const amount = document.getElementById('op-amount').value || 0;
+        const person = document.getElementById('op-person').value || 'Tim General Admin';
+        const date = document.getElementById('op-date').value || '04 Okt 2026';
+
+        const formattedAmount = `Rp ${new Intl.NumberFormat('id-ID').format(amount)}`;
+
+        const rowHTML = `
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-800 opex-name block">${name}</span>
+                        <span class="text-[11px] text-slate-400">Transaksi OPEX</span>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg border border-slate-200 font-semibold opex-cat">
+                    ${cat}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-xs text-slate-600 opex-date">${date}</td>
+            <td class="px-6 py-4 text-xs text-slate-700 opex-person">${person}</td>
+            <td class="px-6 py-4 text-right font-bold text-slate-900 opex-amount" data-val="${amount}">${formattedAmount}</td>
+            <td class="px-6 py-4">
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1.5 w-max">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Lunas
+                </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openOpexModal('edit', this)" class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-1.5 rounded-lg" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+                    <button onclick="deleteOpex(this)" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg" title="Hapus"><i class="fas fa-trash-alt text-xs"></i></button>
+                </div>
+            </td>
+        `;
+
+        if (isEditOp && editOpRow) {
+            editOpRow.innerHTML = rowHTML;
+            editOpRow.classList.add('bg-blue-50/50');
+            setTimeout(() => editOpRow.classList.remove('bg-blue-50/50'), 1000);
+        } else {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50/80 transition-colors bg-emerald-50/50 group';
+            tr.innerHTML = rowHTML;
+            document.getElementById('opex-table-body').prepend(tr);
+            setTimeout(() => tr.classList.remove('bg-emerald-50/50'), 1000);
+        }
+
+        closeOpexModal();
+    }
+
+    function deleteOpex(btn) {
+        if(confirm("Hapus catatan operasional ini?")) {
+            const row = btn.closest('tr');
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-10px)';
+            setTimeout(() => {
+                row.remove();
+            }, 300);
+        }
+    }
+</script>
+{% endblock %}

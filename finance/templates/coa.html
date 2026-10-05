@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-400/20 text-blue-400">
+                    <i class="fas fa-list-ol text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Chart of Accounts (COA)</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Daftar kodefikasi dan hirarki akun akuntansi standar perusahaan ERP.</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="openCoaModal('create')" class="relative z-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0">
+            <i class="fas fa-plus text-xs"></i> Tambah Akun Baru (COA)
+        </button>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+        <button onclick="filterCoa('all', this)" class="px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white shadow-sm transition-all coa-tab">Semua Akun (18)</button>
+        <button onclick="filterCoa('1000', this)" class="px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all coa-tab">1000 - Aset / Kas</button>
+        <button onclick="filterCoa('2000', this)" class="px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all coa-tab">2000 - Kewajiban</button>
+        <button onclick="filterCoa('3000', this)" class="px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all coa-tab">3000 - Ekuitas</button>
+        <button onclick="filterCoa('4000', this)" class="px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all coa-tab">4000 - Pendapatan</button>
+        <button onclick="filterCoa('5000', this)" class="px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all coa-tab">5000 - HPP Proyek</button>
+        <button onclick="filterCoa('6000', this)" class="px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all coa-tab">6000 - Beban OPEX</button>
+    </div>
+
+    <!-- COA Table Container -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Kode Akun</th>
+                        <th class="px-6 py-3.5">Nama Akun Akuntansi</th>
+                        <th class="px-6 py-3.5">Kategori Utama</th>
+                        <th class="px-6 py-3.5">Pos Saldo Normal</th>
+                        <th class="px-6 py-3.5 text-right">Saldo Saat Ini</th>
+                        <th class="px-6 py-3.5 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="coa-table-body" class="divide-y divide-slate-100 font-medium">
+                    <!-- 1000 Series -->
+                    <tr class="hover:bg-slate-50/80 transition-colors coa-row" data-code="1000">
+                        <td class="px-6 py-4 font-mono font-bold text-blue-600 coa-code">1101</td>
+                        <td class="px-6 py-4 font-bold text-slate-800 coa-name">Kas Kecil (Petty Cash)</td>
+                        <td class="px-6 py-4"><span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-100">Aset Lancar</span></td>
+                        <td class="px-6 py-4 text-xs font-bold text-emerald-600">DEBIT</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 5.000.000</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="openCoaModal('edit', this)" class="text-slate-400 hover:text-blue-600 p-1.5"><i class="fas fa-pen text-xs"></i></button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/80 transition-colors coa-row" data-code="1000">
+                        <td class="px-6 py-4 font-mono font-bold text-blue-600 coa-code">1102</td>
+                        <td class="px-6 py-4 font-bold text-slate-800 coa-name">Bank BCA Operasional</td>
+                        <td class="px-6 py-4"><span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-100">Aset Lancar</span></td>
+                        <td class="px-6 py-4 text-xs font-bold text-emerald-600">DEBIT</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 350.000.000</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="openCoaModal('edit', this)" class="text-slate-400 hover:text-blue-600 p-1.5"><i class="fas fa-pen text-xs"></i></button>
+                        </td>
+                    </tr>
+
+                    <!-- 4000 Series -->
+                    <tr class="hover:bg-slate-50/80 transition-colors coa-row" data-code="4000">
+                        <td class="px-6 py-4 font-mono font-bold text-blue-600 coa-code">4101</td>
+                        <td class="px-6 py-4 font-bold text-slate-800 coa-name">Pendapatan Proyek & IT Services</td>
+                        <td class="px-6 py-4"><span class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-indigo-100">Pendapatan (Revenue)</span></td>
+                        <td class="px-6 py-4 text-xs font-bold text-purple-600">KREDIT</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 450.000.000</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="openCoaModal('edit', this)" class="text-slate-400 hover:text-blue-600 p-1.5"><i class="fas fa-pen text-xs"></i></button>
+                        </td>
+                    </tr>
+
+                    <!-- 5000 Series -->
+                    <tr class="hover:bg-slate-50/80 transition-colors coa-row" data-code="5000">
+                        <td class="px-6 py-4 font-mono font-bold text-blue-600 coa-code">5101</td>
+                        <td class="px-6 py-4 font-bold text-slate-800 coa-name">HPP - Upah Freelancer & Subkon</td>
+                        <td class="px-6 py-4"><span class="bg-amber-50 text-amber-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-amber-100">HPP Proyek</span></td>
+                        <td class="px-6 py-4 text-xs font-bold text-emerald-600">DEBIT</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 65.000.000</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="openCoaModal('edit', this)" class="text-slate-400 hover:text-blue-600 p-1.5"><i class="fas fa-pen text-xs"></i></button>
+                        </td>
+                    </tr>
+
+                    <!-- 6000 Series -->
+                    <tr class="hover:bg-slate-50/80 transition-colors coa-row" data-code="6000">
+                        <td class="px-6 py-4 font-mono font-bold text-blue-600 coa-code">6101</td>
+                        <td class="px-6 py-4 font-bold text-slate-800 coa-name">Beban Gaji Karyawan (Payroll)</td>
+                        <td class="px-6 py-4"><span class="bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-rose-100">Beban OPEX</span></td>
+                        <td class="px-6 py-4 text-xs font-bold text-emerald-600">DEBIT</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 85.000.000</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="openCoaModal('edit', this)" class="text-slate-400 hover:text-blue-600 p-1.5"><i class="fas fa-pen text-xs"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal CRUD COA -->
+<div id="coaModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center backdrop-blur-md transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-slate-100" id="coaModalContent">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+            <h3 class="font-bold text-slate-800 text-base" id="coaModalTitle">Tambah Akun COA Baru</h3>
+            <button onclick="closeCoaModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Kode Akun</label>
+                    <input type="text" id="coa-code" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 font-mono" placeholder="6105">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Pos Saldo Normal</label>
+                    <select id="coa-pos" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="DEBIT">DEBIT</option>
+                        <option value="KREDIT">KREDIT</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nama Akun Akuntansi</label>
+                <input type="text" id="coa-name" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500" placeholder="Contoh: Beban Pelatihan Karyawan">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Kategori Akun</label>
+                <select id="coa-cat" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="Aset Lancar">1000 - Aset / Kas</option>
+                    <option value="Kewajiban">2000 - Kewajiban / Hutang</option>
+                    <option value="Ekuitas">3000 - Ekuitas / Modal</option>
+                    <option value="Pendapatan">4000 - Pendapatan (Revenue)</option>
+                    <option value="HPP Proyek">5000 - HPP Proyek</option>
+                    <option value="Beban OPEX">6000 - Beban Operasional (OPEX)</option>
+                </select>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/80 flex justify-end gap-2.5">
+            <button onclick="closeCoaModal()" class="px-4 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl">Batal</button>
+            <button onclick="saveCoaData()" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 rounded-xl">Simpan Akun</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const coaModal = document.getElementById('coaModal');
+    const coaModalContent = document.getElementById('coaModalContent');
+
+    function filterCoa(cat, btn) {
+        document.querySelectorAll('.coa-tab').forEach(t => {
+            t.classList.remove('bg-blue-600', 'text-white');
+            t.classList.add('bg-white', 'text-slate-600');
+        });
+        btn.classList.remove('bg-white', 'text-slate-600');
+        btn.classList.add('bg-blue-600', 'text-white');
+
+        document.querySelectorAll('.coa-row').forEach(row => {
+            if(cat === 'all' || row.getAttribute('data-code') === cat) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    }
+
+    function openCoaModal(mode) {
+        coaModal.classList.remove('hidden');
+        setTimeout(() => {
+            coaModal.classList.remove('opacity-0');
+            coaModalContent.classList.remove('scale-95');
+        }, 10);
+    }
+
+    function closeCoaModal() {
+        coaModal.classList.add('opacity-0');
+        coaModalContent.classList.add('scale-95');
+        setTimeout(() => coaModal.classList.add('hidden'), 200);
+    }
+
+    function saveCoaData() {
+        const code = document.getElementById('coa-code').value || '6999';
+        const name = document.getElementById('coa-name').value || 'Akun Baru';
+        const cat = document.getElementById('coa-cat').value;
+        const pos = document.getElementById('coa-pos').value;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition-colors coa-row bg-emerald-50/50';
+        tr.setAttribute('data-code', code.substring(0, 1) + '000');
+        tr.innerHTML = `
+            <td class="px-6 py-4 font-mono font-bold text-blue-600 coa-code">${code}</td>
+            <td class="px-6 py-4 font-bold text-slate-800 coa-name">${name}</td>
+            <td class="px-6 py-4"><span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-100">${cat}</span></td>
+            <td class="px-6 py-4 text-xs font-bold ${pos === 'DEBIT' ? 'text-emerald-600' : 'text-purple-600'}">${pos}</td>
+            <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 0</td>
+            <td class="px-6 py-4 text-right">
+                <button onclick="openCoaModal('edit', this)" class="text-slate-400 hover:text-blue-600 p-1.5"><i class="fas fa-pen text-xs"></i></button>
+            </td>
+        `;
+
+        document.getElementById('coa-table-body').prepend(tr);
+        setTimeout(() => tr.classList.remove('bg-emerald-50/50'), 1000);
+        closeCoaModal();
+    }
+</script>
+{% endblock %}

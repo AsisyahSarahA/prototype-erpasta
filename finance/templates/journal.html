@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-400/20 text-blue-400">
+                    <i class="fas fa-book text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Jurnal Umum (General Journal)</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Entri jurnal ganda (Double-Entry Debit & Kredit) yang ter-generate otomatis dari sistem ERP.</p>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 relative z-10">
+            <span class="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                <i class="fas fa-check-circle"></i> Status Jurnal: BALANCED
+            </span>
+        </div>
+    </div>
+
+    <!-- Summary Balance Banner -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Debit</p>
+            <p class="text-2xl font-extrabold text-emerald-600 mt-1">Rp 520.000.000</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Kredit</p>
+            <p class="text-2xl font-extrabold text-purple-600 mt-1">Rp 520.000.000</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Selisih (Balance)</p>
+                <p class="text-2xl font-extrabold text-slate-900 mt-1">Rp 0</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Journal Entry Log Cards / Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <span class="text-sm font-bold text-slate-800">Daftar Transaksi Jurnal Berpasangan</span>
+            <button class="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl flex items-center gap-2">
+                <i class="fas fa-filter text-slate-400"></i> Filter Tanggal
+            </button>
+        </div>
+
+        <div class="divide-y divide-slate-100">
+            
+            <!-- Journal Block 1 -->
+            <div class="p-5 space-y-3 hover:bg-slate-50/50 transition-colors">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">JRN-2026-001</span>
+                        <span class="text-xs text-slate-400">04 Okt 2026</span>
+                        <span class="text-xs font-bold text-slate-700 ml-2">• Pelunasan Invoice RS Medika</span>
+                    </div>
+                    <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">Auto-Generated (AR)</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-slate-100/70 text-slate-500 font-bold uppercase text-[10px]">
+                            <tr>
+                                <th class="px-4 py-2">Kode Akun</th>
+                                <th class="px-4 py-2">Nama Akun Akuntansi</th>
+                                <th class="px-4 py-2 text-right">Debit (Rp)</th>
+                                <th class="px-4 py-2 text-right">Kredit (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                            <tr>
+                                <td class="px-4 py-2.5 font-mono font-bold text-blue-600">1102</td>
+                                <td class="px-4 py-2.5">Bank BCA Operasional</td>
+                                <td class="px-4 py-2.5 text-right font-bold text-emerald-600">30.000.000</td>
+                                <td class="px-4 py-2.5 text-right text-slate-400">0</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2.5 font-mono font-bold text-blue-600">4101</td>
+                                <td class="px-4 py-2.5 pl-8 text-slate-500">└ Pendapatan Proyek & IT Services</td>
+                                <td class="px-4 py-2.5 text-right text-slate-400">0</td>
+                                <td class="px-4 py-2.5 text-right font-bold text-purple-600">30.000.000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Journal Block 2 -->
+            <div class="p-5 space-y-3 hover:bg-slate-50/50 transition-colors">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">JRN-2026-002</span>
+                        <span class="text-xs text-slate-400">03 Okt 2026</span>
+                        <span class="text-xs font-bold text-slate-700 ml-2">• Pembayaran Tagihan Vendor AWS</span>
+                    </div>
+                    <span class="text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">Auto-Generated (AP)</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-slate-100/70 text-slate-500 font-bold uppercase text-[10px]">
+                            <tr>
+                                <th class="px-4 py-2">Kode Akun</th>
+                                <th class="px-4 py-2">Nama Akun Akuntansi</th>
+                                <th class="px-4 py-2 text-right">Debit (Rp)</th>
+                                <th class="px-4 py-2 text-right">Kredit (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                            <tr>
+                                <td class="px-4 py-2.5 font-mono font-bold text-blue-600">5101</td>
+                                <td class="px-4 py-2.5">HPP - Infrastruktur Server & Cloud</td>
+                                <td class="px-4 py-2.5 text-right font-bold text-emerald-600">23.250.000</td>
+                                <td class="px-4 py-2.5 text-right text-slate-400">0</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2.5 font-mono font-bold text-blue-600">1102</td>
+                                <td class="px-4 py-2.5 pl-8 text-slate-500">└ Bank BCA Operasional</td>
+                                <td class="px-4 py-2.5 text-right text-slate-400">0</td>
+                                <td class="px-4 py-2.5 text-right font-bold text-purple-600">23.250.000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

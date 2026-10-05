@@ -57,9 +57,9 @@
     } else if (p.includes('forge pm.html') || p.includes('/project/')) {
       activeModule = 'project';
       activeSubpage = hash || 'dashboard';
-    } else if (p.includes('/finance/')) {
+    } else if (p.includes('/finance/') || p.includes('finance.html')) {
       activeModule = 'finance';
-      activeSubpage = hash || 'view-dashboard';
+      activeSubpage = hash || 'dashboard';
     } else if (p.includes('marketing.html') || p.includes('/marketing/')) {
       activeModule = 'marketing';
       activeSubpage = hash || 'marketing-ops';
@@ -190,29 +190,65 @@
               ${svg('chevron', 'nav-chevron')}
             </button>
             <div class="nav-sub" id="financeSubNav">
-              <a href="${prefix}finance/index.html#view-dashboard" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'view-dashboard' || activeSubpage === 'dashboard' || !activeSubpage) ? 'active' : ''}" data-module="finance" data-sub="view-dashboard" onclick="window.navigateToModuleSubpage('finance', 'view-dashboard', '${prefix}finance/index.html#view-dashboard', event)">
+              <a href="${prefix}finance/index.html#dashboard" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'dashboard' || activeSubpage === 'view-dashboard' || !activeSubpage) ? 'active' : ''}" data-module="finance" data-sub="dashboard" onclick="window.navigateToModuleSubpage('finance', 'dashboard', '${prefix}finance/index.html#dashboard', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Cash Flow Overview</span>
               </a>
-              <a href="${prefix}finance/index.html#view-penagihan" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'view-penagihan' || activeSubpage === 'penagihan') ? 'active' : ''}" data-module="finance" data-sub="view-penagihan" onclick="window.navigateToModuleSubpage('finance', 'view-penagihan', '${prefix}finance/index.html#view-penagihan', event)">
+              <a href="${prefix}finance/index.html#invoices" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'invoices' || activeSubpage === 'view-invoices' || activeSubpage === 'penagihan' || activeSubpage === 'view-penagihan') ? 'active' : ''}" data-module="finance" data-sub="invoices" onclick="window.navigateToModuleSubpage('finance', 'invoices', '${prefix}finance/index.html#invoices', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Pemasukan (AR & Termin)</span>
               </a>
-              <a href="${prefix}finance/index.html#view-klaim" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'view-klaim' || activeSubpage === 'klaim') ? 'active' : ''}" data-module="finance" data-sub="view-klaim" onclick="window.navigateToModuleSubpage('finance', 'view-klaim', '${prefix}finance/index.html#view-klaim', event)">
+              <a href="${prefix}finance/index.html#expenses" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'expenses' || activeSubpage === 'view-expenses' || activeSubpage === 'klaim' || activeSubpage === 'view-klaim') ? 'active' : ''}" data-module="finance" data-sub="expenses" onclick="window.navigateToModuleSubpage('finance', 'expenses', '${prefix}finance/index.html#expenses', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Pengeluaran (AP & Klaim)</span>
+                <span>Klaim & Struk (AI OCR)</span>
               </a>
-              <a href="${prefix}finance/index.html#view-recon" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'view-recon' || activeSubpage === 'recon') ? 'active' : ''}" data-module="finance" data-sub="view-recon" onclick="window.navigateToModuleSubpage('finance', 'view-recon', '${prefix}finance/index.html#view-recon', event)">
+              <a href="${prefix}finance/index.html#opex" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'opex' || activeSubpage === 'view-opex') ? 'active' : ''}" data-module="finance" data-sub="opex" onclick="window.navigateToModuleSubpage('finance', 'opex', '${prefix}finance/index.html#opex', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Kas & Rekonsiliasi Bank</span>
+                <span>Biaya Operasional (OPEX)</span>
               </a>
-              <a href="${prefix}finance/index.html#view-generic" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'view-generic' || activeSubpage === 'generic') ? 'active' : ''}" data-module="finance" data-sub="view-generic" onclick="window.navigateToModuleSubpage('finance', 'view-generic', '${prefix}finance/index.html#view-generic', event)">
+              <a href="${prefix}finance/index.html#payroll" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'payroll' || activeSubpage === 'view-payroll') ? 'active' : ''}" data-module="finance" data-sub="payroll" onclick="window.navigateToModuleSubpage('finance', 'payroll', '${prefix}finance/index.html#payroll', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Buku Besar & COA</span>
+                <span>Penggajian (Payroll)</span>
               </a>
-              <a href="${prefix}finance/index.html#view-profit" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'view-profit' || activeSubpage === 'profit') ? 'active' : ''}" data-module="finance" data-sub="view-profit" onclick="window.navigateToModuleSubpage('finance', 'view-profit', '${prefix}finance/index.html#view-profit', event)">
+              <a href="${prefix}finance/index.html#vendor" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'vendor' || activeSubpage === 'view-vendor') ? 'active' : ''}" data-module="finance" data-sub="vendor" onclick="window.navigateToModuleSubpage('finance', 'vendor', '${prefix}finance/index.html#vendor', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Tagihan Vendor</span>
+              </a>
+              <a href="${prefix}finance/index.html#freelancer" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'freelancer' || activeSubpage === 'view-freelancer') ? 'active' : ''}" data-module="finance" data-sub="freelancer" onclick="window.navigateToModuleSubpage('finance', 'freelancer', '${prefix}finance/index.html#freelancer', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Pembayaran Freelancer</span>
+              </a>
+              <a href="${prefix}finance/index.html#accounts" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'accounts' || activeSubpage === 'view-accounts') ? 'active' : ''}" data-module="finance" data-sub="accounts" onclick="window.navigateToModuleSubpage('finance', 'accounts', '${prefix}finance/index.html#accounts', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Daftar Rekening & Kas</span>
+              </a>
+              <a href="${prefix}finance/index.html#internal-transfer" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'internal-transfer' || activeSubpage === 'view-internal-transfer') ? 'active' : ''}" data-module="finance" data-sub="internal-transfer" onclick="window.navigateToModuleSubpage('finance', 'internal-transfer', '${prefix}finance/index.html#internal-transfer', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Mutasi Internal</span>
+              </a>
+              <a href="${prefix}finance/index.html#reconciliation" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'reconciliation' || activeSubpage === 'view-reconciliation' || activeSubpage === 'recon' || activeSubpage === 'view-recon') ? 'active' : ''}" data-module="finance" data-sub="reconciliation" onclick="window.navigateToModuleSubpage('finance', 'reconciliation', '${prefix}finance/index.html#reconciliation', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Rekonsiliasi Bank (CSV)</span>
+              </a>
+              <a href="${prefix}finance/index.html#coa" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'coa' || activeSubpage === 'view-coa' || activeSubpage === 'generic' || activeSubpage === 'view-generic') ? 'active' : ''}" data-module="finance" data-sub="coa" onclick="window.navigateToModuleSubpage('finance', 'coa', '${prefix}finance/index.html#coa', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Chart of Accounts (COA)</span>
+              </a>
+              <a href="${prefix}finance/index.html#journal" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'journal' || activeSubpage === 'view-journal') ? 'active' : ''}" data-module="finance" data-sub="journal" onclick="window.navigateToModuleSubpage('finance', 'journal', '${prefix}finance/index.html#journal', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Jurnal Umum</span>
+              </a>
+              <a href="${prefix}finance/index.html#report-company" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'report-company' || activeSubpage === 'view-report-company') ? 'active' : ''}" data-module="finance" data-sub="report-company" onclick="window.navigateToModuleSubpage('finance', 'report-company', '${prefix}finance/index.html#report-company', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Laba Rugi Perusahaan</span>
+              </a>
+              <a href="${prefix}finance/index.html#report-project" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'report-project' || activeSubpage === 'view-report-project' || activeSubpage === 'profit' || activeSubpage === 'view-profit') ? 'active' : ''}" data-module="finance" data-sub="report-project" onclick="window.navigateToModuleSubpage('finance', 'report-project', '${prefix}finance/index.html#report-project', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Profitabilitas Proyek</span>
+              </a>
+              <a href="${prefix}finance/index.html#report-customer" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'report-customer' || activeSubpage === 'view-report-customer') ? 'active' : ''}" data-module="finance" data-sub="report-customer" onclick="window.navigateToModuleSubpage('finance', 'report-customer', '${prefix}finance/index.html#report-customer', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Laporan per Customer</span>
               </a>
             </div>
           </div>
@@ -354,7 +390,7 @@
 
     if (targetModule === 'crm' && (p.includes('crm.html') || p.includes('/crm/'))) isCurrentDocument = true;
     else if (targetModule === 'project' && (p.includes('forge pm.html') || p.includes('/project/'))) isCurrentDocument = true;
-    else if (targetModule === 'finance' && p.includes('/finance/')) isCurrentDocument = true;
+    else if (targetModule === 'finance' && (p.includes('/finance/') || p.includes('finance.html'))) isCurrentDocument = true;
     else if (targetModule === 'marketing' && (p.includes('marketing.html') || p.includes('/marketing/'))) isCurrentDocument = true;
     else if (targetModule === 'dashboard' && !p.includes('/crm/') && !p.includes('/finance/') && !p.includes('/marketing/') && !p.includes('/project/')) isCurrentDocument = true;
 
@@ -367,12 +403,21 @@
       } else if (targetModule === 'marketing' && typeof window.switchMarketingPage === 'function') {
         window.switchMarketingPage(subpage.replace('view-', ''));
       } else if (targetModule === 'finance') {
-        // Finance SPA switcher
-        const targetViewId = subpage.startsWith('view-') ? subpage : ('view-' + subpage);
-        const viewEl = document.getElementById(targetViewId);
-        if (viewEl) {
-          document.querySelectorAll('.view-section').forEach(v => v.style.display = 'none');
-          viewEl.style.display = 'block';
+        if (typeof window.switchFinancePage === 'function') {
+          window.switchFinancePage(subpage);
+        } else {
+          // Finance SPA switcher
+          const rawSub = subpage.replace('view-', '');
+          const targetViewId = 'view-' + rawSub;
+          const viewEl = document.getElementById(targetViewId) || document.getElementById(subpage);
+          if (viewEl) {
+            document.querySelectorAll('.view-section').forEach(v => {
+              v.style.display = 'none';
+              v.classList.remove('active');
+            });
+            viewEl.style.display = 'block';
+            viewEl.classList.add('active');
+          }
         }
       } else if (targetModule === 'project') {
         // PM Forge subpage switcher

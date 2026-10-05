@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-400/20 text-blue-400">
+                    <i class="fas fa-exchange-alt text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Mutasi Internal (Pindah Dana)</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Transfer antar rekening bank/kas perusahaan tanpa mempengaruhi saldo Laba Rugi (Non-Revenue/Non-Expense).</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="openTransferModal()" class="relative z-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0">
+            <i class="fas fa-plus text-xs"></i> Buat Mutasi Internal Baru
+        </button>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="bg-gradient-to-r from-indigo-500/10 via-blue-500/5 to-transparent border border-indigo-200/80 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 relative overflow-hidden">
+        <div class="p-2 bg-indigo-600 text-white rounded-xl shadow-sm text-sm shrink-0 mt-0.5">
+            <i class="fas fa-info-circle"></i>
+        </div>
+        <div class="text-xs sm:text-sm space-y-1">
+            <p class="font-bold text-slate-900">Catatan Akuntansi ERP:</p>
+            <p class="text-slate-600 leading-relaxed">
+                Mutasi internal hanya memindahkan saldo dari <strong class="text-indigo-700">Rekening Asal (Kredit)</strong> ke <strong class="text-emerald-700">Rekening Tujuan (Debit)</strong>. Transaksi ini netral dan tidak dihitung sebagai beban pengeluaran maupun pendapatan perusahaan.
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Transfer Grid & Form -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Quick Transfer Form Card -->
+        <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fas fa-paper-plane text-blue-600 text-sm"></i> Form Pindah Dana
+                </h3>
+                <span class="text-[11px] font-bold text-slate-400">Instan</span>
+            </div>
+
+            <form class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Dari Rekening (Asal)</label>
+                    <select id="tr-source" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50/50 font-medium text-slate-800">
+                        <option value="BCA Utama">BCA Utama Operasional (Rp 350.000.000)</option>
+                        <option value="Mandiri Payroll">Bank Mandiri Payroll (Rp 130.250.000)</option>
+                        <option value="Wise USD">Wise USD Account ($ 12.450)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs shadow-xs border border-blue-100">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Ke Rekening (Tujuan)</label>
+                    <select id="tr-target" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50/50 font-medium text-slate-800">
+                        <option value="Kas Kecil">Kas Kecil Kantor / Petty Cash (Rp 5.000.000)</option>
+                        <option value="Mandiri Payroll">Bank Mandiri Payroll (Rp 130.250.000)</option>
+                        <option value="BCA Utama">BCA Utama Operasional (Rp 350.000.000)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Transfer (Rp)</label>
+                        <input type="number" id="tr-amount" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold text-slate-900" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Biaya Admin (Jika ada)</label>
+                        <input type="number" id="tr-fee" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-slate-600" placeholder="6500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Keterangan / Keperluan</label>
+                    <input type="text" id="tr-desc" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-slate-400" placeholder="Contoh: Top-up Petty Cash Mingguan">
+                </div>
+
+                <button type="button" onclick="executeInternalTransfer()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-blue-500/25 transition-all transform active:scale-98 flex items-center justify-center gap-2">
+                    <i class="fas fa-check-circle"></i> Eksekusi Pindah Dana
+                </button>
+            </form>
+        </div>
+
+        <!-- Right: Recent Transfer Log Table -->
+        <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col justify-between">
+            <div>
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <span class="text-sm font-bold text-slate-800">Riwayat Mutasi Internal Terakhir</span>
+                    <span class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-indigo-100">Aktif</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-3.5">No. Mutasi</th>
+                                <th class="px-6 py-3.5">Asal & Tujuan</th>
+                                <th class="px-6 py-3.5 text-right">Nominal</th>
+                                <th class="px-6 py-3.5">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transfer-table-body" class="divide-y divide-slate-100 font-medium">
+                            <!-- Row 1 -->
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="px-6 py-4">
+                                    <span class="font-mono text-xs font-bold text-indigo-600 block">TRF-2026-102</span>
+                                    <span class="text-[11px] text-slate-400">04 Okt 2026 • Top-up Kas</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <span class="font-bold text-slate-800">BCA Utama</span>
+                                        <i class="fas fa-arrow-right text-slate-400 text-[10px]"></i>
+                                        <span class="font-bold text-emerald-700">Kas Kecil</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 5.000.000</td>
+                                <td class="px-6 py-4">
+                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1.5 w-max">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Berhasil
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- Row 2 -->
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="px-6 py-4">
+                                    <span class="font-mono text-xs font-bold text-indigo-600 block">TRF-2026-098</span>
+                                    <span class="text-[11px] text-slate-400">01 Okt 2026 • Dana Payroll</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <span class="font-bold text-slate-800">BCA Utama</span>
+                                        <i class="fas fa-arrow-right text-slate-400 text-[10px]"></i>
+                                        <span class="font-bold text-amber-700">Mandiri Payroll</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 45.000.000</td>
+                                <td class="px-6 py-4">
+                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1.5 w-max">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Berhasil
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function executeInternalTransfer() {
+        const source = document.getElementById('tr-source').value;
+        const target = document.getElementById('tr-target').value;
+        const amount = document.getElementById('tr-amount').value || 0;
+        const desc = document.getElementById('tr-desc').value || 'Pindah Dana Internal';
+
+        if(amount <= 0) {
+            alert("Harap masukkan nominal transfer yang valid.");
+            return;
+        }
+
+        const formattedAmount = `Rp ${new Intl.NumberFormat('id-ID').format(amount)}`;
+        const trfCode = `TRF-2026-${Math.floor(100 + Math.random() * 900)}`;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition-colors bg-emerald-50/50';
+        tr.innerHTML = `
+            <td class="px-6 py-4">
+                <span class="font-mono text-xs font-bold text-indigo-600 block">${trfCode}</span>
+                <span class="text-[11px] text-slate-400">Baru Saja • ${desc}</span>
+            </td>
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="font-bold text-slate-800">${source}</span>
+                    <i class="fas fa-arrow-right text-slate-400 text-[10px]"></i>
+                    <span class="font-bold text-emerald-700">${target}</span>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-right font-bold text-slate-900">${formattedAmount}</td>
+            <td class="px-6 py-4">
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1.5 w-max">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Berhasil
+                </span>
+            </td>
+        `;
+
+        document.getElementById('transfer-table-body').prepend(tr);
+        setTimeout(() => tr.classList.remove('bg-emerald-50/50'), 1000);
+
+        // Reset
+        document.getElementById('tr-amount').value = '';
+        document.getElementById('tr-desc').value = '';
+        alert("Pindah dana berhasil dicatat!");
+    }
+</script>
+{% endblock %}

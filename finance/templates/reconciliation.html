@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Page Title -->
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Rekonsiliasi Bank (Dynamic Import & Match)</h1>
+        <p class="text-sm text-gray-500 mt-1">Cocokkan mutasi bank dari file CSV dengan tagihan/pengeluaran di sistem secara otomatis.</p>
+    </div>
+
+    <!-- Step 1: Upload CSV -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">
+            <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+            Import File Mutasi Bank (CSV / Excel)
+        </h3>
+        <p class="text-xs text-gray-400 mb-4 ml-8">Sistem mendukung format CSV dari BCA, Mandiri, BNI, atau bank lain dengan pemetaan kolom dinamis.</p>
+        <div class="flex flex-col md:flex-row items-start gap-4">
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Rekening Bank</label>
+                <select class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500">
+                    <option>BCA Operasional (Rp 150.000.000)</option>
+                    <option>Mandiri Valas ($ 10.500)</option>
+                    <option>Kas Kecil Kantor</option>
+                </select>
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">File Mutasi Rekening Koran</label>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors cursor-pointer">
+                    <i class="fas fa-file-csv text-2xl text-gray-400 mb-1"></i>
+                    <p class="text-sm text-gray-500">Drag & drop atau <span class="text-blue-600 font-medium">klik untuk upload</span> file CSV</p>
+                    <p class="text-xs text-gray-400 mt-1">mutasi_bca_sept.csv</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Column Mapping (CSV Preview) -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">
+            <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+            Tentukan Format Kolom Bank (Pemetaan Dinamis)
+        </h3>
+        <p class="text-xs text-gray-400 mb-4 ml-8">Pilih kolom mana yang berisi Tanggal, Keterangan, dan Nominal dari CSV Bank Anda.</p>
+
+        <div class="overflow-x-auto border border-gray-200 rounded-lg">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-blue-50">
+                        <td class="px-4 py-2 font-medium text-gray-600">
+                            <select class="text-xs border border-blue-300 rounded px-2 py-1 bg-white w-full">
+                                <option>➡️ Kolom: Tanggal</option>
+                                <option>➡️ Kolom: Keterangan</option>
+                                <option>Abaikan</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-2 font-medium text-gray-600">
+                            <select class="text-xs border border-blue-300 rounded px-2 py-1 bg-white w-full">
+                                <option>➡️ Kolom: Keterangan/Deskripsi</option>
+                                <option>Abaikan</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-2 font-medium text-gray-600">
+                            <select class="text-xs border border-blue-300 rounded px-2 py-1 bg-white w-full">
+                                <option>➡️ Kolom: Uang Masuk</option>
+                                <option>➡️ Kolom: Uang Keluar</option>
+                                <option>Abaikan</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-2 font-medium text-gray-600">
+                            <select class="text-xs border border-gray-300 rounded px-2 py-1 bg-white w-full">
+                                <option>Abaikan (Saldo)</option>
+                                <option>➡️ Kolom: Saldo</option>
+                            </select>
+                        </td>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-500 text-xs font-mono">
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">01/09/2026</td>
+                        <td class="px-4 py-2">TRF DP RS MEDIKA</td>
+                        <td class="px-4 py-2 text-green-600 font-semibold">10,000,000</td>
+                        <td class="px-4 py-2">250,000,000</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">02/09/2026</td>
+                        <td class="px-4 py-2">BIAYA ADMIN BANK</td>
+                        <td class="px-4 py-2 text-red-500">-15,000</td>
+                        <td class="px-4 py-2">249,985,000</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">15/09/2026</td>
+                        <td class="px-4 py-2">TRF FREELANCER UI BUDI</td>
+                        <td class="px-4 py-2 text-red-500">-5,000,000</td>
+                        <td class="px-4 py-2">244,985,000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 flex items-center justify-between">
+            <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input type="checkbox" class="w-4 h-4 accent-blue-600"> Simpan format ini sebagai <span class="font-medium">"Template BCA"</span>
+            </label>
+            <button class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+                Lanjutkan Rekonsiliasi <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 3: Tinder-style Matching -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">
+            <span class="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+            Cocokkan Mutasi dengan Data Sistem (Matching)
+        </h3>
+        <p class="text-xs text-gray-400 mb-5 ml-8">Sistem ERP menyarankan invoice/pengeluaran yang sesuai secara otomatis. Klik Konfirmasi untuk menyelesaikan.</p>
+
+        <!-- Tinder Row 1 — Income Match -->
+        <div class="tinder-row grid grid-cols-2 gap-4 mb-4 p-4 border border-green-200 rounded-xl bg-green-50">
+            <!-- Left: Bank Data -->
+            <div class="border-l-4 border-green-500 pl-4">
+                <p class="text-xs text-green-700 font-bold uppercase tracking-wider mb-2">📥 Uang Masuk (dari CSV Bank)</p>
+                <p class="text-lg font-bold text-gray-800">+ Rp 10.000.000</p>
+                <p class="text-sm text-gray-500 mt-1"><i class="fas fa-calendar text-gray-400 mr-1"></i> 01 Sep 2026</p>
+                <p class="text-sm font-medium text-gray-700 mt-1">TRF DP RS MEDIKA</p>
+            </div>
+            <!-- Right: System Suggestion -->
+            <div>
+                <p class="text-xs text-blue-600 font-bold uppercase tracking-wider mb-2">💡 Sugesti Sistem ERP</p>
+                <p class="text-sm text-gray-600">Apakah ini pembayaran:</p>
+                <p class="font-semibold text-gray-800 mt-1">Invoice DP — Proyek RS Medika</p>
+                <p class="text-sm text-gray-500">Termin 1 (30%) • Rp 10.000.000</p>
+                <div class="flex gap-2 mt-3">
+                    <button onclick="matchRow(this)" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+                        <i class="fas fa-check mr-1"></i> Ya, Tandai Lunas
+                    </button>
+                    <button onclick="skipRow(this)" class="px-3 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-100 transition-colors">
+                        Cari Manual
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tinder Row 2 — Expense Match -->
+        <div class="tinder-row grid grid-cols-2 gap-4 mb-4 p-4 border border-red-200 rounded-xl bg-red-50">
+            <!-- Left: Bank Data -->
+            <div class="border-l-4 border-red-500 pl-4">
+                <p class="text-xs text-red-700 font-bold uppercase tracking-wider mb-2">📤 Uang Keluar (dari CSV Bank)</p>
+                <p class="text-lg font-bold text-gray-800">- Rp 5.000.000</p>
+                <p class="text-sm text-gray-500 mt-1"><i class="fas fa-calendar text-gray-400 mr-1"></i> 15 Sep 2026</p>
+                <p class="text-sm font-medium text-gray-700 mt-1">TRF FREELANCER UI BUDI</p>
+            </div>
+            <!-- Right: Manual Selection -->
+            <div>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">🔍 Pilih Pengeluaran (Manual)</p>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cocokkan dengan:</label>
+                <select class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option>Tagihan Budi (Freelancer UI) — Rp 5.000.000</option>
+                    <option>Gaji Staf Andi — Rp 5.000.000</option>
+                    <option>Klaim Transport — Rp 5.000.000</option>
+                </select>
+                <div class="flex gap-2 mt-3">
+                    <button onclick="matchRow(this)" class="flex-1 bg-gray-800 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors">
+                        <i class="fas fa-link mr-1"></i> Konfirmasi Match
+                    </button>
+                    <button onclick="skipRow(this)" class="px-3 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-100 transition-colors">
+                        Lewati
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tinder Row 3 — Unmatched -->
+        <div class="tinder-row grid grid-cols-2 gap-4 p-4 border border-gray-200 rounded-xl bg-gray-50 opacity-70">
+            <div class="border-l-4 border-gray-400 pl-4">
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">📤 Uang Keluar (dari CSV Bank)</p>
+                <p class="text-lg font-bold text-gray-800">- Rp 15.000</p>
+                <p class="text-sm text-gray-500 mt-1"><i class="fas fa-calendar text-gray-400 mr-1"></i> 02 Sep 2026</p>
+                <p class="text-sm font-medium text-gray-700 mt-1">BIAYA ADMIN BANK</p>
+            </div>
+            <div class="flex items-center">
+                <div>
+                    <p class="text-sm text-gray-500">Tidak ada saran dari sistem.</p>
+                    <p class="text-xs text-gray-400 mt-1">Catat sebagai biaya operasional kantor?</p>
+                    <button onclick="skipRow(this)" class="mt-2 text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                        Catat Sebagai OPEX
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tinder-row {
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease-out, margin-bottom 0.5s ease;
+    }
+    .swipe-right {
+        transform: translateX(120%) rotate(10deg);
+        opacity: 0;
+        pointer-events: none;
+    }
+    .swipe-left {
+        transform: translateX(-120%) rotate(-10deg);
+        opacity: 0;
+        pointer-events: none;
+    }
+    .matched-success {
+        border-color: #22c55e !important;
+        background-color: #dcfce7 !important;
+        transform: scale(1.02);
+    }
+</style>
+<script>
+    function matchRow(btn) {
+        const row = btn.closest('.tinder-row');
+        
+        // Add success highlight first
+        row.classList.add('matched-success');
+        
+        // Then swipe out after a short delay for visual satisfaction
+        setTimeout(() => {
+            row.classList.add('swipe-right');
+            setTimeout(() => {
+                row.style.marginBottom = `-${row.offsetHeight}px`;
+                setTimeout(() => {
+                    row.remove();
+                    checkEmpty();
+                }, 500);
+            }, 300);
+        }, 300);
+    }
+
+    function skipRow(btn) {
+        const row = btn.closest('.tinder-row');
+        row.classList.add('swipe-left');
+        setTimeout(() => {
+            row.style.marginBottom = `-${row.offsetHeight}px`;
+            setTimeout(() => {
+                row.remove();
+                checkEmpty();
+            }, 500);
+        }, 300);
+    }
+
+    function checkEmpty() {
+        const remainingRows = document.querySelectorAll('.tinder-row').length;
+        if (remainingRows === 0) {
+            const container = document.querySelector('.bg-white.rounded-xl.shadow-sm.border.border-gray-100.p-6:nth-child(3)');
+            const successMsg = document.createElement('div');
+            successMsg.className = 'text-center py-10 animate-fade-in';
+            successMsg.innerHTML = `
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500 text-3xl">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Hore! Rekonsiliasi Selesai 🎉</h3>
+                <p class="text-gray-500">Semua transaksi dari bank berhasil dicocokkan dengan data sistem.</p>
+                <button onclick="location.reload()" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    Selesai
+                </button>
+            `;
+            container.appendChild(successMsg);
+        }
+    }
+</script>
+{% endblock %}
