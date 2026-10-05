@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-400/20 text-blue-400">
+                    <i class="fas fa-users-between-lines text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Laporan Keuangan per Customer</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Rekapitulasi total tagihan invoice, pembayaran diterima, & sisa piutang per klien.</p>
+                </div>
+            </div>
+        </div>
+        <button class="relative z-10 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 backdrop-blur-md transition-all">
+            <i class="fas fa-file-excel"></i> Export Excel Customer
+        </button>
+    </div>
+
+    <!-- Customer Cards / Table Grid -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <span class="text-sm font-bold text-slate-800">Daftar Rekapitulasi Finansial Klien</span>
+            <span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-100">3 Klien Utama</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Nama Customer / Klien</th>
+                        <th class="px-6 py-3.5">Total Proyek</th>
+                        <th class="px-6 py-3.5 text-right">Total Invoice Tagihan</th>
+                        <th class="px-6 py-3.5 text-right">Total Pembayaran Lunas</th>
+                        <th class="px-6 py-3.5 text-right">Sisa Piutang (AR)</th>
+                        <th class="px-6 py-3.5">Status Pembayaran</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    <!-- Customer 1 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                                    RSM
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-800 block">RS Medika Utama</span>
+                                    <span class="text-[11px] text-slate-400">Healthcare Industry</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-semibold text-slate-600">1 Proyek</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 120.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-emerald-600">Rp 90.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-rose-600">Rp 30.000.000</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Termin Berjalan</span>
+                        </td>
+                    </tr>
+
+                    <!-- Customer 2 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                                    PTA
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-800 block">PT Alpha Global</span>
+                                    <span class="text-[11px] text-slate-400">Corporate & Consulting</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-semibold text-slate-600">1 Proyek</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 35.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-emerald-600">Rp 35.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-400">Rp 0</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Lunas 100%</span>
+                        </td>
+                    </tr>
+
+                    <!-- Customer 3 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                                    PMP
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-800 block">PT Mitra Perkasa</span>
+                                    <span class="text-[11px] text-slate-400">Enterprise Services</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-semibold text-slate-600">1 Proyek</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">Rp 250.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-emerald-600">Rp 150.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-rose-600">Rp 100.000.000</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Termin Berjalan</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

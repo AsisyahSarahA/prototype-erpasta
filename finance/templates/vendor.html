@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-400/20 text-blue-400">
+                    <i class="fas fa-file-invoice-dollar text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Tagihan Vendor (Operasional & HPP)</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Kelola dan atur alokasi pembiayaan vendor, cloud infrastructure, lisensi, & operasional proyek.</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="openVendorModal('create')" class="relative z-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0">
+            <i class="fas fa-plus text-xs"></i> Input Tagihan Vendor
+        </button>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Menunggu Pembayaran -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-bl-full pointer-events-none group-hover:bg-rose-500/10 transition-colors"></div>
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-100/80">Menunggu Pembayaran</span>
+                <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm shadow-xs">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-extrabold text-slate-900 tracking-tight">Rp 18.500.000</p>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-1.5 font-medium">
+                    <span class="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span>3 tagihan mendekati jatuh tempo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sudah Dibayar Bulan Ini -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full pointer-events-none group-hover:bg-emerald-500/10 transition-colors"></div>
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100/80">Dibayar Bulan Ini</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm shadow-xs">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-extrabold text-slate-900 tracking-tight">Rp 12.000.000</p>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-1.5 font-medium">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>5 tagihan telah diselesaikan</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Tagihan USD -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full pointer-events-none group-hover:bg-indigo-500/10 transition-colors"></div>
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100/80">Tagihan Valas (USD)</span>
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm shadow-xs">
+                    <i class="fas fa-globe"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-extrabold text-slate-900 tracking-tight">$ 2.300</p>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-1.5 font-medium">
+                    <span class="inline-block w-2 h-2 rounded-full bg-indigo-500"></span>
+                    <span>AWS, Figma, & GitHub Teams</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Controls -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="relative flex-1 w-full">
+            <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" placeholder="Cari nama vendor, nomor invoice, atau proyek..." class="pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm w-full bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-400">
+        </div>
+        <div class="flex items-center gap-2.5 w-full sm:w-auto">
+            <select class="border border-slate-200 rounded-xl px-3.5 py-2 text-sm bg-slate-50/50 focus:bg-white text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
+                <option>Semua Kategori</option>
+                <option>Infrastruktur IT (Server/Cloud)</option>
+                <option>Software & Lisensi</option>
+                <option>Operasional Kantor</option>
+            </select>
+            <select class="border border-slate-200 rounded-xl px-3.5 py-2 text-sm bg-slate-50/50 focus:bg-white text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
+                <option>Semua Status</option>
+                <option>Menunggu Pembayaran</option>
+                <option>Jatuh Tempo</option>
+                <option>Lunas</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Main Data Table Container -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-slate-800">Daftar Tagihan</span>
+                <span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-100">8 Item</span>
+            </div>
+            <button class="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl shadow-2xs hover:bg-slate-50 flex items-center gap-2 transition-all">
+                <i class="fas fa-file-export text-slate-400"></i> Export Excel
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Vendor</th>
+                        <th class="px-6 py-3.5">No. Invoice</th>
+                        <th class="px-6 py-3.5">Kategori</th>
+                        <th class="px-6 py-3.5">Beban Anggaran</th>
+                        <th class="px-6 py-3.5">Jatuh Tempo</th>
+                        <th class="px-6 py-3.5 text-right">Nominal</th>
+                        <th class="px-6 py-3.5">Status</th>
+                        <th class="px-6 py-3.5 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="vendor-table-body" class="divide-y divide-slate-100 font-medium">
+                    <!-- Row 1 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-sm shadow-orange-500/20 vendor-initial">AWS</div>
+                                <div>
+                                    <span class="font-bold text-slate-800 vendor-name block">Amazon Web Services</span>
+                                    <span class="text-[11px] text-slate-400">Cloud Infrastructure</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-mono text-xs font-semibold text-indigo-600 bg-indigo-50/60 px-2 py-1 rounded-md border border-indigo-100 vendor-inv">BILL-AWS-SEP26</span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 vendor-cat">Infrastruktur IT</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-lg border border-purple-100 font-semibold vendor-charge" data-type="hpp">
+                                <i class="fas fa-layer-group text-[10px]"></i> HPP: RS Medika
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-rose-600 font-semibold text-xs flex items-center gap-1 vendor-date">
+                                <i class="fas fa-exclamation-circle text-[10px]"></i> 05 Okt 2026
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900 vendor-amount" data-currency="USD" data-val="1500">$ 1.500</td>
+                        <td class="px-6 py-4">
+                            <span class="status-jatuh text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/60 flex items-center gap-1.5 w-max">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Jatuh Tempo
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1">
+                                    <i class="fas fa-check text-[10px]"></i> Bayar
+                                </button>
+                                <button onclick="openVendorModal('edit', this)" class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-1.5 rounded-lg" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+                                <button onclick="deleteVendor(this)" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg" title="Hapus"><i class="fas fa-trash-alt text-xs"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 2 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-sm shadow-purple-500/20 vendor-initial">FIG</div>
+                                <div>
+                                    <span class="font-bold text-slate-800 vendor-name block">Figma Organization</span>
+                                    <span class="text-[11px] text-slate-400">Design Tools</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-mono text-xs font-semibold text-indigo-600 bg-indigo-50/60 px-2 py-1 rounded-md border border-indigo-100 vendor-inv">FIGMA-2026-10</span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 vendor-cat">Software & Lisensi</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg border border-slate-200 font-semibold vendor-charge" data-type="opex">
+                                <i class="fas fa-building text-[10px]"></i> OPEX (Kantor)
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 text-xs vendor-date">01 Nov 2026</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900 vendor-amount" data-currency="USD" data-val="450">$ 450</td>
+                        <td class="px-6 py-4">
+                            <span class="status-menunggu text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center gap-1.5 w-max">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Menunggu
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1">
+                                    <i class="fas fa-check text-[10px]"></i> Bayar
+                                </button>
+                                <button onclick="openVendorModal('edit', this)" class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-1.5 rounded-lg" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+                                <button onclick="deleteVendor(this)" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg" title="Hapus"><i class="fas fa-trash-alt text-xs"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 3 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-sm vendor-initial">GH</div>
+                                <div>
+                                    <span class="font-bold text-slate-800 vendor-name block">GitHub Teams</span>
+                                    <span class="text-[11px] text-slate-400">Code Repository</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-mono text-xs font-semibold text-indigo-600 bg-indigo-50/60 px-2 py-1 rounded-md border border-indigo-100 vendor-inv">GH-2026-09</span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 vendor-cat">Software & Lisensi</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg border border-slate-200 font-semibold vendor-charge" data-type="opex">
+                                <i class="fas fa-building text-[10px]"></i> OPEX (Kantor)
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 text-xs vendor-date">01 Sep 2026</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900 vendor-amount" data-currency="USD" data-val="40">$ 40</td>
+                        <td class="px-6 py-4">
+                            <span class="status-lunas text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1.5 w-max">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Lunas
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg transition-all border border-slate-200">Detail</button>
+                                <button onclick="openVendorModal('edit', this)" class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-1.5 rounded-lg" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+                                <button onclick="deleteVendor(this)" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg" title="Hapus"><i class="fas fa-trash-alt text-xs"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CRUD Modal untuk Vendor -->
+<div id="vendorModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center backdrop-blur-md transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-slate-100" id="vendorModalContent">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg text-sm">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base" id="vendorModalTitle">Input Tagihan Vendor Baru</h3>
+            </div>
+            <button onclick="closeVendorModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nama Vendor</label>
+                    <input type="text" id="v-name" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-400" placeholder="Contoh: DigitalOcean">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">No. Invoice</label>
+                    <input type="text" id="v-inv" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none font-mono placeholder:text-slate-400" placeholder="INV-DO-10">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Kategori</label>
+                    <select id="v-cat" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none text-slate-700 bg-white">
+                        <option value="Infrastruktur IT">Infrastruktur IT</option>
+                        <option value="Software & Lisensi">Software & Lisensi</option>
+                        <option value="Operasional Kantor">Operasional Kantor</option>
+                        <option value="Jasa Pihak Ketiga">Jasa Pihak Ketiga</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Mata Uang</label>
+                    <select id="v-curr" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none text-slate-700 bg-white">
+                        <option value="IDR">IDR - Rupiah</option>
+                        <option value="USD">USD - Dollar</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Tagihan</label>
+                    <input type="number" id="v-amount" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none font-semibold text-slate-800" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Jatuh Tempo</label>
+                    <input type="text" id="v-date" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none" placeholder="15 Nov 2026">
+                </div>
+            </div>
+
+            <!-- Radio Toggle HPP vs OPEX -->
+            <div class="p-4 bg-slate-50/80 rounded-xl border border-slate-200/80 space-y-3">
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Alokasi Beban Biaya</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white cursor-pointer hover:border-blue-400 transition-colors">
+                        <input type="radio" name="chargeType" value="opex" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                        <span class="text-xs font-semibold text-slate-700">OPEX (Kantor)</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white cursor-pointer hover:border-purple-400 transition-colors">
+                        <input type="radio" name="chargeType" value="hpp" class="w-4 h-4 text-purple-600 focus:ring-purple-500">
+                        <span class="text-xs font-semibold text-slate-700">HPP (Proyek)</span>
+                    </label>
+                </div>
+
+                <div id="project-selector" class="mt-2 hidden">
+                    <label class="block text-[11px] font-bold text-purple-700 mb-1">Pilih Proyek Terkait</label>
+                    <select id="v-project" class="w-full border border-purple-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none bg-purple-50 text-purple-900 font-medium">
+                        <option>RS Medika Utama</option>
+                        <option>Website Company Profile X</option>
+                        <option>Sistem HRIS Terintegrasi</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/80 flex justify-end gap-2.5">
+            <button onclick="closeVendorModal()" class="px-4 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors">Batal</button>
+            <button onclick="saveVendorData()" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-500/20 transition-all">Simpan Tagihan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const vModal = document.getElementById('vendorModal');
+    const vModalContent = document.getElementById('vendorModalContent');
+    let isEditVendor = false;
+    let editVendorRow = null;
+
+    document.querySelectorAll('input[name="chargeType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const ps = document.getElementById('project-selector');
+            if (this.value === 'hpp') {
+                ps.classList.remove('hidden');
+            } else {
+                ps.classList.add('hidden');
+            }
+        });
+    });
+
+    function getVendorInitials(name) {
+        return name.substring(0, 3).toUpperCase();
+    }
+    
+    function getRandomGradientClass() {
+        const gradients = [
+            'from-indigo-500 to-purple-600 shadow-indigo-500/20',
+            'from-blue-500 to-cyan-600 shadow-blue-500/20',
+            'from-emerald-500 to-teal-600 shadow-emerald-500/20',
+            'from-amber-500 to-orange-600 shadow-orange-500/20',
+            'from-rose-500 to-pink-600 shadow-rose-500/20'
+        ];
+        return gradients[Math.floor(Math.random() * gradients.length)];
+    }
+
+    function openVendorModal(mode, btn = null) {
+        isEditVendor = (mode === 'edit');
+        document.getElementById('vendorModalTitle').innerText = isEditVendor ? 'Edit Tagihan Vendor' : 'Input Tagihan Vendor Baru';
+        
+        if (isEditVendor && btn) {
+            editVendorRow = btn.closest('tr');
+            document.getElementById('v-name').value = editVendorRow.querySelector('.vendor-name').innerText;
+            document.getElementById('v-inv').value = editVendorRow.querySelector('.vendor-inv').innerText;
+            document.getElementById('v-cat').value = editVendorRow.querySelector('.vendor-cat').innerText;
+            document.getElementById('v-date').value = editVendorRow.querySelector('.vendor-date').innerText.replace('Jatuh Tempo', '').trim();
+            
+            const amountEl = editVendorRow.querySelector('.vendor-amount');
+            document.getElementById('v-curr').value = amountEl.getAttribute('data-currency');
+            document.getElementById('v-amount').value = amountEl.getAttribute('data-val');
+            
+            const chargeEl = editVendorRow.querySelector('.vendor-charge');
+            if (chargeEl.getAttribute('data-type') === 'hpp') {
+                document.querySelector('input[name="chargeType"][value="hpp"]').checked = true;
+                document.getElementById('project-selector').classList.remove('hidden');
+            } else {
+                document.querySelector('input[name="chargeType"][value="opex"]').checked = true;
+                document.getElementById('project-selector').classList.add('hidden');
+            }
+        } else {
+            editVendorRow = null;
+            document.getElementById('v-name').value = '';
+            document.getElementById('v-inv').value = '';
+            document.getElementById('v-amount').value = '';
+            document.getElementById('v-date').value = '';
+            document.querySelector('input[name="chargeType"][value="opex"]').checked = true;
+            document.getElementById('project-selector').classList.add('hidden');
+        }
+        
+        vModal.classList.remove('hidden');
+        setTimeout(() => {
+            vModal.classList.remove('opacity-0');
+            vModalContent.classList.remove('scale-95');
+        }, 10);
+    }
+
+    function closeVendorModal() {
+        vModal.classList.add('opacity-0');
+        vModalContent.classList.add('scale-95');
+        setTimeout(() => {
+            vModal.classList.add('hidden');
+        }, 200);
+    }
+
+    function saveVendorData() {
+        const name = document.getElementById('v-name').value || 'Vendor Baru';
+        const inv = document.getElementById('v-inv').value || 'INV-001';
+        const cat = document.getElementById('v-cat').value;
+        const curr = document.getElementById('v-curr').value;
+        const amount = document.getElementById('v-amount').value || 0;
+        const date = document.getElementById('v-date').value || 'TBA';
+        const isHPP = document.querySelector('input[name="chargeType"]:checked').value === 'hpp';
+        
+        let chargeBadge = isHPP 
+            ? `<span class="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-lg border border-purple-100 font-semibold vendor-charge" data-type="hpp"><i class="fas fa-layer-group text-[10px]"></i> HPP: ${document.getElementById('v-project').value}</span>` 
+            : `<span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg border border-slate-200 font-semibold vendor-charge" data-type="opex"><i class="fas fa-building text-[10px]"></i> OPEX (Kantor)</span>`;
+
+        let displayAmount = curr === 'USD' ? `$ ${amount}` : `Rp ${new Intl.NumberFormat('id-ID').format(amount)}`;
+
+        const rowHTML = `
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-gradient-to-br ${getRandomGradientClass()} rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-sm vendor-initial">${getVendorInitials(name)}</div>
+                    <div>
+                        <span class="font-bold text-slate-800 vendor-name block">${name}</span>
+                        <span class="text-[11px] text-slate-400">${cat}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <span class="font-mono text-xs font-semibold text-indigo-600 bg-indigo-50/60 px-2 py-1 rounded-md border border-indigo-100 vendor-inv">${inv}</span>
+            </td>
+            <td class="px-6 py-4 text-slate-600 vendor-cat">${cat}</td>
+            <td class="px-6 py-4">${chargeBadge}</td>
+            <td class="px-6 py-4 text-slate-600 text-xs vendor-date">${date}</td>
+            <td class="px-6 py-4 text-right font-bold text-slate-900 vendor-amount" data-currency="${curr}" data-val="${amount}">${displayAmount}</td>
+            <td class="px-6 py-4">
+                <span class="status-menunggu text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center gap-1.5 w-max">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Menunggu
+                </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                    <button class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1"><i class="fas fa-check text-[10px]"></i> Bayar</button>
+                    <button onclick="openVendorModal('edit', this)" class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-1.5 rounded-lg" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+                    <button onclick="deleteVendor(this)" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg" title="Hapus"><i class="fas fa-trash-alt text-xs"></i></button>
+                </div>
+            </td>
+        `;
+
+        if (isEditVendor && editVendorRow) {
+            editVendorRow.innerHTML = rowHTML;
+            editVendorRow.classList.add('bg-blue-50/50');
+            setTimeout(() => editVendorRow.classList.remove('bg-blue-50/50'), 1000);
+        } else {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50/80 transition-colors bg-emerald-50/50 group';
+            tr.innerHTML = rowHTML;
+            document.getElementById('vendor-table-body').prepend(tr);
+            setTimeout(() => tr.classList.remove('bg-emerald-50/50'), 1000);
+        }
+        
+        closeVendorModal();
+    }
+
+    function deleteVendor(btn) {
+        if(confirm("Hapus data tagihan vendor ini?")) {
+            const row = btn.closest('tr');
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-10px)';
+            setTimeout(() => {
+                row.remove();
+            }, 300);
+        }
+    }
+</script>
+{% endblock %}
+

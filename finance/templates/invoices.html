@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Penagihan & Termin (Invoice AR)</h1>
+            <p class="text-sm text-gray-500 mt-1">Jadwal penagihan otomatis tersinkronisasi dari Modul CRM.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="flex items-center gap-2 text-xs font-medium text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg shadow-sm">
+                <i class="fas fa-sync-alt animate-spin-slow"></i> Tersinkronisasi dengan CRM
+            </span>
+        </div>
+    </div>
+
+    <!-- Summary Bar -->
+    <div class="grid grid-cols-3 gap-4">
+        <div class="bg-green-50 border border-green-200 p-4 rounded-xl text-center">
+            <p class="text-xs text-green-600 font-medium">Total Lunas</p>
+            <p class="text-xl font-bold text-green-700 mt-1">Rp 24.000.000</p>
+        </div>
+        <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-center">
+            <p class="text-xs text-yellow-600 font-medium">Menunggu Pembayaran</p>
+            <p class="text-xl font-bold text-yellow-700 mt-1">Rp 19.500.000</p>
+        </div>
+        <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl text-center">
+            <p class="text-xs text-gray-500 font-medium">Draft (Belum Ditagih)</p>
+            <p class="text-xl font-bold text-gray-600 mt-1">Rp 16.500.000</p>
+        </div>
+    </div>
+
+    <!-- Search & Filters (Professional Tabs) -->
+    <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-end justify-between border-b border-gray-200">
+        <!-- Tabs -->
+        <div class="flex space-x-8 w-full md:w-auto overflow-x-auto -mb-px">
+            <button onclick="switchView('project')" id="btn-project" class="pb-3 text-sm font-semibold border-b-2 border-blue-600 text-blue-600 transition-colors whitespace-nowrap flex items-center gap-2">
+                <i class="fas fa-project-diagram"></i> Per Proyek
+            </button>
+            <button onclick="switchView('client')" id="btn-client" class="pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap flex items-center gap-2">
+                <i class="fas fa-building"></i> Per Klien
+            </button>
+            <button onclick="switchView('month')" id="btn-month" class="pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap flex items-center gap-2">
+                <i class="fas fa-calendar-alt"></i> Jatuh Tempo Bulan Ini
+            </button>
+        </div>
+        
+        <!-- Search Input -->
+        <div class="relative w-full md:w-72 pb-3">
+            <i class="fas fa-search absolute left-3 top-3.5 text-gray-400 text-sm"></i>
+            <input type="text" placeholder="Cari nama, invoice, atau klien..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white w-full bg-gray-50 transition-all shadow-sm">
+        </div>
+    </div>
+
+    <!-- VIEW: PER PROJECT (Default) -->
+    <div id="view-project" class="space-y-6">
+
+    <!-- Project Card 1 -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-folder text-white text-sm"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-gray-800">PROYEK: APLIKASI KASIR RS MEDIKA</p>
+                    <p class="text-xs text-gray-500">Total Nilai Kontrak: <span class="font-semibold text-gray-700">Rp 30.000.000</span></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors" title="AI akan mengirimkan invoice secara otomatis saat jatuh tempo termin tercapai.">
+                <i class="fas fa-robot text-blue-500"></i>
+                <span class="text-xs font-semibold text-blue-700">AI Auto-Invoice Aktif</span>
+                <!-- Toggle switch simulation -->
+                <div class="w-8 h-4 bg-blue-500 rounded-full relative ml-2">
+                    <div class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+                </div>
+            </div>
+        </div>
+        <div class="divide-y divide-gray-50">
+            <!-- Termin 1 -->
+            <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700"><i class="fas fa-file-alt text-gray-400 mr-2"></i><span class="font-bold">Termin 1:</span> DP Awal (30%)</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Jatuh Tempo: 01 Agu 2026 | Invoice: INV-2608-001</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <p class="font-semibold text-gray-700">Rp 9.000.000</p>
+                    <span class="status-lunas text-xs font-semibold px-2.5 py-1 rounded-full">✅ LUNAS</span>
+                    <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
+                        <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteTermin(this)" class="text-gray-400 hover:text-red-600 transition-colors" title="Batalkan Termin"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            </div>
+            <!-- Termin 2 -->
+            <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                    <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700"><i class="fas fa-file-alt text-gray-400 mr-2"></i><span class="font-bold">Termin 2:</span> UAT Selesai (40%)</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Jatuh Tempo: 01 Okt 2026 | Invoice: INV-2610-002</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <p class="font-semibold text-gray-700">Rp 12.000.000</p>
+                    <div class="flex items-center gap-2">
+                        <span class="status-jatuh text-xs font-semibold px-2.5 py-1 rounded-full">🔴 JATUH TEMPO</span>
+                        <button class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">Ingatkan Klien</button>
+                    </div>
+                    <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
+                        <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteTermin(this)" class="text-gray-400 hover:text-red-600 transition-colors" title="Batalkan Termin"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            </div>
+            <!-- Termin 3 -->
+            <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50 opacity-60">
+                <div class="flex items-center gap-4">
+                    <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700"><i class="fas fa-file-alt text-gray-400 mr-2"></i><span class="font-bold">Termin 3:</span> Pelunasan (30%)</p>
+                        <p class="text-xs text-blue-500 mt-0.5 font-medium"><i class="fas fa-magic"></i> AI akan generate otomatis pada: 01 Des 2026</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <p class="font-semibold text-gray-700">Rp 9.000.000</p>
+                    <div class="flex items-center gap-2">
+                        <span class="status-draft text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">🗓️ JADWAL CRM</span>
+                        <button onclick="generateManual(this)" class="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors flex items-center gap-1">
+                            <i class="fas fa-bolt"></i> Generate Manual
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
+                        <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteTermin(this)" class="text-gray-400 hover:text-red-600 transition-colors" title="Batalkan Termin"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Card 2 -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-folder text-white text-sm"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-gray-800">PROYEK: WEBSITE COMPANY PROFILE X</p>
+                    <p class="text-xs text-gray-500">Total Nilai Kontrak: <span class="font-semibold text-gray-700">Rp 15.000.000</span></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" title="Aktifkan agar AI mengurus pengiriman invoice otomatis.">
+                <i class="fas fa-robot text-gray-400"></i>
+                <span class="text-xs font-semibold text-gray-600">AI Auto-Invoice Mati</span>
+                <!-- Toggle switch simulation -->
+                <div class="w-8 h-4 bg-gray-300 rounded-full relative ml-2">
+                    <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+                </div>
+            </div>
+        </div>
+        <div class="divide-y divide-gray-50">
+            <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                    <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700"><i class="fas fa-file-alt text-gray-400 mr-2"></i><span class="font-bold">Termin 1:</span> DP Awal (50%)</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Jatuh Tempo: 10 Okt 2026 | Invoice: INV-2610-003</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <p class="font-semibold text-gray-700">Rp 7.500.000</p>
+                    <span class="status-menunggu text-xs font-semibold px-2.5 py-1 rounded-full">🟡 MENUNGGU</span>
+                    <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
+                        <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteTermin(this)" class="text-gray-400 hover:text-red-600 transition-colors" title="Batalkan Termin"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50 opacity-60">
+                <div class="flex items-center gap-4">
+                    <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700"><i class="fas fa-file-alt text-gray-400 mr-2"></i><span class="font-bold">Termin 2:</span> Pelunasan (50%)</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Dijadwalkan: 10 Nov 2026 (Manual Invoice)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <p class="font-semibold text-gray-700">Rp 7.500.000</p>
+                    <div class="flex items-center gap-2">
+                        <span class="status-draft text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">🗓️ JADWAL CRM</span>
+                        <button onclick="generateManual(this)" class="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors flex items-center gap-1">
+                            <i class="fas fa-bolt"></i> Generate Manual
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
+                        <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteTermin(this)" class="text-gray-400 hover:text-red-600 transition-colors" title="Batalkan Termin"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div> <!-- END VIEW PROJECT -->
+
+    <!-- VIEW: PER CLIENT -->
+    <div id="view-client" class="space-y-6 hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-building text-indigo-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-800 text-lg">KLIEN: RS Medika Utama</p>
+                        <p class="text-xs text-gray-500">2 Proyek Aktif | Total Kontrak: Rp 80.000.000</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                Proyek: Aplikasi Kasir RS Medika
+            </div>
+            <div class="divide-y divide-gray-50 px-5">
+                <div class="py-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Termin 2: UAT Selesai (40%)</p>
+                        <p class="text-xs text-red-500 mt-0.5">Jatuh Tempo: 01 Okt 2026</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <p class="font-semibold text-gray-700">Rp 12.000.000</p>
+                        <span class="status-jatuh text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">🔴 JATUH TEMPO</span>
+                        <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
+                            <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteTermin(this)" class="text-gray-400 hover:text-red-600 transition-colors" title="Batalkan Termin"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- END VIEW CLIENT -->
+
+    <!-- VIEW: PER MONTH (Bulan Ini) -->
+    <div id="view-month" class="space-y-6 hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-calendar-alt text-2xl opacity-80"></i>
+                    <div>
+                        <p class="font-bold text-lg">Tagihan Bulan Ini (Oktober 2026)</p>
+                        <p class="text-xs text-blue-100">Total Proyeksi Pencairan: Rp 19.500.000</p>
+                    </div>
+                </div>
+                <button class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fas fa-paper-plane mr-1"></i> Kirim Massal (2 Invoice)
+                </button>
+            </div>
+            <div class="divide-y divide-gray-100">
+                <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center gap-4">
+                        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">RS Medika - Aplikasi Kasir</p>
+                            <p class="text-sm text-gray-600 mt-0.5">Termin 2: UAT Selesai (40%)</p>
+                            <p class="text-xs text-red-500 mt-1"><i class="fas fa-exclamation-circle"></i> Terlewat 3 Hari (Jatuh Tempo 1 Okt)</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <p class="font-bold text-gray-800 text-lg">Rp 12.000.000</p>
+                        <button class="text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-100">Follow Up Klien</button>
+                        <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
+                            <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteTermin(this)" class="text-gray-400 hover:text-red-600 transition-colors" title="Batalkan Termin"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center gap-4">
+                        <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">PT XYZ - Company Profile</p>
+                            <p class="text-sm text-gray-600 mt-0.5">Termin 1: DP Awal (50%)</p>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fas fa-clock"></i> Dijadwalkan 10 Okt</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <p class="font-bold text-gray-800 text-lg">Rp 7.500.000</p>
+                        <button class="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-100">Generate Invoice</button>
+                        <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
+                            <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteTermin(this)" class="text-gray-400 hover:text-red-600 transition-colors" title="Batalkan Termin"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- END VIEW MONTH -->
+
+</div>
+
+<script>
+    function switchView(viewId) {
+        // Reset buttons to inactive state
+        ['project', 'client', 'month'].forEach(id => {
+            const btn = document.getElementById('btn-' + id);
+            btn.className = 'pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap flex items-center gap-2';
+            document.getElementById('view-' + id).classList.add('hidden');
+        });
+        
+        // Set active state
+        const activeBtn = document.getElementById('btn-' + viewId);
+        activeBtn.className = 'pb-3 text-sm font-semibold border-b-2 border-blue-600 text-blue-600 transition-colors whitespace-nowrap flex items-center gap-2';
+        
+        // Show view
+        document.getElementById('view-' + viewId).classList.remove('hidden');
+    }
+    function generateManual(btn) {
+        const row = btn.closest('.flex.items-center.justify-between.hover\\:bg-gray-50');
+        const statusBadge = row.querySelector('.status-draft');
+        
+        // Simulasikan efek generating
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Generating...';
+        btn.classList.add('bg-blue-50', 'text-blue-600', 'border-blue-200');
+        
+        setTimeout(() => {
+            // Ubah teks tombol
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim ke Klien';
+            btn.classList.remove('bg-blue-50', 'text-blue-600', 'border-blue-200');
+            btn.classList.add('bg-blue-600', 'text-white', 'border-transparent', 'hover:bg-blue-700');
+            btn.onclick = function() { alert('Invoice telah dikirim ke klien via Email/WhatsApp!'); };
+            
+            // Update badge status
+            statusBadge.innerHTML = '🟡 MENUNGGU PEMBAYARAN';
+            statusBadge.className = 'status-menunggu text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-700';
+            
+            // Ubah teks jadwal menjadi nomor invoice
+            const infoText = row.querySelector('.text-xs.mt-0\\.5');
+            infoText.innerHTML = 'Invoice: <span class="font-mono font-medium text-blue-600">INV-AUTO-009</span> | Baru saja di-generate';
+            infoText.className = 'text-xs text-gray-500 mt-0.5';
+            
+            // Hapus opacity jika ada
+            row.classList.remove('opacity-60');
+            
+        }, 1500);
+    }
+    
+    function editTermin(btn) {
+        const row = btn.closest('.flex.items-center.justify-between');
+        const nominalElement = row.querySelector('.font-semibold.text-gray-700, .font-bold.text-gray-800.text-lg');
+        
+        let currentNominal = nominalElement.innerText.replace(/[^0-9]/g, '');
+        let newNominal = prompt("Ubah nominal termin ini (Angka saja):", currentNominal);
+        
+        if (newNominal && newNominal !== currentNominal) {
+            // Format ulang ke rupiah (dummy)
+            const formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(newNominal);
+            nominalElement.innerText = formatted;
+            
+            // Efek highlight
+            row.classList.add('bg-blue-50');
+            setTimeout(() => row.classList.remove('bg-blue-50'), 1000);
+        }
+    }
+    
+    function deleteTermin(btn) {
+        if(confirm("Apakah Anda yakin ingin membatalkan/menghapus termin ini?")) {
+            const row = btn.closest('.flex.items-center.justify-between.hover\\:bg-gray-50, .py-4.flex.items-center.justify-between');
+            row.style.transition = 'all 0.4s ease-out';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            
+            setTimeout(() => {
+                row.remove();
+            }, 400);
+        }
+    }
+</script>
+{% endblock %}

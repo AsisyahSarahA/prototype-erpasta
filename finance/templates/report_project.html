@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-400/20 text-blue-400">
+                    <i class="fas fa-project-diagram text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Profitabilitas Proyek (P&L per Project)</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Rumus Otomatis: [Total Termin Lunas] - [HPP Freelancer & Vendor Proyek] = Laba Bersih Proyek.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Project Profitability -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <span class="text-sm font-bold text-slate-800">Analisis Laba/Rugi per Proyek Aktif</span>
+            <button class="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl flex items-center gap-2">
+                <i class="fas fa-download text-slate-400"></i> Export Excel
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Nama Proyek</th>
+                        <th class="px-6 py-3.5 text-right">Nilai Kontrak</th>
+                        <th class="px-6 py-3.5 text-right">Termin Terbayar</th>
+                        <th class="px-6 py-3.5 text-right">Biaya HPP Proyek</th>
+                        <th class="px-6 py-3.5 text-right">Laba Bersih Proyek</th>
+                        <th class="px-6 py-3.5">Margin %</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    <!-- Project 1 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-bold text-slate-800 block">Aplikasi Kasir RS Medika</span>
+                            <span class="text-[11px] text-slate-400">Client: RS Medika Utama</span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-semibold text-slate-700">Rp 120.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-emerald-600">Rp 90.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-amber-600">Rp 23.500.000</td>
+                        <td class="px-6 py-4 text-right font-extrabold text-blue-600">Rp 66.500.000</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">73.8%</span>
+                        </td>
+                    </tr>
+
+                    <!-- Project 2 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-bold text-slate-800 block">Web Company Profile X</span>
+                            <span class="text-[11px] text-slate-400">Client: PT Alpha Global</span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-semibold text-slate-700">Rp 35.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-emerald-600">Rp 35.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-amber-600">Rp 8.500.000</td>
+                        <td class="px-6 py-4 text-right font-extrabold text-blue-600">Rp 26.500.000</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">75.7%</span>
+                        </td>
+                    </tr>
+
+                    <!-- Project 3 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-bold text-slate-800 block">Sistem HRIS Terintegrasi</span>
+                            <span class="text-[11px] text-slate-400">Client: PT Mitra Perkasa</span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-semibold text-slate-700">Rp 250.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-emerald-600">Rp 150.000.000</td>
+                        <td class="px-6 py-4 text-right font-bold text-amber-600">Rp 33.000.000</td>
+                        <td class="px-6 py-4 text-right font-extrabold text-blue-600">Rp 117.000.000</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">78.0%</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

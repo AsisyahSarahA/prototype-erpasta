@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Astacode ERP V1</title>
+<link rel="stylesheet" href="sidebar.css">
 <style>
 :root {
   --primary: #305BA3; --primary-2: #264A85; --primary-soft: #E8EEF7;
@@ -550,40 +551,8 @@ button { cursor: pointer; }
 <body>
 
 <div class="app">
-<aside class="sidebar" id="sidebar">
-  <div class="brand">
-    <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.2 6.8H21l-5.5 4 2.1 6.7L12 16.4 6.4 20.5 8.5 13 3 9.8h6.8L12 3z"/></svg></div>
-    <div><h1>ASTACODE ERP</h1><p>Enterprise Operations Platform</p></div>
-  </div>
-  
-  <div class="nav-label">Workspace</div>
-  <nav class="nav" id="nav">
-    <button class="nav-btn active" data-page="dashboard"><svg data-i="dashboard"></svg>Dashboard</button>
-    <button class="nav-btn" data-page="crm"><svg data-i="users"></svg>CRM</button>
-    <button class="nav-btn" data-page="pipeline"><svg data-i="kanban"></svg>Pipeline</button>
-    <button class="nav-btn" data-page="projects"><svg data-i="briefcase"></svg>Project Management</button>
-    <button class="nav-btn" data-page="automation"><svg data-i="bug"></svg>Automation Fix Bug</button>
-    <button class="nav-btn" data-page="finance"><svg data-i="wallet"></svg>Finance & AR</button>
-    <button class="nav-btn" data-page="marketing"><svg data-i="megaphone"></svg>Marketing Ops</button>
-    <button class="nav-btn" data-page="content"><svg data-i="spark"></svg>AI Content Engine</button>
-    <button class="nav-btn" data-page="aikanban"><svg data-i="bot"></svg>Kanban AI (Global)</button>
-  </nav>
-  
-  <div class="nav-label">Control & Config</div>
-  <nav class="nav">
-    <button class="nav-btn" data-page="analytics"><svg data-i="chart"></svg>Reporting</button>
-    <button class="nav-btn" data-page="integrations"><svg data-i="plug"></svg>Integrations</button>
-    <button class="nav-btn" data-page="rbac"><svg data-i="shield"></svg>Access & Audit</button>
-    <button class="nav-btn" data-page="settings"><svg data-i="settings"></svg>Settings</button>
-  </nav>
-  
-  <div class="sidebar-bottom">
-    <div class="mini-user">
-      <div class="avatar">AS</div>
-      <div><strong>Asisyah Sarah A.</strong><span>Project Manager</span></div>
-    </div>
-  </div>
-</aside>
+<!-- Dynamic Shared Sidebar Container -->
+<div id="sidebar-container" data-active-page="dashboard"></div>
 
 <main class="main">
   <header class="topbar">
@@ -882,29 +851,29 @@ button { cursor: pointer; }
       <div class="kpi"><span class="label">Active Clients</span><div class="value">46</div><div class="delta up">8 new this quarter</div></div>
     </div>
     
-    <!-- Tambahan CRM Lifecycle Control -->
+    <!-- Tambahan CRM Lifecycle Control with Direct Submodule Links -->
     <div class="panel" style="margin-top:16px; margin-bottom:16px;">
-      <div class="panel-head"><div><div class="panel-title">CRM Lifecycle Control</div><div class="panel-sub">Direct access to every customer journey stage</div></div><span class="pill">10 CRM domains</span></div>
+      <div class="panel-head"><div><div class="panel-title">CRM Sub-Module Hub (Odoo-Level Integration)</div><div class="panel-sub">Direct access to pipeline, quotation MoU, customer database, and master data</div></div><a href="crm.html#pipeline" class="pill" style="text-decoration:none;">Buka Full CRM Workspace →</a></div>
       <div class="panel-body integration" style="padding-top:14px; padding-bottom:14px;">
         <div class="integration-card" style="padding:14px;">
-          <div class="ic-top"><strong>Leads</strong><span class="status info">382</span></div>
-          <p>Source, ownership, qualification, tags, next action.</p>
-          <button class="btn ghost" style="width:100%; border:1px solid var(--border);">Open Leads</button>
+          <div class="ic-top"><strong>Lead & Pipeline</strong><span class="status info">Kanban & Table</span></div>
+          <p>Siklus leads, prospects, offerings, quotation hingga won.</p>
+          <a href="crm.html#pipeline" class="btn ghost" style="width:100%; border:1px solid var(--border); text-align:center; display:block;">Buka Pipeline</a>
         </div>
         <div class="integration-card" style="padding:14px;">
-          <div class="ic-top"><strong>Prospects</strong><span class="status warning">278</span></div>
-          <p>Qualification notes, need, budget, decision maker.</p>
-          <button class="btn ghost" style="width:100%; border:1px solid var(--border);">Open Prospects</button>
+          <div class="ic-top"><strong>Quotation & MoU</strong><span class="status warning">211 Penawaran</span></div>
+          <p>Kop surat resmi, hide harga satuan, dan skema termin 3x.</p>
+          <a href="crm.html#quotation" class="btn ghost" style="width:100%; border:1px solid var(--border); text-align:center; display:block;">Buka Quotation</a>
         </div>
         <div class="integration-card" style="padding:14px;">
-          <div class="ic-top"><strong>Offerings</strong><span class="status success">28</span></div>
-          <p>Reusable service catalog with pricing model & scope.</p>
-          <button class="btn ghost" style="width:100%; border:1px solid var(--border);">Open Offerings</button>
+          <div class="ic-top"><strong>Master Customer</strong><span class="status success">Client 360</span></div>
+          <p>Database pelanggan, filter kota, PIC, dan nomor WhatsApp.</p>
+          <a href="crm.html#customer" class="btn ghost" style="width:100%; border:1px solid var(--border); text-align:center; display:block;">Buka Customer</a>
         </div>
         <div class="integration-card" style="padding:14px;">
-          <div class="ic-top"><strong>Proposals</strong><span class="status info">14</span></div>
-          <p>Versioned proposal, approval, validity and send tracking.</p>
-          <button class="btn ghost" style="width:100%; border:1px solid var(--border);">Open Proposals</button>
+          <div class="ic-top"><strong>Master Data CRM</strong><span class="status info">5 Master Entities</span></div>
+          <p>Kategori, Sales, Customer, Produk Layanan, dan Team.</p>
+          <a href="crm.html#master" class="btn ghost" style="width:100%; border:1px solid var(--border); text-align:center; display:block;">Buka Master Data</a>
         </div>
       </div>
     </div>
@@ -2038,5 +2007,6 @@ if(searchEl) {
   });
 }
 </script>
+<script src="sidebar.js"></script>
 </body>
 </html>

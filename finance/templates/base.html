@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astacode ERP — Finance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../sidebar.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/finance.css">
+    <style>
+        body { display: flex; font-family: 'Inter', sans-serif; background: #F4F7FB; color: #0F172A; }
+        .app-wrapper { display: flex; width: 100%; min-height: 100vh; }
+        .main-content { flex: 1; overflow-x: hidden; display: flex; flex-direction: column; min-width: 0; min-height: 100vh; }
+        .page-content { flex: 1; overflow-y: auto; padding: 26px 28px 40px; background: #F4F7FB; max-width: 1720px; width: 100%; margin: 0 auto; }
+        .topbar { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(14px); border-bottom: 1px solid #E2E8F0; height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 30; flex-shrink: 0; }
+        .breadcrumb { font-size: 13px; color: #64748B; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        .breadcrumb strong { color: #0F172A; font-weight: 700; }
+        .user-profile { display: flex; align-items: center; gap: 10px; margin-left: 8px; padding-left: 12px; border-left: 1px solid #E2E8F0; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #38BDF8, #305BA3); color: #fff; font-weight: 700; display: grid; place-items: center; font-size: 12px; box-shadow: 0 2px 8px rgba(48, 91, 163, 0.3); }
+        .user-info { display: flex; flex-direction: column; line-height: 1.2; }
+        .user-info strong { font-size: 12px; font-weight: 700; color: #0F172A; }
+        .user-info span { font-size: 10.5px; color: #64748B; }
+        .search-box { position: relative; width: 280px; }
+        .search-box svg { position: absolute; left: 12px; top: 11px; width: 16px; height: 16px; color: #64748B; pointer-events: none; }
+        .search-box input { width: 100%; height: 38px; padding: 0 16px 0 36px; border: 1px solid #E2E8F0; border-radius: 9px; font-size: 12px; transition: 0.2s; background: #FAFAFC; }
+        .search-box input:focus { border-color: #305BA3; background: #fff; box-shadow: 0 0 0 3px rgba(48, 91, 163, 0.15); }
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+
+    <!-- ======= MASTER SIDEBAR ======= -->
+    <div id="sidebar-container" data-active-page="finance" data-active-subpage="{{ request.endpoint }}"></div>
+
+    <!-- ======= MAIN CONTENT ======= -->
+    <main class="main-content">
+        <header class="topbar">
+            <div class="breadcrumb">
+                Astacode ERP <span>/</span> Finance <span>/</span> <strong id="current-view-title">{{ request.endpoint|capitalize if request.endpoint else 'Dashboard' }}</strong>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" placeholder="Cari invoice, mutasi, akun...">
+                </div>
+                <button class="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-colors relative" onclick="window.showToast ? showToast('Tidak ada notifikasi baru.', 'info') : alert('Tidak ada notifikasi baru.')">
+                    <i class="fas fa-bell text-sm"></i>
+                    <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border border-white"></span>
+                </button>
+                <div class="user-profile">
+                    <div class="user-info text-right">
+                        <strong>Asisyah Sarah A.</strong>
+                        <span>Project Manager</span>
+                    </div>
+                    <div class="user-avatar">AS</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+</div>
+
+<script src="/static/script.js"></script>
+<script src="../sidebar.js"></script>
+</body>
+</html>

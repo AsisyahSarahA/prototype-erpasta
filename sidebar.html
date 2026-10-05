@@ -1,0 +1,287 @@
+<!-- ==========================================================================
+     ASTACODE ERP - MASTER UNIFIED SIDEBAR COMPONENT
+     Single Source of Truth for Navigation across CRM, PM, Finance & Marketing
+     ========================================================================== -->
+<aside class="sidebar" id="sidebar">
+  <!-- Brand Header -->
+  <a href="index.html#dashboard" class="brand" data-nav="dashboard" data-module="dashboard">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3l2.2 6.8H21l-5.5 4 2.1 6.7L12 16.4 6.4 20.5 8.5 13 3 9.8h6.8L12 3z"/>
+      </svg>
+    </div>
+    <div class="brand-info">
+      <h1>ASTACODE ERP</h1>
+      <p>Enterprise Operations Platform</p>
+    </div>
+  </a>
+
+  <!-- Section: Workspace -->
+  <div class="nav-label">Workspace</div>
+  <nav class="nav" id="sidebar-nav-workspace">
+    <!-- 0. Executive Dashboard -->
+    <a href="index.html#dashboard" class="nav-btn" data-nav="dashboard" data-module="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 13h6V4H4v9zm10 7h6v-9h-6v9zM4 20h6v-3H4v3zm10-10h6V4h-6v6z"/>
+      </svg>
+      <span>Executive Dashboard</span>
+    </a>
+
+    <!-- 1. CRM Module (Accordion) -->
+    <div class="nav-group" id="crmNavGroup" data-module-group="crm">
+      <button type="button" class="nav-btn nav-parent-btn" id="crmParentToggle" onclick="window.toggleModuleAccordion('crmNavGroup', event)">
+        <div class="nav-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm12 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>CRM Module</span>
+        </div>
+        <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+      <div class="nav-sub" id="crmSubNav">
+        <a href="crm/crm.html#pipeline" class="nav-sub-btn" data-module="crm" data-sub="pipeline" onclick="window.navigateToModuleSubpage('crm', 'pipeline', 'crm/crm.html#pipeline', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Lead & Pipeline</span>
+        </a>
+        <a href="crm/crm.html#quotation" class="nav-sub-btn" data-module="crm" data-sub="quotation" onclick="window.navigateToModuleSubpage('crm', 'quotation', 'crm/crm.html#quotation', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Quotation & MoU Studio</span>
+        </a>
+        <a href="crm/crm.html#customer" class="nav-sub-btn" data-module="crm" data-sub="customer" onclick="window.navigateToModuleSubpage('crm', 'customer', 'crm/crm.html#customer', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Master Customer (360°)</span>
+        </a>
+        <a href="crm/crm.html#master" class="nav-sub-btn" data-module="crm" data-sub="master" onclick="window.navigateToModuleSubpage('crm', 'master', 'crm/crm.html#master', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Master Data CRM</span>
+        </a>
+        <a href="crm/crm.html#analytics" class="nav-sub-btn" data-module="crm" data-sub="analytics" onclick="window.navigateToModuleSubpage('crm', 'analytics', 'crm/crm.html#analytics', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Revenue Forecast</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 2. Project Management (Forge PM) (Accordion) -->
+    <div class="nav-group" id="projectNavGroup" data-module-group="project">
+      <button type="button" class="nav-btn nav-parent-btn" id="projectParentToggle" onclick="window.toggleModuleAccordion('projectNavGroup', event)">
+        <div class="nav-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 7h16v13H4zM8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 12h16M10 12v2h4v-2"/>
+          </svg>
+          <span>Project Management</span>
+        </div>
+        <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+      <div class="nav-sub" id="projectSubNav">
+        <a href="project/Forge PM.html#dashboard" class="nav-sub-btn" data-module="project" data-sub="dashboard" onclick="window.navigateToModuleSubpage('project', 'dashboard', 'project/Forge PM.html#dashboard', event)">
+          <span class="nav-sub-dot"></span>
+          <span>PM Dashboard</span>
+        </a>
+        <a href="project/Forge PM.html#project" class="nav-sub-btn" data-module="project" data-sub="project" onclick="window.navigateToModuleSubpage('project', 'project', 'project/Forge PM.html#project', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Projects Portfolio</span>
+        </a>
+        <a href="project/Forge PM.html#tickets" class="nav-sub-btn" data-module="project" data-sub="tickets" onclick="window.navigateToModuleSubpage('project', 'tickets', 'project/Forge PM.html#tickets', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Tickets & Backlog</span>
+        </a>
+        <a href="project/Forge PM.html#mytasks" class="nav-sub-btn" data-module="project" data-sub="mytasks" onclick="window.navigateToModuleSubpage('project', 'mytasks', 'project/Forge PM.html#mytasks', event)">
+          <span class="nav-sub-dot"></span>
+          <span>My Tasks</span>
+        </a>
+        <a href="project/Forge PM.html#automation" class="nav-sub-btn" data-module="project" data-sub="automation" onclick="window.navigateToModuleSubpage('project', 'automation', 'project/Forge PM.html#automation', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Automation Fix Bug</span>
+          <span class="nav-badge-accent">AI</span>
+        </a>
+        <a href="project/Forge PM.html#events" class="nav-sub-btn" data-module="project" data-sub="events" onclick="window.navigateToModuleSubpage('project', 'events', 'project/Forge PM.html#events', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Events & Schedule</span>
+        </a>
+        <a href="project/Forge PM.html#notes" class="nav-sub-btn" data-module="project" data-sub="notes" onclick="window.navigateToModuleSubpage('project', 'notes', 'project/Forge PM.html#notes', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Knowledge Notes</span>
+        </a>
+        <a href="project/Forge PM.html#team" class="nav-sub-btn" data-module="project" data-sub="team" onclick="window.navigateToModuleSubpage('project', 'team', 'project/Forge PM.html#team', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Team Workload</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 3. Finance V3 Module (Accordion) -->
+    <div class="nav-group" id="financeNavGroup" data-module-group="finance">
+      <button type="button" class="nav-btn nav-parent-btn" id="financeParentToggle" onclick="window.toggleModuleAccordion('financeNavGroup', event)">
+        <div class="nav-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M16 14h.01 M20 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"/>
+          </svg>
+          <span>Finance & AR/AP</span>
+        </div>
+        <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+      <div class="nav-sub" id="financeSubNav">
+        <a href="finance/index.html#dashboard" class="nav-sub-btn" data-module="finance" data-sub="dashboard" onclick="window.navigateToModuleSubpage('finance', 'dashboard', 'finance/index.html#dashboard', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Cash Flow Overview</span>
+        </a>
+        <a href="finance/index.html#invoices" class="nav-sub-btn" data-module="finance" data-sub="invoices" onclick="window.navigateToModuleSubpage('finance', 'invoices', 'finance/index.html#invoices', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Pemasukan (AR & Termin)</span>
+        </a>
+        <a href="finance/index.html#expenses" class="nav-sub-btn" data-module="finance" data-sub="expenses" onclick="window.navigateToModuleSubpage('finance', 'expenses', 'finance/index.html#expenses', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Klaim & Struk (AI OCR)</span>
+        </a>
+        <a href="finance/index.html#opex" class="nav-sub-btn" data-module="finance" data-sub="opex" onclick="window.navigateToModuleSubpage('finance', 'opex', 'finance/index.html#opex', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Biaya Operasional (OPEX)</span>
+        </a>
+        <a href="finance/index.html#payroll" class="nav-sub-btn" data-module="finance" data-sub="payroll" onclick="window.navigateToModuleSubpage('finance', 'payroll', 'finance/index.html#payroll', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Penggajian (Payroll)</span>
+        </a>
+        <a href="finance/index.html#vendor" class="nav-sub-btn" data-module="finance" data-sub="vendor" onclick="window.navigateToModuleSubpage('finance', 'vendor', 'finance/index.html#vendor', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Tagihan Vendor</span>
+        </a>
+        <a href="finance/index.html#freelancer" class="nav-sub-btn" data-module="finance" data-sub="freelancer" onclick="window.navigateToModuleSubpage('finance', 'freelancer', 'finance/index.html#freelancer', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Pembayaran Freelancer</span>
+        </a>
+        <a href="finance/index.html#accounts" class="nav-sub-btn" data-module="finance" data-sub="accounts" onclick="window.navigateToModuleSubpage('finance', 'accounts', 'finance/index.html#accounts', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Daftar Rekening & Kas</span>
+        </a>
+        <a href="finance/index.html#internal-transfer" class="nav-sub-btn" data-module="finance" data-sub="internal-transfer" onclick="window.navigateToModuleSubpage('finance', 'internal-transfer', 'finance/index.html#internal-transfer', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Mutasi Internal</span>
+        </a>
+        <a href="finance/index.html#reconciliation" class="nav-sub-btn" data-module="finance" data-sub="reconciliation" onclick="window.navigateToModuleSubpage('finance', 'reconciliation', 'finance/index.html#reconciliation', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Rekonsiliasi Bank (CSV)</span>
+        </a>
+        <a href="finance/index.html#coa" class="nav-sub-btn" data-module="finance" data-sub="coa" onclick="window.navigateToModuleSubpage('finance', 'coa', 'finance/index.html#coa', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Chart of Accounts (COA)</span>
+        </a>
+        <a href="finance/index.html#journal" class="nav-sub-btn" data-module="finance" data-sub="journal" onclick="window.navigateToModuleSubpage('finance', 'journal', 'finance/index.html#journal', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Jurnal Umum</span>
+        </a>
+        <a href="finance/index.html#report-company" class="nav-sub-btn" data-module="finance" data-sub="report-company" onclick="window.navigateToModuleSubpage('finance', 'report-company', 'finance/index.html#report-company', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Laba Rugi Perusahaan</span>
+        </a>
+        <a href="finance/index.html#report-project" class="nav-sub-btn" data-module="finance" data-sub="report-project" onclick="window.navigateToModuleSubpage('finance', 'report-project', 'finance/index.html#report-project', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Profitabilitas Proyek</span>
+        </a>
+        <a href="finance/index.html#report-customer" class="nav-sub-btn" data-module="finance" data-sub="report-customer" onclick="window.navigateToModuleSubpage('finance', 'report-customer', 'finance/index.html#report-customer', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Laporan per Customer</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 4. Marketing Module (Accordion) -->
+    <div class="nav-group" id="marketingNavGroup" data-module-group="marketing">
+      <button type="button" class="nav-btn nav-parent-btn" id="marketingParentToggle" onclick="window.toggleModuleAccordion('marketingNavGroup', event)">
+        <div class="nav-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11v2a2 2 0 0 0 2 2h2l4 6h2l-2.5-6H19a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H10L5 6v5z"/>
+          </svg>
+          <span>Marketing & AI</span>
+        </div>
+        <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+      <div class="nav-sub" id="marketingSubNav">
+        <a href="marketing/marketing.html#marketing-ops" class="nav-sub-btn" data-module="marketing" data-sub="marketing-ops" onclick="window.navigateToModuleSubpage('marketing', 'marketing-ops', 'marketing/marketing.html#marketing-ops', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Marketing Ops</span>
+        </a>
+        <a href="marketing/marketing.html#ai-engine" class="nav-sub-btn" data-module="marketing" data-sub="ai-engine" onclick="window.navigateToModuleSubpage('marketing', 'ai-engine', 'marketing/marketing.html#ai-engine', event)">
+          <span class="nav-sub-dot"></span>
+          <span>AI Content Engine</span>
+        </a>
+        <a href="marketing/marketing.html#approval-queue" class="nav-sub-btn" data-module="marketing" data-sub="approval-queue" onclick="window.navigateToModuleSubpage('marketing', 'approval-queue', 'marketing/marketing.html#approval-queue', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Antrean Persetujuan</span>
+        </a>
+        <a href="marketing/marketing.html#calendar" class="nav-sub-btn" data-module="marketing" data-sub="calendar" onclick="window.navigateToModuleSubpage('marketing', 'calendar', 'marketing/marketing.html#calendar', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Content Calendar</span>
+        </a>
+        <a href="marketing/marketing.html#distribution" class="nav-sub-btn" data-module="marketing" data-sub="distribution" onclick="window.navigateToModuleSubpage('marketing', 'distribution', 'marketing/marketing.html#distribution', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Distribution Manager</span>
+        </a>
+        <a href="marketing/marketing.html#asset-library" class="nav-sub-btn" data-module="marketing" data-sub="asset-library" onclick="window.navigateToModuleSubpage('marketing', 'asset-library', 'marketing/marketing.html#asset-library', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Brand Asset Library</span>
+        </a>
+        <a href="marketing/marketing.html#social-listening" class="nav-sub-btn" data-module="marketing" data-sub="social-listening" onclick="window.navigateToModuleSubpage('marketing', 'social-listening', 'marketing/marketing.html#social-listening', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Social Listening</span>
+        </a>
+        <a href="marketing/marketing.html#inbox" class="nav-sub-btn" data-module="marketing" data-sub="inbox" onclick="window.navigateToModuleSubpage('marketing', 'inbox', 'marketing/marketing.html#inbox', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Omnichannel Inbox</span>
+        </a>
+        <a href="marketing/marketing.html#content-history" class="nav-sub-btn" data-module="marketing" data-sub="content-history" onclick="window.navigateToModuleSubpage('marketing', 'content-history', 'marketing/marketing.html#content-history', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Riwayat Konten</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 5. Kanban AI Global -->
+    <a href="index.html#aikanban" class="nav-btn" data-nav="aikanban" data-module="aikanban">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM9 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+      </svg>
+      <span>Kanban AI (Global)</span>
+    </a>
+  </nav>
+
+  <!-- Section: Control & Config -->
+  <div class="nav-label">Control & Config</div>
+  <nav class="nav" id="sidebar-nav-config">
+    <a href="index.html#analytics" class="nav-btn" data-nav="analytics" data-module="analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 20V10M12 20V4M6 20v-6"/>
+      </svg>
+      <span>Executive Reporting</span>
+    </a>
+    <a href="index.html#integrations" class="nav-btn" data-nav="integrations" data-module="integrations">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 12l4-4m-6 8 4-4m6-8v4m0 0h4m-4 0a5 5 0 0 1-5 5H9a5 5 0 0 0 0 10h4"/>
+      </svg>
+      <span>Integrations Hub</span>
+    </a>
+    <a href="index.html#rbac" class="nav-btn" data-nav="rbac" data-module="rbac">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span>Access & Audit (RBAC)</span>
+    </a>
+    <a href="index.html#settings" class="nav-btn" data-nav="settings" data-module="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <!-- Sidebar User Profile Footer -->
+  <div class="sidebar-bottom">
+    <div class="mini-user">
+      <div class="avatar">AS</div>
+      <div class="user-details">
+        <strong>Asisyah Sarah A.</strong>
+        <span>Project Manager</span>
+      </div>
+    </div>
+  </div>
+</aside>

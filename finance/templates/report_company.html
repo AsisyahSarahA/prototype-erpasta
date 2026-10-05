@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/20 backdrop-blur-md rounded-xl border border-blue-400/20 text-blue-400">
+                    <i class="fas fa-building text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Laba Rugi Perusahaan (Consolidated P&L)</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Laporan performa konsolidasi seluruh pendapatan, Harga Pokok Produksi (HPP), & Beban Operasional.</p>
+                </div>
+            </div>
+        </div>
+        <button class="relative z-10 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 backdrop-blur-md transition-all">
+            <i class="fas fa-file-pdf"></i> Download Laporan PDF
+        </button>
+    </div>
+
+    <!-- P&L Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pendapatan (Gross)</p>
+            <p class="text-2xl font-extrabold text-slate-900 mt-1">Rp 450.000.000</p>
+            <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md mt-2 inline-block"><i class="fas fa-arrow-up"></i> +14% vs Bln Lalu</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total HPP Proyek</p>
+            <p class="text-2xl font-extrabold text-amber-600 mt-1">Rp 65.000.000</p>
+            <span class="text-[11px] text-slate-400 mt-2 block">Freelancer & Subkon</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Beban OPEX Kantor</p>
+            <p class="text-2xl font-extrabold text-rose-600 mt-1">Rp 109.850.000</p>
+            <span class="text-[11px] text-slate-400 mt-2 block">Payroll & Rutin</span>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-500 to-teal-700 text-white p-5 rounded-2xl shadow-lg shadow-emerald-500/20">
+            <p class="text-xs font-bold text-emerald-100 uppercase tracking-wider">Laba Bersih (Net Profit)</p>
+            <p class="text-2xl font-extrabold text-white mt-1">Rp 275.150.000</p>
+            <span class="text-[11px] font-semibold bg-white/20 text-white px-2 py-0.5 rounded-md mt-2 inline-block">Margin Laba: 61.1%</span>
+        </div>
+    </div>
+
+    <!-- Consolidated P&L Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <span class="text-sm font-bold text-slate-800">Rincian Laporan Laba Rugi Konsolidasi (Oktober 2026)</span>
+            <span class="text-xs text-slate-400 font-mono">Mata Uang: IDR</span>
+        </div>
+
+        <div class="p-6 space-y-6">
+            
+            <!-- Group 1: Pendapatan -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <span class="font-extrabold text-slate-900 text-sm uppercase">1. Pendapatan Usaha (Revenue)</span>
+                    <span class="font-extrabold text-emerald-600 text-sm">Rp 450.000.000</span>
+                </div>
+                <div class="pl-6 space-y-1.5 text-xs font-medium text-slate-600">
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                        <span>Pendapatan Termin Proyek Software & Web</span>
+                        <span class="font-semibold text-slate-800">Rp 400.000.000</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                        <span>Pendapatan Retainer Maintenance & Cloud</span>
+                        <span class="font-semibold text-slate-800">Rp 50.000.000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group 2: HPP -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <span class="font-extrabold text-slate-900 text-sm uppercase">2. Harga Pokok Produksi (HPP)</span>
+                    <span class="font-extrabold text-amber-600 text-sm">(Rp 65.000.000)</span>
+                </div>
+                <div class="pl-6 space-y-1.5 text-xs font-medium text-slate-600">
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                        <span>Upah Freelancer & Developer Lepas</span>
+                        <span class="font-semibold text-slate-800">Rp 42.000.000</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                        <span>Biaya Vendor Server & Infrastructure Proyek</span>
+                        <span class="font-semibold text-slate-800">Rp 23.000.000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gross Profit Line -->
+            <div class="flex justify-between items-center bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <span class="font-extrabold text-blue-900 text-sm">LABA KOTOR (GROSS PROFIT)</span>
+                <span class="font-extrabold text-blue-700 text-base">Rp 385.000.000</span>
+            </div>
+
+            <!-- Group 3: OPEX -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <span class="font-extrabold text-slate-900 text-sm uppercase">3. Beban Operasional (OPEX)</span>
+                    <span class="font-extrabold text-rose-600 text-sm">(Rp 109.850.000)</span>
+                </div>
+                <div class="pl-6 space-y-1.5 text-xs font-medium text-slate-600">
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                        <span>Gaji & Tunjangan Karyawan (Payroll)</span>
+                        <span class="font-semibold text-slate-800">Rp 85.000.000</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                        <span>Sewa Gedung & Service Charge</span>
+                        <span class="font-semibold text-slate-800">Rp 15.000.000</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                        <span>Utilitas (Listrik, Air, Internet WiFi)</span>
+                        <span class="font-semibold text-slate-800">Rp 9.850.000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Net Profit Line -->
+            <div class="flex justify-between items-center bg-emerald-600 text-white p-5 rounded-2xl shadow-md">
+                <div>
+                    <span class="font-extrabold text-base block">LABA BERSIH SEBELUM PAJAK (NET PROFIT)</span>
+                    <span class="text-xs text-emerald-100">Margin Keuntungan Konsolidasi Bersih</span>
+                </div>
+                <span class="font-extrabold text-2xl">Rp 275.150.000</span>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

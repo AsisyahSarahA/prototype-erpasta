@@ -1,0 +1,314 @@
+/* ==========================================================================
+   ASTACODE ERP - UNIFIED MASTER SIDEBAR STYLES
+   Adopts primary theme tokens from index.html:
+   Primary: #305BA3 | Sidebar Dark: #0F172A - #0B1324 | Accent Glow: #38BDF8
+   ========================================================================== */
+
+:root {
+  --sidebar-bg-1: #0F172A;
+  --sidebar-bg-2: #0B1324;
+  --sidebar-text: #CBD5E1;
+  --sidebar-muted: #64748B;
+  --sidebar-accent: #305BA3;
+  --sidebar-accent-hover: #264A85;
+  --sidebar-accent-light: #38BDF8;
+  --sidebar-hover: rgba(255, 255, 255, 0.07);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-radius: 10px;
+  --sidebar-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 270px;
+  min-width: 270px;
+  max-width: 270px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, var(--sidebar-bg-1) 0%, var(--sidebar-bg-2) 100%);
+  color: #fff;
+  padding: 18px 14px;
+  border-right: 1px solid var(--sidebar-border);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  font-family: var(--sidebar-font);
+}
+
+/* Scrollbar styling for sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Brand Header */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 18px;
+  border-bottom: 1px solid var(--sidebar-border);
+  margin-bottom: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s;
+}
+.brand:hover {
+  opacity: 0.95;
+}
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #38BDF8 0%, #305BA3 100%);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 20px rgba(48, 91, 163, 0.4);
+  flex-shrink: 0;
+}
+.brand-mark svg {
+  width: 20px;
+  height: 20px;
+  color: #ffffff;
+}
+.brand-info h1 {
+  font-size: 15px;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #ffffff;
+  line-height: 1.2;
+}
+.brand-info p {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  color: var(--sidebar-muted);
+  font-weight: 500;
+}
+
+/* Navigation Section Labels */
+.nav-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #64748B;
+  padding: 10px 10px 6px;
+  margin-top: 6px;
+  font-weight: 800;
+}
+
+/* Navigation Lists */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Navigation Buttons */
+.nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--sidebar-text);
+  border: 0;
+  border-radius: var(--sidebar-radius);
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-decoration: none;
+  box-sizing: border-box;
+  position: relative;
+}
+.nav-btn:hover {
+  background: var(--sidebar-hover);
+  color: #ffffff;
+}
+.nav-btn.active {
+  background: rgba(48, 91, 163, 0.35);
+  color: #ffffff;
+  box-shadow: inset 3px 0 0 #38BDF8;
+  font-weight: 700;
+}
+.nav-btn svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+/* Accordion / Submenu Styles */
+.nav-group {
+  display: flex;
+  flex-direction: column;
+}
+.nav-parent-btn {
+  justify-content: space-between;
+}
+.nav-parent-btn .nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-chevron {
+  width: 14px;
+  height: 14px;
+  color: #94A3B8;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+.nav-group.open > .nav-parent-btn .nav-chevron {
+  transform: rotate(90deg);
+  color: #ffffff;
+}
+
+.nav-sub {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 18px;
+  position: relative;
+}
+.nav-sub::before {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 6px;
+  bottom: 6px;
+  width: 1.5px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.nav-group.open > .nav-sub {
+  max-height: 850px;
+  margin-top: 3px;
+  margin-bottom: 5px;
+}
+
+.nav-sub-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 14px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #94A3B8;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  box-sizing: border-box;
+}
+.nav-sub-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+.nav-sub-btn.active {
+  color: #38BDF8;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.12);
+}
+.nav-sub-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #64748B;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.nav-sub-btn:hover .nav-sub-dot {
+  background: #CBD5E1;
+}
+.nav-sub-btn.active .nav-sub-dot {
+  background: #38BDF8;
+  box-shadow: 0 0 8px #38BDF8;
+}
+
+.nav-badge-accent {
+  margin-left: auto;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #0F172A;
+  background: #38BDF8;
+  padding: 1px 6px;
+  border-radius: 8px;
+  letter-spacing: 0.04em;
+}
+
+/* Sidebar Footer User Box */
+.sidebar-bottom {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--sidebar-border);
+}
+.mini-user {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38BDF8, #305BA3);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 11px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(48, 91, 163, 0.3);
+}
+.user-details strong {
+  display: block;
+  font-size: 12px;
+  color: #ffffff;
+  font-weight: 700;
+}
+.user-details span {
+  display: block;
+  color: var(--sidebar-muted);
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+/* Mobile Responsive Drawer Overlay */
+@media (max-width: 820px) {
+  .sidebar {
+    position: fixed;
+    left: -290px;
+    top: 0;
+    bottom: 0;
+    width: 270px;
+    z-index: 100;
+    box-shadow: 10px 0 35px rgba(0, 0, 0, 0.55);
+  }
+  .sidebar.open {
+    left: 0;
+  }
+}

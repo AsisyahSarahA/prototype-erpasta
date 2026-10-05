@@ -36,6 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Check hash on load
+    if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        if (hash) window.switchMarketingPage(hash);
+    }
+
     // Chart.js - Performance Tracker (Analytics Page)
     const ctxPerf = document.getElementById('performanceChart');
     if (ctxPerf) {
@@ -112,3 +118,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Expose switchMarketingPage globally for sidebar.js integration
+window.switchMarketingPage = function(subpage) {
+    const views = document.querySelectorAll('.view-section');
+    views.forEach(view => view.classList.remove('active'));
+    
+    const targetId = 'view-' + subpage;
+    const targetView = document.getElementById(targetId);
+    if (targetView) {
+        targetView.classList.add('active');
+    }
+    
+    const breadcrumbTitle = document.getElementById('current-view-title');
+    if (breadcrumbTitle) {
+        const btn = document.querySelector(`.nav-sub-btn[data-marketing-sub="${subpage}"] span:not(.nav-sub-dot)`);
+        if (btn) {
+            breadcrumbTitle.textContent = btn.textContent;
+        }
+    }
+};
