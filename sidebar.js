@@ -26,7 +26,8 @@
     plug: '<path d="M8 12l4-4m-6 8 4-4m6-8v4m0 0h4m-4 0a5 5 0 0 1-5 5H9a5 5 0 0 0 0 10h4"/>',
     shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
     settings: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
-    chevron: '<polyline points="9 18 15 12 9 6"></polyline>'
+    chevron: '<polyline points="9 18 15 12 9 6"></polyline>',
+    hr: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'
   };
 
   function svg(name, className = '') {
@@ -37,7 +38,7 @@
   // Detect current directory context
   function getPathPrefix() {
     const p = window.location.pathname.toLowerCase().replace(/\\/g, '/');
-    if (p.includes('/crm/') || p.includes('/finance/') || p.includes('/marketing/') || p.includes('/project/')) {
+    if (p.includes('/crm/') || p.includes('/finance/') || p.includes('/marketing/') || p.includes('/project/') || p.includes('/hr/')) {
       return '../';
     }
     return '';
@@ -63,6 +64,9 @@
     } else if (p.includes('marketing.html') || p.includes('/marketing/')) {
       activeModule = 'marketing';
       activeSubpage = hash || 'marketing-ops';
+    } else if (p.includes('hr.html') || p.includes('/hr/')) {
+      activeModule = 'hr';
+      activeSubpage = hash || 'dashboard';
     } else {
       // In Root index.html
       activeModule = (hash && ['aikanban', 'analytics', 'integrations', 'rbac', 'settings'].includes(hash)) ? hash : 'dashboard';
@@ -302,6 +306,91 @@
             </div>
           </div>
 
+          <!-- 5. HR Module (Accordion) -->
+          <div class="nav-group ${activeModule === 'hr' ? 'open' : ''}" id="hrNavGroup" data-module-group="hr">
+            <button type="button" class="nav-btn nav-parent-btn ${activeModule === 'hr' ? 'active' : ''}" id="hrParentToggle" onclick="window.toggleModuleAccordion('hrNavGroup', event)">
+              <div class="nav-left">
+                ${svg('hr')}
+                <span>HR & Payroll</span>
+              </div>
+              ${svg('chevron', 'nav-chevron')}
+            </button>
+            <div class="nav-sub" id="hrSubNav">
+              <a href="${prefix}HR/hr.html#beranda" class="nav-sub-btn ${activeModule === 'hr' && (activeSubpage === 'beranda' || activeSubpage === 'dashboard' || !activeSubpage) ? 'active' : ''}" data-module="hr" data-sub="beranda" onclick="window.navigateToModuleSubpage('hr', 'beranda', '${prefix}HR/hr.html#beranda', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Beranda HR</span>
+              </a>
+              <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">ABSENSI</div>
+              <a href="${prefix}HR/hr.html#presensi" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'presensi' ? 'active' : ''}" data-module="hr" data-sub="presensi" onclick="window.navigateToModuleSubpage('hr', 'presensi', '${prefix}HR/hr.html#presensi', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Presensi Saya</span>
+              </a>
+              <a href="${prefix}HR/hr.html#dailylog" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'dailylog' ? 'active' : ''}" data-module="hr" data-sub="dailylog" onclick="window.navigateToModuleSubpage('hr', 'dailylog', '${prefix}HR/hr.html#dailylog', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Daily Log</span>
+              </a>
+              <a href="${prefix}HR/hr.html#workload" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'workload' ? 'active' : ''}" data-module="hr" data-sub="workload" onclick="window.navigateToModuleSubpage('hr', 'workload', '${prefix}HR/hr.html#workload', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Workload Malam</span>
+              </a>
+              <a href="${prefix}HR/hr.html#rekap" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'rekap' ? 'active' : ''}" data-module="hr" data-sub="rekap" onclick="window.navigateToModuleSubpage('hr', 'rekap', '${prefix}HR/hr.html#rekap', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Rekap Tim</span>
+              </a>
+
+              <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">MANAJEMEN</div>
+              <a href="${prefix}HR/hr.html#karyawan" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'karyawan' ? 'active' : ''}" data-module="hr" data-sub="karyawan" onclick="window.navigateToModuleSubpage('hr', 'karyawan', '${prefix}HR/hr.html#karyawan', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Data Karyawan</span>
+              </a>
+              <a href="${prefix}HR/hr.html#lowongan" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'lowongan' ? 'active' : ''}" data-module="hr" data-sub="lowongan" onclick="window.navigateToModuleSubpage('hr', 'lowongan', '${prefix}HR/hr.html#lowongan', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Lowongan Rekrutmen</span>
+              </a>
+              <a href="${prefix}HR/hr.html#pipeline" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'pipeline' ? 'active' : ''}" data-module="hr" data-sub="pipeline" onclick="window.navigateToModuleSubpage('hr', 'pipeline', '${prefix}HR/hr.html#pipeline', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Pipeline Pelamar</span>
+              </a>
+
+              <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">PKL / MAGANG</div>
+              <a href="${prefix}HR/hr.html#pengajuan" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'pengajuan' ? 'active' : ''}" data-module="hr" data-sub="pengajuan" onclick="window.navigateToModuleSubpage('hr', 'pengajuan', '${prefix}HR/hr.html#pengajuan', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Pengajuan PKL</span>
+              </a>
+              <a href="${prefix}HR/hr.html#kalender" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'kalender' ? 'active' : ''}" data-module="hr" data-sub="kalender" onclick="window.navigateToModuleSubpage('hr', 'kalender', '${prefix}HR/hr.html#kalender', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Kalender Kuota</span>
+              </a>
+              <a href="${prefix}HR/hr.html#peserta" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'peserta' ? 'active' : ''}" data-module="hr" data-sub="peserta" onclick="window.navigateToModuleSubpage('hr', 'peserta', '${prefix}HR/hr.html#peserta', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Peserta Aktif</span>
+              </a>
+              <a href="${prefix}HR/hr.html#evaluasi" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'evaluasi' ? 'active' : ''}" data-module="hr" data-sub="evaluasi" onclick="window.navigateToModuleSubpage('hr', 'evaluasi', '${prefix}HR/hr.html#evaluasi', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Evaluasi PKL</span>
+              </a>
+              <a href="${prefix}HR/hr.html#sertifikat" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'sertifikat' ? 'active' : ''}" data-module="hr" data-sub="sertifikat" onclick="window.navigateToModuleSubpage('hr', 'sertifikat', '${prefix}HR/hr.html#sertifikat', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Sertifikat PKL</span>
+              </a>
+
+              <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">Laporan</div>
+             
+              <a href="${prefix}HR/hr.html#dokumen" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'dokumen' ? 'active' : ''}" data-module="hr" data-sub="dokumen" onclick="window.navigateToModuleSubpage('hr', 'dokumen', '${prefix}HR/hr.html#dokumen', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Dokumen & Template</span>
+              </a>
+              <a href="${prefix}HR/hr.html#laporan" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'laporan' ? 'active' : ''}" data-module="hr" data-sub="laporan" onclick="window.navigateToModuleSubpage('hr', 'laporan', '${prefix}HR/hr.html#laporan', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Laporan HR</span>
+              </a>
+              <a href="${prefix}HR/hr.html#pengaturan" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'pengaturan' ? 'active' : ''}" data-module="hr" data-sub="pengaturan" onclick="window.navigateToModuleSubpage('hr', 'pengaturan', '${prefix}HR/hr.html#pengaturan', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Pengaturan HR</span>
+              </a>
+            </div>
+          </div>
+
           <!-- 5. Kanban AI Global -->
           <a href="${prefix}index.html#aikanban" class="nav-btn ${activeModule === 'aikanban' ? 'active' : ''}" data-nav="aikanban" data-module="aikanban">
             ${svg('bot')}
@@ -392,7 +481,8 @@
     else if (targetModule === 'project' && (p.includes('forge pm.html') || p.includes('/project/'))) isCurrentDocument = true;
     else if (targetModule === 'finance' && (p.includes('/finance/') || p.includes('finance.html'))) isCurrentDocument = true;
     else if (targetModule === 'marketing' && (p.includes('marketing.html') || p.includes('/marketing/'))) isCurrentDocument = true;
-    else if (targetModule === 'dashboard' && !p.includes('/crm/') && !p.includes('/finance/') && !p.includes('/marketing/') && !p.includes('/project/')) isCurrentDocument = true;
+    else if (targetModule === 'hr' && (p.includes('hr.html') || p.includes('/hr/'))) isCurrentDocument = true;
+    else if (targetModule === 'dashboard' && !p.includes('/crm/') && !p.includes('/finance/') && !p.includes('/marketing/') && !p.includes('/project/') && !p.includes('/hr/')) isCurrentDocument = true;
 
     if (isCurrentDocument) {
       if (e) e.preventDefault();
@@ -427,6 +517,10 @@
           pageEl.classList.add('active');
           const bc = document.getElementById('bcCurrent');
           if (bc) bc.textContent = subpage.toUpperCase();
+        }
+      } else if (targetModule === 'hr') {
+        if (typeof window.showPage === 'function') {
+          window.showPage(subpage);
         }
       } else if (typeof window.showPage === 'function') {
         window.showPage(subpage);
@@ -463,7 +557,7 @@
 
     // In-page router click listener for root index.html
     const p = window.location.pathname.toLowerCase().replace(/\\/g, '/');
-    const isRootIndex = !p.includes('/crm/') && !p.includes('/finance/') && !p.includes('/marketing/') && !p.includes('/project/');
+    const isRootIndex = !p.includes('/crm/') && !p.includes('/finance/') && !p.includes('/marketing/') && !p.includes('/project/') && !p.includes('/hr/');
     
     if (isRootIndex) {
       document.querySelectorAll('#sidebar [data-nav]').forEach(el => {
