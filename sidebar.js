@@ -156,6 +156,10 @@
                 <span class="nav-sub-dot"></span>
                 <span>Projects Portfolio</span>
               </a>
+              <a href="${prefix}project/Forge PM.html#handover" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'handover' ? 'active' : ''}" data-module="project" data-sub="handover" onclick="window.navigateToModuleSubpage('project', 'handover', '${prefix}project/Forge PM.html#handover', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Handover CRM</span>
+              </a>
               <a href="${prefix}project/Forge PM.html#tickets" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'tickets' ? 'active' : ''}" data-module="project" data-sub="tickets" onclick="window.navigateToModuleSubpage('project', 'tickets', '${prefix}project/Forge PM.html#tickets', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Tickets & Backlog</span>
