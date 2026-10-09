@@ -97,10 +97,6 @@
             <i class="fa-solid fa-arrow-right-arrow-left"></i>
             <span>Mutasi</span>
           </button>
-          <button type="button" class="finance-subnav-item" data-target="reconciliation" onclick="window.switchFinancePage('reconciliation')">
-            <i class="fa-solid fa-scale-balanced"></i>
-            <span>Rekonsiliasi CSV</span>
-          </button>
           <button type="button" class="finance-subnav-item" data-target="coa" onclick="window.switchFinancePage('coa')">
             <i class="fa-solid fa-list-ol"></i>
             <span>COA</span>
@@ -565,6 +561,19 @@
             </div>
           </div>
 
+          <!-- Periode Filter Pengeluaran -->
+          <div class="filter-bar" style="margin-bottom:18px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:12.5px; font-weight:700; color:var(--text-muted);"><i class="fa-solid fa-filter"></i> Periode Pengeluaran:</span>
+              <button class="btn btn-sm primary" id="btn-period-daily" onclick="window.switchExpensePeriod('daily', this)"><i class="fa-solid fa-calendar-day"></i> Harian</button>
+              <button class="btn btn-sm" id="btn-period-monthly" onclick="window.switchExpensePeriod('monthly', this)"><i class="fa-solid fa-calendar-week"></i> Bulanan</button>
+              <button class="btn btn-sm" id="btn-period-yearly" onclick="window.switchExpensePeriod('yearly', this)"><i class="fa-solid fa-calendar"></i> Tahunan</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="date" class="form-input" id="expense-date-filter" value="2026-10-07" style="padding:4px 10px; font-size:12px;" onchange="window.showFinanceToast('Filter tanggal pengeluaran diperbarui', 'info')">
+            </div>
+          </div>
+
           <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:22px;">
             <!-- Left: Dropzone -->
             <div class="card-panel">
@@ -979,8 +988,9 @@
                   <tr>
                     <th>Nama Freelancer</th>
                     <th>Proyek Terkait</th>
-                    <th>Deliverables / Milestone</th>
-                    <th style="text-align:right;">Nominal Fee</th>
+                    <th>Deliverables / Task</th>
+                    <th style="text-align:center;">Termin (Selesai/Total)</th>
+                    <th style="text-align:right;">Nominal Fee Termin</th>
                     <th>Status Approval</th>
                     <th style="text-align:right;">Aksi</th>
                   </tr>
@@ -990,6 +1000,7 @@
                     <td><strong>Rian Pratama</strong><div style="font-size:10.5px; color:var(--text-muted);">Mobile Developer Flutter</div></td>
                     <td><span class="badge info">Aplikasi Kasir RS Medika</span></td>
                     <td>Slicing UI & Integrasi API POS</td>
+                    <td style="text-align:center;"><span class="badge success" style="font-weight:700;">Termin 2 dari 3</span></td>
                     <td style="text-align:right; font-weight:800;">Rp 5.000.000</td>
                     <td><span class="badge success">✅ APPROVED PM</span></td>
                     <td style="text-align:right;">
@@ -1000,6 +1011,7 @@
                     <td><strong>Siti Rahma</strong><div style="font-size:10.5px; color:var(--text-muted);">QA Tester</div></td>
                     <td><span class="badge info">Aplikasi Kasir RS Medika</span></td>
                     <td>Automation Testing Sprint 2</td>
+                    <td style="text-align:center;"><span class="badge warning" style="font-weight:700;">Termin 1 dari 2</span></td>
                     <td style="text-align:right; font-weight:800;">Rp 3.500.000</td>
                     <td><span class="badge warning">🟡 REVIEW PM</span></td>
                     <td style="text-align:right;">
@@ -1068,7 +1080,7 @@
               </div>
               <div class="card-body">
                 <div style="font-size:22px; font-weight:800; color:var(--text-primary); margin-bottom:12px;">Rp 350.000.000</div>
-                <button class="btn btn-sm" style="width:100%;" onclick="window.switchFinancePage('reconciliation')"><i class="fa-solid fa-scale-balanced"></i> Rekonsiliasi Bank</button>
+
               </div>
             </div>
 
@@ -1186,94 +1198,7 @@
         </section>
 
 
-        <!-- ================================================================
-             10. REKONSILIASI BANK (DYNAMIC CSV & MATCHING)
-             ================================================================ -->
-        <section id="view-reconciliation" class="view-section">
-          <div class="hero-banner">
-            <div class="hero-left">
-              <div class="hero-icon"><i class="fa-solid fa-scale-balanced"></i></div>
-              <div class="hero-title">
-                <h2>Rekonsiliasi Bank Dinamis (Dynamic CSV & Tinder Match)</h2>
-                <p>Import mutasi rekening koran bank apa saja, otomatisasi pencocokan invoice termin & pengeluaran.</p>
-              </div>
-            </div>
-          </div>
 
-          <!-- Step 1: Upload CSV -->
-          <div class="card-panel">
-            <div class="card-header">
-              <h4 class="card-title">1. Upload File Mutasi Rekening Koran (CSV)</h4>
-            </div>
-            <div class="card-body">
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:center;">
-                <div>
-                  <label class="form-label">Pilih Rekening Bank</label>
-                  <select class="form-select">
-                    <option>BCA Operasional (8830-192-8391)</option>
-                    <option>Mandiri Payroll (132-00-19283-91)</option>
-                  </select>
-                </div>
-                <div style="border: 2px dashed var(--border-dark); border-radius:10px; padding:16px; text-align:center; background:#FAFAFC; cursor:pointer;" onclick="showFinanceToast('File mutasi_bca_oktober.csv berhasil dimuat!', 'success')">
-                  <i class="fa-solid fa-file-csv" style="font-size:24px; color:var(--primary);"></i>
-                  <strong style="display:block; font-size:12px; margin-top:4px;">Klik untuk Memuat File CSV Bank</strong>
-                  <span style="font-size:10.5px; color:var(--text-muted);">Format BCA, Mandiri, BNI didukung otomatis</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Step 2: Tinder Match Cards -->
-          <div class="card-panel">
-            <div class="card-header">
-              <h4 class="card-title">2. Cocokkan Transaksi (Swipe & Match)</h4>
-              <span class="badge info">3 Transaksi Perlu Konfirmasi</span>
-            </div>
-            <div class="card-body" id="reconCardsContainer">
-              
-              <!-- Match Card 1 -->
-              <div class="recon-tinder-card card-panel" style="background:#F0FDF4; border:1px solid #BBF7D0; margin-bottom:14px;">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; padding:18px;">
-                  <div style="border-right: 1px solid #BBF7D0; padding-right:16px;">
-                    <span class="badge success" style="margin-bottom:8px;">📥 UANG MASUK (CSV BANK)</span>
-                    <div style="font-size:20px; font-weight:800; color:#047857;">+ Rp 10.000.000</div>
-                    <div style="font-size:11px; color:#065F46; margin-top:4px;">Tanggal: 01 Okt 2026 • Keterangan: TRF DP RS MEDIKA POS</div>
-                  </div>
-                  <div>
-                    <span class="badge info" style="margin-bottom:8px;">💡 SUGESTI SISTEM ERP</span>
-                    <strong style="display:block; font-size:13px; color:var(--text-primary);">Invoice DP Termin 1 — RS Medika</strong>
-                    <p style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Kecocokan Nominal: 100% Cocok</p>
-                    <div style="display:flex; gap:10px; margin-top:12px;">
-                      <button class="btn btn-sm success" onclick="handleReconMatch(this)"><i class="fa-solid fa-check"></i> Konfirmasi & Tandai Lunas</button>
-                      <button class="btn btn-sm" onclick="handleReconSkip(this)">Lewati</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Match Card 2 -->
-              <div class="recon-tinder-card card-panel" style="background:#FEF2F2; border:1px solid #FECACA; margin-bottom:14px;">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; padding:18px;">
-                  <div style="border-right: 1px solid #FECACA; padding-right:16px;">
-                    <span class="badge danger" style="margin-bottom:8px;">📤 UANG KELUAR (CSV BANK)</span>
-                    <div style="font-size:20px; font-weight:800; color:#B91C1C;">- Rp 5.000.000</div>
-                    <div style="font-size:11px; color:#991B1B; margin-top:4px;">Tanggal: 02 Okt 2026 • Keterangan: TRF RIAN PRATAMA FL</div>
-                  </div>
-                  <div>
-                    <span class="badge info" style="margin-bottom:8px;">💡 SUGESTI SISTEM ERP</span>
-                    <strong style="display:block; font-size:13px; color:var(--text-primary);">Fee Freelancer Rian Pratama (UI Slicing)</strong>
-                    <p style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Deliverables Disetujui PM</p>
-                    <div style="display:flex; gap:10px; margin-top:12px;">
-                      <button class="btn btn-sm success" onclick="handleReconMatch(this)"><i class="fa-solid fa-check"></i> Konfirmasi Match</button>
-                      <button class="btn btn-sm" onclick="handleReconSkip(this)">Lewati</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </section>
 
 
         <!-- ================================================================
@@ -1769,7 +1694,7 @@
         <button class="icon-btn" onclick="closeFinanceModal('modalCreateFreelancer')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <form onsubmit="event.preventDefault(); showFinanceToast('Tagihan freelancer berhasil didaftarkan untuk review PM!', 'success'); closeFinanceModal('modalCreateFreelancer');">
+        <form onsubmit="event.preventDefault(); showFinanceToast('Tagihan termin freelancer berhasil didaftarkan untuk review PM!', 'success'); closeFinanceModal('modalCreateFreelancer');">
           <div class="form-group">
             <label class="form-label">Nama Freelancer</label>
             <input type="text" class="form-input" placeholder="Nama Freelancer" required>
@@ -1783,11 +1708,21 @@
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
+              <label class="form-label">Termin Ke- (Input Manual)</label>
+              <input type="number" class="form-input" placeholder="Misal: 1" min="1" value="1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total Termin Keseluruhan</label>
+              <input type="number" class="form-input" placeholder="Misal: 3" min="1" value="3" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
               <label class="form-label">Deliverable / Milestone</label>
               <input type="text" class="form-input" placeholder="Contoh: Slicing UI" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Nominal Fee (Rp)</label>
+              <label class="form-label">Nominal Fee Termin Ini (Rp)</label>
               <input type="number" class="form-input" placeholder="0" required>
             </div>
           </div>

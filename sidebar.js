@@ -156,6 +156,10 @@
                 <span class="nav-sub-dot"></span>
                 <span>Projects Portfolio</span>
               </a>
+              <a href="${prefix}project/Forge PM.html#handover" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'handover' ? 'active' : ''}" data-module="project" data-sub="handover" onclick="window.navigateToModuleSubpage('project', 'handover', '${prefix}project/Forge PM.html#handover', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Handover CRM</span>
+              </a>
               <a href="${prefix}project/Forge PM.html#tickets" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'tickets' ? 'active' : ''}" data-module="project" data-sub="tickets" onclick="window.navigateToModuleSubpage('project', 'tickets', '${prefix}project/Forge PM.html#tickets', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Tickets & Backlog</span>
@@ -229,10 +233,6 @@
               <a href="${prefix}finance/index.html#internal-transfer" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'internal-transfer' || activeSubpage === 'view-internal-transfer') ? 'active' : ''}" data-module="finance" data-sub="internal-transfer" onclick="window.navigateToModuleSubpage('finance', 'internal-transfer', '${prefix}finance/index.html#internal-transfer', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Mutasi Internal</span>
-              </a>
-              <a href="${prefix}finance/index.html#reconciliation" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'reconciliation' || activeSubpage === 'view-reconciliation' || activeSubpage === 'recon' || activeSubpage === 'view-recon') ? 'active' : ''}" data-module="finance" data-sub="reconciliation" onclick="window.navigateToModuleSubpage('finance', 'reconciliation', '${prefix}finance/index.html#reconciliation', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Rekonsiliasi Bank (CSV)</span>
               </a>
               <a href="${prefix}finance/index.html#coa" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'coa' || activeSubpage === 'view-coa' || activeSubpage === 'generic' || activeSubpage === 'view-generic') ? 'active' : ''}" data-module="finance" data-sub="coa" onclick="window.navigateToModuleSubpage('finance', 'coa', '${prefix}finance/index.html#coa', event)">
                 <span class="nav-sub-dot"></span>
