@@ -230,10 +230,6 @@
                 <span class="nav-sub-dot"></span>
                 <span>Mutasi Internal</span>
               </a>
-              <a href="${prefix}finance/index.html#reconciliation" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'reconciliation' || activeSubpage === 'view-reconciliation' || activeSubpage === 'recon' || activeSubpage === 'view-recon') ? 'active' : ''}" data-module="finance" data-sub="reconciliation" onclick="window.navigateToModuleSubpage('finance', 'reconciliation', '${prefix}finance/index.html#reconciliation', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Rekonsiliasi Bank (CSV)</span>
-              </a>
               <a href="${prefix}finance/index.html#coa" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'coa' || activeSubpage === 'view-coa' || activeSubpage === 'generic' || activeSubpage === 'view-generic') ? 'active' : ''}" data-module="finance" data-sub="coa" onclick="window.navigateToModuleSubpage('finance', 'coa', '${prefix}finance/index.html#coa', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Chart of Accounts (COA)</span>

@@ -19,7 +19,6 @@
     'freelancer': 'Pembayaran Freelancer (HPP Proyek)',
     'accounts': 'Daftar Rekening & Saldo Kas/Bank',
     'internal-transfer': 'Mutasi Internal (Pindah Dana)',
-    'reconciliation': 'Rekonsiliasi Bank (CSV & Matching)',
     'coa': 'Chart of Accounts (COA)',
     'journal': 'Jurnal Umum (General Journal)',
     'report-company': 'Laba Rugi Perusahaan (Consolidated P&L)',
@@ -229,50 +228,20 @@
     }, 1600);
   };
 
-  // Tinder-style Reconciliation Matching
-  window.handleReconMatch = function(btn) {
-    const card = btn.closest('.recon-tinder-card');
-    if (!card) return;
+  // Expense Period Switcher (Daily, Monthly, Yearly)
+  window.switchExpensePeriod = function(periodType, btn) {
+    document.querySelectorAll('#btn-period-daily, #btn-period-monthly, #btn-period-yearly').forEach(b => {
+      b.classList.remove('primary');
+    });
+    if (btn) btn.classList.add('primary');
 
-    card.classList.add('matched-swipe');
-    window.showFinanceToast('✅ Transaksi berhasil direkonsiliasi & dicatat ke Jurnal Umum!', 'success');
-
-    setTimeout(() => {
-      card.remove();
-      checkReconEmpty();
-    }, 400);
+    const labels = {
+      'daily': 'Harian',
+      'monthly': 'Bulanan',
+      'yearly': 'Tahunan'
+    };
+    window.showFinanceToast(`Filter pengeluaran disesuaikan ke periode ${labels[periodType] || periodType}.`, 'info');
   };
-
-  window.handleReconSkip = function(btn) {
-    const card = btn.closest('.recon-tinder-card');
-    if (!card) return;
-
-    card.classList.add('skipped-swipe');
-    window.showFinanceToast('Transakasi dilewati untuk pencarian manual.', 'info');
-
-    setTimeout(() => {
-      card.remove();
-      checkReconEmpty();
-    }, 400);
-  };
-
-  function checkReconEmpty() {
-    const cards = document.querySelectorAll('.recon-tinder-card');
-    if (cards.length === 0) {
-      const container = document.getElementById('reconCardsContainer');
-      if (container) {
-        container.innerHTML = `
-          <div style="text-align:center; padding: 40px 20px; background:#F8FAFC; border: 1px dashed var(--border); border-radius:12px;">
-            <div style="width:50px; height:50px; border-radius:50%; background:#ECFDF5; color:#10B981; display:grid; place-items:center; margin:0 auto 12px; font-size:22px;">
-              <i class="fa-solid fa-check"></i>
-            </div>
-            <h4 style="font-size:15px; font-weight:800; color:var(--text-primary);">Semua Mutasi Telah Direkonsiliasi 🎉</h4>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Seluruh transaksi dari rekening koran bank cocok 100% dengan buku kas.</p>
-          </div>
-        `;
-      }
-    }
-  }
 
   // Invoice Tab Switcher (Per Proyek, Per Klien, Jatuh Tempo)
   window.switchInvoiceTab = function(tabName) {
