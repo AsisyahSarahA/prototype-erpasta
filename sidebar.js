@@ -54,7 +54,7 @@
 
     if (p.includes('crm.html') || p.includes('/crm/')) {
       activeModule = 'crm';
-      activeSubpage = hash || 'pipeline';
+      activeSubpage = hash || 'dashboard';
     } else if (p.includes('forge pm.html') || p.includes('/project/')) {
       activeModule = 'project';
       activeSubpage = hash || 'dashboard';
@@ -115,25 +115,33 @@
               ${svg('chevron', 'nav-chevron')}
             </button>
             <div class="nav-sub" id="crmSubNav">
-              <a href="${prefix}crm/crm.html#pipeline" class="nav-sub-btn ${activeModule === 'crm' && (activeSubpage === 'pipeline' || !activeSubpage) ? 'active' : ''}" data-module="crm" data-sub="pipeline" onclick="window.navigateToModuleSubpage('crm', 'pipeline', '${prefix}crm/crm.html#pipeline', event)">
+              <a href="${prefix}crm/crm.html#dashboard" class="nav-sub-btn ${activeModule === 'crm' && (activeSubpage === 'dashboard' || !activeSubpage) ? 'active' : ''}" data-module="crm" data-sub="dashboard" onclick="window.navigateToModuleSubpage('crm', 'dashboard', '${prefix}crm/crm.html#dashboard', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Lead & Pipeline</span>
+                <span>Executive Dashboard</span>
+              </a>
+              <a href="${prefix}crm/crm.html#pipeline" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'pipeline' ? 'active' : ''}" data-module="crm" data-sub="pipeline" onclick="window.navigateToModuleSubpage('crm', 'pipeline', '${prefix}crm/crm.html#pipeline', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Lead & Sales Pipeline</span>
               </a>
               <a href="${prefix}crm/crm.html#quotation" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'quotation' ? 'active' : ''}" data-module="crm" data-sub="quotation" onclick="window.navigateToModuleSubpage('crm', 'quotation', '${prefix}crm/crm.html#quotation', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Quotation & MoU</span>
+                <span>Quotation & MoU Studio</span>
               </a>
               <a href="${prefix}crm/crm.html#customer" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'customer' ? 'active' : ''}" data-module="crm" data-sub="customer" onclick="window.navigateToModuleSubpage('crm', 'customer', '${prefix}crm/crm.html#customer', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Master Customer (360°)</span>
+                <span>Master Customer 360°</span>
               </a>
               <a href="${prefix}crm/crm.html#master" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'master' ? 'active' : ''}" data-module="crm" data-sub="master" onclick="window.navigateToModuleSubpage('crm', 'master', '${prefix}crm/crm.html#master', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Master Data CRM</span>
+                <span>Katalog Software & Harga</span>
               </a>
-              <a href="${prefix}crm/crm.html#analytics" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'analytics' ? 'active' : ''}" data-module="crm" data-sub="analytics" onclick="window.navigateToModuleSubpage('crm', 'analytics', '${prefix}crm/crm.html#analytics', event)">
+              <a href="${prefix}crm/crm.html#activity" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'activity' ? 'active' : ''}" data-module="crm" data-sub="activity" onclick="window.navigateToModuleSubpage('crm', 'activity', '${prefix}crm/crm.html#activity', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Revenue Forecast</span>
+                <span>Jadwal & Follow-up</span>
+              </a>
+              <a href="${prefix}crm/crm.html#guide" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'guide' ? 'active' : ''}" data-module="crm" data-sub="guide" onclick="window.navigateToModuleSubpage('crm', 'guide', '${prefix}crm/crm.html#guide', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Panduan SOP CRM</span>
               </a>
             </div>
           </div>
@@ -546,12 +554,16 @@
 
   // Mobile Menu & In-Page Listeners Setup
   function setupMobileListeners() {
-    const mobileBtn = document.getElementById('mobileMenu') || document.querySelector('.mobile-toggle');
+    const mobileBtn = document.getElementById('mobileMenu') || document.querySelector('.mobile-toggle') || document.querySelector('.sidebar-toggle-btn');
     if (mobileBtn) {
       mobileBtn.onclick = function(e) {
         if (e) e.preventDefault();
         const sb = document.getElementById('sidebar');
-        if (sb) sb.classList.toggle('open');
+        if (sb) {
+          sb.classList.toggle('open');
+          const ov = document.getElementById('sidebarOverlay');
+          if (ov) ov.classList.toggle('open', sb.classList.contains('open'));
+        }
       };
     }
 

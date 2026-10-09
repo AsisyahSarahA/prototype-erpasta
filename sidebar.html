@@ -39,9 +39,13 @@
         <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
       <div class="nav-sub" id="crmSubNav">
+        <a href="crm/crm.html#dashboard" class="nav-sub-btn" data-module="crm" data-sub="dashboard" onclick="window.navigateToModuleSubpage('crm', 'dashboard', 'crm/crm.html#dashboard', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Executive Dashboard</span>
+        </a>
         <a href="crm/crm.html#pipeline" class="nav-sub-btn" data-module="crm" data-sub="pipeline" onclick="window.navigateToModuleSubpage('crm', 'pipeline', 'crm/crm.html#pipeline', event)">
           <span class="nav-sub-dot"></span>
-          <span>Lead & Pipeline</span>
+          <span>Lead & Sales Pipeline</span>
         </a>
         <a href="crm/crm.html#quotation" class="nav-sub-btn" data-module="crm" data-sub="quotation" onclick="window.navigateToModuleSubpage('crm', 'quotation', 'crm/crm.html#quotation', event)">
           <span class="nav-sub-dot"></span>
@@ -49,15 +53,19 @@
         </a>
         <a href="crm/crm.html#customer" class="nav-sub-btn" data-module="crm" data-sub="customer" onclick="window.navigateToModuleSubpage('crm', 'customer', 'crm/crm.html#customer', event)">
           <span class="nav-sub-dot"></span>
-          <span>Master Customer (360°)</span>
+          <span>Master Customer 360°</span>
         </a>
         <a href="crm/crm.html#master" class="nav-sub-btn" data-module="crm" data-sub="master" onclick="window.navigateToModuleSubpage('crm', 'master', 'crm/crm.html#master', event)">
           <span class="nav-sub-dot"></span>
-          <span>Master Data CRM</span>
+          <span>Katalog Software & Harga</span>
         </a>
-        <a href="crm/crm.html#analytics" class="nav-sub-btn" data-module="crm" data-sub="analytics" onclick="window.navigateToModuleSubpage('crm', 'analytics', 'crm/crm.html#analytics', event)">
+        <a href="crm/crm.html#activity" class="nav-sub-btn" data-module="crm" data-sub="activity" onclick="window.navigateToModuleSubpage('crm', 'activity', 'crm/crm.html#activity', event)">
           <span class="nav-sub-dot"></span>
-          <span>Revenue Forecast</span>
+          <span>Jadwal & Follow-up</span>
+        </a>
+        <a href="crm/crm.html#guide" class="nav-sub-btn" data-module="crm" data-sub="guide" onclick="window.navigateToModuleSubpage('crm', 'guide', 'crm/crm.html#guide', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Panduan SOP CRM</span>
         </a>
       </div>
     </div>
@@ -234,9 +242,93 @@
           <span>Riwayat Konten</span>
         </a>
       </div>
+    <!-- 5. HR Module (Accordion) -->
+    <div class="nav-group" id="hrNavGroup" data-module-group="hr">
+      <button type="button" class="nav-btn nav-parent-btn" id="hrParentToggle" onclick="window.toggleModuleAccordion('hrNavGroup', event)">
+        <div class="nav-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>HR & Payroll</span>
+        </div>
+        <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+      <div class="nav-sub" id="hrSubNav">
+        <a href="HR/hr.html#beranda" class="nav-sub-btn" data-module="hr" data-sub="beranda" onclick="window.navigateToModuleSubpage('hr', 'beranda', 'HR/hr.html#beranda', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Beranda HR</span>
+        </a>
+        <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">ABSENSI</div>
+        <a href="HR/hr.html#presensi" class="nav-sub-btn" data-module="hr" data-sub="presensi" onclick="window.navigateToModuleSubpage('hr', 'presensi', 'HR/hr.html#presensi', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Presensi Saya</span>
+        </a>
+        <a href="HR/hr.html#dailylog" class="nav-sub-btn" data-module="hr" data-sub="dailylog" onclick="window.navigateToModuleSubpage('hr', 'dailylog', 'HR/hr.html#dailylog', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Daily Log</span>
+        </a>
+        <a href="HR/hr.html#workload" class="nav-sub-btn" data-module="hr" data-sub="workload" onclick="window.navigateToModuleSubpage('hr', 'workload', 'HR/hr.html#workload', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Workload Malam</span>
+        </a>
+        <a href="HR/hr.html#rekap" class="nav-sub-btn" data-module="hr" data-sub="rekap" onclick="window.navigateToModuleSubpage('hr', 'rekap', 'HR/hr.html#rekap', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Rekap Tim</span>
+        </a>
+
+        <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">MANAJEMEN</div>
+        <a href="HR/hr.html#karyawan" class="nav-sub-btn" data-module="hr" data-sub="karyawan" onclick="window.navigateToModuleSubpage('hr', 'karyawan', 'HR/hr.html#karyawan', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Data Karyawan</span>
+        </a>
+        <a href="HR/hr.html#lowongan" class="nav-sub-btn" data-module="hr" data-sub="lowongan" onclick="window.navigateToModuleSubpage('hr', 'lowongan', 'HR/hr.html#lowongan', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Lowongan Rekrutmen</span>
+        </a>
+        <a href="HR/hr.html#pipeline" class="nav-sub-btn" data-module="hr" data-sub="pipeline" onclick="window.navigateToModuleSubpage('hr', 'pipeline', 'HR/hr.html#pipeline', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Pipeline Pelamar</span>
+        </a>
+
+        <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">PKL / MAGANG</div>
+        <a href="HR/hr.html#pengajuan" class="nav-sub-btn" data-module="hr" data-sub="pengajuan" onclick="window.navigateToModuleSubpage('hr', 'pengajuan', 'HR/hr.html#pengajuan', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Pengajuan PKL</span>
+        </a>
+        <a href="HR/hr.html#kalender" class="nav-sub-btn" data-module="hr" data-sub="kalender" onclick="window.navigateToModuleSubpage('hr', 'kalender', 'HR/hr.html#kalender', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Kalender Kuota</span>
+        </a>
+        <a href="HR/hr.html#peserta" class="nav-sub-btn" data-module="hr" data-sub="peserta" onclick="window.navigateToModuleSubpage('hr', 'peserta', 'HR/hr.html#peserta', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Peserta Aktif</span>
+        </a>
+        <a href="HR/hr.html#evaluasi" class="nav-sub-btn" data-module="hr" data-sub="evaluasi" onclick="window.navigateToModuleSubpage('hr', 'evaluasi', 'HR/hr.html#evaluasi', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Evaluasi PKL</span>
+        </a>
+        <a href="HR/hr.html#sertifikat" class="nav-sub-btn" data-module="hr" data-sub="sertifikat" onclick="window.navigateToModuleSubpage('hr', 'sertifikat', 'HR/hr.html#sertifikat', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Sertifikat PKL</span>
+        </a>
+
+        <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">Laporan</div>
+        <a href="HR/hr.html#dokumen" class="nav-sub-btn" data-module="hr" data-sub="dokumen" onclick="window.navigateToModuleSubpage('hr', 'dokumen', 'HR/hr.html#dokumen', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Dokumen & Template</span>
+        </a>
+        <a href="HR/hr.html#laporan" class="nav-sub-btn" data-module="hr" data-sub="laporan" onclick="window.navigateToModuleSubpage('hr', 'laporan', 'HR/hr.html#laporan', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Laporan HR</span>
+        </a>
+        <a href="HR/hr.html#pengaturan" class="nav-sub-btn" data-module="hr" data-sub="pengaturan" onclick="window.navigateToModuleSubpage('hr', 'pengaturan', 'HR/hr.html#pengaturan', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Pengaturan HR</span>
+        </a>
+      </div>
     </div>
 
-    <!-- 5. Kanban AI Global -->
+    <!-- 6. Kanban AI Global -->
     <a href="index.html#aikanban" class="nav-btn" data-nav="aikanban" data-module="aikanban">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM9 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
