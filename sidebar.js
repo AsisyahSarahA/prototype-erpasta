@@ -202,6 +202,10 @@
                 <span class="nav-sub-dot"></span>
                 <span>Klaim & Struk (AI OCR)</span>
               </a>
+              <a href="${prefix}finance/index.html#pengeluaran" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'pengeluaran' || activeSubpage === 'view-pengeluaran') ? 'active' : ''}" data-module="finance" data-sub="pengeluaran" onclick="window.navigateToModuleSubpage('finance', 'pengeluaran', '${prefix}finance/index.html#pengeluaran', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Pengeluaran</span>
+              </a>
               <a href="${prefix}finance/index.html#opex" class="nav-sub-btn ${activeModule === 'finance' && (activeSubpage === 'opex' || activeSubpage === 'view-opex') ? 'active' : ''}" data-module="finance" data-sub="opex" onclick="window.navigateToModuleSubpage('finance', 'opex', '${prefix}finance/index.html#opex', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Biaya Operasional (OPEX)</span>
