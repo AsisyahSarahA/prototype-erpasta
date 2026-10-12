@@ -73,6 +73,10 @@
             <i class="fa-solid fa-receipt"></i>
             <span>Klaim OCR</span>
           </button>
+          <button type="button" class="finance-subnav-item" data-target="pengeluaran" onclick="window.switchFinancePage('pengeluaran')">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            <span>Pengeluaran</span>
+          </button>
           <button type="button" class="finance-subnav-item" data-target="opex" onclick="window.switchFinancePage('opex')">
             <i class="fa-solid fa-building"></i>
             <span>OPEX Kantor</span>
@@ -86,8 +90,8 @@
             <span>Vendor</span>
           </button>
           <button type="button" class="finance-subnav-item" data-target="freelancer" onclick="window.switchFinancePage('freelancer')">
-            <i class="fa-solid fa-user-clock"></i>
-            <span>Freelancer</span>
+            <i class="fa-solid fa-file-contract"></i>
+            <span>Kontrak Freelance</span>
           </button>
           <button type="button" class="finance-subnav-item" data-target="accounts" onclick="window.switchFinancePage('accounts')">
             <i class="fa-solid fa-building-columns"></i>
@@ -315,15 +319,15 @@
               </div>
               <div class="hero-title">
                 <h2>Penagihan & Termin Proyek (Accounts Receivable)</h2>
-                <p>Otomatisasi jadwal termin penagihan dari kontrak MoU CRM ke invoice siap kirim.</p>
+                <p>Termin penagihan otomatis tersinkronisasi dari kesepakatan MoU/Quotation di Modul CRM. Tim Finance dapat mengedit tanggal & menghapus termin, serta menyetujui invoice per-proyek dari PM.</p>
               </div>
             </div>
             <div class="hero-actions">
-              <button class="btn outline-white" onclick="showFinanceToast('Sinkronisasi CRM: 3 Konten Termin Termutakhirkan.', 'success')">
-                <i class="fa-solid fa-arrows-rotate"></i> Sinkron CRM
+              <button class="btn outline-white" onclick="syncTerminsFromCrm()">
+                <i class="fa-solid fa-arrows-rotate"></i> Sinkron Ulang dari CRM
               </button>
-              <button class="btn primary" onclick="openFinanceModal('modalCreateTermin')">
-                <i class="fa-solid fa-plus"></i> Tambah Termin Baru
+              <button class="btn primary" onclick="simulatePmTaskDoneTrigger()">
+                <i class="fa-solid fa-bolt"></i> Simulasikan Milestone PM Selesai
               </button>
             </div>
           </div>
@@ -350,23 +354,52 @@
             </div>
           </div>
 
-          <!-- Invoice Views Filter Tabs -->
+          <!-- Invoice Views Filter & Sorting Bar -->
           <div class="filter-bar">
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <button class="btn btn-sm primary" id="tab-btn-project" onclick="switchInvoiceTab('project')"><i class="fa-solid fa-diagram-project"></i> Per Proyek</button>
               <button class="btn btn-sm" id="tab-btn-client" onclick="switchInvoiceTab('client')"><i class="fa-solid fa-building"></i> Per Klien</button>
               <button class="btn btn-sm" id="tab-btn-month" onclick="switchInvoiceTab('month')"><i class="fa-solid fa-calendar"></i> Jatuh Tempo Bulan Ini</button>
+              
+              <!-- Sorter Dropdown (Proyek, Klien, Jatuh Tempo) -->
+              <div style="display:flex; align-items:center; gap:6px; margin-left:8px; border-left:1px solid var(--border); padding-left:12px;">
+                <span style="font-size:12px; color:var(--text-muted); font-weight:600;"><i class="fa-solid fa-arrow-down-short-wide"></i> Sortir:</span>
+                <select class="form-select" id="invoiceSortSelect" style="padding:5px 10px; font-size:12px; border-radius:6px;" onchange="sortInvoiceCards(this.value)">
+                  <option value="project-asc">Nama Proyek (A - Z)</option>
+                  <option value="project-desc">Nama Proyek (Z - A)</option>
+                  <option value="client-asc">Nama Klien (A - Z)</option>
+                  <option value="due-soon">Jatuh Tempo Terdekat</option>
+                  <option value="amount-high">Nominal Tertinggi</option>
+                </select>
+              </div>
             </div>
             <div class="filter-search" style="max-width:300px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Cari invoice atau proyek...">
+              <input type="text" id="invoiceSearchInput" placeholder="Cari termin, proyek, klien..." oninput="filterInvoiceCards(this.value)">
             </div>
           </div>
 
           <!-- Tab View: Per Proyek -->
           <div id="invoice-view-project" style="display:block;">
+            
+            <!-- Alert Integrasi Otomatis PM -> Finance -->
+            <div id="pmDraftNotice" style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:12px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:16px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; border-radius:50%; background:#FEF3C7; color:#D97706; display:grid; place-items:center; font-size:16px;">
+                  <i class="fa-solid fa-bell-concierge"></i>
+                </div>
+                <div>
+                  <strong style="font-size:12.5px; color:#92400E; display:block;">Invoice Masuk dari Project Management (Status: DRAFT)</strong>
+                  <span style="font-size:11px; color:#B45309;" id="pmDraftNoticeDesc">Project Manager telah menandai milestone "UAT Selesai (Termin 2)" tuntas. Invoice otomatis masuk ke Finance untuk diapprove.</span>
+                </div>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-xs success" onclick="approveDraftInvoice('INV-2610-002')"><i class="fa-solid fa-check"></i> Approve & Terbitkan</button>
+              </div>
+            </div>
+
             <!-- Project Card 1 -->
-            <div class="card-panel">
+            <div class="card-panel invoice-project-card" id="card-proj-medika" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-10-01" data-amount="33300000">
               <div class="card-header" style="background:#F8FAFC;">
                 <div style="display:flex; align-items:center; gap:12px;">
                   <div style="width:36px; height:36px; border-radius:8px; background:#305BA3; color:#fff; display:grid; place-items:center;">
@@ -374,47 +407,97 @@
                   </div>
                   <div>
                     <h4 style="font-size:14px; font-weight:800; color:var(--text-primary);">PROYEK: APLIKASI KASIR RS MEDIKA</h4>
-                    <span style="font-size:11.5px; color:var(--text-muted);">Total Nilai Kontrak: <strong style="color:var(--text-primary);">Rp 30.000.000</strong> • Klien: RS Medika Utama</span>
+                    <span style="font-size:11.5px; color:var(--text-muted);">
+                      Total Kontrak: <strong style="color:var(--text-primary);">Rp 33.300.000</strong> (DPP: Rp 30.000.000 + PPN 11%: Rp 3.300.000 | PPh 23: Rp 600.000) • Klien: <strong style="color:var(--text-primary);">RS Medika Utama</strong> (MoU CRM)
+                    </span>
                   </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                  <span class="badge info"><i class="fa-solid fa-robot"></i> AI Auto-Invoice Aktif</span>
+                  <span class="tax-tag ppn"><i class="fa-solid fa-percent"></i> PPN 11% Aktif</span>
+                  <span class="tax-tag pph"><i class="fa-solid fa-shield-halved"></i> PPh 23 (2%)</span>
+                  <span class="badge info"><i class="fa-solid fa-link"></i> Jadwal dari CRM</span>
                 </div>
               </div>
               <div class="card-body" style="padding:0;">
                 <table class="data-table">
-                  <tbody>
+                  <thead>
                     <tr>
-                      <td style="width:30%;">
-                        <strong style="color:var(--text-primary);"><i class="fa-solid fa-file-invoice text-muted" style="margin-right:6px;"></i>Termin 1: DP Awal (30%)</strong>
-                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: 01 Agu 2026 • Ref: INV-2608-001</div>
+                      <th style="width:28%;">Termin / Kesepakatan CRM</th>
+                      <th>DPP (Dasar Pajak)</th>
+                      <th>PPN (11%)</th>
+                      <th>PPh 23 (2%)</th>
+                      <th style="text-align:right;">Total Tagihan</th>
+                      <th>Status & Approval</th>
+                      <th style="text-align:right;">Aksi & Kelola</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Termin 1 -->
+                    <tr id="termin-row-1" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-08-01" data-amount="9990000">
+                      <td>
+                        <strong style="color:var(--text-primary);"><i class="fa-solid fa-file-invoice text-muted" style="margin-right:6px;"></i><span id="tname-1">Termin 1: DP Awal (30%)</span></strong>
+                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-1">01 Agu 2026</span> • Ref: INV-2608-001</div>
                       </td>
-                      <td style="font-weight:800; color:var(--text-primary);">Rp 9.000.000</td>
+                      <td>Rp 9.000.000</td>
+                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 990.000</td>
+                      <td style="color:#B45309; font-weight:600;">- Rp 180.000</td>
+                      <td style="font-weight:800; color:var(--text-primary); text-align:right;">
+                        Rp 9.990.000
+                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 9.810.000</div>
+                      </td>
                       <td><span class="badge success">✅ LUNAS</span></td>
                       <td style="text-align:right;">
-                        <button class="btn btn-xs" onclick="showFinanceToast('Kuitansi tanda lunas diunduh.', 'success')"><i class="fa-solid fa-receipt"></i> Kuitansi</button>
+                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
+                          <button class="btn btn-xs" onclick="showInvoiceTaxDetail('Termin 1 (DP 30%)', 9000000, 990000, 180000, 'Lunas')" title="Rincian Pajak"><i class="fa-solid fa-receipt"></i></button>
+                          <button class="btn btn-xs" onclick="openEditTerminModal('1', 'Termin 1: DP Awal (30%)', 9000000, '2026-08-01', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')" title="Edit Jadwal / Data"><i class="fa-solid fa-pen-to-square"></i></button>
+                          <button class="btn btn-xs danger" onclick="deleteTerminRow('termin-row-1', 'Termin 1 (DP 30%)')" title="Hapus Termin"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                       </td>
                     </tr>
-                    <tr style="background:#FEF2F2;">
+
+                    <!-- Termin 2 (Otomatis masuk dari PM - Butuh Approval Spesifik Proyek RS Medika) -->
+                    <tr id="rowTermin2" style="background:#FFFBEB;" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-10-01" data-amount="13320000">
                       <td>
-                        <strong style="color:#B91C1C;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>Termin 2: UAT Selesai (40%)</strong>
-                        <div style="font-size:10.5px; color:#B91C1C;">Jatuh Tempo: 01 Okt 2026 • Ref: INV-2610-002</div>
+                        <strong style="color:#B45309;"><i class="fa-solid fa-code-compare" style="margin-right:6px;"></i><span id="tname-2">Termin 2: UAT Selesai (40%)</span></strong>
+                        <div style="font-size:10.5px; color:#B45309;">Ref: INV-2610-002 • Jatuh Tempo: <span id="tdue-2">01 Okt 2026</span> • <span class="badge neutral" style="font-size:9.5px;">Triggered by PM Task Done</span></div>
                       </td>
-                      <td style="font-weight:800; color:#B91C1C;">Rp 12.000.000</td>
-                      <td><span class="badge danger">🔴 JATUH TEMPO</span></td>
+                      <td>Rp 12.000.000</td>
+                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 1.320.000</td>
+                      <td style="color:#B45309; font-weight:600;">- Rp 240.000</td>
+                      <td style="font-weight:800; color:#B45309; text-align:right;">
+                        Rp 13.320.000
+                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 13.080.000</div>
+                      </td>
+                      <td><span class="badge amber-draft" id="badgeTermin2">🟡 DRAFT (Verifikasi Finance)</span></td>
                       <td style="text-align:right;">
-                        <button class="btn btn-xs primary" onclick="showFinanceToast('Pesan reminder termin 2 dikirim ke Finance RS Medika!', 'success')"><i class="fa-solid fa-paper-plane"></i> Follow Up</button>
+                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
+                          <button class="btn btn-xs success" id="btnApproveTermin2" onclick="approveSpecificProjectInvoice('INV-2610-002', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')"><i class="fa-solid fa-check"></i> Approve Invoice</button>
+                          <button class="btn btn-xs" onclick="openEditTerminModal('2', 'Termin 2: UAT Selesai (40%)', 12000000, '2026-10-01', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')" title="Edit Termin"><i class="fa-solid fa-pen-to-square"></i></button>
+                          <button class="btn btn-xs danger" onclick="deleteTerminRow('rowTermin2', 'Termin 2 (UAT)')" title="Hapus Termin"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                       </td>
                     </tr>
-                    <tr style="opacity:0.75;">
+
+                    <!-- Termin 3 -->
+                    <tr id="rowTermin3" style="opacity:0.85;" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-12-01" data-amount="9990000">
                       <td>
-                        <strong><i class="fa-solid fa-hourglass-start text-muted" style="margin-right:6px;"></i>Termin 3: Pelunasan & BAST (30%)</strong>
-                        <div style="font-size:10.5px; color:var(--text-muted);">Dijadwalkan: 01 Des 2026 • Terhubung Milestone BAST</div>
+                        <strong><i class="fa-solid fa-hourglass-start text-muted" style="margin-right:6px;"></i><span id="tname-3">Termin 3: Pelunasan & BAST (30%)</span></strong>
+                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-3">01 Des 2026</span> • Menunggu Milestone PM Selesai</div>
                       </td>
-                      <td style="font-weight:700;">Rp 9.000.000</td>
-                      <td><span class="badge neutral">🗓️ JADWAL CRM</span></td>
+                      <td>Rp 9.000.000</td>
+                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 990.000</td>
+                      <td style="color:#B45309; font-weight:600;">- Rp 180.000</td>
+                      <td style="font-weight:700; text-align:right;">
+                        Rp 9.990.000
+                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 9.810.000</div>
+                      </td>
+                      <td><span class="badge neutral" id="badgeTermin3">🗓️ MENUNGGU PM</span></td>
                       <td style="text-align:right;">
-                        <button class="btn btn-xs" onclick="showFinanceToast('Invoice manual di-generate!', 'info')"><i class="fa-solid fa-bolt"></i> Generate</button>
+                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
+                          <button class="btn btn-xs" id="btnTriggerTermin3" onclick="simulatePmApprovalTermin3('Aplikasi Kasir RS Medika', 'RS Medika Utama')"><i class="fa-solid fa-wand-magic-sparkles"></i> Trigger PM Selesai</button>
+                          <button class="btn btn-xs" onclick="openEditTerminModal('3', 'Termin 3: Pelunasan & BAST (30%)', 9000000, '2026-12-01', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')" title="Edit Termin"><i class="fa-solid fa-pen-to-square"></i></button>
+                          <button class="btn btn-xs danger" onclick="deleteTerminRow('rowTermin3', 'Termin 3 (Pelunasan)')" title="Hapus Termin"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -423,7 +506,7 @@
             </div>
 
             <!-- Project Card 2 -->
-            <div class="card-panel">
+            <div class="card-panel invoice-project-card" id="card-proj-alpha" data-project="Web Company Profile X" data-client="PT Alpha Global" data-due="2026-10-10" data-amount="16650000">
               <div class="card-header" style="background:#F8FAFC;">
                 <div style="display:flex; align-items:center; gap:12px;">
                   <div style="width:36px; height:36px; border-radius:8px; background:#8B5CF6; color:#fff; display:grid; place-items:center;">
@@ -431,25 +514,44 @@
                   </div>
                   <div>
                     <h4 style="font-size:14px; font-weight:800; color:var(--text-primary);">PROYEK: WEB COMPANY PROFILE X</h4>
-                    <span style="font-size:11.5px; color:var(--text-muted);">Total Nilai Kontrak: <strong style="color:var(--text-primary);">Rp 15.000.000</strong> • Klien: PT Alpha Global</span>
+                    <span style="font-size:11.5px; color:var(--text-muted);">Total Nilai Kontrak: <strong style="color:var(--text-primary);">Rp 16.650.000</strong> (DPP: Rp 15.000.000 + PPN 11%: Rp 1.650.000) • Klien: <strong style="color:var(--text-primary);">PT Alpha Global</strong> (MoU CRM)</span>
                   </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                  <span class="badge neutral">Manual Invoicing</span>
+                  <span class="tax-tag ppn">PPN 11%</span>
+                  <span class="badge info"><i class="fa-solid fa-link"></i> Jadwal dari CRM</span>
                 </div>
               </div>
               <div class="card-body" style="padding:0;">
                 <table class="data-table">
-                  <tbody>
+                  <thead>
                     <tr>
-                      <td style="width:30%;">
-                        <strong style="color:var(--text-primary);"><i class="fa-solid fa-file-invoice text-muted" style="margin-right:6px;"></i>Termin 1: DP Awal (50%)</strong>
-                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: 10 Okt 2026 • Ref: INV-2610-003</div>
+                      <th style="width:28%;">Termin / Kesepakatan CRM</th>
+                      <th>DPP (Dasar Pajak)</th>
+                      <th>PPN (11%)</th>
+                      <th>PPh 23 (2%)</th>
+                      <th style="text-align:right;">Total Tagihan</th>
+                      <th>Status & Approval</th>
+                      <th style="text-align:right;">Aksi & Kelola</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr id="termin-row-alpha-1" data-project="Web Company Profile X" data-client="PT Alpha Global" data-due="2026-10-10" data-amount="8325000">
+                      <td>
+                        <strong style="color:var(--text-primary);"><i class="fa-solid fa-file-invoice text-muted" style="margin-right:6px;"></i><span id="tname-alpha-1">Termin 1: DP Awal (50%)</span></strong>
+                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-alpha-1">10 Okt 2026</span> • Ref: INV-2610-003</div>
                       </td>
-                      <td style="font-weight:800; color:var(--text-primary);">Rp 7.500.000</td>
-                      <td><span class="badge warning">🟡 MENUNGGU</span></td>
+                      <td>Rp 7.500.000</td>
+                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 825.000</td>
+                      <td style="color:#B45309; font-weight:600;">- Rp 150.000</td>
+                      <td style="font-weight:800; color:var(--text-primary); text-align:right;">Rp 8.325.000</td>
+                      <td><span class="badge warning">🟡 MENUNGGU BAYAR</span></td>
                       <td style="text-align:right;">
-                        <button class="btn btn-xs primary" onclick="showFinanceToast('Invoice dikirimkan ke klien!', 'success')"><i class="fa-solid fa-paper-plane"></i> Kirim</button>
+                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
+                          <button class="btn btn-xs primary" onclick="showFinanceToast('Invoice INV-2610-003 dikirimkan ke PT Alpha Global!', 'success')" title="Kirim ke Klien"><i class="fa-solid fa-paper-plane"></i></button>
+                          <button class="btn btn-xs" onclick="openEditTerminModal('alpha-1', 'Termin 1: DP Awal (50%)', 7500000, '2026-10-10', 'Web Company Profile X', 'PT Alpha Global')" title="Edit Termin"><i class="fa-solid fa-pen-to-square"></i></button>
+                          <button class="btn btn-xs danger" onclick="deleteTerminRow('termin-row-alpha-1', 'Termin 1 (DP Alpha Global)')" title="Hapus Termin"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -547,55 +649,67 @@
           <div class="hero-banner">
             <div class="hero-left">
               <div class="hero-icon">
-                <i class="fa-solid fa-receipt"></i>
+                <i class="fa-solid fa-expand"></i>
               </div>
               <div class="hero-title">
-                <h2>Klaim Struk & Pengeluaran (AI Smart OCR)</h2>
-                <p>Ekstraksi otomatis foto struk/nota, pengajuan reimbursement karyawan, & alokasi biaya HPP/OPEX.</p>
+                <h2>AI Smart OCR Scanner (Multi-Transaksi)</h2>
+                <p>Scanner terpadu cerdas untuk membaca struk pengeluaran (reimbursement/OPEX), bukti transfer pemasukan kas (AR), dan dokumen kontrak/invoice.</p>
               </div>
             </div>
             <div class="hero-actions">
+              <button class="btn outline-white" onclick="selectOcrScanType('income')">
+                <i class="fa-solid fa-arrow-down-left"></i> Scan Bukti Pemasukan
+              </button>
               <button class="btn primary" onclick="document.getElementById('ocrFileInput').click()">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Struk
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Scan Struk/Dokumen
               </button>
             </div>
           </div>
 
-          <!-- Periode Filter Pengeluaran -->
-          <div class="filter-bar" style="margin-bottom:18px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-size:12.5px; font-weight:700; color:var(--text-muted);"><i class="fa-solid fa-filter"></i> Periode Pengeluaran:</span>
-              <button class="btn btn-sm primary" id="btn-period-daily" onclick="window.switchExpensePeriod('daily', this)"><i class="fa-solid fa-calendar-day"></i> Harian</button>
-              <button class="btn btn-sm" id="btn-period-monthly" onclick="window.switchExpensePeriod('monthly', this)"><i class="fa-solid fa-calendar-week"></i> Bulanan</button>
-              <button class="btn btn-sm" id="btn-period-yearly" onclick="window.switchExpensePeriod('yearly', this)"><i class="fa-solid fa-calendar"></i> Tahunan</button>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <input type="date" class="form-input" id="expense-date-filter" value="2026-10-07" style="padding:4px 10px; font-size:12px;" onchange="window.showFinanceToast('Filter tanggal pengeluaran diperbarui', 'info')">
-            </div>
-          </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:22px;">
             <!-- Left: Dropzone -->
             <div class="card-panel">
               <div class="card-header">
-                <h4 class="card-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary);"></i> Auto Scan OCR Struk</h4>
-                <span class="badge info">Engine v2.4</span>
+                <div>
+                  <h4 class="card-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary);"></i> Universal AI OCR Scanner</h4>
+                  <p class="card-subtitle">Membaca otomatis struk pengeluaran, bukti transfer kas masuk, maupun faktur kontrak</p>
+                </div>
+                <span class="badge info">Multi-Type v3.0</span>
               </div>
               <div class="card-body">
-                <div id="ocrDropArea" style="border: 2px dashed var(--border-dark); border-radius:12px; padding:36px 20px; text-align:center; background:#FAFAFC; position:relative; overflow:hidden; transition:all 0.2s;">
-                  <i class="fa-solid fa-file-invoice" style="font-size:38px; color:var(--primary); margin-bottom:12px;"></i>
-                  <h4 style="font-size:14px; font-weight:700; color:var(--text-primary);">Tarik & Lepas Foto Struk di Sini</h4>
-                  <p style="font-size:11.5px; color:var(--text-muted); margin-top:4px;">Format: JPG, PNG, atau PDF (Maks 10MB)</p>
-                  <button type="button" class="btn btn-sm" style="margin-top:14px;" onclick="document.getElementById('ocrFileInput').click()">
-                    <i class="fa-solid fa-folder-open"></i> Pilih File dari Komputer
+                <!-- Transaction Type Toggle Before Upload -->
+                <div style="margin-bottom:14px; background:#F1F5F9; border-radius:8px; padding:4px; display:flex; gap:4px;">
+                  <button type="button" class="btn btn-xs primary" id="ocr-type-expense" onclick="switchOcrDocType('expense')" style="flex:1;">
+                    <i class="fa-solid fa-receipt"></i> Struk Pengeluaran
                   </button>
+                  <button type="button" class="btn btn-xs" id="ocr-type-income" onclick="switchOcrDocType('income')" style="flex:1;">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Bukti Pemasukan (AR)
+                  </button>
+                  <button type="button" class="btn btn-xs" id="ocr-type-contract" onclick="switchOcrDocType('contract')" style="flex:1;">
+                    <i class="fa-solid fa-file-contract"></i> Tagihan Kontrak
+                  </button>
+                </div>
+
+                <div id="ocrDropArea" style="border: 2px dashed var(--border-dark); border-radius:12px; padding:32px 20px; text-align:center; background:#FAFAFC; position:relative; overflow:hidden; transition:all 0.2s;">
+                  <i class="fa-solid fa-camera-retro" style="font-size:36px; color:var(--primary); margin-bottom:12px;"></i>
+                  <h4 style="font-size:14px; font-weight:700; color:var(--text-primary);" id="ocrDropTitle">Tarik & Lepas Dokumen / Struk di Sini</h4>
+                  <p style="font-size:11.5px; color:var(--text-muted); margin-top:4px;" id="ocrDropDesc">Mendukung: Struk nota bensin/makan, bukti mutasi transfer bank, invoice PDF</p>
+                  <div style="display:flex; justify-content:center; gap:8px; margin-top:14px;">
+                    <button type="button" class="btn btn-sm" onclick="document.getElementById('ocrFileInput').click()">
+                      <i class="fa-solid fa-folder-open"></i> Pilih File
+                    </button>
+                    <button type="button" class="btn btn-sm" onclick="simulateOcrSample()">
+                      <i class="fa-solid fa-bolt"></i> Simulasikan Scan AI
+                    </button>
+                  </div>
                   <input type="file" id="ocrFileInput" style="display:none;" accept="image/*,application/pdf">
 
                   <!-- Scanning Animation Overlay -->
                   <div id="scanningOverlay" style="position:absolute; inset:0; background:rgba(15,23,42,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; opacity:0; transition:opacity 0.3s; z-index:10;" class="pointer-events-none">
                     <i class="fa-solid fa-spinner fa-spin" style="font-size:32px; color:#38BDF8; margin-bottom:12px;"></i>
-                    <strong style="font-size:13px; letter-spacing:0.04em;">AI MEMBACA FISIK STRUK...</strong>
-                    <span style="font-size:11px; color:#94A3B8; margin-top:4px;">Mengekstrak tanggal, merchant, & nominal otomatis</span>
+                    <strong style="font-size:13px; letter-spacing:0.04em;" id="ocrScanningText">AI MEMBACA ELEMEN DOKUMEN...</strong>
+                    <span style="font-size:11px; color:#94A3B8; margin-top:4px;">Mengekstrak tanggal, nomor referensi, pihak terkait & nominal</span>
                   </div>
                 </div>
 
@@ -605,7 +719,7 @@
                     <i class="fa-solid fa-circle-check" style="color:#10B981; font-size:18px;"></i>
                     <div>
                       <strong id="receiptFileName" style="font-size:12px; color:#047857; display:block;">struk_aws_oktober.jpg</strong>
-                      <span style="font-size:10.5px; color:#059669;">Data berhasil diekstrak AI</span>
+                      <span style="font-size:10.5px; color:#059669;" id="receiptTypeLabel">Ekstraksi Pengeluaran Berhasil</span>
                     </div>
                   </div>
                   <button class="btn btn-xs" onclick="document.getElementById('receiptPreview').style.display='none';"><i class="fa-solid fa-xmark"></i></button>
@@ -613,47 +727,275 @@
               </div>
             </div>
 
-            <!-- Right: Form Detail Pengeluaran -->
+            <!-- Right: Form Detail Transaksi Terisi Otomatis -->
             <div class="card-panel">
               <div class="card-header">
-                <h4 class="card-title">Detail Form Pengeluaran & Beban</h4>
+                <div>
+                  <h4 class="card-title" id="exp-form-title">Hasil Ekstraksi OCR: Pengeluaran</h4>
+                  <p class="card-subtitle">Form terisi otomatis dari hasil pembacaan AI dan dapat diverifikasi</p>
+                </div>
+                <span class="badge success" id="ocr-badge-confidence"><i class="fa-solid fa-check"></i> Akurasi 98%</span>
               </div>
               <div class="card-body">
-                <form id="expenseForm" onsubmit="event.preventDefault(); showFinanceToast('Pengajuan klaim berhasil dikirim untuk approval!', 'success');">
+                <form id="expenseForm" onsubmit="event.preventDefault(); submitOcrTransaction();">
                   <div class="form-group">
-                    <label class="form-label">Deskripsi Pengeluaran</label>
-                    <input type="text" id="exp-desc" class="form-input" placeholder="Contoh: Bensin Operasional / Domain Medika" value="Tagihan Cloud Server AWS">
+                    <label class="form-label" id="lbl-exp-type">Jenis Transaksi Akuntansi</label>
+                    <select class="form-select" id="exp-type-select" onchange="syncOcrFormFields(this.value)">
+                      <option value="expense">Pengeluaran Kas (Klaim / Reimbursement / OPEX)</option>
+                      <option value="income">Pemasukan Kas (Pembayaran Invoice Klien / AR)</option>
+                      <option value="contract">Pencatatan Tagihan Kontrak Vendor/Freelance</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" id="lbl-exp-desc">Deskripsi Transaksi / Keterangan</label>
+                    <input type="text" id="exp-desc" class="form-input" placeholder="Contoh: Bensin Operasional / Domain Medika" value="Tagihan Cloud Server & Database Cluster AWS">
                   </div>
                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                     <div class="form-group">
                       <label class="form-label">Nominal (Rp)</label>
-                      <input type="number" id="exp-amount" class="form-input" placeholder="0" value="15350000">
+                      <input type="number" id="exp-amount" class="form-input" placeholder="0" value="15350000" required>
                     </div>
                     <div class="form-group">
                       <label class="form-label">Tanggal Transaksi</label>
-                      <input type="date" id="exp-date" class="form-input" value="2026-10-04">
+                      <input type="date" id="exp-date" class="form-input" value="2026-10-04" required>
                     </div>
                   </div>
                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                     <div class="form-group">
-                      <label class="form-label">Pihak / Vendor</label>
-                      <input type="text" id="exp-vendor" class="form-input" placeholder="Nama Toko/Merchant" value="Amazon Web Services">
+                      <label class="form-label" id="lbl-exp-vendor">Pihak Terkait (Merchant / Klien)</label>
+                      <input type="text" id="exp-vendor" class="form-input" placeholder="Nama Toko/Merchant/Klien" value="Amazon Web Services (AWS)">
                     </div>
                     <div class="form-group">
-                      <label class="form-label">Alokasi Beban</label>
-                      <select class="form-select">
-                        <option>Operasional Kantor (OPEX)</option>
-                        <option>HPP Proyek RS Medika</option>
-                        <option>HPP Proyek Web Alpha</option>
+                      <label class="form-label" id="lbl-exp-allocation">Alokasi Akun Buku Besar</label>
+                      <select class="form-select" id="exp-allocation">
+                        <option value="opex">Beban Operasional Kantor (OPEX)</option>
+                        <option value="hpp-rs">HPP Proyek: Aplikasi RS Medika</option>
+                        <option value="hpp-web">HPP Proyek: Web Company Profile</option>
+                        <option value="income-ar">Kas Masuk: Pelunasan Piutang Termin</option>
                       </select>
                     </div>
                   </div>
                   <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-                    <button type="reset" class="btn">Reset</button>
-                    <button type="submit" class="btn primary"><i class="fa-solid fa-paper-plane"></i> Ajukan Klaim</button>
+                    <button type="reset" class="btn">Reset Form</button>
+                    <button type="submit" class="btn primary" id="btn-submit-ocr"><i class="fa-solid fa-check"></i> Simpan & Posting Jurnal</button>
                   </div>
                 </form>
               </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================================================================
+             3B. MENU PENGELUARAN (HARIAN, MINGGUAN, BULANAN, TAHUNAN)
+             Lengkap Tanggal, Hari, dan Jam Transaksi
+             ================================================================ -->
+        <section id="view-pengeluaran" class="view-section">
+          <div class="hero-banner">
+            <div class="hero-left">
+              <div class="hero-icon">
+                <i class="fa-solid fa-money-bill-wave"></i>
+              </div>
+              <div class="hero-title">
+                <h2>Buku Pengeluaran Kas & Beban (Cash Outflow)</h2>
+                <p>Monitoring komprehensif seluruh pengeluaran perusahaan dengan filter periode Harian, Mingguan, Bulanan, & Tahunan serta pencatatan detail Hari, Tanggal, & Jam transaksi.</p>
+              </div>
+            </div>
+            <div class="hero-actions">
+              <button class="btn outline-white" onclick="exportPengeluaranCsv()">
+                <i class="fa-solid fa-file-csv"></i> Unduh Laporan CSV
+              </button>
+              <button class="btn primary" onclick="window.switchFinancePage('expenses')">
+                <i class="fa-solid fa-camera-retro"></i> Scan Struk OCR
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Summary Pengeluaran -->
+          <div class="kpi-grid cols-3">
+            <div class="kpi-card">
+              <div class="kpi-accent-bar" style="background:#EF4444;"></div>
+              <div class="kpi-top"><span class="kpi-label" id="pengeluaran-kpi-label">Total Pengeluaran (Periode Aktif)</span><i class="fa-solid fa-receipt" style="color:#EF4444;"></i></div>
+              <div class="kpi-val" style="color:#EF4444;" id="pengeluaran-kpi-val">Rp 23.450.000</div>
+              <div class="kpi-sub" id="pengeluaran-kpi-sub">5 Transaksi tercatat</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-accent-bar" style="background:#305BA3;"></div>
+              <div class="kpi-top"><span class="kpi-label">HPP Proyek Terbesar</span><i class="fa-solid fa-cubes" style="color:#305BA3;"></i></div>
+              <div class="kpi-val" style="color:#305BA3;">Rp 15.350.000</div>
+              <div class="kpi-sub">Cloud & Database Cluster AWS</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-accent-bar" style="background:#F59E0B;"></div>
+              <div class="kpi-top"><span class="kpi-label">Beban Rutin Operasional</span><i class="fa-solid fa-building" style="color:#F59E0B;"></i></div>
+              <div class="kpi-val" style="color:#D97706;">Rp 8.100.000</div>
+              <div class="kpi-sub">Utilitas, Sewa, & Petty Cash</div>
+            </div>
+          </div>
+
+          <!-- Filter Periode Pengeluaran: Harian, Mingguan, Bulanan, Tahunan -->
+          <div class="filter-bar" style="flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:12.5px; font-weight:700; color:var(--text-muted);"><i class="fa-solid fa-clock-rotate-left"></i> Periode:</span>
+              <button class="btn btn-sm primary" id="btn-period-tab-harian" onclick="setPengeluaranPeriod('harian')">
+                <i class="fa-solid fa-calendar-day"></i> Harian
+              </button>
+              <button class="btn btn-sm" id="btn-period-tab-mingguan" onclick="setPengeluaranPeriod('mingguan')">
+                <i class="fa-solid fa-calendar-week"></i> Mingguan
+              </button>
+              <button class="btn btn-sm" id="btn-period-tab-bulanan" onclick="setPengeluaranPeriod('bulanan')">
+                <i class="fa-solid fa-calendar"></i> Bulanan
+              </button>
+              <button class="btn btn-sm" id="btn-period-tab-tahunan" onclick="setPengeluaranPeriod('tahunan')">
+                <i class="fa-solid fa-calendar-days"></i> Tahunan
+              </button>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px;">
+              <!-- Kategori Filter -->
+              <select class="form-select" id="filterPengeluaranKategori" style="padding:6px 12px; font-size:12px;" onchange="filterPengeluaranTable()">
+                <option value="all">Semua Kategori Beban</option>
+                <option value="OPEX">Beban Operasional (OPEX)</option>
+                <option value="HPP">HPP Proyek</option>
+                <option value="Petty Cash">Kas Kecil / Reimbursable</option>
+              </select>
+
+              <!-- Search -->
+              <div class="filter-search" style="max-width:240px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="searchPengeluaranInput" placeholder="Cari transaksi..." oninput="filterPengeluaranTable()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Period Notice Banner -->
+          <div id="pengeluaranPeriodBanner" style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:10px 16px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#1E40AF;">
+            <div>
+              <i class="fa-solid fa-circle-info" style="margin-right:6px;"></i>
+              <strong id="pengeluaranPeriodDesc">Menampilkan Transaksi Pengeluaran: Periode Harian (Hari Ini: Senin, 12 Oktober 2026)</strong>
+            </div>
+            <span class="badge info" id="pengeluaranPeriodBadge">Mode: Real-Time Harian</span>
+          </div>
+
+          <!-- Table Pengeluaran Lengkap Hari, Tanggal, dan Jam -->
+          <div class="card-panel">
+            <div class="card-header">
+              <div>
+                <h4 class="card-title"><i class="fa-solid fa-list" style="color:var(--primary);"></i> Rincian Pengeluaran Kas (Berdasarkan Waktu)</h4>
+                <p class="card-subtitle">Setiap transaksi mencatat Hari, Tanggal, Jam, Merchant/Penerima, dan Rekening Pengeluaran</p>
+              </div>
+              <span class="badge neutral" id="pengeluaranRowCountBadge">5 Data Transaksi</span>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table" id="pengeluaranTable">
+                <thead>
+                  <tr>
+                    <th style="width:22%;">Waktu Transaksi (Hari, Tanggal, Jam)</th>
+                    <th>Deskripsi / Transaksi</th>
+                    <th>Pihak Penerima / Merchant</th>
+                    <th>Kategori Beban</th>
+                    <th>Sumber Rekening</th>
+                    <th style="text-align:right;">Nominal Keluar</th>
+                    <th style="text-align:right;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="pengeluaranTableBody">
+                  <!-- Transaksi 1 - Hari Ini Pagi -->
+                  <tr data-period="harian" data-kategori="Petty Cash" data-amount="350000">
+                    <td>
+                      <div>
+                        <strong style="color:var(--text-primary); font-size:12px;"><i class="fa-solid fa-clock" style="color:var(--primary); margin-right:4px;"></i>Senin, 12 Okt 2026</strong>
+                        <div style="font-size:11px; color:#059669; font-weight:700;"><i class="fa-solid fa-hourglass-start"></i> Pukul 10:15:30 WIB</div>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>Konsumsi Rapat Client & Pantry Kantor</strong>
+                      <div style="font-size:10.5px; color:var(--text-muted);">Ref: EXP-20261012-001 • Klaim Reimbursement Budi S.</div>
+                    </td>
+                    <td><span style="font-weight:600;">Starbucks Coffee & Alfamart</span></td>
+                    <td><span class="badge purple">Petty Cash</span></td>
+                    <td><span class="badge neutral">Kas Kecil Kantor</span></td>
+                    <td style="text-align:right; font-weight:800; color:#EF4444;">- Rp 350.000</td>
+                    <td style="text-align:right;"><span class="badge success">✅ Terbayar</span></td>
+                  </tr>
+
+                  <!-- Transaksi 2 - Hari Ini Siang -->
+                  <tr data-period="harian" data-kategori="OPEX" data-amount="1750000">
+                    <td>
+                      <div>
+                        <strong style="color:var(--text-primary); font-size:12px;"><i class="fa-solid fa-clock" style="color:var(--primary); margin-right:4px;"></i>Senin, 12 Okt 2026</strong>
+                        <div style="font-size:11px; color:#059669; font-weight:700;"><i class="fa-solid fa-hourglass-start"></i> Pukul 13:45:00 WIB</div>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>Tagihan Internet Dedicated Biznet</strong>
+                      <div style="font-size:10.5px; color:var(--text-muted);">Ref: EXP-20261012-002 • Periode Oktober 2026</div>
+                    </td>
+                    <td><span style="font-weight:600;">PT Biznet Networks</span></td>
+                    <td><span class="badge info">OPEX</span></td>
+                    <td><span class="badge info">BCA Operasional</span></td>
+                    <td style="text-align:right; font-weight:800; color:#EF4444;">- Rp 1.750.000</td>
+                    <td style="text-align:right;"><span class="badge success">✅ Terbayar</span></td>
+                  </tr>
+
+                  <!-- Transaksi 3 - Mingguan (Minggu Ini) -->
+                  <tr data-period="mingguan" data-kategori="HPP" data-amount="15350000">
+                    <td>
+                      <div>
+                        <strong style="color:var(--text-primary); font-size:12px;"><i class="fa-solid fa-clock" style="color:var(--primary); margin-right:4px;"></i>Jumat, 09 Okt 2026</strong>
+                        <div style="font-size:11px; color:#475569; font-weight:700;"><i class="fa-solid fa-hourglass-start"></i> Pukul 09:20:15 WIB</div>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>Cloud Server AWS & RDS PostgreSQL Cluster</strong>
+                      <div style="font-size:10.5px; color:var(--text-muted);">Ref: BILL-AWS-1009 • Proyek Aplikasi RS Medika</div>
+                    </td>
+                    <td><span style="font-weight:600;">Amazon Web Services (AWS)</span></td>
+                    <td><span class="badge warning">HPP</span></td>
+                    <td><span class="badge info">BCA Operasional (Wise USD)</span></td>
+                    <td style="text-align:right; font-weight:800; color:#EF4444;">- Rp 15.350.000</td>
+                    <td style="text-align:right;"><span class="badge success">✅ Terbayar</span></td>
+                  </tr>
+
+                  <!-- Transaksi 4 - Mingguan (Minggu Ini) -->
+                  <tr data-period="mingguan" data-kategori="HPP" data-amount="5000000">
+                    <td>
+                      <div>
+                        <strong style="color:var(--text-primary); font-size:12px;"><i class="fa-solid fa-clock" style="color:var(--primary); margin-right:4px;"></i>Rabu, 07 Okt 2026</strong>
+                        <div style="font-size:11px; color:#475569; font-weight:700;"><i class="fa-solid fa-hourglass-start"></i> Pukul 15:10:40 WIB</div>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>Pencairan Termin 2 Kontrak Freelancer Flutter (SPK-014)</strong>
+                      <div style="font-size:10.5px; color:var(--text-muted);">Ref: SPK-FL-014 • Rian Pratama (Slicing POS)</div>
+                    </td>
+                    <td><span style="font-weight:600;">Rian Pratama</span></td>
+                    <td><span class="badge warning">HPP</span></td>
+                    <td><span class="badge info">BCA Operasional</span></td>
+                    <td style="text-align:right; font-weight:800; color:#EF4444;">- Rp 5.000.000</td>
+                    <td style="text-align:right;"><span class="badge success">✅ Terbayar</span></td>
+                  </tr>
+
+                  <!-- Transaksi 5 - Bulanan / Tahunan (Awal Bulan) -->
+                  <tr data-period="bulanan" data-kategori="OPEX" data-amount="1000000">
+                    <td>
+                      <div>
+                        <strong style="color:var(--text-primary); font-size:12px;"><i class="fa-solid fa-clock" style="color:var(--primary); margin-right:4px;"></i>Kamis, 01 Okt 2026</strong>
+                        <div style="font-size:11px; color:#475569; font-weight:700;"><i class="fa-solid fa-hourglass-start"></i> Pukul 08:30:00 WIB</div>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>Pembelian ATK, Kertas Printer & Tinta Kantor</strong>
+                      <div style="font-size:10.5px; color:var(--text-muted);">Ref: EXP-20261001-004 • Keperluan Administrasi</div>
+                    </td>
+                    <td><span style="font-weight:600;">Gramedia Stationery</span></td>
+                    <td><span class="badge info">OPEX</span></td>
+                    <td><span class="badge neutral">Kas Kecil Kantor</span></td>
+                    <td style="text-align:right; font-weight:800; color:#EF4444;">- Rp 1.000.000</td>
+                    <td style="text-align:right;"><span class="badge success">✅ Terbayar</span></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -748,19 +1090,22 @@
         </section>
 
 
-        <!-- ================================================================
-             5. PENGGAJIAN KARYAWAN (PAYROLL)
+        <!-- ===============        <!-- ================================================================
+             5. PENGGAJIAN KARYAWAN (PAYROLL OPEX - SYNC HR)
              ================================================================ -->
         <section id="view-payroll" class="view-section">
           <div class="hero-banner">
             <div class="hero-left">
               <div class="hero-icon"><i class="fa-solid fa-users"></i></div>
               <div class="hero-title">
-                <h2>Penggajian Karyawan Tetap (Payroll OPEX)</h2>
-                <p>Perhitungan gaji staf bulanan, tunjangan operasional, dan indeks performa kinerja.</p>
+                <h2>Penggajian Karyawan Tetap (Payroll Terintegrasi Modul HR)</h2>
+                <p>Master data karyawan dan besaran gaji pokok mengikuti data resmi jabatan dari Modul HR Astacode.</p>
               </div>
             </div>
             <div class="hero-actions">
+              <button class="btn outline-white" onclick="syncPayrollFromHrModule()">
+                <i class="fa-solid fa-arrows-rotate"></i> Sinkron Master HR
+              </button>
               <button class="btn primary" onclick="openFinanceModal('modalCreatePayroll')">
                 <i class="fa-solid fa-plus"></i> Tambah Data Gaji
               </button>
@@ -770,78 +1115,171 @@
           <div class="kpi-grid">
             <div class="kpi-card">
               <div class="kpi-top"><span class="kpi-label">Total Beban Gaji</span><i class="fa-solid fa-money-bill-wave" style="color:#305BA3;"></i></div>
-              <div class="kpi-val">Rp 26.350.000</div>
-              <div class="kpi-sub">Oktober 2026</div>
+              <div class="kpi-val" id="payroll-kpi-total">Rp 75.000.000</div>
+              <div class="kpi-sub">Oktober 2026 • 6 Karyawan Tetap</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Total Tunjangan</span><i class="fa-solid fa-gift" style="color:#8B5CF6;"></i></div>
-              <div class="kpi-val">Rp 3.000.000</div>
-              <div class="kpi-sub">Kesehatan & Transport</div>
+              <div class="kpi-top"><span class="kpi-label">Total Tunjangan Jabatan</span><i class="fa-solid fa-gift" style="color:#8B5CF6;"></i></div>
+              <div class="kpi-val">Rp 10.700.000</div>
+              <div class="kpi-sub">Standar Grade HR Astacode</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Staf Aktif</span><i class="fa-solid fa-user-group" style="color:#10B981;"></i></div>
-              <div class="kpi-val">2 Orang</div>
-              <div class="kpi-sub">Tim Internal</div>
+              <div class="kpi-top"><span class="kpi-label">Karyawan Tetap (HR)</span><i class="fa-solid fa-user-check" style="color:#10B981;"></i></div>
+              <div class="kpi-val">6 Orang</div>
+              <div class="kpi-sub"><span class="badge success" style="font-size:10px;"><i class="fa-solid fa-check"></i> 100% Terverifikasi HR</span></div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Rata-rata Indeks</span><i class="fa-solid fa-star" style="color:#F59E0B;"></i></div>
-              <div class="kpi-val">96.5%</div>
-              <div class="kpi-sub">Performa Baik</div>
+              <div class="kpi-top"><span class="kpi-label">Status Payroll</span><i class="fa-solid fa-calendar-check" style="color:#F59E0B;"></i></div>
+              <div class="kpi-val" style="font-size:18px; color:#10B981;">Draft Payrun PR-2026-10</div>
+              <div class="kpi-sub">Cut-off 25 Okt 2026</div>
             </div>
           </div>
 
           <div class="card-panel">
             <div class="card-header">
-              <h4 class="card-title">Daftar Payroll Karyawan (Oktober 2026)</h4>
-              <button class="btn btn-sm success" onclick="showFinanceToast('Slip gaji massal berhasil di-generate & dikirim ke email karyawan!', 'success')"><i class="fa-solid fa-envelope"></i> Kirim Slip Gaji</button>
+              <div>
+                <h4 class="card-title">Daftar Payroll Karyawan Astacode (Data Master HR)</h4>
+                <p class="card-subtitle">Gaji pokok tersinkron otomatis berdasarkan jabatan dan level di Modul HR</p>
+              </div>
+              <button class="btn btn-sm success" onclick="showFinanceToast('Slip gaji massal di-generate dari master HR & dikirim ke email karyawan!', 'success')"><i class="fa-solid fa-envelope"></i> Kirim Slip Gaji Massal</button>
             </div>
             <div class="table-wrap">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Karyawan & Posisi</th>
-                    <th>Gaji Pokok</th>
-                    <th>Tunjangan</th>
-                    <th style="text-align:center;">Indeks Performa</th>
-                    <th style="text-align:right;">Gaji Bersih (Net)</th>
+                    <th>Karyawan & Jabatan (HR)</th>
+                    <th>Divisi / Tim</th>
+                    <th style="text-align:right;">Gaji Pokok (Standar HR)</th>
+                    <th style="text-align:right;">Tunjangan Jabatan</th>
+                    <th style="text-align:center;">Presensi & Log HR</th>
+                    <th style="text-align:right;">Gaji Bersih (Take Home Pay)</th>
                     <th style="text-align:right;">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody id="payrollTableBody">
+                  <!-- Bagas Prakoso - Tech Lead -->
                   <tr>
                     <td>
                       <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#EFF6FF; color:#305BA3; font-weight:700; display:grid; place-items:center;">AS</div>
+                        <div style="width:32px; height:32px; border-radius:50%; background:#EFF6FF; color:#305BA3; font-weight:700; display:grid; place-items:center;">BP</div>
                         <div>
-                          <strong style="display:block; color:var(--text-primary);">Andi Setiawan</strong>
-                          <span style="font-size:10.5px; color:var(--text-muted);">Lead Backend Engineer</span>
+                          <strong style="display:block; color:var(--text-primary);">Bagas Prakoso</strong>
+                          <span style="font-size:10.5px; color:var(--primary); font-weight:600;"><i class="fa-solid fa-id-badge"></i> Tech Lead (Grade Tech Lead)</span>
                         </div>
                       </div>
                     </td>
-                    <td>Rp 15.000.000</td>
-                    <td>Rp 2.000.000</td>
-                    <td style="text-align:center;"><span class="badge success">100%</span></td>
-                    <td style="text-align:right; font-weight:800; color:var(--text-primary);">Rp 17.000.000</td>
+                    <td><span class="badge info">Engineering</span></td>
+                    <td style="text-align:right; font-weight:600;">Rp 18.000.000</td>
+                    <td style="text-align:right; color:var(--text-muted);">Rp 3.000.000</td>
+                    <td style="text-align:center;"><span class="badge success">100% Hadir</span></td>
+                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 21.000.000</td>
                     <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showFinanceToast('Slip gaji Andi Setiawan dibuka', 'info')"><i class="fa-solid fa-file-invoice"></i> Slip</button>
+                      <button class="btn btn-xs" onclick="showSlipGajiModal('Bagas Prakoso', 'Tech Lead', 18000000, 3000000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
                     </td>
                   </tr>
+
+                  <!-- Rina Anggraini - HR Manager -->
                   <tr>
                     <td>
                       <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#F5F3FF; color:#8B5CF6; font-weight:700; display:grid; place-items:center;">BD</div>
+                        <div style="width:32px; height:32px; border-radius:50%; background:#FDF2F8; color:#DB2777; font-weight:700; display:grid; place-items:center;">RA</div>
                         <div>
-                          <strong style="display:block; color:var(--text-primary);">Budi Darmawan</strong>
-                          <span style="font-size:10.5px; color:var(--text-muted);">Senior UI/UX Designer</span>
+                          <strong style="display:block; color:var(--text-primary);">Rina Anggraini</strong>
+                          <span style="font-size:10.5px; color:#DB2777; font-weight:600;"><i class="fa-solid fa-id-badge"></i> HR Manager (Grade Manager)</span>
                         </div>
                       </div>
                     </td>
-                    <td>Rp 10.000.000</td>
-                    <td>Rp 1.000.000</td>
-                    <td style="text-align:center;"><span class="badge success">95%</span></td>
-                    <td style="text-align:right; font-weight:800; color:var(--text-primary);">Rp 10.500.000</td>
+                    <td><span class="badge purple">People Ops</span></td>
+                    <td style="text-align:right; font-weight:600;">Rp 14.000.000</td>
+                    <td style="text-align:right; color:var(--text-muted);">Rp 2.500.000</td>
+                    <td style="text-align:center;"><span class="badge success">100% Hadir</span></td>
+                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 16.500.000</td>
                     <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showFinanceToast('Slip gaji Budi Darmawan dibuka', 'info')"><i class="fa-solid fa-file-invoice"></i> Slip</button>
+                      <button class="btn btn-xs" onclick="showSlipGajiModal('Rina Anggraini', 'HR Manager', 14000000, 2500000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
+                    </td>
+                  </tr>
+
+                  <!-- Fajar Nugroho - Backend Developer -->
+                  <tr>
+                    <td>
+                      <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:#EFF6FF; color:#1D4ED8; font-weight:700; display:grid; place-items:center;">FN</div>
+                        <div>
+                          <strong style="display:block; color:var(--text-primary);">Fajar Nugroho</strong>
+                          <span style="font-size:10.5px; color:var(--text-muted);"><i class="fa-solid fa-id-badge"></i> Backend Developer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="badge info">Engineering</span></td>
+                    <td style="text-align:right; font-weight:600;">Rp 12.000.000</td>
+                    <td style="text-align:right; color:var(--text-muted);">Rp 1.500.000</td>
+                    <td style="text-align:center;"><span class="badge success">98% Hadir</span></td>
+                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 13.500.000</td>
+                    <td style="text-align:right;">
+                      <button class="btn btn-xs" onclick="showSlipGajiModal('Fajar Nugroho', 'Backend Developer', 12000000, 1500000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
+                    </td>
+                  </tr>
+
+                  <!-- Dewi Lestari - Frontend Developer -->
+                  <tr>
+                    <td>
+                      <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:#ECFDF5; color:#059669; font-weight:700; display:grid; place-items:center;">DL</div>
+                        <div>
+                          <strong style="display:block; color:var(--text-primary);">Dewi Lestari</strong>
+                          <span style="font-size:10.5px; color:var(--text-muted);"><i class="fa-solid fa-id-badge"></i> Frontend Developer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="badge info">Engineering</span></td>
+                    <td style="text-align:right; font-weight:600;">Rp 11.000.000</td>
+                    <td style="text-align:right; color:var(--text-muted);">Rp 1.500.000</td>
+                    <td style="text-align:center;"><span class="badge success">100% Hadir</span></td>
+                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 12.500.000</td>
+                    <td style="text-align:right;">
+                      <button class="btn btn-xs" onclick="showSlipGajiModal('Dewi Lestari', 'Frontend Developer', 11000000, 1500000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
+                    </td>
+                  </tr>
+
+                  <!-- Citra Maharani - UI/UX Designer -->
+                  <tr>
+                    <td>
+                      <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:#F5F3FF; color:#8B5CF6; font-weight:700; display:grid; place-items:center;">CM</div>
+                        <div>
+                          <strong style="display:block; color:var(--text-primary);">Citra Maharani</strong>
+                          <span style="font-size:10.5px; color:var(--text-muted);"><i class="fa-solid fa-id-badge"></i> UI/UX Designer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="badge purple">Design</span></td>
+                    <td style="text-align:right; font-weight:600;">Rp 10.500.000</td>
+                    <td style="text-align:right; color:var(--text-muted);">Rp 1.200.000</td>
+                    <td style="text-align:center;"><span class="badge success">96% Hadir</span></td>
+                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 11.700.000</td>
+                    <td style="text-align:right;">
+                      <button class="btn btn-xs" onclick="showSlipGajiModal('Citra Maharani', 'UI/UX Designer', 10500000, 1200000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
+                    </td>
+                  </tr>
+
+                  <!-- Galih Pratama - QA Engineer -->
+                  <tr>
+                    <td>
+                      <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:#FEF3C7; color:#D97706; font-weight:700; display:grid; place-items:center;">GP</div>
+                        <div>
+                          <strong style="display:block; color:var(--text-primary);">Galih Pratama</strong>
+                          <span style="font-size:10.5px; color:var(--text-muted);"><i class="fa-solid fa-id-badge"></i> QA Engineer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="badge warning">QA</span></td>
+                    <td style="text-align:right; font-weight:600;">Rp 9.500.000</td>
+                    <td style="text-align:right; color:var(--text-muted);">Rp 1.000.000</td>
+                    <td style="text-align:center;"><span class="badge success">95% Hadir</span></td>
+                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 10.500.000</td>
+                    <td style="text-align:right;">
+                      <button class="btn btn-xs" onclick="showSlipGajiModal('Galih Pratama', 'QA Engineer', 9500000, 1000000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
                     </td>
                   </tr>
                 </tbody>
@@ -939,20 +1377,20 @@
 
 
         <!-- ================================================================
-             7. PEMBAYARAN FREELANCER (HPP PROYEK)
+             7. SISTEM KONTRAK KERJA FREELANCE (HPP PROYEK)
              ================================================================ -->
         <section id="view-freelancer" class="view-section">
           <div class="hero-banner">
             <div class="hero-left">
-              <div class="hero-icon"><i class="fa-solid fa-user-clock"></i></div>
+              <div class="hero-icon"><i class="fa-solid fa-file-contract"></i></div>
               <div class="hero-title">
-                <h2>Pembayaran Freelancer (HPP Proyek)</h2>
-                <p>Pencairan fee tenaga lepas berbasis deliverables yang memotong margin keuntungan proyek secara akurat.</p>
+                <h2>Sistem Kontrak Kerja Freelance (HPP Proyek)</h2>
+                <p>Pengelolaan tenaga lepas berbasis Surat Perjanjian Kontrak Kerja (SPK), kesepakatan termin milestone PM, & pencairan fee.</p>
               </div>
             </div>
             <div class="hero-actions">
               <button class="btn primary" onclick="openFinanceModal('modalCreateFreelancer')">
-                <i class="fa-solid fa-plus"></i> Tambah Tagihan Freelancer
+                <i class="fa-solid fa-plus"></i> Buat Kontrak Freelance Baru
               </button>
             </div>
           </div>
@@ -960,62 +1398,95 @@
           <div class="kpi-grid cols-3">
             <div class="kpi-card">
               <div class="kpi-accent-bar" style="background:#F59E0B;"></div>
-              <div class="kpi-top"><span class="kpi-label">Menunggu Approval PM</span><i class="fa-solid fa-hourglass-half" style="color:#F59E0B;"></i></div>
+              <div class="kpi-top"><span class="kpi-label">Menunggu Verifikasi PM</span><i class="fa-solid fa-hourglass-half" style="color:#F59E0B;"></i></div>
               <div class="kpi-val" style="color:#D97706;">Rp 8.500.000</div>
-              <div class="kpi-sub">2 tagihan dalam peninjauan</div>
+              <div class="kpi-sub">Deliverable milestone sedang direview PM</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-accent-bar" style="background:#10B981;"></div>
-              <div class="kpi-top"><span class="kpi-label">Disetujui, Siap Bayar</span><i class="fa-solid fa-check-double" style="color:#10B981;"></i></div>
+              <div class="kpi-top"><span class="kpi-label">Disetujui PM • Siap Cair</span><i class="fa-solid fa-check-double" style="color:#10B981;"></i></div>
               <div class="kpi-val" style="color:#10B981;">Rp 5.000.000</div>
-              <div class="kpi-sub">Siap transfer bank</div>
+              <div class="kpi-sub">Siap ditransfer oleh Tim Finance</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-accent-bar" style="background:#305BA3;"></div>
-              <div class="kpi-top"><span class="kpi-label">Total Fee Terbayar</span><i class="fa-solid fa-circle-check" style="color:#305BA3;"></i></div>
+              <div class="kpi-top"><span class="kpi-label">Total Realisasi Kontrak HPP</span><i class="fa-solid fa-circle-check" style="color:#305BA3;"></i></div>
               <div class="kpi-val">Rp 23.500.000</div>
-              <div class="kpi-sub">Masuk beban HPP</div>
+              <div class="kpi-sub">Beban HPP terlunasi</div>
             </div>
           </div>
 
           <div class="card-panel">
             <div class="card-header">
-              <h4 class="card-title">Daftar Penagihan Freelancer Proyek</h4>
+              <div>
+                <h4 class="card-title">Daftar Kontrak Kerja & Penagihan Freelancer</h4>
+                <p class="card-subtitle">Setiap freelancer terikat dokumen SPK resmi dengan skema termin bertahap</p>
+              </div>
+              <span class="badge info"><i class="fa-solid fa-shield-halved"></i> Terikat Dokumen SPK</span>
             </div>
             <div class="table-wrap">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Nama Freelancer</th>
+                    <th>No. Kontrak (SPK) & Freelancer</th>
                     <th>Proyek Terkait</th>
-                    <th>Deliverables / Task</th>
-                    <th style="text-align:center;">Termin (Selesai/Total)</th>
+                    <th>Deliverables / Milestone PM</th>
+                    <th style="text-align:center;">Termin Kontrak</th>
                     <th style="text-align:right;">Nominal Fee Termin</th>
-                    <th>Status Approval</th>
+                    <th>Status Verifikasi</th>
                     <th style="text-align:right;">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><strong>Rian Pratama</strong><div style="font-size:10.5px; color:var(--text-muted);">Mobile Developer Flutter</div></td>
+                    <td>
+                      <div>
+                        <strong style="color:var(--text-primary);">Rian Pratama</strong>
+                        <span class="tax-tag ppn" style="margin-left:6px; font-size:10px;"><i class="fa-solid fa-file-signature"></i> SPK-2026/FL-014</span>
+                      </div>
+                      <div style="font-size:10.5px; color:var(--text-muted);">Mobile Developer Flutter • Durasi: 2 Bulan</div>
+                    </td>
                     <td><span class="badge info">Aplikasi Kasir RS Medika</span></td>
                     <td>Slicing UI & Integrasi API POS</td>
                     <td style="text-align:center;"><span class="badge success" style="font-weight:700;">Termin 2 dari 3</span></td>
-                    <td style="text-align:right; font-weight:800;">Rp 5.000.000</td>
+                    <td style="text-align:right; font-weight:800; color:var(--text-primary);">Rp 5.000.000</td>
                     <td><span class="badge success">✅ APPROVED PM</span></td>
                     <td style="text-align:right;">
-                      <button class="btn btn-xs success" onclick="showFinanceToast('Dana freelancer berhasil ditransfer via BCA!', 'success')">Cairkan Fee</button>
+                      <button class="btn btn-xs success" onclick="showFinanceToast('Dana termin kontrak Rian Pratama berhasil ditransfer via BCA!', 'success')"><i class="fa-solid fa-money-bill-transfer"></i> Cairkan Fee</button>
                     </td>
                   </tr>
                   <tr>
-                    <td><strong>Siti Rahma</strong><div style="font-size:10.5px; color:var(--text-muted);">QA Tester</div></td>
+                    <td>
+                      <div>
+                        <strong style="color:var(--text-primary);">Siti Rahma</strong>
+                        <span class="tax-tag ppn" style="margin-left:6px; font-size:10px;"><i class="fa-solid fa-file-signature"></i> SPK-2026/FL-015</span>
+                      </div>
+                      <div style="font-size:10.5px; color:var(--text-muted);">QA Automation Tester • Durasi: 1 Bulan</div>
+                    </td>
                     <td><span class="badge info">Aplikasi Kasir RS Medika</span></td>
                     <td>Automation Testing Sprint 2</td>
                     <td style="text-align:center;"><span class="badge warning" style="font-weight:700;">Termin 1 dari 2</span></td>
-                    <td style="text-align:right; font-weight:800;">Rp 3.500.000</td>
-                    <td><span class="badge warning">🟡 REVIEW PM</span></td>
+                    <td style="text-align:right; font-weight:800; color:var(--text-primary);">Rp 3.500.000</td>
+                    <td><span class="badge warning">🟡 MENUNGGU PM</span></td>
                     <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showFinanceToast('Detail deliverables dibuka', 'info')">Review</button>
+                      <button class="btn btn-xs" onclick="showFinanceToast('Dokumen kontrak SPK-2026/FL-015 & deliverables dibuka', 'info')"><i class="fa-solid fa-eye"></i> Cek Kontrak</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div>
+                        <strong style="color:var(--text-primary);">Hana Putri</strong>
+                        <span class="tax-tag ppn" style="margin-left:6px; font-size:10px;"><i class="fa-solid fa-file-signature"></i> SPK-2026/FL-011</span>
+                      </div>
+                      <div style="font-size:10.5px; color:var(--text-muted);">Mobile Developer (Rate: Rp 95.000/jam di HR)</div>
+                    </td>
+                    <td><span class="badge purple">Web Company Profile</span></td>
+                    <td>Penyelesaian Modul Katalog & Checkout</td>
+                    <td style="text-align:center;"><span class="badge success" style="font-weight:700;">Termin 3 (Pelunasan)</span></td>
+                    <td style="text-align:right; font-weight:800; color:var(--text-primary);">Rp 4.750.000</td>
+                    <td><span class="badge success">✅ LUNAS</span></td>
+                    <td style="text-align:right;">
+                      <span class="badge success"><i class="fa-solid fa-check"></i> Sudah Ditransfer</span>
                     </td>
                   </tr>
                 </tbody>
@@ -1538,40 +2009,79 @@
        GLOBAL INTERACTIVE MODALS
        ================================================================ -->
 
-  <!-- Modal: Tambah Termin Baru -->
-  <div class="modal-backdrop" id="modalCreateTermin">
+  <!-- Modal: Edit Termin (Kesepakatan CRM) -->
+  <div class="modal-backdrop" id="modalEditTermin">
     <div class="modal-card">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-file-invoice-dollar" style="color:var(--primary); margin-right:8px;"></i> Tambah Termin Penagihan Baru</h3>
-        <button class="icon-btn" onclick="closeFinanceModal('modalCreateTermin')"><i class="fa-solid fa-xmark"></i></button>
+        <h3><i class="fa-solid fa-pen-to-square" style="color:var(--primary); margin-right:8px;"></i> Edit Jadwal & Data Termin (CRM)</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalEditTermin')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <form id="formTermin" onsubmit="event.preventDefault(); showFinanceToast('Termin baru berhasil diterbitkan!', 'success'); closeFinanceModal('modalCreateTermin');">
-          <div class="form-group">
-            <label class="form-label">Pilih Proyek Terkait</label>
-            <select class="form-select">
-              <option>Aplikasi Kasir RS Medika (Rp 30.000.000)</option>
-              <option>Web Company Profile X (Rp 15.000.000)</option>
-              <option>Sistem HRIS Terintegrasi (Rp 80.000.000)</option>
-            </select>
+        <form id="formEditTermin" onsubmit="event.preventDefault(); submitSaveEditedTermin();">
+          <input type="hidden" id="edit-t-id" value="">
+          <div style="background:#F1F5F9; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <span style="color:var(--text-muted);">Proyek:</span>
+              <strong style="color:var(--text-primary);" id="edit-t-proj">Aplikasi Kasir RS Medika</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted);">Klien:</span>
+              <strong style="color:var(--text-primary);" id="edit-t-client">RS Medika Utama</strong>
+            </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Nama Termin / Milestone</label>
-            <input type="text" class="form-input" placeholder="Contoh: Termin 3 - BAST Lunas" required>
+            <label class="form-label">Nama Termin / Milestone CRM</label>
+            <input type="text" id="edit-t-name" class="form-input" placeholder="Contoh: Termin 1: DP Awal (30%)" required>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
-              <label class="form-label">Nominal (Rp)</label>
-              <input type="number" class="form-input" placeholder="Rp 0" required>
+              <label class="form-label">Dasar Pengenaan Pajak (DPP Rp)</label>
+              <input type="number" id="edit-t-dpp" class="form-input" placeholder="Rp 0" required oninput="calcEditModalTerminTax()">
             </div>
             <div class="form-group">
-              <label class="form-label">Jatuh Tempo</label>
-              <input type="date" class="form-input" required>
+              <label class="form-label">Tanggal Jatuh Tempo</label>
+              <input type="date" id="edit-t-due" class="form-input" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Tarif PPN</label>
+              <select id="edit-t-ppn" class="form-select" onchange="calcEditModalTerminTax()">
+                <option value="11" selected>PPN 11% (Standar)</option>
+                <option value="12">PPN 12% (Kenaikan UU HPP)</option>
+                <option value="0">Non-PPN (0% Bebas Pajak)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Potongan PPh 23</label>
+              <select id="edit-t-pph" class="form-select" onchange="calcEditModalTerminTax()">
+                <option value="2" selected>PPh 23 - 2% (Jasa Software)</option>
+                <option value="0">Tanpa PPh 23 (0%)</option>
+              </select>
+            </div>
+          </div>
+          <!-- Live Tax Calculation Box -->
+          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:14px; font-size:11.5px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span style="color:var(--text-muted);">Nilai PPN:</span>
+              <strong style="color:var(--primary);" id="edit-t-calc-ppn">Rp 0</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span style="color:var(--text-muted);">Potongan PPh 23:</span>
+              <strong style="color:#B45309;" id="edit-t-calc-pph">- Rp 0</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border); padding-top:6px; font-weight:800;">
+              <span>Total Tagihan Invoice:</span>
+              <strong style="color:var(--text-primary); font-size:13px;" id="edit-t-calc-total">Rp 0</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#10B981; font-size:11px; margin-top:2px;">
+              <span>Estimasi Kas Masuk (Net):</span>
+              <strong id="edit-t-calc-net">Rp 0</strong>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn" onclick="closeFinanceModal('modalCreateTermin')">Batal</button>
-            <button type="submit" class="btn primary">Simpan & Terbitkan</button>
+            <button type="button" class="btn" onclick="closeFinanceModal('modalEditTermin')">Batal</button>
+            <button type="submit" class="btn primary"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
           </div>
         </form>
       </div>
@@ -1622,113 +2132,126 @@
     </div>
   </div>
 
-  <!-- Modal: Tambah Payroll -->
+  <!-- Modal: Tambah Payroll (Terhubung Master Jabatan HR) -->
   <div class="modal-backdrop" id="modalCreatePayroll">
     <div class="modal-card">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-users" style="color:var(--primary); margin-right:8px;"></i> Tambah Data Gaji Karyawan</h3>
+        <h3><i class="fa-solid fa-users" style="color:var(--primary); margin-right:8px;"></i> Input Payroll Karyawan (Sinkron Jabatan HR)</h3>
         <button class="icon-btn" onclick="closeFinanceModal('modalCreatePayroll')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <form onsubmit="event.preventDefault(); showFinanceToast('Data gaji karyawan berhasil ditambahkan!', 'success'); closeFinanceModal('modalCreatePayroll');">
+        <form onsubmit="event.preventDefault(); submitPayrollHrForm();">
           <div class="form-group">
-            <label class="form-label">Nama Karyawan & Posisi</label>
-            <input type="text" class="form-input" placeholder="Contoh: Sarah A. - Project Manager" required>
-          </div>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-            <div class="form-group">
-              <label class="form-label">Gaji Pokok (Rp)</label>
-              <input type="number" class="form-input" placeholder="0" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Tunjangan (Rp)</label>
-              <input type="number" class="form-input" placeholder="0" value="1500000">
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn" onclick="closeFinanceModal('modalCreatePayroll')">Batal</button>
-            <button type="submit" class="btn primary">Simpan Payroll</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Input Tagihan Vendor -->
-  <div class="modal-backdrop" id="modalCreateVendor">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-store" style="color:var(--primary); margin-right:8px;"></i> Input Tagihan Vendor Baru</h3>
-        <button class="icon-btn" onclick="closeFinanceModal('modalCreateVendor')"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body">
-        <form onsubmit="event.preventDefault(); showFinanceToast('Tagihan vendor berhasil dicatat di AP!', 'success'); closeFinanceModal('modalCreateVendor');">
-          <div class="form-group">
-            <label class="form-label">Nama Vendor / Perusahaan</label>
-            <input type="text" class="form-input" placeholder="Contoh: Amazon Web Services" required>
-          </div>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-            <div class="form-group">
-              <label class="form-label">Nominal (Mata Uang)</label>
-              <input type="text" class="form-input" placeholder="Misal: $ 1.200 USD atau Rp 18.000.000" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Jatuh Tempo</label>
-              <input type="date" class="form-input" required>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn" onclick="closeFinanceModal('modalCreateVendor')">Batal</button>
-            <button type="submit" class="btn primary">Simpan Tagihan</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Input Freelancer -->
-  <div class="modal-backdrop" id="modalCreateFreelancer">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-user-clock" style="color:var(--primary); margin-right:8px;"></i> Tambah Tagihan Freelancer Proyek</h3>
-        <button class="icon-btn" onclick="closeFinanceModal('modalCreateFreelancer')"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body">
-        <form onsubmit="event.preventDefault(); showFinanceToast('Tagihan termin freelancer berhasil didaftarkan untuk review PM!', 'success'); closeFinanceModal('modalCreateFreelancer');">
-          <div class="form-group">
-            <label class="form-label">Nama Freelancer</label>
-            <input type="text" class="form-input" placeholder="Nama Freelancer" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Bebankan Ke Proyek (HPP)</label>
-            <select class="form-select">
-              <option>Aplikasi Kasir RS Medika</option>
-              <option>Web Company Profile X</option>
+            <label class="form-label">Pilih Karyawan Tetap (Master HR)</label>
+            <select class="form-select" id="pay-emp-select" onchange="onHrEmployeeSelected(this.value)">
+              <option value="custom">-- Pilih Staf HR atau Input Baru --</option>
+              <option value="Bagas Prakoso" data-jabatan="Tech Lead" data-tim="Engineering" data-gaji="18000000" data-tunj="3000000">Bagas Prakoso — Tech Lead (Engineering)</option>
+              <option value="Rina Anggraini" data-jabatan="HR Manager" data-tim="People Ops" data-gaji="14000000" data-tunj="2500000">Rina Anggraini — HR Manager (People Ops)</option>
+              <option value="Fajar Nugroho" data-jabatan="Backend Developer" data-tim="Engineering" data-gaji="12000000" data-tunj="1500000">Fajar Nugroho — Backend Developer (Engineering)</option>
+              <option value="Dewi Lestari" data-jabatan="Frontend Developer" data-tim="Engineering" data-gaji="11000000" data-tunj="1500000">Dewi Lestari — Frontend Developer (Engineering)</option>
+              <option value="Citra Maharani" data-jabatan="UI/UX Designer" data-tim="Design" data-gaji="10500000" data-tunj="1200000">Citra Maharani — UI/UX Designer (Design)</option>
+              <option value="Galih Pratama" data-jabatan="QA Engineer" data-tim="QA" data-gaji="9500000" data-tunj="1000000">Galih Pratama — QA Engineer (QA)</option>
             </select>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
-              <label class="form-label">Termin Ke- (Input Manual)</label>
-              <input type="number" class="form-input" placeholder="Misal: 1" min="1" value="1" required>
+              <label class="form-label">Nama Karyawan</label>
+              <input type="text" id="pay-name" class="form-input" placeholder="Nama Karyawan" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Total Termin Keseluruhan</label>
-              <input type="number" class="form-input" placeholder="Misal: 3" min="1" value="3" required>
+              <label class="form-label">Jabatan (Mengikuti Modul HR)</label>
+              <select class="form-select" id="pay-jabatan" onchange="onHrJabatanChanged(this.value)">
+                <option value="Tech Lead" data-gaji="18000000" data-tunj="3000000">Tech Lead</option>
+                <option value="HR Manager" data-gaji="14000000" data-tunj="2500000">HR Manager</option>
+                <option value="Backend Developer" data-gaji="12000000" data-tunj="1500000">Backend Developer</option>
+                <option value="Frontend Developer" data-gaji="11000000" data-tunj="1500000">Frontend Developer</option>
+                <option value="UI/UX Designer" data-gaji="10500000" data-tunj="1200000">UI/UX Designer</option>
+                <option value="QA Engineer" data-gaji="9500000" data-tunj="1000000">QA Engineer</option>
+                <option value="Junior Developer" data-gaji="7000000" data-tunj="800000">Junior Developer</option>
+              </select>
             </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
-              <label class="form-label">Deliverable / Milestone</label>
-              <input type="text" class="form-input" placeholder="Contoh: Slicing UI" required>
+              <label class="form-label">Gaji Pokok Sesuai Jabatan (Rp)</label>
+              <input type="number" id="pay-gaji" class="form-input" placeholder="0" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Nominal Fee Termin Ini (Rp)</label>
-              <input type="number" class="form-input" placeholder="0" required>
+              <label class="form-label">Tunjangan Jabatan (Rp)</label>
+              <input type="number" id="pay-tunj" class="form-input" placeholder="0" value="1500000">
             </div>
           </div>
-          <div class="modal-footer">
+          <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; font-size:11.5px; color:#166534; display:flex; gap:8px;">
+            <i class="fa-solid fa-circle-check" style="margin-top:2px;"></i>
+            <span>Besaran gaji pokok terkunci dan diselaraskan secara otomatis dengan standar golongan gaji pada database Modul HR Astacode.</span>
+          </div>
+          <div class="modal-footer" style="margin-top:14px;">
+            <button type="button" class="btn" onclick="closeFinanceModal('modalCreatePayroll')">Batal</button>
+            <button type="submit" class="btn primary">Simpan Payroll HR</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Input Kontrak Kerja Freelancer (Sistem SPK & Termin) -->
+  <div class="modal-backdrop" id="modalCreateFreelancer">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-contract" style="color:var(--primary); margin-right:8px;"></i> Buat Kontrak Kerja Freelance (SPK)</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalCreateFreelancer')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="event.preventDefault(); submitFreelanceContract();">
+          <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Nomor Kontrak (SPK Resmi)</label>
+              <input type="text" id="fl-spk" class="form-input" value="SPK-2026/FL-016" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pilih Proyek (HPP)</label>
+              <select class="form-select" id="fl-project">
+                <option>Aplikasi Kasir RS Medika</option>
+                <option>Web Company Profile X</option>
+                <option>Sistem HRIS Terintegrasi</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Nama Freelancer</label>
+              <input type="text" id="fl-name" class="form-input" placeholder="Contoh: Hana Putri" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Keahlian / Posisi Kontrak</label>
+              <input type="text" id="fl-role" class="form-input" placeholder="Contoh: Flutter Developer / UI Designer" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Skema Termin Kontrak</label>
+              <select class="form-select" id="fl-termin">
+                <option>Termin 1 dari 3 (DP Awal)</option>
+                <option>Termin 2 dari 3 (Deliverables Slicing)</option>
+                <option>Termin 3 dari 3 (Pelunasan & UAT)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nilai Kontrak Termin Ini (Rp)</label>
+              <input type="number" id="fl-amount" class="form-input" placeholder="0" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deliverable / Milestone Acuan PM</label>
+            <input type="text" id="fl-milestone" class="form-input" placeholder="Contoh: Slicing UI dan Integrasi API Selesai Di-review PM" required>
+          </div>
+          <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:10px 14px; font-size:11.5px; color:#92400E; display:flex; gap:8px;">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-top:2px;"></i>
+            <span>Sesuai SOP Astacode, pembayaran termin kontrak freelancer hanya dicairkan oleh Finance setelah task/milestone disetujui tuntas oleh PM.</span>
+          </div>
+          <div class="modal-footer" style="margin-top:14px;">
             <button type="button" class="btn" onclick="closeFinanceModal('modalCreateFreelancer')">Batal</button>
-            <button type="submit" class="btn primary">Ajukan Approval</button>
+            <button type="submit" class="btn primary">Daftarkan Kontrak SPK</button>
           </div>
         </form>
       </div>
@@ -1811,6 +2334,99 @@
             <button type="submit" class="btn primary">Simpan Akun</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Rincian Faktur Pajak & Breakdown Termin -->
+  <div class="modal-backdrop" id="modalTaxDetail">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-receipt" style="color:var(--primary); margin-right:8px;"></i> Rincian Faktur Pajak & Pembayaran</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalTaxDetail')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Termin / Dokumen</span>
+            <span class="badge success" id="mtd-status">Lunas</span>
+          </div>
+          <h4 id="mtd-title" style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:4px;">Termin 1 (DP 30%)</h4>
+          <span style="font-size:11.5px; color:var(--text-muted);">Proyek: Aplikasi Kasir RS Medika • NPWP Klien: 01.345.678.9-012.000</span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; font-size:12.5px;">
+          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
+            <span style="color:var(--text-muted);">Dasar Pengenaan Pajak (DPP):</span>
+            <strong id="mtd-dpp" style="color:var(--text-primary);">Rp 9.000.000</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
+            <span style="color:var(--text-muted);"><i class="fa-solid fa-plus text-primary" style="font-size:10px; margin-right:4px;"></i>PPN Keluaran (11%):</span>
+            <strong id="mtd-ppn" style="color:#1D4ED8;">+ Rp 990.000</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
+            <span style="color:var(--text-muted);"><i class="fa-solid fa-minus" style="font-size:10px; margin-right:4px; color:#B45309;"></i>Withholding Tax PPh 23 (2%):</span>
+            <strong id="mtd-pph" style="color:#B45309;">- Rp 180.000</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-top:1px dashed var(--border); font-size:13.5px; font-weight:800;">
+            <span>Gross Tagihan Faktur:</span>
+            <strong id="mtd-total" style="color:var(--text-primary);">Rp 9.990.000</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; background:#ECFDF5; border:1px solid #A7F3D0; padding:10px 14px; border-radius:8px; color:#065F46; font-size:13px; font-weight:700;">
+            <span>Kas Bersih Diterima (Net):</span>
+            <span id="mtd-net">Rp 9.810.000</span>
+          </div>
+        </div>
+
+        <div style="margin-top:16px; padding:10px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; font-size:11px; color:#1E40AF; display:flex; gap:8px;">
+          <i class="fa-solid fa-circle-info" style="margin-top:2px;"></i>
+          <span>Faktur Pajak Elektronik (e-Faktur) otomatis dibuatkan drafnya dan siap dilaporkan pada SPT Masa PPN. Bukti potong PPh 23 wajib dimintakan ke klien setelah pembayaran.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn primary" onclick="closeFinanceModal('modalTaxDetail')">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Slip Gaji Karyawan (Data HR) -->
+  <div class="modal-backdrop" id="modalSlipGaji">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-invoice-dollar" style="color:var(--primary); margin-right:8px;"></i> Slip Gaji Karyawan (Modul HR)</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalSlipGaji')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Periode: Oktober 2026</span>
+            <span class="badge success">PR-2026-10</span>
+          </div>
+          <h4 id="slip-emp-name" style="font-size:16px; font-weight:800; color:var(--text-primary); margin-top:4px;">Bagas Prakoso</h4>
+          <span id="slip-emp-role" style="font-size:11.5px; color:var(--primary); font-weight:600;">Tech Lead • Divisi Engineering</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px;">
+          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
+            <span style="color:var(--text-muted);">Gaji Pokok (Standar Jabatan HR):</span>
+            <strong id="slip-base" style="color:var(--text-primary);">Rp 18.000.000</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
+            <span style="color:var(--text-muted);">Tunjangan Jabatan:</span>
+            <strong id="slip-tunj" style="color:#1D4ED8;">+ Rp 3.000.000</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
+            <span style="color:var(--text-muted);">Potongan Presensi / Keterlambatan:</span>
+            <strong style="color:#10B981;">Rp 0 (Kehadiran 100%)</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px dashed var(--border); font-size:13.5px; font-weight:800;">
+            <span>Total Take Home Pay (Net):</span>
+            <strong id="slip-net" style="color:#10B981; font-size:15px;">Rp 21.000.000</strong>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeFinanceModal('modalSlipGaji')">Tutup</button>
+        <button type="button" class="btn primary" onclick="showFinanceToast('Slip gaji dikirimkan ke email karyawan!', 'success'); closeFinanceModal('modalSlipGaji');"><i class="fa-solid fa-paper-plane"></i> Kirim ke Karyawan</button>
       </div>
     </div>
   </div>

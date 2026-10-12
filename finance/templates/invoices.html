@@ -65,16 +65,13 @@
                 </div>
                 <div>
                     <p class="font-bold text-gray-800">PROYEK: APLIKASI KASIR RS MEDIKA</p>
-                    <p class="text-xs text-gray-500">Total Nilai Kontrak: <span class="font-semibold text-gray-700">Rp 30.000.000</span></p>
+                    <p class="text-xs text-gray-500">Total Nilai Kontrak: <span class="font-semibold text-gray-700">Rp 33.300.000</span> (DPP: Rp 30.000.000 + PPN 11%: Rp 3.300.000 | PPh 23: Rp 600.000)</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors" title="AI akan mengirimkan invoice secara otomatis saat jatuh tempo termin tercapai.">
-                <i class="fas fa-robot text-blue-500"></i>
-                <span class="text-xs font-semibold text-blue-700">AI Auto-Invoice Aktif</span>
-                <!-- Toggle switch simulation -->
-                <div class="w-8 h-4 bg-blue-500 rounded-full relative ml-2">
-                    <div class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
-                </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 rounded-md">PPN 11% Aktif</span>
+                <span class="text-xs font-semibold px-2 py-1 bg-amber-100 text-amber-700 rounded-md">PPh 23 (2%)</span>
+                <span class="text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded-md"><i class="fas fa-sync-alt"></i> PM Sync Aktif</span>
             </div>
         </div>
         <div class="divide-y divide-gray-50">
@@ -84,11 +81,14 @@
                     <div class="w-2 h-2 rounded-full bg-green-500"></div>
                     <div>
                         <p class="text-sm font-medium text-gray-700"><i class="fas fa-file-alt text-gray-400 mr-2"></i><span class="font-bold">Termin 1:</span> DP Awal (30%)</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Jatuh Tempo: 01 Agu 2026 | Invoice: INV-2608-001</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Jatuh Tempo: 01 Agu 2026 | Invoice: INV-2608-001 • DPP: Rp 9.000.000 | PPN 11%: +Rp 990.000 | PPh 23: -Rp 180.000</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-6">
-                    <p class="font-semibold text-gray-700">Rp 9.000.000</p>
+                    <div class="text-right">
+                        <p class="font-semibold text-gray-700">Rp 9.990.000</p>
+                        <p class="text-xs text-green-600 font-medium">Net Kas: Rp 9.810.000</p>
+                    </div>
                     <span class="status-lunas text-xs font-semibold px-2.5 py-1 rounded-full">✅ LUNAS</span>
                     <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
                         <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
@@ -96,20 +96,25 @@
                     </div>
                 </div>
             </div>
-            <!-- Termin 2 -->
-            <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50">
+            <!-- Termin 2 (Otomatis dari PM) -->
+            <div class="px-5 py-4 flex items-center justify-between bg-amber-50/60 hover:bg-amber-50">
                 <div class="flex items-center gap-4">
-                    <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
                     <div>
-                        <p class="text-sm font-medium text-gray-700"><i class="fas fa-file-alt text-gray-400 mr-2"></i><span class="font-bold">Termin 2:</span> UAT Selesai (40%)</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Jatuh Tempo: 01 Okt 2026 | Invoice: INV-2610-002</p>
+                        <p class="text-sm font-medium text-amber-900"><i class="fas fa-code-compare mr-2 text-amber-500"></i><span class="font-bold">Termin 2:</span> UAT Selesai (40%)</p>
+                        <p class="text-xs text-amber-700 mt-0.5">Ref: INV-2610-002 • <span class="bg-amber-200/70 text-amber-900 px-1.5 py-0.5 rounded text-[10px] font-semibold">Milestone PM Selesai</span> • DPP: Rp 12.000.000 | PPN 11%: +Rp 1.320.000 | PPh 23: -Rp 240.000</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-6">
-                    <p class="font-semibold text-gray-700">Rp 12.000.000</p>
+                    <div class="text-right">
+                        <p class="font-bold text-amber-900">Rp 13.320.000</p>
+                        <p class="text-xs text-green-600 font-medium">Net Kas: Rp 13.080.000</p>
+                    </div>
                     <div class="flex items-center gap-2">
-                        <span class="status-jatuh text-xs font-semibold px-2.5 py-1 rounded-full">🔴 JATUH TEMPO</span>
-                        <button class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">Ingatkan Klien</button>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">🟡 DRAFT (Verifikasi Finance)</span>
+                        <button onclick="this.className='text-xs bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg'; this.innerHTML='Disetujui'; this.previousElementSibling.className='text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-800'; this.previousElementSibling.innerHTML='🟡 MENUNGGU BAYAR';" class="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 shadow-sm flex items-center gap-1 font-semibold">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
                     </div>
                     <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">
                         <button onclick="editTermin(this)" class="text-gray-400 hover:text-blue-600 transition-colors" title="Edit Data"><i class="fas fa-edit"></i></button>
@@ -118,20 +123,23 @@
                 </div>
             </div>
             <!-- Termin 3 -->
-            <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50 opacity-60">
+            <div class="px-5 py-4 flex items-center justify-between hover:bg-gray-50 opacity-70">
                 <div class="flex items-center gap-4">
                     <div class="w-2 h-2 rounded-full bg-gray-300"></div>
                     <div>
                         <p class="text-sm font-medium text-gray-700"><i class="fas fa-file-alt text-gray-400 mr-2"></i><span class="font-bold">Termin 3:</span> Pelunasan (30%)</p>
-                        <p class="text-xs text-blue-500 mt-0.5 font-medium"><i class="fas fa-magic"></i> AI akan generate otomatis pada: 01 Des 2026</p>
+                        <p class="text-xs text-blue-500 mt-0.5 font-medium"><i class="fas fa-magic"></i> Menunggu milestone PM selesai (BAST) untuk memicu Invoice Draft otomatis</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-6">
-                    <p class="font-semibold text-gray-700">Rp 9.000.000</p>
+                    <div class="text-right">
+                        <p class="font-semibold text-gray-700">Rp 9.990.000</p>
+                        <p class="text-xs text-gray-500 font-medium">Net Kas: Rp 9.810.000</p>
+                    </div>
                     <div class="flex items-center gap-2">
-                        <span class="status-draft text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">🗓️ JADWAL CRM</span>
-                        <button onclick="generateManual(this)" class="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors flex items-center gap-1">
-                            <i class="fas fa-bolt"></i> Generate Manual
+                        <span class="status-draft text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">🗓️ MENUNGGU PM</span>
+                        <button onclick="alert('Milestone disimulasikan selesai di PM! Invoice draft Termin 3 terbentuk di Finance.');" class="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors flex items-center gap-1">
+                            <i class="fas fa-bolt"></i> Trigger PM
                         </button>
                     </div>
                     <div class="flex items-center gap-3 border-l border-gray-200 pl-4 ml-2">

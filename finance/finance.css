@@ -623,6 +623,37 @@ a {
   color: #475569;
   border: 1px solid var(--border);
 }
+.badge.amber-draft {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+  animation: pulseLight 2s infinite ease-in-out;
+}
+@keyframes pulseLight {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+/* Tax Chip Styles */
+.tax-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.tax-tag.ppn {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+.tax-tag.pph {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
 
 /* --- FILTER CONTROLS --- */
 .filter-bar {
