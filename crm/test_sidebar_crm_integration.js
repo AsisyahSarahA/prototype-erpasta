@@ -1,9 +1,13 @@
 const fs = require('fs');
+const path = require('path');
 
 console.log('=== VERIFYING MASTER UNIFIED SIDEBAR INTEGRATION ===\n');
 
 // 1. Check sidebar.html
-const sidebarHtml = fs.readFileSync('sidebar.html', 'utf8');
+const sidebarHtmlPath = fs.existsSync(path.resolve(__dirname, '..', 'sidebar.html'))
+  ? path.resolve(__dirname, '..', 'sidebar.html')
+  : (fs.existsSync(path.resolve(__dirname, 'sidebar.html')) ? path.resolve(__dirname, 'sidebar.html') : 'sidebar.html');
+const sidebarHtml = fs.readFileSync(sidebarHtmlPath, 'utf8');
 const expectedCrmSubpages = [
   { sub: 'dashboard', label: 'Executive Dashboard' },
   { sub: 'pipeline', label: 'Lead & Sales Pipeline' },
@@ -27,7 +31,10 @@ expectedCrmSubpages.forEach(item => {
 });
 
 // 2. Check sidebar.js
-const sidebarJs = fs.readFileSync('sidebar.js', 'utf8');
+const sidebarJsPath = fs.existsSync(path.resolve(__dirname, '..', 'sidebar.js'))
+  ? path.resolve(__dirname, '..', 'sidebar.js')
+  : (fs.existsSync(path.resolve(__dirname, 'sidebar.js')) ? path.resolve(__dirname, 'sidebar.js') : 'sidebar.js');
+const sidebarJs = fs.readFileSync(sidebarJsPath, 'utf8');
 console.log('\n2. Checking sidebar.js CRM submenus:');
 expectedCrmSubpages.forEach(item => {
   const hasSub = sidebarJs.includes(`data-sub="${item.sub}"`);
@@ -41,7 +48,10 @@ expectedCrmSubpages.forEach(item => {
 });
 
 // 3. Check crm.html integration
-const crmHtml = fs.readFileSync('crm/crm.html', 'utf8');
+const crmHtmlPath = fs.existsSync(path.resolve(__dirname, 'crm.html'))
+  ? path.resolve(__dirname, 'crm.html')
+  : (fs.existsSync(path.resolve(__dirname, 'crm', 'crm.html')) ? path.resolve(__dirname, 'crm', 'crm.html') : 'crm/crm.html');
+const crmHtml = fs.readFileSync(crmHtmlPath, 'utf8');
 console.log('\n3. Checking crm/crm.html master integration:');
 const checks = [
   { name: 'Linked sidebar.css', test: crmHtml.includes('<link rel="stylesheet" href="../sidebar.css">') },

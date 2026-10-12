@@ -198,9 +198,20 @@
   background: rgba(255, 255, 255, 0.08);
 }
 .nav-group.open > .nav-sub {
-  max-height: 850px;
+  max-height: 1400px;
   margin-top: 3px;
   margin-bottom: 5px;
+}
+
+.nav-sub-group-title {
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #64748B;
+  padding: 8px 10px 2px 14px;
+  font-weight: 800;
+  user-select: none;
+  opacity: 0.9;
 }
 
 .nav-sub-btn {
