@@ -209,6 +209,195 @@
             backdrop-filter: blur(4px);
             letter-spacing: 0.5px;
         }
+
+        /* --- KANBAN CONTENT AI COMPACT DESIGN --- */
+        .kanban-kpi-bar {
+            display: grid !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            margin-bottom: 16px !important;
+            width: 100% !important;
+        }
+        .kanban-kpi-card {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            padding: 10px 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+            transition: all 0.18s ease !important;
+            box-sizing: border-box !important;
+        }
+        .kanban-kpi-card:hover {
+            transform: translateY(-2px) !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.05) !important;
+        }
+        .kanban-kpi-icon {
+            width: 34px !important;
+            height: 34px !important;
+            border-radius: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 14px !important;
+            flex-shrink: 0 !important;
+        }
+        .kanban-board-container {
+            display: flex !important;
+            gap: 12px !important;
+            overflow-x: auto !important;
+            padding-bottom: 16px !important;
+            min-height: 520px !important;
+            align-items: flex-start !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .kanban-column-pro {
+            flex: 1 1 0px !important;
+            min-width: 240px !important;
+            max-width: 320px !important;
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            padding: 10px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 480px !important;
+            transition: all 0.2s ease !important;
+            box-sizing: border-box !important;
+        }
+        .kanban-column-pro.drag-over {
+            background: #eff6ff !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+        }
+        .kanban-col-head {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 10px !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        .kanban-col-title {
+            font-size: 11.5px !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            color: #1e293b !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.3px !important;
+        }
+        .kanban-col-badge {
+            padding: 2px 7px !important;
+            border-radius: 10px !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #475569 !important;
+        }
+        .kanban-cards-wrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            flex: 1 !important;
+            min-height: 120px !important;
+        }
+        .kanban-card-pro {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            padding: 10px 12px !important;
+            cursor: grab !important;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+            position: relative !important;
+            user-select: none !important;
+            box-sizing: border-box !important;
+        }
+        .kanban-card-pro:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 14px rgba(15,23,42,0.07) !important;
+            border-color: #cbd5e1 !important;
+        }
+        .kanban-card-pro.dragging {
+            opacity: 0.4 !important;
+            transform: scale(0.97) !important;
+        }
+        .kanban-card-pro .card-platform-pills {
+            display: flex !important;
+            gap: 4px !important;
+            flex-wrap: wrap !important;
+            margin-bottom: 6px !important;
+        }
+        .platform-pill {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 3px !important;
+            font-size: 9px !important;
+            font-weight: 700 !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            background: #f1f5f9 !important;
+            color: #475569 !important;
+            letter-spacing: 0.2px !important;
+        }
+        .platform-pill.ig { background: #fdf2f8 !important; color: #db2777 !important; border: 1px solid #fbcfe8 !important; }
+        .platform-pill.tt { background: #0f172a !important; color: #ffffff !important; }
+        .platform-pill.li { background: #e0f2fe !important; color: #0284c7 !important; border: 1px solid #bae6fd !important; }
+        .platform-pill.yt { background: #fee2e2 !important; color: #dc2626 !important; border: 1px solid #fecaca !important; }
+        .platform-pill.tw { background: #f0f9ff !important; color: #0369a1 !important; border: 1px solid #bae6fd !important; }
+        .platform-pill.multi { background: #faf5ff !important; color: #7c3aed !important; border: 1px dashed #d8b4fe !important; }
+        .kanban-card-title {
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            line-height: 1.35 !important;
+            margin-bottom: 4px !important;
+        }
+        .kanban-card-desc {
+            font-size: 11px !important;
+            color: #64748b !important;
+            line-height: 1.35 !important;
+            margin-bottom: 8px !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+        }
+        .kanban-card-meta {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            font-size: 10px !important;
+            color: #94a3b8 !important;
+            padding-top: 6px !important;
+            border-top: 1px dashed #f1f5f9 !important;
+        }
+        .kanban-card-actions {
+            display: flex !important;
+            gap: 4px !important;
+            margin-top: 6px !important;
+            padding-top: 6px !important;
+            border-top: 1px solid #f1f5f9 !important;
+        }
+        .kanban-card-actions button {
+            flex: 1 !important;
+            font-size: 10px !important;
+            padding: 3px 6px !important;
+            border-radius: 5px !important;
+            height: 24px !important;
+            white-space: nowrap !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+        }
     </style>
 </head>
 <body>
@@ -616,10 +805,29 @@
                                         <i class="fa-solid fa-bolt"></i> AI Brainstorm 7 Hari
                                     </button>
                                 </div>
+                                <div style="display:flex; gap:12px; margin-top:10px; flex-wrap:wrap;">
+                                    <div style="flex:1; min-width:200px;">
+                                        <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:4px; display:block;">Tone & Persona AI:</label>
+                                        <select id="sprintToneSelect" class="form-control" style="font-size:12px; height:34px; padding:0 8px;">
+                                            <option value="tech-geek">💻 Edukasi Santai & Tech Geek (Developer First)</option>
+                                            <option value="b2b-pro">🏢 Profesional & Otoritatif (B2B Enterprise)</option>
+                                            <option value="viral-hook">🔥 Viral & Storytelling Hook (TikTok / Reels)</option>
+                                        </select>
+                                    </div>
+                                    <div style="flex:1; min-width:180px;">
+                                        <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:4px; display:block;">Auto-Vault Brankas Aset:</label>
+                                        <div style="display:flex; align-items:center; gap:6px; height:34px; font-size:12px; color:#059669; font-weight:600; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:0 10px;">
+                                            <i class="fa-solid fa-circle-check"></i> Aktif (Auto-Save ke DAM)
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="sprint-actions-box">
+                            <div class="sprint-actions-box" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start;">
                                 <button class="btn btn-primary btn-execute-all" id="btnExecuteAll7Days">
                                     <i class="fa-solid fa-play"></i> Eksekusi Semua (7 Hari)
+                                </button>
+                                <button class="btn btn-outline" id="btnSyncToKanban" onclick="window.syncSprintToKanbanBoard()" style="background:#fff; border-color:#c7d2fe; color:#4f46e5;">
+                                    <i class="fa-solid fa-table-columns" style="color:#7c3aed;"></i> Ekspor ke Kanban AI
                                 </button>
                                 <button class="btn btn-outline btn-sync-cal" id="btnSyncToCalendar">
                                     <i class="fa-solid fa-calendar-days"></i> Sinkron ke Kalender
@@ -628,7 +836,7 @@
                         </div>
                         <div class="sprint-token-note">
                             <i class="fa-solid fa-circle-info"></i>
-                            <span><strong>Strategi Hemat Token:</strong> Topik dan jadwal dibuat gratis. AI hanya men-*generate* visual, slide, dan copywriting lengkap saat tombol <em>"Eksekusi AI"</em> per hari diklik.</span>
+                            <span><strong>Strategi Hemat Token & Multi-Akun:</strong> Topik dan jadwal dibuat gratis. Saat tombol <em>"Ekspor ke Kanban AI"</em> diklik, seluruh 7 konten otomatis terdistribusi ke kolom workflow Kanban dengan akun tujuan masing-masing & tersimpan di Brankas Aset DAM.</span>
                         </div>
                     </div>
 
@@ -1064,47 +1272,174 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                 </section>
 
 
-                <!-- 3. KANBAN AI -->
+                <!-- 3. KANBAN CONTENT AI (OMNICHANNEL WORKFLOW BOARD) -->
                 <section id="view-kanban" class="view-section">
-                    <div style="margin-bottom: 24px;">
-                        <h2 style="font-size: 20px;">Kanban AI (Global Content Workflow)</h2>
-                        <p style="font-size: 13px; color: var(--text-tertiary);">Drag and drop content across stages.</p>
+                    <!-- Header with Breadcrumb & Action Toolbar -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 22px; flex-wrap:wrap; gap:16px;">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">
+                                <span>Marketing & AI</span>
+                                <i class="fa-solid fa-chevron-right" style="font-size:9px;"></i>
+                                <span style="color:var(--brand-primary); font-weight:600;">Kanban Content AI</span>
+                            </div>
+                            <h2 style="font-size: 22px; font-weight:700; color:var(--text-primary); margin:0;">Kanban Content AI (Omnichannel Workflow Board)</h2>
+                            <p style="font-size: 13px; color: var(--text-tertiary); margin-top:4px; margin-bottom:0;">
+                                Orkestrasi siklus hidup konten dari ideasi, auto-drafting AI, kurasi editorial, otomatis tersimpan ke Brankas Aset DAM, hingga auto-publish ke multi-akun sosmed.
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                            <button class="btn btn-outline" id="btnKanbanLeadMagnet" onclick="window.switchMarketingPage('inbox')" style="font-size:12px; font-weight:600; padding:8px 14px; background:#f5f3ff; border-color:#c7d2fe; color:#4f46e5;">
+                                <i class="fa-solid fa-bolt" style="color:#6366f1;"></i> Lead Magnet Auto-DM
+                            </button>
+                            <button class="btn btn-outline" id="btnKanbanOpenDam" onclick="window.switchMarketingPage('asset-library')" style="font-size:12px; font-weight:600; padding:8px 14px; background:#fff;">
+                                <i class="fa-solid fa-vault" style="color:var(--brand-primary);"></i> Brankas Aset DAM
+                            </button>
+                            <button class="btn btn-outline" id="btnKanbanMultiPublish" onclick="window.openMultiAccountPublishModal()" style="font-size:12px; font-weight:600; padding:8px 14px; background:#fff;">
+                                <i class="fa-solid fa-paper-plane" style="color:#059669;"></i> Auto-Publish Multi-Akun
+                            </button>
+                            <button class="btn btn-primary" id="btnOpenAddKanbanModal" onclick="window.openKanbanAddModal()" style="font-size:12px; font-weight:600; padding:8px 16px;">
+                                <i class="fa-solid fa-plus"></i> Tambah Ide Konten
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="kanban-board">
-                        <div class="kanban-column">
-                            <div class="kanban-col-header">Ideas & Scraped <span class="k-count">2</span></div>
-                            <div class="kanban-card">
-                                <h4>Docker for Beginners</h4>
-                                <p>Requested by SEO Team</p>
-                                <div class="kanban-tags"><span class="k-tag">Blog</span></div>
+
+                    <!-- Metric Ribbon -->
+                    <div class="kanban-kpi-bar">
+                        <div class="kanban-kpi-card">
+                            <div class="kanban-kpi-icon" style="background:#eff6ff; color:#2563eb;">
+                                <i class="fa-solid fa-layer-group"></i>
                             </div>
-                            <div class="kanban-card">
-                                <h4>Why Next.js?</h4>
-                                <p>Trending keyword detected</p>
-                                <div class="kanban-tags"><span class="k-tag">Carousel</span></div>
+                            <div>
+                                <span style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Total Konten</span>
+                                <div style="font-size:18px; font-weight:700; color:#0f172a;" id="kanbanKpiTotal">14 Konten</div>
                             </div>
                         </div>
-                        <div class="kanban-column">
-                            <div class="kanban-col-header">AI Generating <span class="k-count">1</span></div>
-                            <div class="kanban-card" style="border-left: 3px solid var(--brand-primary);">
-                                <h4>React Hooks Guide</h4>
-                                <p>Engine is drafting content...</p>
-                                <div class="kanban-tags"><span class="k-tag">TikTok Script</span></div>
+                        <div class="kanban-kpi-card">
+                            <div class="kanban-kpi-icon" style="background:#fef3c7; color:#d97706;">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </div>
+                            <div>
+                                <span style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Ide & Tren</span>
+                                <div style="font-size:18px; font-weight:700; color:#0f172a;" id="kanbanKpiIdeas">3 Ide</div>
                             </div>
                         </div>
-                        <div class="kanban-column">
-                            <div class="kanban-col-header">Tinjau / Quality <span class="k-count">3</span></div>
-                            <div class="kanban-card" style="border-left: 3px solid var(--warning);">
-                                <h4>5 Prinsip Laravel</h4>
-                                <p>Waiting for Maya's approval</p>
+                        <div class="kanban-kpi-card">
+                            <div class="kanban-kpi-icon" style="background:#ede9fe; color:#7c3aed;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <div>
+                                <span style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">AI Drafting</span>
+                                <div style="font-size:18px; font-weight:700; color:#0f172a;" id="kanbanKpiDrafting">3 Draft</div>
                             </div>
                         </div>
-                        <div class="kanban-column">
-                            <div class="kanban-col-header">Ready & Scheduled <span class="k-count">5</span></div>
-                            <div class="kanban-card" style="border-left: 3px solid var(--success);">
-                                <h4>Laravel Tips</h4>
-                                <p>Scheduled: Oct 28</p>
+                        <div class="kanban-kpi-card">
+                            <div class="kanban-kpi-icon" style="background:#fff7ed; color:#ea580c;">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div>
+                                <span style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Siap Review</span>
+                                <div style="font-size:18px; font-weight:700; color:#0f172a;" id="kanbanKpiReview">3 Item</div>
+                            </div>
+                        </div>
+                        <div class="kanban-kpi-card">
+                            <div class="kanban-kpi-icon" style="background:#ecfdf5; color:#059669;">
+                                <i class="fa-solid fa-rocket"></i>
+                            </div>
+                            <div>
+                                <span style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Terjadwal & Terbit</span>
+                                <div style="font-size:18px; font-weight:700; color:#0f172a;" id="kanbanKpiPublished">5 Post</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Toolbar -->
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 18px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                        <!-- Platform Filter Pills -->
+                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;" id="kanbanPlatformFilterPills">
+                            <button class="btn btn-outline active" data-k-platform="all" onclick="window.filterKanbanByPlatform('all')" style="font-size:11.5px; padding:6px 12px; height:auto; border-radius:8px;">Semua Saluran</button>
+                            <button class="btn btn-outline" data-k-platform="Instagram" onclick="window.filterKanbanByPlatform('Instagram')" style="font-size:11.5px; padding:6px 12px; height:auto; border-radius:8px;"><i class="fa-brands fa-instagram" style="color:#db2777;"></i> Instagram</button>
+                            <button class="btn btn-outline" data-k-platform="TikTok" onclick="window.filterKanbanByPlatform('TikTok')" style="font-size:11.5px; padding:6px 12px; height:auto; border-radius:8px;"><i class="fa-brands fa-tiktok"></i> TikTok</button>
+                            <button class="btn btn-outline" data-k-platform="LinkedIn" onclick="window.filterKanbanByPlatform('LinkedIn')" style="font-size:11.5px; padding:6px 12px; height:auto; border-radius:8px;"><i class="fa-brands fa-linkedin" style="color:#0284c7;"></i> LinkedIn</button>
+                            <button class="btn btn-outline" data-k-platform="YouTube" onclick="window.filterKanbanByPlatform('YouTube')" style="font-size:11.5px; padding:6px 12px; height:auto; border-radius:8px;"><i class="fa-brands fa-youtube" style="color:#dc2626;"></i> YouTube</button>
+                            <button class="btn btn-outline" data-k-platform="Multi" onclick="window.filterKanbanByPlatform('Multi')" style="font-size:11.5px; padding:6px 12px; height:auto; border-radius:8px;"><i class="fa-solid fa-share-nodes" style="color:#7c3aed;"></i> Multi-Akun</button>
+                        </div>
+
+                        <!-- Search & Quick Batch Action -->
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <div style="position:relative;">
+                                <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:10px; color:#94a3b8; font-size:12px;"></i>
+                                <input type="text" id="kanbanSearchInput" oninput="window.renderKanbanBoard()" placeholder="Cari kartu, hashtag, topik..." style="height:34px; padding:0 12px 0 34px; font-size:12px; border:1px solid #cbd5e1; border-radius:8px; outline:none; width:220px;">
+                            </div>
+                            <button class="btn btn-outline" onclick="window.batchDraftAllIdeas()" style="font-size:11.5px; padding:6px 12px; height:auto; border-radius:8px;" title="AI Drafting Semua Ide di Kolom 1">
+                                <i class="fa-solid fa-bolt" style="color:#eab308;"></i> Batch AI Draft
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 5-COLUMN KANBAN BOARD CONTAINER -->
+                    <div class="kanban-board-container" id="kanbanBoardContainer">
+                        <!-- Column 1: Ide & Tren -->
+                        <div class="kanban-column-pro" data-stage="ideas" ondragover="window.handleKanbanDragOver(event)" ondragleave="window.handleKanbanDragLeave(event)" ondrop="window.handleKanbanDrop(event, 'ideas')">
+                            <div class="kanban-col-head">
+                                <span class="kanban-col-title">
+                                    <i class="fa-solid fa-lightbulb" style="color:#d97706;"></i> Ide & Tren Scraped
+                                </span>
+                                <span class="kanban-col-badge" id="kCount-ideas">0</span>
+                            </div>
+                            <div class="kanban-cards-wrapper" id="kCol-ideas">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Column 2: AI Drafting -->
+                        <div class="kanban-column-pro" data-stage="drafting" ondragover="window.handleKanbanDragOver(event)" ondragleave="window.handleKanbanDragLeave(event)" ondrop="window.handleKanbanDrop(event, 'drafting')">
+                            <div class="kanban-col-head">
+                                <span class="kanban-col-title">
+                                    <i class="fa-solid fa-wand-magic-sparkles" style="color:#7c3aed;"></i> AI Drafting (Proses)
+                                </span>
+                                <span class="kanban-col-badge" id="kCount-drafting">0</span>
+                            </div>
+                            <div class="kanban-cards-wrapper" id="kCol-drafting">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Column 3: Tinjau & Approval -->
+                        <div class="kanban-column-pro" data-stage="review" ondragover="window.handleKanbanDragOver(event)" ondragleave="window.handleKanbanDragLeave(event)" ondrop="window.handleKanbanDrop(event, 'review')">
+                            <div class="kanban-col-head">
+                                <span class="kanban-col-title">
+                                    <i class="fa-solid fa-clipboard-check" style="color:#ea580c;"></i> Tinjau & Approval
+                                </span>
+                                <span class="kanban-col-badge" id="kCount-review">0</span>
+                            </div>
+                            <div class="kanban-cards-wrapper" id="kCol-review">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Column 4: Terjadwal Multi-Akun -->
+                        <div class="kanban-column-pro" data-stage="scheduled" ondragover="window.handleKanbanDragOver(event)" ondragleave="window.handleKanbanDragLeave(event)" ondrop="window.handleKanbanDrop(event, 'scheduled')">
+                            <div class="kanban-col-head">
+                                <span class="kanban-col-title">
+                                    <i class="fa-solid fa-calendar-check" style="color:#0284c7;"></i> Terjadwal Multi-Akun
+                                </span>
+                                <span class="kanban-col-badge" id="kCount-scheduled">0</span>
+                            </div>
+                            <div class="kanban-cards-wrapper" id="kCol-scheduled">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Column 5: Terbit & Live -->
+                        <div class="kanban-column-pro" data-stage="published" ondragover="window.handleKanbanDragOver(event)" ondragleave="window.handleKanbanDragLeave(event)" ondrop="window.handleKanbanDrop(event, 'published')">
+                            <div class="kanban-col-head">
+                                <span class="kanban-col-title">
+                                    <i class="fa-solid fa-circle-check" style="color:#059669;"></i> Terbit & Live
+                                </span>
+                                <span class="kanban-col-badge" id="kCount-published">0</span>
+                            </div>
+                            <div class="kanban-cards-wrapper" id="kCol-published">
+                                <!-- Rendered dynamically -->
                             </div>
                         </div>
                     </div>
@@ -1314,18 +1649,38 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
 
                     <!-- SUB-TAB 1: Platform & Integrasi API -->
                     <div id="distTab-platforms" class="dist-tab-content" style="display:block;">
+                        <!-- Multi-Account Pool Banner -->
+                        <div style="background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%); border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-users-gear"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 14px; font-weight: 700; color: #1e3a8a; margin: 0 0 2px 0;" id="textMultiAccountPoolTitle">Multi-Account Sosmed Token Pool (5 Akun Aktif Terhubung)</h4>
+                                    <p style="font-size: 12px; color: #475569; margin: 0;" id="textMultiAccountPoolSubtitle">Sistem mengelola OAuth tokens terpisah per profil brand: <strong>2 Akun Instagram</strong> + <strong>3 Akun TikTok</strong>. Konten dapat dipublish serentak maupun dijadwal mandiri.</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button class="btn btn-outline" style="font-size: 12px; padding: 6px 14px; background: #fff;" onclick="window.showToast('✅ Seluruh OAuth token (IG & TikTok) masih aktif & tersinkronisasi!', 'success')"><i class="fa-solid fa-arrows-rotate"></i> Sync All Tokens</button>
+                                <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="window.openMultiAccountModal('Instagram')"><i class="fa-solid fa-plus"></i> Sambung Akun Baru</button>
+                            </div>
+                        </div>
+
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px;">
-                            <!-- Instagram Graph API Card -->
+                            <!-- Instagram Graph API Card (2 Akun) -->
                             <div class="platform-int-card">
                                 <div>
                                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
                                         <div class="platform-icon-box" style="background:#fdf2f8; color:#db2777;">
                                             <i class="fa-brands fa-instagram"></i>
                                         </div>
-                                        <span class="status-badge badge-done" style="font-size:10px;"><i class="fa-solid fa-circle-check"></i> TERHUBUNG</span>
+                                        <span class="status-badge badge-done" id="badgeIgAccountCount" style="font-size:10px;"><i class="fa-solid fa-circle-check"></i> 2 AKUN TERHUBUNG</span>
                                     </div>
                                     <h4 style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:3px;">Instagram Business API</h4>
-                                    <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">Akun: <strong>@asta.marketing</strong> • Carousel & Reels</p>
+                                    <div style="display:flex; flex-direction:column; gap:3px; margin-bottom:12px;" id="listIgConnectedHandles">
+                                        <span style="font-size:11.5px; color:#1e293b;"><i class="fa-solid fa-check" style="color:#059669; font-size:10px;"></i> <strong>@astacode.official</strong> (Brand Utama • 48.2K)</span>
+                                        <span style="font-size:11.5px; color:#1e293b;"><i class="fa-solid fa-check" style="color:#059669; font-size:10px;"></i> <strong>@astacode.career</strong> (Employer / Hiring • 12.4K)</span>
+                                    </div>
                                     
                                     <div class="platform-info-box">
                                         <div class="platform-info-row">
@@ -1334,42 +1689,46 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                         </div>
                                         <div class="platform-info-row">
                                             <span>Rate Limit: <strong>185/200 calls/hr</strong></span>
-                                            <span>Webhook: <strong style="color:#059669;">Active Delivery</strong></span>
+                                            <span id="textIgChannelCount">Multi-Tenant: <strong style="color:#059669;">2 Channel Active</strong></span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="platform-card-actions">
-                                    <button class="btn btn-outline btn-test-platform-ping" data-platform="Instagram Business API"><i class="fa-solid fa-wifi"></i> Test Ping</button>
-                                    <button class="btn btn-primary btn-config-platform" data-platform="Instagram" data-account="@asta.marketing" data-type="graph_api"><i class="fa-solid fa-gear"></i> Konfigurasi</button>
+                                <div class="platform-card-actions" style="display:flex; gap:6px;">
+                                    <button class="btn btn-outline" style="font-size:11px; padding:8px 8px; flex:1;" onclick="window.openPlatformConfigModal('Instagram', 'Akun Instagram', 'graph_api')"><i class="fa-solid fa-key" style="color:#d97706;"></i> Kredensial API</button>
+                                    <button class="btn btn-primary" id="btnManageIgAccounts" style="font-size:11px; padding:8px 8px; flex:1;" onclick="window.openMultiAccountModal('Instagram')"><i class="fa-solid fa-users"></i> Kelola Akun</button>
                                 </div>
                             </div>
 
-                            <!-- TikTok Content API Card -->
+                            <!-- TikTok Content API Card (3 Akun) -->
                             <div class="platform-int-card">
                                 <div>
                                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
                                         <div class="platform-icon-box" style="background:#f1f5f9; color:#0f172a;">
                                             <i class="fa-brands fa-tiktok"></i>
                                         </div>
-                                        <span class="status-badge badge-done" style="font-size:10px;"><i class="fa-solid fa-circle-check"></i> TERHUBUNG</span>
+                                        <span class="status-badge badge-done" id="badgeTtAccountCount" style="font-size:10px;"><i class="fa-solid fa-circle-check"></i> 3 AKUN TERHUBUNG</span>
                                     </div>
-                                    <h4 style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:3px;">TikTok Posting API</h4>
-                                    <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">Akun: <strong>@asta.marketing</strong> • Direct Video Publishing</p>
+                                    <h4 style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:3px;">TikTok Content Posting API</h4>
+                                    <div style="display:flex; flex-direction:column; gap:3px; margin-bottom:12px;" id="listTtConnectedHandles">
+                                        <span style="font-size:11.5px; color:#1e293b;"><i class="fa-solid fa-check" style="color:#059669; font-size:10px;"></i> <strong>@astacode.tech</strong> (Coding & Edukasi • 185K)</span>
+                                        <span style="font-size:11.5px; color:#1e293b;"><i class="fa-solid fa-check" style="color:#059669; font-size:10px;"></i> <strong>@astacode.life</strong> (Work Culture & BTS • 42K)</span>
+                                        <span style="font-size:11.5px; color:#1e293b;"><i class="fa-solid fa-check" style="color:#059669; font-size:10px;"></i> <strong>@astacode.academy</strong> (Bootcamp & Sertifikasi • 28K)</span>
+                                    </div>
                                     
                                     <div class="platform-info-box">
                                         <div class="platform-info-row">
                                             <span>API Protocol: <strong>OAuth 2.0 PKCE</strong></span>
-                                            <span>Chunk Size: <strong style="color:#059669;">10MB Part</strong></span>
+                                            <span>Chunk Upload: <strong style="color:#059669;">10MB Parallel</strong></span>
                                         </div>
                                         <div class="platform-info-row">
                                             <span>Rate Limit: <strong>92/100 calls/hr</strong></span>
-                                            <span>Direct Post: <strong style="color:#059669;">Ready</strong></span>
+                                            <span id="textTtChannelCount">Multi-Tenant: <strong style="color:#059669;">3 Channel Active</strong></span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="platform-card-actions">
-                                    <button class="btn btn-outline btn-test-platform-ping" data-platform="TikTok Content Posting API"><i class="fa-solid fa-wifi"></i> Test Ping</button>
-                                    <button class="btn btn-primary btn-config-platform" data-platform="TikTok" data-account="@asta.marketing" data-type="video_api"><i class="fa-solid fa-gear"></i> Konfigurasi</button>
+                                <div class="platform-card-actions" style="display:flex; gap:6px;">
+                                    <button class="btn btn-outline" style="font-size:11px; padding:8px 8px; flex:1;" onclick="window.openPlatformConfigModal('TikTok', 'Akun TikTok', 'video_api')"><i class="fa-solid fa-key" style="color:#d97706;"></i> Kredensial API</button>
+                                    <button class="btn btn-primary" id="btnManageTtAccounts" style="font-size:11px; padding:8px 8px; flex:1;" onclick="window.openMultiAccountModal('TikTok')"><i class="fa-solid fa-users"></i> Kelola Akun</button>
                                 </div>
                             </div>
 
@@ -2318,6 +2677,92 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                 <input type="checkbox" checked>
                                 <span class="slider"></span>
                             </label>
+                        </div>
+                    </div>
+
+                    <!-- LEAD MAGNET & COMMENT-TO-DM HOOK AUTOMATION (TIKTOK & REELS) -->
+                    <div class="card" style="margin-bottom: 24px; border: 1px solid #c7d2fe; background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%); border-radius: 12px; padding: 22px; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                            <div>
+                                <div style="display:inline-flex; align-items:center; gap:6px; background:#e0e7ff; color:#4338ca; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; margin-bottom:6px; text-transform:uppercase;">
+                                    <i class="fa-solid fa-bolt"></i> Lead Magnet Hook Engine
+                                </div>
+                                <h3 style="font-size:16px; font-weight:700; color:#1e1b4b; margin:0 0 4px 0;">Otomasi Hook Video TikTok: Komen "PENGIN" ➔ Auto-DM Naskah Brankas Aset</h3>
+                                <p style="font-size:12.5px; color:#475569; margin:0;">Saat audiens TikTok/Reels merespons hook edukasi dengan mengetik kata kunci pemicu, bot langsung membalas komentar publik + mengirim berkas naskah PDF dari <strong>Brankas Aset DAM</strong> ke DM + menyimpan kontak sebagai Lead di CRM.</p>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="status-badge badge-done" style="background:#dcfce7; color:#166534; font-size:11px;"><i class="fa-solid fa-circle-check"></i> Webhook Listening Aktif</span>
+                                <button class="btn btn-primary" id="btnTestTikTokHook" onclick="window.simulateTikTokLeadMagnetHook()" style="font-size:12px; padding:8px 16px; background:linear-gradient(135deg, #4f46e5, #6366f1); box-shadow:0 2px 8px rgba(79, 70, 229, 0.25);">
+                                    <i class="fa-solid fa-play"></i> ⚡ Uji Simulasi Komen "PENGIN"
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Grid 3 Kolom: Trigger, Asset DAM, Aksi Respons -->
+                        <div style="display:grid; grid-template-columns: 1fr 1.2fr 1.2fr; gap:16px; margin-bottom:18px;">
+                            <!-- Box 1: Keyword Trigger -->
+                            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+                                <div style="font-size:11.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">
+                                    <i class="fa-solid fa-hashtag" style="color:#6366f1;"></i> 1. Kata Kunci Pemicu (Regex)
+                                </div>
+                                <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;">
+                                    <span style="background:#f1f5f9; color:#0f172a; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600;">PENGIN</span>
+                                    <span style="background:#f1f5f9; color:#0f172a; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600;">MAU</span>
+                                    <span style="background:#f1f5f9; color:#0f172a; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600;">NASKAH</span>
+                                    <span style="background:#f1f5f9; color:#0f172a; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600;">TEMPLATE</span>
+                                    <span style="background:#f1f5f9; color:#0f172a; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600;">DOCKER</span>
+                                </div>
+                                <div style="font-size:11px; color:#64748b;">
+                                    Kanal Target: <strong>TikTok @astacode.tech</strong> & <strong>IG @astacode.official</strong>
+                                </div>
+                            </div>
+
+                            <!-- Box 2: Sumber Berkas Brankas Aset DAM -->
+                            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+                                <div style="font-size:11.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">
+                                    <i class="fa-solid fa-folder-open" style="color:#ec4899;"></i> 2. Berkas Naskah (Brankas Aset DAM)
+                                </div>
+                                <div style="display:flex; align-items:center; gap:10px; background:#fdf2f8; border:1px solid #fbcfe8; border-radius:8px; padding:8px 12px; margin-bottom:8px;">
+                                    <div style="width:32px; height:32px; border-radius:6px; background:#db2777; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px;">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </div>
+                                    <div style="overflow:hidden;">
+                                        <div style="font-size:12px; font-weight:700; color:#831843; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;" id="hookSelectedAssetName">naskah_script_docker_dan_devops.pdf</div>
+                                        <div style="font-size:10.5px; color:#9d174d;">Folder: 🎁 Naskah Lead Magnet • 1.8 MB</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:10.5px; color:#059669; font-weight:600;"><i class="fa-solid fa-check"></i> Cloud CDN Link Siap</span>
+                                    <a href="#assets" onclick="window.navigateToSection && window.navigateToSection('brand-assets')" style="font-size:11px; color:#2563eb; font-weight:600; text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Brankas</a>
+                                </div>
+                            </div>
+
+                            <!-- Box 3: Respon & CRM Capture -->
+                            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+                                <div style="font-size:11.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">
+                                    <i class="fa-solid fa-reply-all" style="color:#10b981;"></i> 3. Tindakan Otomatis & CRM
+                                </div>
+                                <div style="font-size:11.5px; color:#334155; line-height:1.4; margin-bottom:6px;">
+                                    <strong>💬 Balas Komentar:</strong> <em>"@username Cek DM kamu ya kak! Naskah lengkap sudah mimin kirim 🚀"</em>
+                                </div>
+                                <div style="font-size:11.5px; color:#334155; line-height:1.4; margin-bottom:6px;">
+                                    <strong>📩 Kirim DM:</strong> <em>"Halo kak! Ini naskah PDF + panduan yang diminta: [Download Link]"</em>
+                                </div>
+                                <div style="display:inline-flex; align-items:center; gap:5px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:6px; font-size:10.5px; font-weight:600;">
+                                    <i class="fa-solid fa-address-book"></i> Auto-Sync ke CRM Pipeline (MQL)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Console Simulator Output (Hidden by default, shown on test) -->
+                        <div id="hookSimulationConsole" style="display:none; background:#0f172a; border-radius:10px; padding:14px 16px; font-family:monospace; font-size:12px; color:#e2e8f0;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #334155; padding-bottom:6px;">
+                                <span style="color:#38bdf8; font-weight:bold;"><i class="fa-solid fa-terminal"></i> Live Webhook Event & Bot Execution Logs</span>
+                                <span style="color:#94a3b8; font-size:10.5px;">Latency: 180ms</span>
+                            </div>
+                            <div id="hookSimulationLogs" style="display:flex; flex-direction:column; gap:4px; max-height:140px; overflow-y:auto;">
+                                <!-- Dynamically populated by window.simulateTikTokLeadMagnetHook -->
+                            </div>
                         </div>
                     </div>
 
@@ -3630,6 +4075,446 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
             </div>
             <div style="padding:12px 20px; border-top:1px solid var(--border-light); background:#f8fafc; display:flex; justify-content:flex-end;">
                 <button class="btn btn-outline" onclick="window.closeCompetitorDetailModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         15. MODAL: TAMBAH IDE KONTEN BARU (KANBAN CONTENT AI)
+         ===================================================================== -->
+    <div id="kanbanAddModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+        <div style="background:#fff; border-radius:14px; width:560px; max-width:94%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); overflow:hidden; animation:modalFadeIn 0.25s ease;">
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div>
+                    <strong style="font-size:15px; color:var(--text-primary); display:block;">
+                        <i class="fa-solid fa-lightbulb" style="color:#d97706; margin-right:6px;"></i> Tambah Ide Konten Baru (Kanban AI)
+                    </strong>
+                    <span style="font-size:11.5px; color:var(--text-tertiary);">Rencanakan topik atau tren untuk diproses AI dan didistribusikan ke multi-akun</span>
+                </div>
+                <button onclick="window.closeKanbanAddModal()" style="border:none; background:transparent; font-size:16px; color:#94a3b8; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="formAddKanbanCard" onsubmit="window.handleSaveKanbanCard(event)">
+                <div style="padding:20px; max-height:75vh; overflow-y:auto;">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label class="form-label" style="font-size:12px; font-weight:700;">Judul / Topik Konten <span style="color:#e11d48;">*</span></label>
+                        <input type="text" id="kInputTitle" class="form-control" placeholder="Contoh: 5 Alasan Kenapa Perusahaan Wajib Pakai ERP Modular di 2026" required>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:12px; font-weight:700;">Format Konten</label>
+                            <select id="kSelectFormat" class="form-control">
+                                <option value="Carousel (5 Slide)">Carousel (5 Slide - IG/LinkedIn)</option>
+                                <option value="Short Video (9:16)">Short Video / Reel (TikTok & Reels)</option>
+                                <option value="Thought Leadership">Thought Leadership Post (LinkedIn)</option>
+                                <option value="Tech Meme / Infografis">Tech Meme / Infografis Edukasi</option>
+                                <option value="Blog SEO Article">Artikel Blog Mendalam (SEO)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:12px; font-weight:700;">Tahapan Awal</label>
+                            <select id="kSelectStage" class="form-control">
+                                <option value="ideas">💡 Kolom: Ide & Tren Scraped</option>
+                                <option value="drafting">🤖 Kolom: Langsung AI Drafting</option>
+                                <option value="review">🔍 Kolom: Siap Ditinjau</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Target Multi-Akun Selector -->
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label class="form-label" style="font-size:12px; font-weight:700; display:flex; justify-content:space-between;">
+                            <span>Target Akun Media Sosial (Bisa Multi-Akun)</span>
+                            <span style="font-size:11px; color:#2563eb; cursor:pointer;" onclick="window.toggleAllKanbanAccounts(true)">Pilih Semua</span>
+                        </label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px;">
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="checkbox" name="kTargetAccount" value="Instagram: @astacode.official" checked>
+                                <span><i class="fa-brands fa-instagram" style="color:#db2777;"></i> @astacode.official</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="checkbox" name="kTargetAccount" value="Instagram: @astacode.career" checked>
+                                <span><i class="fa-brands fa-instagram" style="color:#db2777;"></i> @astacode.career</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="checkbox" name="kTargetAccount" value="TikTok: @astacode.tech" checked>
+                                <span><i class="fa-brands fa-tiktok"></i> @astacode.tech</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="checkbox" name="kTargetAccount" value="LinkedIn: Astacode Enterprise" checked>
+                                <span><i class="fa-brands fa-linkedin" style="color:#0284c7;"></i> Astacode Enterprise</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="checkbox" name="kTargetAccount" value="YouTube: Astacode Tech TV">
+                                <span><i class="fa-brands fa-youtube" style="color:#dc2626;"></i> Astacode Tech TV</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="checkbox" name="kTargetAccount" value="X: @astacode_dev">
+                                <span><i class="fa-brands fa-x-twitter"></i> @astacode_dev</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label class="form-label" style="font-size:12px; font-weight:700;">Catatan / Brief AI Prompt</label>
+                        <textarea id="kInputBrief" class="form-control" rows="3" placeholder="Fokus pada pain point tim IT yang lembur karena bug tracking manual..."></textarea>
+                    </div>
+
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; font-size:11.5px; color:#15803d; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-vault"></i>
+                        <span><strong>Auto-Vault Aktif:</strong> Saat konten ini di-generate oleh AI, visual & naskah akan otomatis tersimpan ke <em>Brankas Aset DAM</em>.</span>
+                    </div>
+                </div>
+                <div style="padding:14px 20px; border-top:1px solid var(--border-light); background:#f8fafc; display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn btn-outline" onclick="window.closeKanbanAddModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Simpan ke Kanban</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         16. MODAL: DETAIL KARTU KANBAN & WORKFLOW INSPECTOR
+         ===================================================================== -->
+    <div id="kanbanCardDetailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+        <div style="background:#fff; border-radius:14px; width:680px; max-width:94%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); overflow:hidden; animation:modalFadeIn 0.25s ease;">
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                        <span class="status-badge badge-pending" id="detailModalStageBadge">Ide & Tren</span>
+                        <span style="font-size:11.5px; color:#64748b;" id="detailModalFormat">Carousel (5 Slide)</span>
+                    </div>
+                    <strong style="font-size:16px; color:var(--text-primary); display:block;" id="detailModalTitle">Judul Konten</strong>
+                </div>
+                <button onclick="window.closeKanbanCardDetailModal()" style="border:none; background:transparent; font-size:16px; color:#94a3b8; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding:20px; max-height:75vh; overflow-y:auto;">
+                <!-- Targeted Accounts Strip -->
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Akun Media Sosial Target:</label>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;" id="detailModalAccountsPills">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Content Preview / Copywriting -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase;">Naskah / Caption Copywriting AI:</span>
+                        <button class="btn btn-outline" onclick="window.copyKanbanModalCaption()" style="font-size:10.5px; padding:3px 8px; height:auto;"><i class="fa-solid fa-copy"></i> Salin Teks</button>
+                    </div>
+                    <div style="font-size:12.5px; color:#1e293b; line-height:1.55; white-space:pre-wrap; max-height:140px; overflow-y:auto; background:#fff; padding:10px; border-radius:6px; border:1px solid #cbd5e1;" id="detailModalCaption">
+                        Konten belum di-generate oleh AI Engine. Klik tombol "Eksekusi AI Drafting" di bawah untuk merancang slide dan copy otomatis.
+                    </div>
+                </div>
+
+                <!-- Workflow Stage Controller -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase;">Pindah Tahapan Workflow:</label>
+                        <select id="detailModalMoveStageSelect" onchange="window.handleDetailModalStageChange(this.value)" class="form-control" style="font-size:12px;">
+                            <option value="ideas">💡 1. Ide & Tren Scraped</option>
+                            <option value="drafting">🤖 2. AI Drafting (In Progress)</option>
+                            <option value="review">🔍 3. Tinjau & Approval</option>
+                            <option value="scheduled">⏰ 4. Terjadwal Multi-Akun</option>
+                            <option value="published">🚀 5. Terbit & Live</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase;">Integrasi Brankas Aset:</label>
+                        <div style="display:flex; align-items:center; height:38px; gap:8px;">
+                            <span class="status-badge badge-done" id="detailModalDamBadge" style="font-size:10.5px;"><i class="fa-solid fa-check"></i> Tersimpan di DAM</span>
+                            <button class="btn btn-outline" onclick="window.switchMarketingPage('asset-library')" style="font-size:11px; padding:4px 10px; height:auto;">Lihat Berkas</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Hub Buttons -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                    <button class="btn btn-outline" id="btnDetailExecuteAi" onclick="window.triggerDetailCardAiDraft()" style="font-size:11.5px; padding:9px;">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:#7c3aed;"></i> Eksekusi AI Draft
+                    </button>
+                    <button class="btn btn-outline" id="btnDetailSaveToDam" onclick="window.saveCurrentDetailCardToDam()" style="font-size:11.5px; padding:9px;">
+                        <i class="fa-solid fa-vault" style="color:var(--brand-primary);"></i> Simpan ke Brankas
+                    </button>
+                    <button class="btn btn-primary" id="btnDetailPublishMulti" onclick="window.openMultiAccountPublishFromDetail()" style="font-size:11.5px; padding:9px;">
+                        <i class="fa-solid fa-paper-plane"></i> Auto-Publish Multi-Akun
+                    </button>
+                </div>
+            </div>
+            <div style="padding:12px 20px; border-top:1px solid var(--border-light); background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+                <button class="btn btn-outline" onclick="window.deleteCurrentKanbanCard()" style="font-size:11.5px; color:#e11d48; border-color:#fecdd3;"><i class="fa-regular fa-trash-can"></i> Hapus Kartu</button>
+                <button class="btn btn-outline" onclick="window.closeKanbanCardDetailModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         17. MODAL: MULTI-ACCOUNT SOCIAL MEDIA AUTO-PUBLISHER & DISPATCHER
+         ===================================================================== -->
+    <div id="multiAccountPublishModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+        <div style="background:#fff; border-radius:14px; width:740px; max-width:95%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); overflow:hidden; animation:modalFadeIn 0.25s ease;">
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div>
+                    <strong style="font-size:16px; color:var(--text-primary); display:block;">
+                        <i class="fa-solid fa-paper-plane" style="color:#2563eb; margin-right:6px;"></i> Multi-Account Auto-Publisher & Queue Hub
+                    </strong>
+                    <span style="font-size:11.5px; color:var(--text-tertiary);">Orkestrasi penerbitan otomatis ke banyak akun media sosial sekaligus secara terkoordinasi</span>
+                </div>
+                <button onclick="window.closeMultiAccountPublishModal()" style="border:none; background:transparent; font-size:16px; color:#94a3b8; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding:20px; max-height:75vh; overflow-y:auto;">
+                <!-- Content Summary Strip -->
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 16px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="font-size:10.5px; color:#1e40af; font-weight:700; text-transform:uppercase;">Konten yang akan dikirim:</span>
+                        <strong style="display:block; font-size:13.5px; color:#1e3a8a; margin-top:2px;" id="dispatchContentTitle">Fullstack Modern: Next.js 14, Laravel 11 & AI Workflows</strong>
+                    </div>
+                    <span class="status-badge badge-done" style="font-size:11px;"><i class="fa-solid fa-check"></i> Konten Siap Terbit</span>
+                </div>
+
+                <!-- Account Selection Matrix -->
+                <div style="margin-bottom:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <label style="font-size:12px; font-weight:700; color:#1e293b; text-transform:uppercase; letter-spacing:0.5px;">Pilih Akun Tujuan Publikasi (Multi-Sosmed):</label>
+                        <div style="display:flex; gap:8px; font-size:11.5px;">
+                            <span style="color:#2563eb; cursor:pointer; font-weight:600;" onclick="window.toggleAllDispatchAccounts(true)">Pilih Semua (6)</span>
+                            <span style="color:#64748b;">•</span>
+                            <span style="color:#64748b; cursor:pointer;" onclick="window.toggleAllDispatchAccounts(false)">Reset Pilihan</span>
+                        </div>
+                    </div>
+
+                    <!-- Account List Grid -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;" id="dispatchAccountsGrid">
+                        <!-- Instagram Official -->
+                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" checked value="ig-official">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#fdf2f8; color:#db2777; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-instagram"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astacode.official</strong>
+                                    <span style="font-size:10.5px; color:#64748b;">Instagram • 145K Followers</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
+                        </div>
+
+                        <!-- Instagram Career -->
+                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" checked value="ig-career">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#fdf2f8; color:#db2777; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-instagram"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astacode.career</strong>
+                                    <span style="font-size:10.5px; color:#64748b;">Instagram • 32K Followers</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
+                        </div>
+
+                        <!-- TikTok Tech -->
+                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" checked value="tt-tech">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#f1f5f9; color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-tiktok"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astacode.tech</strong>
+                                    <span style="font-size:10.5px; color:#64748b;">TikTok • 210K Followers</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
+                        </div>
+
+                        <!-- LinkedIn Corp -->
+                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" checked value="li-corp">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#e0f2fe; color:#0284c7; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-linkedin"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">Astacode Enterprise Ltd.</strong>
+                                    <span style="font-size:10.5px; color:#64748b;">LinkedIn Page • 14.2K Connections</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
+                        </div>
+
+                        <!-- YouTube Channel -->
+                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" checked value="yt-shorts">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-youtube"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">Astacode Tech TV</strong>
+                                    <span style="font-size:10.5px; color:#64748b;">YouTube Shorts • 54K Subs</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
+                        </div>
+
+                        <!-- X Dev -->
+                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" checked value="tw-dev">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#f0f9ff; color:#0284c7; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-x-twitter"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astacode_dev</strong>
+                                    <span style="font-size:10.5px; color:#64748b;">X / Twitter • 28K Followers</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Automation Settings -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:18px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                        <div>
+                            <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:6px;">Mode Pengiriman Otomatis</label>
+                            <select id="dispatchModeSelect" class="form-control" style="font-size:12px;">
+                                <option value="instant">⚡ Kirim Sekarang (Simultan Bertahap 45s)</option>
+                                <option value="schedule_peak">⏰ Jadwal Otomatis (Rekomendasi Waktu AI)</option>
+                                <option value="custom">📅 Pilih Jam & Tanggal Kustom</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:6px;">Smart Anti-Bot Rate Throttling</label>
+                            <div style="font-size:11.5px; color:#64748b; line-height:1.4; padding-top:4px;">
+                                <i class="fa-solid fa-shield-halved" style="color:#059669;"></i> Background Worker membagi antrean dengan jeda acak (jitter) 30-60 detik per akun untuk menjaga reputasi API.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Dispatch Console Output -->
+                <div id="dispatchConsoleContainer" style="display:none; margin-bottom:10px;">
+                    <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Real-Time Dispatch Worker Log:</label>
+                    <div id="dispatchConsoleLogs" style="background:#0f172a; color:#38bdf8; font-family:monospace; font-size:11px; padding:12px; border-radius:8px; max-height:160px; overflow-y:auto; line-height:1.6;">
+                    </div>
+                </div>
+            </div>
+            <div style="padding:14px 20px; border-top:1px solid var(--border-light); background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; color:#64748b;" id="dispatchSelectedCountText">6 Akun Sosmed Dipilih</span>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-outline" onclick="window.closeMultiAccountPublishModal()">Batal</button>
+                    <button class="btn btn-primary" id="btnExecuteMultiDispatch" onclick="window.runMultiAccountDispatchSimulation()"><i class="fa-solid fa-paper-plane"></i> Mulai Kirim Otomatis</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 15. MODAL: MULTI-ACCOUNT CHANNEL MANAGER (TAMBAH & KELOLA AKUN) -->
+    <div id="multiAccountChannelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+        <div style="background:#fff; border-radius:14px; width:680px; max-width:94%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); overflow:hidden; animation:modalFadeIn 0.25s ease;">
+            <!-- Modal Header -->
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div id="macmHeaderIcon" style="width:38px; height:38px; border-radius:10px; background:#fdf2f8; color:#db2777; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                        <i class="fa-brands fa-instagram"></i>
+                    </div>
+                    <div>
+                        <strong style="font-size:16px; color:var(--text-primary); display:block;" id="macmModalTitle">Kelola Multi-Akun Instagram (Graph API)</strong>
+                        <span style="font-size:12px; color:var(--text-tertiary);" id="macmModalSubtitle">Kelola otorisasi akun Meta OAuth 2.0 & tambah akun brand baru</span>
+                    </div>
+                </div>
+                <button onclick="window.closeMultiAccountModal()" style="border:none; background:transparent; font-size:16px; color:#94a3b8; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div style="padding:20px; max-height:75vh; overflow-y:auto;">
+                <!-- Section 1: Connected Accounts List -->
+                <div style="margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px;" id="macmConnectedCountLabel">Daftar Akun Terhubung (2 Akun Aktif)</span>
+                        <span class="status-badge badge-done" style="font-size:10px;"><i class="fa-solid fa-circle-check"></i> Multi-Tenant Pool OK</span>
+                    </div>
+                    <div id="macmAccountListContainer" style="display:flex; flex-direction:column; gap:8px;">
+                        <!-- Dynamically populated by renderMultiAccountModalList -->
+                    </div>
+                </div>
+
+                <!-- Section 2: Add New Account Card (e.g. Akun ke-3) -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                        <div style="width:26px; height:26px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                        <h4 style="font-size:13.5px; font-weight:700; color:#0f172a; margin:0;" id="macmAddAccountTitle">Hubungkan Akun Instagram Baru (Akun ke-3)</h4>
+                    </div>
+                    <p style="font-size:12px; color:#64748b; margin-top:0; margin-bottom:14px;" id="macmAddAccountDesc">
+                        Anda dapat menghubungkan akun Instagram Bisnis atau Kreator tambahan melalui otorisasi Meta OAuth atau memasukkan kredensial Page Token.
+                    </p>
+
+                    <!-- OAuth Quick Connect Banner -->
+                    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 16px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <i class="fa-brands fa-facebook" style="font-size:24px; color:#1877f2;"></i>
+                            <div>
+                                <strong style="font-size:12.5px; color:#1e3a8a; display:block;">Login via Facebook Business (Meta OAuth)</strong>
+                                <span style="font-size:11px; color:#3b82f6;">Otomatis tarik seluruh Instagram Business Accounts yang dikelola</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="window.triggerSimulatedMetaOAuthLogin()" style="font-size:11.5px; padding:7px 14px; background:#1877f2; border-color:#1877f2;">
+                            <i class="fa-brands fa-facebook"></i> Lanjutkan dengan Meta
+                        </button>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:10px; margin:14px 0;">
+                        <div style="flex:1; height:1px; background:#e2e8f0;"></div>
+                        <span style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase;">Atau Masukkan Manual</span>
+                        <div style="flex:1; height:1px; background:#e2e8f0;"></div>
+                    </div>
+
+                    <!-- Manual Input Form -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:11.5px;">Username / Handle Akun <span style="color:#e11d48;">*</span></label>
+                            <input type="text" id="macmInputHandle" class="form-control" placeholder="@astacode.community" value="@astacode.community" style="font-size:12px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:11.5px;">Kategori Saluran / Tujuan</label>
+                            <select id="macmInputCategory" class="form-control" style="font-size:12px;">
+                                <option value="Komunitas & Edukasi">Komunitas & Edukasi</option>
+                                <option value="E-Commerce & Produk">E-Commerce & Katalog Produk</option>
+                                <option value="Customer Support & FAQ">Customer Support & FAQ</option>
+                                <option value="Event & Workshop">Event & Workshop</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:11.5px;">Instagram Business Account ID</label>
+                            <input type="text" id="macmInputAccountId" class="form-control" value="17841409210842" style="font-size:12px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:11.5px;">Page Access Token (Bearer)</label>
+                            <input type="password" id="macmInputToken" class="form-control" value="EAAQZB...meta_page_token_valid" style="font-size:12px;">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button type="button" class="btn btn-primary" id="macmBtnSubmitAccount" onclick="window.submitAddNewSocialAccount()" style="font-size:12px; padding:8px 18px;">
+                            <i class="fa-solid fa-plus"></i> Sambungkan Akun Sekarang
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding:14px 20px; border-top:1px solid var(--border-light); background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11.5px; color:#64748b;"><i class="fa-solid fa-lock" style="color:#059669;"></i> Token disimpan aman di Credential Vault (AES-256)</span>
+                <button type="button" class="btn btn-outline" onclick="window.closeMultiAccountModal()">Selesai & Tutup</button>
             </div>
         </div>
     </div>

@@ -907,7 +907,17 @@ function initSprintPlanner() {
                     clearInterval(interval);
                     btnExecuteAll.innerHTML = '<i class="fa-solid fa-check-double"></i> 7 Hari Siap';
                     btnExecuteAll.disabled = false;
-                    window.showToast("🚀 Seluruh 7 aset konten & visual mingguan berhasil dibuat oleh AI!", "success");
+
+                    // Otomatis simpan seluruh 7 konten hasil generate ke Brankas Aset (Asset Library DAM)
+                    if (typeof window.autoSaveGeneratedContentToAssetLibrary === 'function') {
+                        for (let s = 1; s <= 7; s++) {
+                            if (sprintData[s]) window.autoSaveGeneratedContentToAssetLibrary(sprintData[s], false);
+                        }
+                        window.showToast("🚀 Seluruh 7 aset konten & visual mingguan berhasil dibuat oleh AI & otomatis tersimpan ke Brankas Aset DAM!", "success");
+                    } else {
+                        window.showToast("🚀 Seluruh 7 aset konten & visual mingguan berhasil dibuat oleh AI!", "success");
+                    }
+
                     renderPreviewForDay(currentPreviewDay);
 
                     // Smoothly scroll to preview section
@@ -932,6 +942,52 @@ function initSprintPlanner() {
             }, 600);
         });
     }
+
+    // Export 7-Day Sprint Directly into Kanban Content AI Board
+    window.syncSprintToKanbanBoard = function() {
+        let count = 0;
+        for (let day = 1; day <= 7; day++) {
+            const item = sprintData[day];
+            if (!item) continue;
+
+            // Cek duplikasi berdasarkan judul
+            const exists = kanbanData.find(c => c.title.toLowerCase().trim() === item.topic.toLowerCase().trim());
+            if (!exists) {
+                let defaultAcc = 'Instagram: @astacode.official';
+                if (item.format === 'video') defaultAcc = 'TikTok: @astacode.tech';
+                else if (item.format === 'blog') defaultAcc = 'LinkedIn: Astacode Enterprise';
+                else if (day === 6) defaultAcc = 'Instagram: @astacode.career';
+
+                const formatTitle = item.format === 'carousel' ? 'Carousel (5 Slide)' : 
+                                   (item.format === 'video' ? 'Short Video (9:16)' : 
+                                   (item.format === 'blog' ? 'Blog SEO Article' : 'Single Post Image'));
+
+                const card = {
+                    id: 'k-sprint-' + day + '-' + Date.now(),
+                    title: item.topic,
+                    stage: item.status === 'ready' ? 'drafting' : 'ideas',
+                    format: formatTitle,
+                    platform: item.platform || 'Multi',
+                    accounts: [defaultAcc],
+                    tags: ['#SprintAI', '#Batch7Days', '#Astacode'],
+                    brief: `Rancangan konten dari AI Content Engine (Hari ke-${day}: ${item.day}).`,
+                    caption: item.caption || `Naskah hasil generate AI untuk "${item.topic}".\n\n#Astacode #Tech`,
+                    date: item.day ? item.day.split(',')[1]?.trim() : 'Minggu ini',
+                    inDam: true
+                };
+                kanbanData.push(card);
+                count++;
+            }
+        }
+
+        window.renderKanbanBoard();
+        window.showToast(`📋 Sukses! ${count > 0 ? count + ' konten sprint' : 'Seluruh konten sprint'} berhasil diekspor ke Kanban Content AI dengan akun target masing-masing!`, 'success');
+
+        // Smoothly redirect user to Kanban board
+        setTimeout(() => {
+            window.switchMarketingPage('kanban');
+        }, 700);
+    };
 
     // Sprint Row Delegate Events
     const rowsContainer = document.getElementById('sprintRowsContainer');
@@ -982,7 +1038,12 @@ function initSprintPlanner() {
                     }
                     if (progressText) progressText.textContent = `Progress: ${readyCount} dari 7 Konten Dieksekusi`;
 
-                    window.showToast(`⚡ Aset visual & copywriting untuk Hari ke-${day} siap ditinjau!`, 'success');
+                    // Otomatis simpan ke Brankas Aset DAM
+                    if (typeof window.autoSaveGeneratedContentToAssetLibrary === 'function') {
+                        window.autoSaveGeneratedContentToAssetLibrary(sprintData[day], true);
+                    } else {
+                        window.showToast(`⚡ Aset visual & copywriting untuk Hari ke-${day} siap ditinjau!`, 'success');
+                    }
 
                     const previewSec = document.getElementById('previewSection');
                     if (previewSec) previewSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1581,6 +1642,9 @@ function initInboxChatTester() {
 // ============================================================================
 
 const brandFoldersData = [
+    { id: 'folder-lead-magnets', name: '🎁 Naskah Lead Magnet (Freebie & PDF)', parent: 'root', color: '#ec4899', count: 3, size: '8.4 MB', modified: 'Hari ini, 14:10' },
+    { id: 'folder-published', name: '🚀 Konten Terpublikasi (Live Archive)', parent: 'root', color: '#10b981', count: 5, size: '42.1 MB', modified: 'Hari ini, 15:00' },
+    { id: 'folder-ai-generated', name: '🤖 Konten Hasil AI (Auto-Vault)', parent: 'root', color: '#8b5cf6', count: 7, size: '22.4 MB', modified: 'Hari ini, 12:30' },
     { id: 'folder-bg', name: 'Backgrounds', parent: 'root', color: '#3b82f6', count: 12, size: '24.5 MB', modified: '28 Okt 2026, 10:44 am' },
     { id: 'folder-logo', name: 'Logo & Watermark', parent: 'root', color: '#3b82f6', count: 8, size: '14.2 MB', modified: '28 Okt 2026, 10:44 am' },
     { id: 'folder-fonts', name: 'Fonts & Typography', parent: 'root', color: '#3b82f6', count: 5, size: '8.1 MB', modified: '28 Okt 2026, 10:44 am' },
@@ -1593,6 +1657,60 @@ const brandFoldersData = [
 ];
 
 const brandFilesData = [
+    {
+        id: 'file-naskah-docker-pdf',
+        name: 'naskah_script_docker_dan_devops.pdf',
+        folder: 'folder-lead-magnets',
+        format: 'PDF',
+        size: '1.8 MB',
+        dim: 'A4 E-Book (12 Halaman)',
+        colorSpace: 'sRGB Printable',
+        dpi: '300 DPI Vector',
+        uploader: 'Astacode Lead Tech (Freebie)',
+        created: 'Hari ini, 11:20',
+        aiScore: '99% (Hook TikTok Tested)',
+        icon: 'fa-file-pdf',
+        previewType: 'pdf',
+        previewBg: 'linear-gradient(135deg, #0284c7, #0369a1)',
+        previewMeta: 'E-Book Naskah & Docker Compose Template • 12 Halaman',
+        bookmarked: true
+    },
+    {
+        id: 'file-prompts-marketing-pdf',
+        name: '50_prompt_ai_marketing_automation.pdf',
+        folder: 'folder-lead-magnets',
+        format: 'PDF',
+        size: '2.4 MB',
+        dim: 'A4 Guidebook (24 Halaman)',
+        colorSpace: 'sRGB Universal',
+        dpi: '300 DPI High-Res',
+        uploader: 'Marketing Automation Lead',
+        created: 'Hari ini, 09:15',
+        aiScore: '100% (Lead Magnet Ready)',
+        icon: 'fa-file-pdf',
+        previewType: 'pdf',
+        previewBg: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+        previewMeta: '50 Master Prompt AI Copywriting & Social Growth',
+        bookmarked: true
+    },
+    {
+        id: 'file-published-ocr-video',
+        name: 'rilis_fitur_ai_ocr_struk_live.mp4',
+        folder: 'folder-published',
+        format: 'MP4',
+        size: '18.4 MB',
+        dim: '1080 × 1920 px (9:16 Reel)',
+        colorSpace: 'Rec.709 Standard',
+        dpi: '60 FPS Full HD',
+        uploader: 'Auto-Publisher (Kanban Archive)',
+        created: '27 Okt 2026 (Live Terbit)',
+        aiScore: '97% (Multi-Account Published)',
+        icon: 'fa-video',
+        previewType: 'video',
+        previewBg: 'linear-gradient(135deg, #0f172a, #1e293b)',
+        previewMeta: 'Live di IG @astacode.official & TikTok @astacode.tech',
+        bookmarked: true
+    },
     {
         id: 'file-office-lobby',
         name: 'office_lobby_bg.png',
@@ -3004,31 +3122,44 @@ window.openPlatformConfigModal = function(platform = "Instagram", account = "@as
     const modal = document.getElementById('platformConfigModal');
     if (!modal) return;
 
-    const titleEl = document.getElementById('modalPlatformTitle');
-    const inputName = document.getElementById('platformConfigName');
-    const inputAcc = document.getElementById('platformConfigAccount');
-    const inputUrl = document.getElementById('platformConfigWebhookUrl');
-    const inputToken = document.getElementById('platformConfigToken');
+    const titleEl = document.getElementById('modalPlatformConfigTitle');
+    const subtitleEl = document.getElementById('modalPlatformConfigSubtitle');
+    const inputAcc = document.getElementById('cfgPlatformAccountInput');
+    const inputUrl = document.getElementById('cfgPlatformEndpointInput');
+    const inputClientId = document.getElementById('cfgPlatformClientId');
+    const inputSecret = document.getElementById('cfgPlatformSecret');
+    const inputToken = document.getElementById('cfgPlatformToken');
 
-    if (titleEl) titleEl.textContent = `Konfigurasi Integrasi: ${platform}`;
-    if (inputName) inputName.value = `${platform} Official Integration`;
+    if (titleEl) titleEl.textContent = `Konfigurasi Kredensial API: ${platform}`;
+    if (subtitleEl) subtitleEl.textContent = `Atur Meta/Platform App Key, Secret, & Bearer Token untuk ${platform}`;
     if (inputAcc) inputAcc.value = account || '@asta.enterprise';
 
-    if (type === 'video_api') {
+    if (platform === 'TikTok' || type === 'video_api') {
         if (inputUrl) inputUrl.value = 'https://open-api.tiktok.com/v2/post/publish/video/';
-        if (inputToken) inputToken.value = 'tk_live_oauth_pkce_998124018249012';
-    } else if (type === 'meta_ads') {
-        if (inputUrl) inputUrl.value = 'https://graph.facebook.com/v19.0/act_892104/';
+        if (inputClientId) inputClientId.value = 'tt_app_client_889210';
+        if (inputSecret) inputSecret.value = 'sec_tt_77a98b12c44810';
+        if (inputToken) inputToken.value = 'act.tiktok_live_oauth_pkce_998124018249012';
+    } else if (platform === 'Meta Ads' || type === 'meta_ads') {
+        if (inputUrl) inputUrl.value = 'https://graph.facebook.com/v19.0/act_892104/adsets';
+        if (inputClientId) inputClientId.value = 'meta_act_892104771';
+        if (inputSecret) inputSecret.value = 'sec_fb_9931bfa2891';
         if (inputToken) inputToken.value = 'EAABwzL1...[Meta_Graph_Token_Valid]';
-    } else if (type === 'linkedin_api') {
+    } else if (platform === 'LinkedIn' || type === 'linkedin_api') {
         if (inputUrl) inputUrl.value = 'https://api.linkedin.com/v2/ugcPosts';
+        if (inputClientId) inputClientId.value = 'li_app_client_782910';
+        if (inputSecret) inputSecret.value = 'sec_li_992140a7781';
         if (inputToken) inputToken.value = 'AQV...[LinkedIn_Enterprise_OAuth2]';
-    } else if (type === 'webhook_relay') {
-        if (inputUrl) inputUrl.value = 'https://hooks.zapier.com/hooks/catch/982104/astacode/';
-        if (inputToken) inputToken.value = 'hmac_sha256_secret_key_prod_2026';
+    } else if (platform === 'Blog CMS' || type === 'webhook_relay') {
+        if (inputUrl) inputUrl.value = 'https://blog.astacode.com/wp-json/wp/v2/posts';
+        if (inputClientId) inputClientId.value = 'wp_rest_client_astacode';
+        if (inputSecret) inputSecret.value = 'whsec_wp_hmac_9941094810294810';
+        if (inputToken) inputToken.value = 'Bearer wp_jwt_auth_production_secret';
     } else {
+        // Default Instagram Graph API
         if (inputUrl) inputUrl.value = 'https://graph.facebook.com/v19.0/17841400/media_publish';
-        if (inputToken) inputToken.value = 'EAAG...[IG_Long_Lived_User_Token]';
+        if (inputClientId) inputClientId.value = 'fb_app_id_8920194819024';
+        if (inputSecret) inputSecret.value = 'meta_app_secret_9941094810294810';
+        if (inputToken) inputToken.value = 'EAAQZB***asta_instagram_long_lived_user_token';
     }
 
     modal.style.display = 'flex';
@@ -3152,10 +3283,18 @@ function initDistributionHub() {
 
     // 3. Platform Configuration Buttons
     document.querySelectorAll('.btn-config-platform').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
             const platform = btn.getAttribute('data-platform') || 'Platform';
             const account = btn.getAttribute('data-account') || '';
             const type = btn.getAttribute('data-type') || 'image_api';
+
+            if (platform.toLowerCase().includes('instagram') || platform.toLowerCase().includes('tiktok')) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.openMultiAccountModal(platform.toLowerCase().includes('instagram') ? 'Instagram' : 'TikTok');
+                return;
+            }
+
             window.openPlatformConfigModal(platform, account, type);
         });
     });
@@ -3189,9 +3328,9 @@ function initDistributionHub() {
     if (formPlatformConfig) {
         formPlatformConfig.addEventListener('submit', (e) => {
             e.preventDefault();
-            const name = document.getElementById('platformConfigName')?.value || 'Integrasi';
+            const name = document.getElementById('modalPlatformConfigTitle')?.textContent || 'Integrasi';
             window.closePlatformConfigModal();
-            window.showToast(`💾 Konfigurasi integrasi "${name}" berhasil disimpan & disinkronkan!`, 'success');
+            window.showToast(`💾 ${name} berhasil disimpan & disinkronkan ke vault!`, 'success');
         });
     }
 
@@ -3520,6 +3659,1414 @@ function initDistributionHub() {
     }
 }
 
+// ============================================================================
+// --- INTEGRATION: AUTO-SAVE GENERATED CONTENT KE BRANKAS ASET (DAM) ---
+// ============================================================================
+window.autoSaveGeneratedContentToAssetLibrary = function(item, showNotification = true) {
+    if (!item) return null;
+
+    // 1. Pastikan folder "🤖 Konten Hasil AI (Auto-Vault)" ada di brandFoldersData
+    let aiFolder = brandFoldersData.find(f => f.id === 'folder-ai-generated');
+    if (!aiFolder) {
+        aiFolder = {
+            id: 'folder-ai-generated',
+            name: '🤖 Konten Hasil AI (Auto-Vault)',
+            parent: 'root',
+            color: '#8b5cf6',
+            count: 0,
+            size: '0.0 MB',
+            modified: 'Hari Ini'
+        };
+        brandFoldersData.unshift(aiFolder);
+    }
+
+    const topicTitle = item.topic || item.title || 'AI Generated Asset';
+    const titleSlug = topicTitle.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().substring(0, 32);
+    const formatStr = (item.format || 'Carousel').toLowerCase();
+    
+    let ext = 'PNG';
+    let icon = 'fa-image';
+    let bg = 'linear-gradient(135deg, #1e3a8a, #3b82f6)';
+    let dim = '1080 × 1350 px (4:5 Carousel)';
+
+    if (formatStr.includes('video') || formatStr.includes('reel') || formatStr.includes('tiktok')) {
+        ext = 'MP4';
+        icon = 'fa-video';
+        bg = 'linear-gradient(135deg, #0f172a, #1e293b)';
+        dim = '1080 × 1920 px (9:16 Reel)';
+    } else if (formatStr.includes('blog') || formatStr.includes('article')) {
+        ext = 'PDF';
+        icon = 'fa-file-lines';
+        bg = 'linear-gradient(135deg, #0f766e, #14b8a6)';
+        dim = 'A4 Article & SEO Meta';
+    }
+
+    const newId = 'file-ai-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    const newFileName = `${titleSlug}_ai_asset.${ext.toLowerCase()}`;
+
+    // Cek duplikasi nama agar tidak menumpuk berkas identik
+    const exists = brandFilesData.find(f => f.name === newFileName);
+    if (exists) {
+        return exists;
+    }
+
+    const newAsset = {
+        id: newId,
+        name: newFileName,
+        folder: 'folder-ai-generated',
+        format: ext,
+        size: '3.2 MB',
+        dim: dim,
+        colorSpace: 'sRGB (Display P3)',
+        dpi: '300 DPI (High-Res Ready)',
+        uploader: 'AI Content Engine (Auto-Save)',
+        created: 'Baru Saja (Auto-Saved)',
+        aiScore: '99% (Sesuai Brand Guidelines)',
+        icon: icon,
+        previewType: ext === 'MP4' ? 'video' : (ext === 'PDF' ? 'pdf' : 'image'),
+        previewBg: bg,
+        previewMeta: `${topicTitle} • Terindeks AI Vault`,
+        bookmarked: true,
+        caption: item.caption || '',
+        videoScript: item.videoScript || '',
+        slides: item.slides || null
+    };
+
+    brandFilesData.unshift(newAsset);
+
+    // Update folder count & size
+    const count = brandFilesData.filter(f => f.folder === 'folder-ai-generated').length;
+    aiFolder.count = count;
+    aiFolder.size = (count * 3.2).toFixed(1) + ' MB';
+
+    // Perbarui tampilan DAM jika sedang dibuka
+    if (typeof window.renderAssetView === 'function') {
+        window.renderAssetView();
+    }
+
+    if (showNotification) {
+        window.showToast(`💾 "${topicTitle.substring(0, 32)}..." otomatis tersimpan ke Brankas Aset (Brand Asset Library)!`, 'success');
+    }
+
+    return newAsset;
+};
+
+// Auto-Archive Konten Terbit ke Folder Live Archive DAM
+window.autoSavePublishedContentToAssetLibrary = function(item, showNotification = true) {
+    if (!item) return null;
+
+    // 1. Pastikan folder "🚀 Konten Terpublikasi (Live Archive)" ada di brandFoldersData
+    let pubFolder = brandFoldersData.find(f => f.id === 'folder-published');
+    if (!pubFolder) {
+        pubFolder = {
+            id: 'folder-published',
+            name: '🚀 Konten Terpublikasi (Live Archive)',
+            parent: 'root',
+            color: '#10b981',
+            count: 0,
+            size: '0.0 MB',
+            modified: 'Hari Ini'
+        };
+        brandFoldersData.unshift(pubFolder);
+    }
+
+    const topicTitle = item.title || item.topic || 'Published Live Asset';
+    const titleSlug = topicTitle.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().substring(0, 32);
+    const formatStr = (item.format || 'Carousel').toLowerCase();
+    
+    let ext = 'PNG';
+    let icon = 'fa-image';
+    let bg = 'linear-gradient(135deg, #065f46, #059669)';
+    let dim = '1080 × 1350 px (Live Carousel)';
+
+    if (formatStr.includes('video') || formatStr.includes('reel') || formatStr.includes('tiktok') || formatStr.includes('short')) {
+        ext = 'MP4';
+        icon = 'fa-video';
+        bg = 'linear-gradient(135deg, #0f172a, #1e293b)';
+        dim = '1080 × 1920 px (Live Reel/TikTok)';
+    } else if (formatStr.includes('blog') || formatStr.includes('article') || formatStr.includes('leadership')) {
+        ext = 'PDF';
+        icon = 'fa-file-lines';
+        bg = 'linear-gradient(135deg, #0369a1, #0284c7)';
+        dim = 'A4 Article & Naskah Lengkap';
+    }
+
+    const newId = 'file-pub-' + Date.now();
+    const newFileName = `${titleSlug}_live_archive.${ext.toLowerCase()}`;
+
+    // Cek duplikasi nama
+    let exists = brandFilesData.find(f => f.name === newFileName);
+    if (exists) {
+        return exists;
+    }
+
+    const accCount = (item.accounts && item.accounts.length) || 1;
+    const newAsset = {
+        id: newId,
+        name: newFileName,
+        folder: 'folder-published',
+        format: ext,
+        size: ext === 'MP4' ? '18.2 MB' : '3.8 MB',
+        dim: dim,
+        colorSpace: 'sRGB (Live Archive)',
+        dpi: '300 DPI (Published Asset)',
+        uploader: `Multi-Channel Publisher (${accCount} Akun)`,
+        created: 'Hari Ini (Live Terbit)',
+        aiScore: '100% (Terverifikasi Live)',
+        icon: icon,
+        previewType: ext === 'MP4' ? 'video' : (ext === 'PDF' ? 'pdf' : 'image'),
+        previewBg: bg,
+        previewMeta: `${topicTitle} • Terbit di ${accCount} Akun Sosmed`,
+        bookmarked: true,
+        caption: item.caption || item.brief || '',
+        videoScript: item.videoScript || '',
+        platform: item.platform || 'Multi-Account',
+        accounts: item.accounts || []
+    };
+
+    brandFilesData.unshift(newAsset);
+
+    // Update folder count & size
+    const count = brandFilesData.filter(f => f.folder === 'folder-published').length;
+    pubFolder.count = count;
+    pubFolder.size = (count * 4.2).toFixed(1) + ' MB';
+
+    // Perbarui tampilan DAM jika sedang dibuka
+    if (typeof window.renderAssetView === 'function') {
+        window.renderAssetView();
+    }
+
+    if (showNotification) {
+        window.showToast(`🚀 Konten "${topicTitle.substring(0, 28)}..." sukses terbit & otomatis diarsipkan ke Brankas Aset (Live Archive DAM)!`, 'success');
+    }
+
+    return newAsset;
+};
+
+
+// ============================================================================
+// --- KANBAN CONTENT AI (OMNICHANNEL WORKFLOW BOARD) ENGINE ---
+// ============================================================================
+
+let kanbanActivePlatform = 'all';
+let kanbanDraggedCardId = null;
+let currentDetailKanbanId = null;
+
+const kanbanData = [
+    // Column 1: ideas
+    {
+        id: 'k-101',
+        title: 'Docker & Kubernetes untuk Pemula: Dari Localhost ke Cloud',
+        stage: 'ideas',
+        format: 'Blog SEO Article',
+        platform: 'Multi',
+        accounts: ['Instagram: @astacode.official', 'LinkedIn: Astacode Enterprise'],
+        tags: ['#Docker', '#DevOps', '#Kubernetes'],
+        brief: 'Tren pencarian tinggi dari software developer yang butuh panduan containerization praktis.',
+        caption: '',
+        date: '30 Okt 2026',
+        inDam: false
+    },
+    {
+        id: 'k-102',
+        title: 'Kenapa Microservices Bisa Bikin Perusahaan Boncos Server?',
+        stage: 'ideas',
+        format: 'Thought Leadership',
+        platform: 'LinkedIn',
+        accounts: ['LinkedIn: Astacode Enterprise'],
+        tags: ['#Architecture', '#CloudCost', '#CTO'],
+        brief: 'Studi kasus premature optimization di startup yang buru-buru adopsi microservices.',
+        caption: '',
+        date: '31 Okt 2026',
+        inDam: false
+    },
+    {
+        id: 'k-103',
+        title: 'Meme Developer: Ekspektasi vs Realita Review PR Hari Jumat',
+        stage: 'ideas',
+        format: 'Tech Meme / Infografis',
+        platform: 'Instagram',
+        accounts: ['Instagram: @astacode.career', 'Instagram: @astacode.official'],
+        tags: ['#DevLife', '#MemeProgrammer', '#TechRelatable'],
+        brief: 'Konten santai pengisi engagement weekend.',
+        caption: '',
+        date: '01 Nov 2026',
+        inDam: false
+    },
+
+    // Column 2: drafting
+    {
+        id: 'k-201',
+        title: 'React Server Components: Panduan Lengkap Anti-Pusing',
+        stage: 'drafting',
+        format: 'Carousel (5 Slide)',
+        platform: 'Instagram',
+        accounts: ['Instagram: @astacode.official', 'LinkedIn: Astacode Enterprise'],
+        tags: ['#NextJS', '#React19', '#Frontend'],
+        brief: 'Drafting slide 1-5 dengan visual code snippet dan analogi restoran.',
+        caption: 'Pusing membedakan Server Component vs Client Component di Next.js? 🤔\n\nSimak rangkuman visual di slide ini! Server Component merender HTML langsung di server dengan 0 bundle size ke browser.\n\n#Nextjs #ReactJS #Fullstack #FrontendTips',
+        date: '28 Okt 2026',
+        inDam: true
+    },
+    {
+        id: 'k-202',
+        title: 'Beda Koding Pakai AI Agent vs Prompting ChatGPT Biasa',
+        stage: 'drafting',
+        format: 'Short Video (9:16)',
+        platform: 'TikTok',
+        accounts: ['TikTok: @astacode.tech', 'Instagram: @astacode.official'],
+        tags: ['#AIAgents', '#CodingTips', '#TechTikTok'],
+        brief: 'Hook video 3 detik: "Zaman sekarang masih copas codingan ChatGPT bolak-balik? Ketinggalan!"',
+        caption: 'Era baru AI Software Engineering! AI Agent bukan cuma jawab teks, tapi bisa baca codebase dan run unit test sendiri! 🤖✨\n\n#AIAgents #SoftwareEngineer #Astacode',
+        date: '29 Okt 2026',
+        inDam: true
+    },
+    {
+        id: 'k-203',
+        title: 'Optimasi Database Query Postgres untuk Aplikasi 100K RPS',
+        stage: 'drafting',
+        format: 'Carousel (5 Slide)',
+        platform: 'LinkedIn',
+        accounts: ['LinkedIn: Astacode Enterprise', 'X: @astacode_dev'],
+        tags: ['#PostgreSQL', '#HighPerformance', '#Backend'],
+        brief: 'Tips indexing B-tree, avoid SELECT *, dan koneksi pooler PgBouncer.',
+        caption: 'Aplikasi kamu mulai lemot saat user membludak? Jangan buru-buru scale server!\n\nPerbaiki 3 bottleneck database Postgres ini terlebih dahulu 🛠️\n\n#Postgres #Database #BackendEngineering #Astacode',
+        date: '29 Okt 2026',
+        inDam: true
+    },
+
+    // Column 3: review
+    {
+        id: 'k-301',
+        title: 'Kenapa Next.js 14 adalah Standar Baru Frontend Engineer',
+        stage: 'review',
+        format: 'Carousel (5 Slide)',
+        platform: 'Instagram',
+        accounts: ['Instagram: @astacode.official', 'Instagram: @astacode.career', 'LinkedIn: Astacode Enterprise'],
+        tags: ['#Nextjs14', '#WebDev', '#EnterpriseStack'],
+        brief: 'Menunggu review visual dari Lead Brand Designer (Maya).',
+        caption: 'Kenapa Next.js 14 jadi standar baru frontend enterprise di 2026? 🚀\n\n1. Zero waterfall dengan Server Components\n2. Server Actions bawaan\n3. Dynamic OpenGraph Generator\n\nSimak slide lengkapnya! 👉\n\n#NextJS #WebDevelopment #ReactJS #AstacodeTech',
+        date: '28 Okt 2026, 10:00 WIB',
+        inDam: true
+    },
+    {
+        id: 'k-302',
+        title: '3 Fitur Rahasia Laravel 11 yang Bikin Developer Bengong 😱',
+        stage: 'review',
+        format: 'Short Video (9:16)',
+        platform: 'TikTok',
+        accounts: ['TikTok: @astacode.tech', 'YouTube: Astacode Tech TV'],
+        tags: ['#Laravel11', '#PHP', '#TechHacks'],
+        brief: 'Script video sudah selesai, menunggu approval final voiceover.',
+        caption: 'Jangan deploy Laravel 11 sebelum kamu tau 3 fitur gila ini! Slim skeleton, dynamic casts, dan built-in rate limiter. Auto-save kodingan kamu! 🚀\n\n#Laravel11 #Backend #PHPDeveloper',
+        date: '29 Okt 2026, 19:00 WIB',
+        inDam: true
+    },
+    {
+        id: 'k-303',
+        title: 'Berapa Biaya Sebenarnya Bangun Software ERP Custom?',
+        stage: 'review',
+        format: 'Thought Leadership',
+        platform: 'LinkedIn',
+        accounts: ['LinkedIn: Astacode Enterprise'],
+        tags: ['#ERPSoftware', '#DigitalTransformation', '#B2B'],
+        brief: 'Countering topik viral kompetitor dengan transparansi pricing model.',
+        caption: 'Banyak perusahaan boncos ratusan juta beli software luar negeri yang fiturnya 80% tidak terpakai.\n\nIni breakdown transparan estimasi biaya ERP modular berbasis open stack yang kami terapkan di Astacode.\n\n#ERP #Enterprise #Astacode',
+        date: '30 Okt 2026, 09:30 WIB',
+        inDam: true
+    },
+
+    // Column 4: scheduled
+    {
+        id: 'k-401',
+        title: 'Studi Kasus: Bagaimana ERP Modular Menghemat OPEX 45%',
+        stage: 'scheduled',
+        format: 'Carousel (5 Slide)',
+        platform: 'Multi',
+        accounts: ['Instagram: @astacode.official', 'LinkedIn: Astacode Enterprise', 'X: @astacode_dev'],
+        tags: ['#CaseStudy', '#CostEfficiency', '#Enterprise'],
+        brief: 'Sudah di-approve oleh Direksi. Dijadwalkan dispatch otomatis via Background Worker.',
+        caption: 'Bagaimana sebuah perusahaan logistik memangkas biaya operasional 45% hanya dalam 3 bulan setelah migrasi ke Astacode ERP? 📊\n\nGeser untuk melihat metrik implementasinya 👉\n\n#CaseStudy #ERP #AstacodeTech',
+        date: '31 Okt 2026, 11:00 WIB',
+        inDam: true
+    },
+    {
+        id: 'k-402',
+        title: 'Behind The Scenes: Suasana Hackathon Tim Engineer Astacode',
+        stage: 'scheduled',
+        format: 'Short Video (9:16)',
+        platform: 'TikTok',
+        accounts: ['TikTok: @astacode.tech', 'Instagram: @astacode.career'],
+        tags: ['#LifeAtAstacode', '#TechCulture', '#Hiring'],
+        brief: 'Employer branding video dijadwalkan Jumat sore peak engagement.',
+        caption: '24 jam bikin AI Automation Agent bareng tim engineer Astacode! Seru banget dan banyak pizza 🍕💻\n\nYuk intip keseruannya!\n\n#LifeAtAstacode #TechCompany #Developer',
+        date: '31 Okt 2026, 17:00 WIB',
+        inDam: true
+    },
+
+    // Column 5: published
+    {
+        id: 'k-501',
+        title: 'Rilis Fitur Baru: Otomasi AI OCR Struk & Klaim Keuangan V3',
+        stage: 'published',
+        format: 'Carousel (5 Slide)',
+        platform: 'Multi',
+        accounts: ['Instagram: @astacode.official', 'LinkedIn: Astacode Enterprise', 'X: @astacode_dev'],
+        tags: ['#ProductUpdate', '#FinanceAI', '#OCR'],
+        brief: 'Sudah terbit sukses di 3 platform sekaligus via API Dispatcher.',
+        caption: 'Bye-bye input struk manual! 👋 Sekarang modul Keuangan Astacode ERP dilengkapi AI OCR scanner yang membaca struk dalam 1.2 detik!\n\nUpdate sekarang di dashboard kalian!\n\n#AstacodeUpdate #FinanceTech #AIAutomation',
+        date: '27 Okt 2026 (Terbit)',
+        inDam: true
+    },
+    {
+        id: 'k-502',
+        title: 'Tips Memilih Tech Stack untuk Startup 2026: Next.js vs Go',
+        stage: 'published',
+        format: 'Blog SEO Article',
+        platform: 'LinkedIn',
+        accounts: ['LinkedIn: Astacode Enterprise'],
+        tags: ['#TechStack', '#GoLang', '#NextJS'],
+        brief: 'Artikel terbit di blog dan disinkronkan ke LinkedIn Article.',
+        caption: 'Go untuk high-throughput backend services, Next.js untuk user-facing interactive interfaces. Kombinasi maut yang kami rekomendasikan di 2026.\n\n#Engineering #Golang #NextJS #Astacode',
+        date: '26 Okt 2026 (Terbit)',
+        inDam: true
+    },
+    {
+        id: 'k-503',
+        title: '5 Kesalahan Arsitektur Fatal Saat Bikin Multi-Tenant SaaS',
+        stage: 'published',
+        format: 'Thought Leadership',
+        platform: 'LinkedIn',
+        accounts: ['LinkedIn: Astacode Enterprise'],
+        tags: ['#SaaS', '#MultiTenant', '#Architecture'],
+        brief: 'Mendapat 1.4K likes dan 120 repost di LinkedIn.',
+        caption: 'Membuat Multi-Tenant SaaS bukan sekadar menambah column company_id di database!\n\nSimak 5 kesalahan fatal yang sering bikin data klien bocor dan cara mencegahnya.\n\n#SaaS #SystemDesign #Astacode',
+        date: '25 Okt 2026 (Terbit)',
+        inDam: true
+    }
+];
+
+// Inisialisasi Kanban & Render
+window.renderKanbanBoard = function() {
+    const searchVal = (document.getElementById('kanbanSearchInput')?.value || '').toLowerCase().trim();
+    
+    // Filter cards
+    const filtered = kanbanData.filter(card => {
+        // Platform filter
+        if (kanbanActivePlatform !== 'all') {
+            if (kanbanActivePlatform === 'Multi') {
+                if (card.platform !== 'Multi' && card.accounts.length <= 1) return false;
+            } else {
+                const matchPlatform = card.platform === kanbanActivePlatform || card.accounts.some(acc => acc.toLowerCase().includes(kanbanActivePlatform.toLowerCase()));
+                if (!matchPlatform) return false;
+            }
+        }
+        // Search filter
+        if (searchVal) {
+            const matchTitle = card.title.toLowerCase().includes(searchVal);
+            const matchTags = card.tags.some(t => t.toLowerCase().includes(searchVal));
+            const matchFormat = card.format.toLowerCase().includes(searchVal);
+            return matchTitle || matchTags || matchFormat;
+        }
+        return true;
+    });
+
+    // Hitung per tahapan
+    const counts = {
+        ideas: 0,
+        drafting: 0,
+        review: 0,
+        scheduled: 0,
+        published: 0
+    };
+
+    const containers = {
+        ideas: document.getElementById('kCol-ideas'),
+        drafting: document.getElementById('kCol-drafting'),
+        review: document.getElementById('kCol-review'),
+        scheduled: document.getElementById('kCol-scheduled'),
+        published: document.getElementById('kCol-published')
+    };
+
+    // Bersihkan kontainer
+    for (const key in containers) {
+        if (containers[key]) containers[key].innerHTML = '';
+    }
+
+    filtered.forEach(card => {
+        if (counts[card.stage] !== undefined) {
+            counts[card.stage]++;
+        }
+        const colEl = containers[card.stage];
+        if (colEl) {
+            colEl.appendChild(createKanbanCardElement(card));
+        }
+    });
+
+    // Update count badges
+    for (const key in counts) {
+        const badge = document.getElementById(`kCount-${key}`);
+        if (badge) badge.textContent = counts[key];
+    }
+
+    // Update KPI Ribbon
+    const totalEl = document.getElementById('kanbanKpiTotal');
+    const ideasEl = document.getElementById('kanbanKpiIdeas');
+    const draftEl = document.getElementById('kanbanKpiDrafting');
+    const revEl = document.getElementById('kanbanKpiReview');
+    const pubEl = document.getElementById('kanbanKpiPublished');
+
+    if (totalEl) totalEl.textContent = `${kanbanData.length} Konten`;
+    if (ideasEl) ideasEl.textContent = `${counts.ideas} Ide`;
+    if (draftEl) draftEl.textContent = `${counts.drafting} Draft`;
+    if (revEl) revEl.textContent = `${counts.review} Item`;
+    if (pubEl) pubEl.textContent = `${counts.scheduled + counts.published} Post`;
+};
+
+function createKanbanCardElement(card) {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'kanban-card-pro';
+    cardEl.setAttribute('draggable', 'true');
+    cardEl.setAttribute('data-id', card.id);
+
+    // Styling khusus border kiri berdasarkan stage
+    const stageBorder = {
+        ideas: '#d97706',
+        drafting: '#7c3aed',
+        review: '#ea580c',
+        scheduled: '#0284c7',
+        published: '#059669'
+    };
+    cardEl.style.borderLeft = `3.5px solid ${stageBorder[card.stage] || '#cbd5e1'}`;
+
+    // Buat Account & Platform Pills
+    let pillsHtml = '';
+    if (card.accounts && card.accounts.length > 1) {
+        pillsHtml += `<span class="platform-pill multi"><i class="fa-solid fa-share-nodes"></i> Multi (${card.accounts.length} Akun)</span>`;
+    } else if (card.accounts && card.accounts.length === 1) {
+        const acc = card.accounts[0];
+        if (acc.includes('Instagram')) pillsHtml += `<span class="platform-pill ig"><i class="fa-brands fa-instagram"></i> IG</span>`;
+        else if (acc.includes('TikTok')) pillsHtml += `<span class="platform-pill tt"><i class="fa-brands fa-tiktok"></i> TikTok</span>`;
+        else if (acc.includes('LinkedIn')) pillsHtml += `<span class="platform-pill li"><i class="fa-brands fa-linkedin"></i> LinkedIn</span>`;
+        else if (acc.includes('YouTube')) pillsHtml += `<span class="platform-pill yt"><i class="fa-brands fa-youtube"></i> YT</span>`;
+        else if (acc.includes('X')) pillsHtml += `<span class="platform-pill tw"><i class="fa-brands fa-x-twitter"></i> X</span>`;
+    } else {
+        pillsHtml += `<span class="platform-pill">${card.platform || 'General'}</span>`;
+    }
+    pillsHtml += `<span class="platform-pill" style="background:#f8fafc; color:#64748b; font-weight:600;">${card.format}</span>`;
+
+    // DAM Badge
+    let damPill = card.inDam ? `<span title="Tersimpan di Brankas Aset DAM" style="font-size:10px; color:#059669; font-weight:700;"><i class="fa-solid fa-vault"></i> DAM</span>` : '';
+
+    // Quick Action button based on stage
+    let actionBtnHtml = '';
+    if (card.stage === 'ideas') {
+        actionBtnHtml = `<button class="btn btn-outline" onclick="window.triggerCardAiDraft('${card.id}', event)"><i class="fa-solid fa-wand-magic-sparkles" style="color:#7c3aed;"></i> AI Draft</button>`;
+    } else if (card.stage === 'drafting') {
+        actionBtnHtml = `<button class="btn btn-outline" onclick="window.moveKanbanCardStage('${card.id}', 'review', event)"><i class="fa-solid fa-arrow-right"></i> Ke Review</button>`;
+    } else if (card.stage === 'review') {
+        actionBtnHtml = `<button class="btn btn-outline" onclick="window.moveKanbanCardStage('${card.id}', 'scheduled', event)"><i class="fa-solid fa-calendar-check" style="color:#0284c7;"></i> Jadwalkan</button>`;
+    } else if (card.stage === 'scheduled') {
+        actionBtnHtml = `<button class="btn btn-primary" onclick="window.openMultiAccountPublishModal('${card.id}', event)" style="font-size:10.5px;"><i class="fa-solid fa-paper-plane"></i> Publish</button>`;
+    } else {
+        actionBtnHtml = `<button class="btn btn-outline" onclick="window.openKanbanCardDetail('${card.id}', event)" style="font-size:10.5px;"><i class="fa-solid fa-chart-simple"></i> Metrik</button>`;
+    }
+
+    cardEl.innerHTML = `
+        <div class="card-platform-pills">
+            ${pillsHtml}
+        </div>
+        <div class="kanban-card-title">${card.title}</div>
+        <div class="kanban-card-desc">${card.brief || card.caption || 'Belum ada catatan deskripsi.'}</div>
+        <div class="kanban-card-meta">
+            <span><i class="fa-regular fa-clock"></i> ${card.date}</span>
+            ${damPill}
+        </div>
+        <div class="kanban-card-actions">
+            <button class="btn btn-outline" onclick="window.openKanbanCardDetail('${card.id}', event)" title="Lihat Pratinjau & Naskah"><i class="fa-solid fa-eye"></i> Detail</button>
+            ${actionBtnHtml}
+        </div>
+    `;
+
+    // Drag events
+    cardEl.addEventListener('dragstart', (e) => {
+        kanbanDraggedCardId = card.id;
+        cardEl.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', card.id);
+    });
+
+    cardEl.addEventListener('dragend', () => {
+        cardEl.classList.remove('dragging');
+        kanbanDraggedCardId = null;
+    });
+
+    // Klik kartu untuk buka detail
+    cardEl.addEventListener('click', (e) => {
+        if (!e.target.closest('button')) {
+            window.openKanbanCardDetail(card.id);
+        }
+    });
+
+    return cardEl;
+}
+
+// Drag and drop handlers
+window.handleKanbanDragOver = function(e) {
+    e.preventDefault();
+    const col = e.currentTarget;
+    col.classList.add('drag-over');
+};
+
+window.handleKanbanDragLeave = function(e) {
+    const col = e.currentTarget;
+    col.classList.remove('drag-over');
+};
+
+window.handleKanbanDrop = function(e, newStage) {
+    e.preventDefault();
+    const col = e.currentTarget;
+    col.classList.remove('drag-over');
+
+    const cardId = e.dataTransfer.getData('text/plain') || kanbanDraggedCardId;
+    if (!cardId) return;
+
+    const card = kanbanData.find(c => c.id === cardId);
+    if (!card || card.stage === newStage) return;
+
+    const oldStage = card.stage;
+    card.stage = newStage;
+
+    // Jika digeser ke "drafting" dan belum ada caption/naskah, otomatis rancang & simpan ke DAM!
+    if (newStage === 'drafting' && !card.caption) {
+        card.caption = `Rancangan konten terstruktur untuk topik "${card.title}" telah dibuat secara otomatis oleh AI Content Engine.\n\n#AstacodeTech #TechTips #Engineering`;
+        window.autoSaveGeneratedContentToAssetLibrary(card, false);
+        card.inDam = true;
+        window.showToast(`🤖 AI Drafting selesai! Konten "${card.title.substring(0, 24)}..." otomatis tersimpan ke Brankas Aset DAM.`, 'success');
+    } else if (newStage === 'published') {
+        card.date = 'Hari ini (Terbit)';
+        card.inDam = true;
+        if (typeof window.autoSavePublishedContentToAssetLibrary === 'function') {
+            window.autoSavePublishedContentToAssetLibrary(card, true);
+        } else {
+            window.showToast(`🚀 Konten "${card.title.substring(0, 24)}..." sukses dipublikasikan ke multi-akun sasaran!`, 'success');
+        }
+    } else {
+        window.showToast(`Tahapan dipindahkan ke "${newStage.toUpperCase()}".`, 'info');
+    }
+
+    window.renderKanbanBoard();
+};
+
+window.filterKanbanByPlatform = function(platform) {
+    kanbanActivePlatform = platform;
+    const buttons = document.querySelectorAll('#kanbanPlatformFilterPills button');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('data-k-platform') === platform) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    window.renderKanbanBoard();
+};
+
+// Modal Tambah Ide Konten
+window.openKanbanAddModal = function() {
+    const modal = document.getElementById('kanbanAddModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        const titleInput = document.getElementById('kInputTitle');
+        if (titleInput) {
+            titleInput.value = '';
+            titleInput.focus();
+        }
+    }
+};
+
+window.closeKanbanAddModal = function() {
+    const modal = document.getElementById('kanbanAddModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.toggleAllKanbanAccounts = function(selectAll) {
+    const checkboxes = document.querySelectorAll('input[name="kTargetAccount"]');
+    checkboxes.forEach(cb => cb.checked = selectAll);
+};
+
+window.handleSaveKanbanCard = function(e) {
+    e.preventDefault();
+    const title = document.getElementById('kInputTitle')?.value.trim();
+    if (!title) return;
+
+    const format = document.getElementById('kSelectFormat')?.value || 'Carousel (5 Slide)';
+    const stage = document.getElementById('kSelectStage')?.value || 'ideas';
+    const brief = document.getElementById('kInputBrief')?.value.trim() || '';
+
+    // Ambil akun target
+    const checkedAccounts = [];
+    document.querySelectorAll('input[name="kTargetAccount"]:checked').forEach(cb => {
+        checkedAccounts.push(cb.value);
+    });
+
+    const newCard = {
+        id: 'k-' + Date.now(),
+        title: title,
+        stage: stage,
+        format: format,
+        platform: checkedAccounts.length > 1 ? 'Multi' : (checkedAccounts[0] ? checkedAccounts[0].split(':')[0] : 'General'),
+        accounts: checkedAccounts.length > 0 ? checkedAccounts : ['Instagram: @astacode.official'],
+        tags: ['#Astacode', '#ContentAI', '#Trend2026'],
+        brief: brief || 'Topik direncanakan oleh tim marketing.',
+        caption: stage !== 'ideas' ? `Drafting awal untuk ${title}. Disusun otomatis untuk format ${format}.\n\n#Astacode` : '',
+        date: 'Hari ini',
+        inDam: false
+    };
+
+    // Jika langsung drafting, simpan otomatis ke Brankas Aset
+    if (stage === 'drafting') {
+        window.autoSaveGeneratedContentToAssetLibrary(newCard, false);
+        newCard.inDam = true;
+    }
+
+    kanbanData.unshift(newCard);
+    window.closeKanbanAddModal();
+    window.renderKanbanBoard();
+    window.showToast(`✨ Ide konten "${title.substring(0, 28)}..." berhasil ditambahkan ke Kanban!`, 'success');
+};
+
+// Modal Detail Kartu Konten
+window.openKanbanCardDetail = function(cardId, event) {
+    if (event) event.stopPropagation();
+    currentDetailKanbanId = cardId;
+    const card = kanbanData.find(c => c.id === cardId);
+    if (!card) return;
+
+    const modal = document.getElementById('kanbanCardDetailModal');
+    if (!modal) return;
+
+    document.getElementById('detailModalTitle').textContent = card.title;
+    document.getElementById('detailModalFormat').textContent = card.format;
+    
+    const stageBadge = document.getElementById('detailModalStageBadge');
+    if (stageBadge) {
+        stageBadge.textContent = card.stage.toUpperCase();
+        stageBadge.className = `status-badge ${card.stage === 'published' ? 'badge-done' : (card.stage === 'scheduled' ? 'badge-draft' : 'badge-pending')}`;
+    }
+
+    const captionEl = document.getElementById('detailModalCaption');
+    if (captionEl) {
+        captionEl.textContent = card.caption || `[Belum ada copywriting generated]\n\nCatatan Brief: ${card.brief || 'Tidak ada catatan khusus.'}\n\nKlik tombol "Eksekusi AI Draft" untuk merancang naskah & visual secara otomatis.`;
+    }
+
+    const stageSelect = document.getElementById('detailModalMoveStageSelect');
+    if (stageSelect) stageSelect.value = card.stage;
+
+    const damBadge = document.getElementById('detailModalDamBadge');
+    if (damBadge) {
+        if (card.inDam) {
+            damBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Tersimpan di Brankas DAM';
+            damBadge.style.color = '#059669';
+        } else {
+            damBadge.innerHTML = '<i class="fa-solid fa-clock"></i> Belum Masuk DAM';
+            damBadge.style.color = '#d97706';
+        }
+    }
+
+    // Render account pills
+    const pillsContainer = document.getElementById('detailModalAccountsPills');
+    if (pillsContainer) {
+        let pillsHtml = '';
+        if (card.accounts && card.accounts.length > 0) {
+            card.accounts.forEach(acc => {
+                pillsHtml += `<span class="platform-pill" style="font-size:11px; padding:4px 9px;"><i class="fa-solid fa-check"></i> ${acc}</span>`;
+            });
+        } else {
+            pillsHtml = '<span style="font-size:11.5px; color:#94a3b8;">Belum ada akun terpasang</span>';
+        }
+        pillsContainer.innerHTML = pillsHtml;
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closeKanbanCardDetailModal = function() {
+    const modal = document.getElementById('kanbanCardDetailModal');
+    if (modal) modal.style.display = 'none';
+    currentDetailKanbanId = null;
+};
+
+window.handleDetailModalStageChange = function(newStage) {
+    if (!currentDetailKanbanId) return;
+    const card = kanbanData.find(c => c.id === currentDetailKanbanId);
+    if (!card) return;
+
+    card.stage = newStage;
+    window.renderKanbanBoard();
+    window.showToast(`Tahapan kartu diubah ke "${newStage.toUpperCase()}".`, 'info');
+};
+
+window.copyKanbanModalCaption = function() {
+    const text = document.getElementById('detailModalCaption')?.textContent || '';
+    navigator.clipboard.writeText(text).then(() => {
+        window.showToast('📋 Copywriting berhasil disalin ke clipboard!', 'success');
+    }).catch(() => {
+        window.showToast('Teks berhasil disalin!', 'success');
+    });
+};
+
+window.triggerDetailCardAiDraft = function() {
+    if (!currentDetailKanbanId) return;
+    const card = kanbanData.find(c => c.id === currentDetailKanbanId);
+    if (!card) return;
+
+    const btn = document.getElementById('btnDetailExecuteAi');
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Merancang Draft...';
+        btn.disabled = true;
+    }
+
+    setTimeout(() => {
+        card.caption = `Rancangan naskah visual profesional untuk "${card.title}":\n\n[Hook]: Tahukah kalian kenapa developer modern di 2026 selalu memprioritaskan arsitektur terstandar?\n\n[Point 1]: Efisiensi sumber daya cloud hingga 40%\n[Point 2]: Maintainability kode jangka panjang\n[Point 3]: Integrasi otonom dengan AI Agent\n\nYuk diskusi di kolom komentar! 👇\n\n#Astacode #FullstackDev #TechLeadership #SoftwareEngineering`;
+        card.stage = 'drafting';
+        card.inDam = true;
+
+        // Auto-save ke Brankas Aset DAM
+        window.autoSaveGeneratedContentToAssetLibrary(card, false);
+
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Selesai Draft';
+            btn.disabled = false;
+        }
+
+        document.getElementById('detailModalCaption').textContent = card.caption;
+        document.getElementById('detailModalMoveStageSelect').value = 'drafting';
+        
+        const damBadge = document.getElementById('detailModalDamBadge');
+        if (damBadge) {
+            damBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Tersimpan di Brankas DAM';
+            damBadge.style.color = '#059669';
+        }
+
+        window.renderKanbanBoard();
+        window.showToast(`✨ Draft & visual berhasil dirancang dan otomatis tersimpan ke Brankas Aset DAM!`, 'success');
+    }, 700);
+};
+
+window.saveCurrentDetailCardToDam = function() {
+    if (!currentDetailKanbanId) return;
+    const card = kanbanData.find(c => c.id === currentDetailKanbanId);
+    if (!card) return;
+
+    window.autoSaveGeneratedContentToAssetLibrary(card, true);
+    card.inDam = true;
+    
+    const damBadge = document.getElementById('detailModalDamBadge');
+    if (damBadge) {
+        damBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Tersimpan di Brankas DAM';
+        damBadge.style.color = '#059669';
+    }
+    window.renderKanbanBoard();
+};
+
+window.deleteCurrentKanbanCard = function() {
+    if (!currentDetailKanbanId) return;
+    const idx = kanbanData.findIndex(c => c.id === currentDetailKanbanId);
+    if (idx > -1) {
+        const deleted = kanbanData.splice(idx, 1)[0];
+        window.closeKanbanCardDetailModal();
+        window.renderKanbanBoard();
+        window.showToast(`🗑️ Kartu "${deleted.title.substring(0, 24)}..." berhasil dihapus dari Kanban.`, 'info');
+    }
+};
+
+window.triggerCardAiDraft = function(cardId, event) {
+    if (event) event.stopPropagation();
+    const card = kanbanData.find(c => c.id === cardId);
+    if (!card) return;
+
+    card.stage = 'drafting';
+    card.caption = `Drafting AI untuk "${card.title}":\n\nNaskah dan slide visual telah disintesis dengan brand tone Astacode.\n\n#Astacode #TechTrends`;
+    window.autoSaveGeneratedContentToAssetLibrary(card, false);
+    card.inDam = true;
+
+    window.renderKanbanBoard();
+    window.showToast(`🤖 AI Drafting selesai! Konten otomatis tersimpan ke Brankas Aset DAM.`, 'success');
+};
+
+window.moveKanbanCardStage = function(cardId, targetStage, event) {
+    if (event) event.stopPropagation();
+    const card = kanbanData.find(c => c.id === cardId);
+    if (!card) return;
+
+    card.stage = targetStage;
+    window.renderKanbanBoard();
+    window.showToast(`Kartu dipindahkan ke kolom ${targetStage.toUpperCase()}.`, 'info');
+};
+
+window.batchDraftAllIdeas = function() {
+    const ideaCards = kanbanData.filter(c => c.stage === 'ideas');
+    if (ideaCards.length === 0) {
+        window.showToast('Tidak ada kartu ide di kolom 1 untuk diproses.', 'info');
+        return;
+    }
+
+    ideaCards.forEach(card => {
+        card.stage = 'drafting';
+        card.caption = `Draft naskah & visual otomatis untuk "${card.title}". Siap ditinjau oleh PM.\n\n#Astacode #TechInnovation`;
+        window.autoSaveGeneratedContentToAssetLibrary(card, false);
+        card.inDam = true;
+    });
+
+    window.renderKanbanBoard();
+    window.showToast(`⚡ ${ideaCards.length} ide konten berhasil di-draft oleh AI & seluruhnya otomatis tersimpan ke Brankas Aset DAM!`, 'success');
+};
+
+
+// ============================================================================
+// --- MULTI-ACCOUNT SOCIAL MEDIA AUTO-PUBLISHER & DISPATCHER ENGINE ---
+// ============================================================================
+
+window.openMultiAccountPublishModal = function(cardId, event) {
+    if (event) event.stopPropagation();
+    const modal = document.getElementById('multiAccountPublishModal');
+    if (!modal) return;
+
+    currentDetailKanbanId = cardId || null;
+
+    if (cardId) {
+        const card = kanbanData.find(c => c.id === cardId);
+        if (card) {
+            const titleEl = document.getElementById('dispatchContentTitle');
+            if (titleEl) titleEl.textContent = `${card.title} (${card.format})`;
+
+            // SINKRONISASI CHECKBOX SELEKTIF:
+            // Centang HANYA akun yang terdaftar untuk kartu ini, uncheck akun lain!
+            const items = document.querySelectorAll('#dispatchAccountsGrid .multi-account-item');
+            items.forEach(item => {
+                const handle = (item.querySelector('strong')?.textContent || '').toLowerCase().trim();
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    const isTarget = card.accounts && card.accounts.some(acc => {
+                        const cleanAcc = acc.toLowerCase();
+                        return cleanAcc.includes(handle) || (handle && cleanAcc.includes(handle.replace('@', '')));
+                    });
+
+                    checkbox.checked = isTarget;
+                    if (isTarget) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                }
+            });
+            updateDispatchSelectedCount();
+        }
+    } else {
+        const titleEl = document.getElementById('dispatchContentTitle');
+        if (titleEl) titleEl.textContent = "Fullstack Modern: Next.js 14, Laravel 11 & AI Workflows (Batch Multi-Channel)";
+    }
+
+    const consoleBox = document.getElementById('dispatchConsoleContainer');
+    if (consoleBox) consoleBox.style.display = 'none';
+
+    modal.style.display = 'flex';
+};
+
+window.openMultiAccountPublishFromDetail = function() {
+    const cardId = currentDetailKanbanId;
+    window.closeKanbanCardDetailModal();
+    window.openMultiAccountPublishModal(cardId);
+};
+
+window.closeMultiAccountPublishModal = function() {
+    const modal = document.getElementById('multiAccountPublishModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.toggleDispatchAccountItem = function(itemEl) {
+    const checkbox = itemEl.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        if (checkbox.checked) {
+            itemEl.classList.add('selected');
+        } else {
+            itemEl.classList.remove('selected');
+        }
+    }
+    updateDispatchSelectedCount();
+};
+
+window.toggleAllDispatchAccounts = function(selectAll) {
+    const items = document.querySelectorAll('#dispatchAccountsGrid .multi-account-item');
+    items.forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+            checkbox.checked = selectAll;
+            if (selectAll) item.classList.add('selected');
+            else item.classList.remove('selected');
+        }
+    });
+    updateDispatchSelectedCount();
+};
+
+function updateDispatchSelectedCount() {
+    const count = document.querySelectorAll('#dispatchAccountsGrid input[type="checkbox"]:checked').length;
+    const countEl = document.getElementById('dispatchSelectedCountText');
+    if (countEl) countEl.textContent = `${count} Akun Sosmed Dipilih`;
+}
+
+window.runMultiAccountDispatchSimulation = function() {
+    const selectedBoxes = document.querySelectorAll('#dispatchAccountsGrid input[type="checkbox"]:checked');
+    if (selectedBoxes.length === 0) {
+        window.showToast('Silakan pilih minimal 1 akun media sosial tujuan!', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnExecuteMultiDispatch');
+    const consoleBox = document.getElementById('dispatchConsoleContainer');
+    const logBox = document.getElementById('dispatchConsoleLogs');
+
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mendispatch Antrean...';
+        btn.disabled = true;
+    }
+
+    if (consoleBox) consoleBox.style.display = 'block';
+    if (logBox) {
+        logBox.innerHTML = `
+            <div style="color:#a5b4fc;">[INIT] Starting Selective Channel Dispatcher... (ID: JOB-${Date.now()})</div>
+            <div style="color:#94a3b8;">[CONFIG] Memproses ${selectedBoxes.length} akun sasaran spesifik (akun tidak dicentang diabaikan)</div>
+        `;
+    }
+
+    // Ambil HANYA akun yang dicentang oleh pengguna!
+    const targets = [];
+    selectedBoxes.forEach((cb, idx) => {
+        const itemEl = cb.closest('.multi-account-item');
+        const handle = itemEl ? (itemEl.querySelector('strong')?.textContent || cb.value) : cb.value;
+        const sub = itemEl ? (itemEl.querySelector('span')?.textContent || '') : '';
+
+        let api = 'REST Graph API Protocol';
+        if (handle.includes('official') || handle.includes('career') || handle.includes('community')) {
+            api = 'Instagram Graph API v19.0';
+        } else if (handle.includes('tech') || handle.includes('life') || handle.includes('academy') || handle.includes('gaming')) {
+            api = 'TikTok Content Posting API v2';
+        } else if (handle.includes('Enterprise')) {
+            api = 'LinkedIn Organization API v2';
+        } else if (handle.includes('TV')) {
+            api = 'YouTube Data API v3 (Shorts)';
+        } else if (handle.includes('_dev')) {
+            api = 'X API v2 Tweet Protocol';
+        }
+
+        targets.push({
+            name: `${handle} (${sub})`,
+            api: api,
+            delay: 350 + (idx * 450)
+        });
+    });
+
+    targets.forEach(t => {
+        setTimeout(() => {
+            if (logBox) {
+                const logRow = document.createElement('div');
+                logRow.innerHTML = `<span style="color:#10b981;">[200 OK]</span> Dispatched to <strong>${t.name}</strong> via <em>${t.api}</em> • Post ID: <code>${Math.floor(Math.random() * 90000000 + 10000000)}</code>`;
+                logBox.appendChild(logRow);
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+        }, t.delay);
+    });
+
+    const totalDuration = 600 + (targets.length * 450);
+
+    setTimeout(() => {
+        if (logBox) {
+            const finishRow = document.createElement('div');
+            finishRow.style.color = '#34d399';
+            finishRow.style.fontWeight = 'bold';
+            finishRow.style.marginTop = '6px';
+            finishRow.innerHTML = `[COMPLETED] Konten sukses terbit HANYA di ${targets.length} akun sasaran yang dipilih!`;
+            logBox.appendChild(finishRow);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Selesai Dipublikasi';
+            btn.disabled = false;
+        }
+
+        const targetHandles = targets.map(t => t.name.split(' ')[0]).join(', ');
+        window.showToast(`🚀 Sukses! Konten terbit spesifik di ${targets.length} akun (${targetHandles}), akun lain tetap aman & tidak terkirim.`, 'success');
+
+        // Jika ada kartu aktif, pindahkan ke published & arsipkan ke Brankas Aset DAM
+        if (currentDetailKanbanId) {
+            const card = kanbanData.find(c => c.id === currentDetailKanbanId);
+            if (card) {
+                card.stage = 'published';
+                card.date = 'Hari ini (Terbit)';
+                card.inDam = true;
+                if (typeof window.autoSavePublishedContentToAssetLibrary === 'function') {
+                    window.autoSavePublishedContentToAssetLibrary(card, false);
+                }
+                window.renderKanbanBoard();
+            }
+        }
+    }, totalDuration);
+};
+
+// ============================================================================
+// --- LEAD MAGNET COMMENT-TO-DM HOOK AUTOMATION SIMULATOR ---
+// ============================================================================
+window.simulateTikTokLeadMagnetHook = function() {
+    const consoleBox = document.getElementById('hookSimulationConsole');
+    const logsBox = document.getElementById('hookSimulationLogs');
+    const btn = document.getElementById('btnTestTikTokHook');
+
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses Webhook...';
+        btn.disabled = true;
+    }
+
+    if (consoleBox) consoleBox.style.display = 'block';
+    if (logsBox) {
+        logsBox.innerHTML = `
+            <div style="color:#38bdf8;">[0.00s] 🟢 INBOUND TIKTOK WEBHOOK: Event 'comment_create' on Video #882103 (@astacode.tech)</div>
+            <div style="color:#e2e8f0;">[0.05s] 👤 Viewer: <strong>@budi_dev</strong> | Isi Komentar: <em>"Pengin min naskah script dockernya!"</em></div>
+        `;
+    }
+
+    setTimeout(() => {
+        if (logsBox) {
+            const row1 = document.createElement('div');
+            row1.style.color = '#fbbf24';
+            row1.innerHTML = `[0.18s] ⚡ KEYWORD TRIGGER MATCHED: Ditemukan kata <strong>'PENGIN'</strong> cocok dengan regex <code>/(pengin|mau|naskah|template|docker)/i</code>`;
+            logsBox.appendChild(row1);
+        }
+    }, 400);
+
+    setTimeout(() => {
+        if (logsBox) {
+            const row2 = document.createElement('div');
+            row2.style.color = '#34d399';
+            row2.innerHTML = `[0.45s] 💬 ACTION 1 (PUBLIC REPLY): POST /tiktok/v2/comment/reply ➔ <em>"@budi_dev Cek DM kamu ya kak! Naskah lengkap sudah mimin kirim 🚀"</em> [Status: 200 OK]`;
+            logsBox.appendChild(row2);
+        }
+    }, 850);
+
+    setTimeout(() => {
+        if (logsBox) {
+            const row3 = document.createElement('div');
+            row3.style.color = '#a78bfa';
+            row3.innerHTML = `[0.82s] 🎁 ACTION 2 (DAM ASSET DM): Mengambil berkas <strong>'naskah_script_docker_dan_devops.pdf'</strong> dari Brankas Aset DAM (folder-lead-magnets). Direct Message terkirim ke @budi_dev membawa link download CDN! [Status: 200 OK]`;
+            logsBox.appendChild(row3);
+        }
+    }, 1300);
+
+    setTimeout(() => {
+        if (logsBox) {
+            const row4 = document.createElement('div');
+            row4.style.color = '#60a5fa';
+            row4.style.fontWeight = 'bold';
+            row4.innerHTML = `[1.15s] 👥 ACTION 3 (CRM SYNC): Kontak @budi_dev otomatis terdaftar sebagai <strong>Marketing Qualified Lead (MQL)</strong> di Pipeline CRM Astacode!`;
+            logsBox.appendChild(row4);
+            logsBox.scrollTop = logsBox.scrollHeight;
+        }
+
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-play"></i> ⚡ Uji Simulasi Komen "PENGIN"';
+            btn.disabled = false;
+        }
+
+        window.showToast("🎯 Sukses! Naskah Brankas Aset terkirim ke DM @budi_dev, komentar publik dibalas, & prospek tersimpan ke CRM!", "success");
+
+        // Tambahkan baris obrolan baru ke tabel Omnichannel Inbox
+        const tableBody = document.querySelector('#view-inbox tbody');
+        if (tableBody) {
+            const newRow = document.createElement('tr');
+            newRow.style.borderBottom = '1px solid var(--border-light)';
+            newRow.style.background = '#f5f3ff';
+            newRow.innerHTML = `
+                <td style="padding:12px 24px;"><input type="checkbox" checked></td>
+                <td style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+                    <div style="width:32px; height:32px; background:#4f46e5; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:14px;">B</div>
+                    <div>
+                        <strong style="color:var(--text-primary); font-weight:600; display:block;">Budi Dev (@budi_dev)</strong>
+                        <span style="color:var(--text-tertiary); font-size:11px;"><i class="fa-brands fa-tiktok" style="color:#000;"></i> TikTok Lead Magnet Hook</span>
+                    </div>
+                </td>
+                <td style="padding:12px 16px; color:var(--text-secondary); max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    "Pengin min naskah script dockernya!" ➔ <em>DM naskah_script_docker.pdf terkirim otomatis</em>
+                </td>
+                <td style="padding:12px 16px;">
+                    <span class="status-badge badge-done" style="background:#ede9fe; color:#5b21b6;"><i class="fa-solid fa-bolt"></i> LEAD MAGNET (DM TERKIRIM)</span>
+                </td>
+                <td style="padding:12px 16px; color:var(--text-tertiary);">Baru Saja</td>
+                <td style="padding:12px 24px; text-align:right;">
+                    <button class="btn btn-outline" style="font-size:11px; padding:4px 12px; height:auto;" onclick="window.showToast('Membuka detail interaksi DM TikTok @budi_dev', 'info')">Lihat Chat</button>
+                </td>
+            `;
+            tableBody.insertBefore(newRow, tableBody.firstChild);
+        }
+    }, 1800);
+};
+
+// ============================================================================
+// --- MULTI-ACCOUNT CHANNEL MANAGER (TAMBAH & KELOLA MULTI-AKUN IG & TIKTOK) ---
+// ============================================================================
+const connectedSocialAccounts = {
+    instagram: [
+        { id: 'ig-official', handle: '@astacode.official', name: 'Astacode Official Brand', category: 'Brand Utama', followers: '48.2K', expiry: '58 Hari', isPrimary: true },
+        { id: 'ig-career', handle: '@astacode.career', name: 'Astacode Careers & Life', category: 'Employer / Hiring', followers: '12.4K', expiry: '58 Hari', isPrimary: false }
+    ],
+    tiktok: [
+        { id: 'tt-tech', handle: '@astacode.tech', name: 'Astacode Tech Lab', category: 'Coding & Edukasi', followers: '185K', expiry: '89 Hari', isPrimary: true },
+        { id: 'tt-life', handle: '@astacode.life', name: 'Astacode Culture', category: 'Work Culture & BTS', followers: '42K', expiry: '89 Hari', isPrimary: false },
+        { id: 'tt-academy', handle: '@astacode.academy', name: 'Astacode Academy', category: 'Bootcamp & Sertifikasi', followers: '28K', expiry: '89 Hari', isPrimary: false }
+    ]
+};
+
+let currentMultiAccountPlatform = 'Instagram';
+
+window.openMultiAccountModal = function(platform = 'Instagram') {
+    currentMultiAccountPlatform = platform;
+    const modal = document.getElementById('multiAccountChannelModal');
+    if (!modal) return;
+
+    const isIg = platform.toLowerCase().includes('instagram');
+    const titleEl = document.getElementById('macmModalTitle');
+    const subtitleEl = document.getElementById('macmModalSubtitle');
+    const iconEl = document.getElementById('macmHeaderIcon');
+    const addTitleEl = document.getElementById('macmAddAccountTitle');
+    const handleInput = document.getElementById('macmInputHandle');
+
+    if (isIg) {
+        if (titleEl) titleEl.textContent = 'Kelola Multi-Akun Instagram (Graph API)';
+        if (subtitleEl) subtitleEl.textContent = 'Kelola otorisasi akun Meta OAuth 2.0 & tambah akun brand baru';
+        if (iconEl) {
+            iconEl.style.background = '#fdf2f8';
+            iconEl.style.color = '#db2777';
+            iconEl.innerHTML = '<i class="fa-brands fa-instagram"></i>';
+        }
+        if (addTitleEl) {
+            const nextIdx = connectedSocialAccounts.instagram.length + 1;
+            addTitleEl.textContent = `Hubungkan Akun Instagram Baru (Akun ke-${nextIdx})`;
+        }
+        if (handleInput) handleInput.value = '@astacode.community';
+    } else {
+        if (titleEl) titleEl.textContent = 'Kelola Multi-Akun TikTok (Content Posting API)';
+        if (subtitleEl) subtitleEl.textContent = 'Kelola otorisasi akun TikTok OAuth 2.0 PKCE & tambah profil baru';
+        if (iconEl) {
+            iconEl.style.background = '#f1f5f9';
+            iconEl.style.color = '#0f172a';
+            iconEl.innerHTML = '<i class="fa-brands fa-tiktok"></i>';
+        }
+        if (addTitleEl) {
+            const nextIdx = connectedSocialAccounts.tiktok.length + 1;
+            addTitleEl.textContent = `Hubungkan Akun TikTok Baru (Akun ke-${nextIdx})`;
+        }
+        if (handleInput) handleInput.value = '@astacode.gaming';
+    }
+
+    renderMultiAccountModalList();
+    modal.style.display = 'flex';
+};
+
+window.closeMultiAccountModal = function() {
+    const modal = document.getElementById('multiAccountChannelModal');
+    if (modal) modal.style.display = 'none';
+};
+
+function renderMultiAccountModalList() {
+    const container = document.getElementById('macmAccountListContainer');
+    const countLabel = document.getElementById('macmConnectedCountLabel');
+    if (!container) return;
+
+    const isIg = currentMultiAccountPlatform.toLowerCase().includes('instagram');
+    const accounts = isIg ? connectedSocialAccounts.instagram : connectedSocialAccounts.tiktok;
+
+    if (countLabel) {
+        countLabel.textContent = `Daftar Akun Terhubung (${accounts.length} Akun Aktif)`;
+    }
+
+    container.innerHTML = '';
+    accounts.forEach((acc, idx) => {
+        const item = document.createElement('div');
+        item.style.background = '#ffffff';
+        item.style.border = '1px solid #e2e8f0';
+        item.style.borderRadius = '10px';
+        item.style.padding = '12px 16px';
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.style.boxShadow = '0 1px 2px rgba(0,0,0,0.03)';
+
+        item.innerHTML = `
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; border-radius:50%; background:${isIg ? '#fce7f3' : '#f1f5f9'}; color:${isIg ? '#db2777' : '#0f172a'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;">
+                    ${acc.handle.charAt(1).toUpperCase()}
+                </div>
+                <div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <strong style="font-size:13px; color:#0f172a;">${acc.handle}</strong>
+                        <span style="font-size:10px; background:#eff6ff; color:#2563eb; padding:1px 6px; border-radius:4px; font-weight:600;">${acc.category}</span>
+                        ${acc.isPrimary ? '<span style="font-size:9.5px; background:#fef3c7; color:#b45309; padding:1px 6px; border-radius:4px; font-weight:700;">UTAMA</span>' : ''}
+                    </div>
+                    <span style="font-size:11px; color:#64748b;">
+                        Followers: <strong>${acc.followers}</strong> • Token Aktif (${acc.expiry})
+                    </span>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button type="button" class="btn btn-outline" style="font-size:11px; padding:4px 10px; height:auto;" onclick="window.showToast('📡 Ping akun ${acc.handle} berhasil! Latensi: 82ms', 'success')"><i class="fa-solid fa-wifi"></i> Ping</button>
+                ${!acc.isPrimary ? `
+                    <button type="button" class="btn btn-outline" style="font-size:11px; padding:4px 8px; height:auto; color:#ef4444; border-color:#fecaca;" onclick="window.removeSocialAccount('${acc.id}')" title="Putuskan Akun"><i class="fa-solid fa-trash"></i></button>
+                ` : '<span style="font-size:10.5px; color:#94a3b8; font-style:italic; padding-right:6px;">Default</span>'}
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.submitAddNewSocialAccount = function() {
+    const handleInput = document.getElementById('macmInputHandle');
+    const catInput = document.getElementById('macmInputCategory');
+    const btn = document.getElementById('macmBtnSubmitAccount');
+
+    const handle = (handleInput?.value || '').trim();
+    const category = catInput?.value || 'Komunitas & Edukasi';
+
+    if (!handle || !handle.startsWith('@')) {
+        window.showToast('Harap masukkan username yang valid dengan awalan @ (contoh: @astacode.community)!', 'warning');
+        return;
+    }
+
+    const isIg = currentMultiAccountPlatform.toLowerCase().includes('instagram');
+    const targetArr = isIg ? connectedSocialAccounts.instagram : connectedSocialAccounts.tiktok;
+
+    if (targetArr.some(a => a.handle.toLowerCase() === handle.toLowerCase())) {
+        window.showToast(`Akun ${handle} sudah terdaftar di sistem!`, 'warning');
+        return;
+    }
+
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memvalidasi OAuth...';
+        btn.disabled = true;
+    }
+
+    setTimeout(() => {
+        const newAcc = {
+            id: 'acc-' + Date.now(),
+            handle: handle,
+            name: handle.replace('@', ''),
+            category: category,
+            followers: (Math.random() * 20 + 5).toFixed(1) + 'K',
+            expiry: '60 Hari',
+            isPrimary: false
+        };
+
+        targetArr.push(newAcc);
+
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-plus"></i> Sambungkan Akun Sekarang';
+            btn.disabled = false;
+        }
+
+        renderMultiAccountModalList();
+        updateDistributionUiPostAccountChange();
+
+        // Update title for next account
+        const addTitleEl = document.getElementById('macmAddAccountTitle');
+        if (addTitleEl) {
+            addTitleEl.textContent = `Hubungkan Akun ${isIg ? 'Instagram' : 'TikTok'} Baru (Akun ke-${targetArr.length + 1})`;
+        }
+
+        window.showToast(`🎉 Sukses! Akun ${isIg ? 'Instagram' : 'TikTok'} ke-${targetArr.length} (${handle}) berhasil disambungkan & siap digunakan untuk posting!`, 'success');
+    }, 900);
+};
+
+window.triggerSimulatedMetaOAuthLogin = function() {
+    window.showToast('🔐 Mengotorisasi izin Facebook Business Login & Instagram Graph API...', 'info');
+    setTimeout(() => {
+        window.submitAddNewSocialAccount();
+    }, 700);
+};
+
+window.removeSocialAccount = function(accId) {
+    const isIg = currentMultiAccountPlatform.toLowerCase().includes('instagram');
+    const targetArr = isIg ? connectedSocialAccounts.instagram : connectedSocialAccounts.tiktok;
+    const idx = targetArr.findIndex(a => a.id === accId);
+    if (idx !== -1) {
+        const removed = targetArr.splice(idx, 1)[0];
+        renderMultiAccountModalList();
+        updateDistributionUiPostAccountChange();
+        window.showToast(`Akun ${removed.handle} berhasil diputuskan.`, 'info');
+    }
+};
+
+function updateDistributionUiPostAccountChange() {
+    const igCount = connectedSocialAccounts.instagram.length;
+    const ttCount = connectedSocialAccounts.tiktok.length;
+    const totalCount = igCount + ttCount;
+
+    // 1. Update Pool Banner
+    const poolTitle = document.getElementById('textMultiAccountPoolTitle');
+    const poolSubtitle = document.getElementById('textMultiAccountPoolSubtitle');
+    if (poolTitle) poolTitle.textContent = `Multi-Account Sosmed Token Pool (${totalCount} Akun Aktif Terhubung)`;
+    if (poolSubtitle) poolSubtitle.innerHTML = `Sistem mengelola OAuth tokens terpisah per profil brand: <strong>${igCount} Akun Instagram</strong> + <strong>${ttCount} Akun TikTok</strong>. Konten dapat dipublish serentak maupun dijadwal mandiri.`;
+
+    // 2. Update Instagram Card
+    const badgeIg = document.getElementById('badgeIgAccountCount');
+    const listIg = document.getElementById('listIgConnectedHandles');
+    const btnManageIg = document.getElementById('btnManageIgAccounts');
+    const textIgCh = document.getElementById('textIgChannelCount');
+
+    if (badgeIg) badgeIg.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${igCount} AKUN TERHUBUNG`;
+    if (textIgCh) textIgCh.innerHTML = `Multi-Tenant: <strong style="color:#059669;">${igCount} Channel Active</strong>`;
+    if (btnManageIg) btnManageIg.innerHTML = `<i class="fa-solid fa-gear"></i> Kelola ${igCount} Akun`;
+
+    if (listIg) {
+        listIg.innerHTML = '';
+        connectedSocialAccounts.instagram.forEach(acc => {
+            const row = document.createElement('span');
+            row.style.fontSize = '11.5px';
+            row.style.color = '#1e293b';
+            row.innerHTML = `<i class="fa-solid fa-check" style="color:#059669; font-size:10px;"></i> <strong>${acc.handle}</strong> (${acc.category} • ${acc.followers})`;
+            listIg.appendChild(row);
+        });
+    }
+
+    // 3. Update Multi-Account Dispatcher Grid if exists
+    const dispatchGrid = document.getElementById('dispatchAccountsGrid');
+    if (dispatchGrid) {
+        const existing3rd = document.getElementById('dispatch-item-ig-community');
+        if (igCount >= 3 && !existing3rd) {
+            const thirdAcc = connectedSocialAccounts.instagram[2];
+            const div = document.createElement('div');
+            div.id = 'dispatch-item-ig-community';
+            div.className = 'multi-account-item selected';
+            div.setAttribute('onclick', 'window.toggleDispatchAccountItem(this)');
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" checked value="ig-community">
+                    <div style="width:32px; height:32px; border-radius:8px; background:#fdf2f8; color:#db2777; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                        <i class="fa-brands fa-instagram"></i>
+                    </div>
+                    <div>
+                        <strong style="display:block; font-size:12px; color:#0f172a;">${thirdAcc.handle}</strong>
+                        <span style="font-size:10.5px; color:#64748b;">Instagram • ${thirdAcc.category}</span>
+                    </div>
+                </div>
+                <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
+            `;
+            dispatchGrid.appendChild(div);
+        }
+    }
+}
+
+function initKanbanModule() {
+    window.renderKanbanBoard();
+}
+
 // Master Global Initialization for Marketing App
 function initAllMarketingModules() {
     if (typeof initDistributionHub === 'function') initDistributionHub();
@@ -3529,6 +5076,7 @@ function initAllMarketingModules() {
     if (typeof initApprovalQueue === 'function') initApprovalQueue();
     if (typeof initSocialListeningActions === 'function') initSocialListeningActions();
     if (typeof initAnalyticsChart === 'function') initAnalyticsChart();
+    if (typeof initKanbanModule === 'function') initKanbanModule();
 }
 
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
@@ -3536,5 +5084,6 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 } else {
     document.addEventListener('DOMContentLoaded', initAllMarketingModules);
 }
+
 
 

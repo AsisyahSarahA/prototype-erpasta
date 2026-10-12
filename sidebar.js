@@ -275,6 +275,11 @@
                 <span class="nav-sub-dot"></span>
                 <span>AI Content Engine</span>
               </a>
+              <a href="${prefix}marketing/marketing.html#kanban" class="nav-sub-btn ${activeModule === 'marketing' && (activeSubpage === 'kanban' || activeSubpage === 'view-kanban') ? 'active' : ''}" data-module="marketing" data-sub="kanban" onclick="window.navigateToModuleSubpage('marketing', 'kanban', '${prefix}marketing/marketing.html#kanban', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Kanban Content AI</span>
+                <span class="nav-badge-accent">Agile</span>
+              </a>
               <a href="${prefix}marketing/marketing.html#approval-queue" class="nav-sub-btn ${activeModule === 'marketing' && (activeSubpage === 'approval-queue' || activeSubpage === 'view-approval-queue') ? 'active' : ''}" data-module="marketing" data-sub="approval-queue" onclick="window.navigateToModuleSubpage('marketing', 'approval-queue', '${prefix}marketing/marketing.html#approval-queue', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Antrean Persetujuan</span>
