@@ -757,6 +757,7 @@ window.publishNowItem = function() {
 
 
 // --- NAVIGATION SYSTEM ---
+// --- UNIFIED NAVIGATION SYSTEM (Harmonized with CRM & Finance) ---
 function initNavigation() {
     const navTriggers = document.querySelectorAll('[data-target]');
     const views = document.querySelectorAll('.view-section');
@@ -769,36 +770,30 @@ function initNavigation() {
             const targetId = trigger.getAttribute('data-target');
             if (!targetId) return;
 
-            // Switch view
-            views.forEach(view => view.classList.remove('active'));
-            const targetView = document.getElementById(targetId);
-            if (targetView) targetView.classList.add('active');
-
-            // Update sidebar nav state
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            const correspondingNav = document.querySelector(`.nav-item[data-target="${targetId}"]`);
-            if (correspondingNav) {
-                correspondingNav.classList.add('active');
-                if (breadcrumbTitle) {
-                    const span = correspondingNav.querySelector('span');
-                    if (span) breadcrumbTitle.textContent = span.textContent;
-                }
-            }
-
-            // Sync with subpage title
-            window.location.hash = targetId.replace('view-', '');
+            window.switchMarketingPage(targetId.replace('view-', ''));
         });
     });
 
     // Check URL hash on initial load
-    if (window.location.hash) {
-        const hash = window.location.hash.substring(1);
-        if (hash) window.switchMarketingPage(hash);
+    const currentHash = (window.location.hash || '').replace('#', '');
+    if (currentHash) {
+        window.switchMarketingPage(currentHash);
+    } else {
+        window.switchMarketingPage('marketing-ops');
     }
+
+    // Listen to browser hash changes (back/forward & sidebar routing)
+    window.addEventListener('hashchange', () => {
+        const hash = (window.location.hash || '').replace('#', '');
+        if (hash) {
+            window.switchMarketingPage(hash);
+        }
+    });
 }
 
-// Global Switcher for sidebar.js
+// Global Switcher for sidebar.js & topbar subnav
 window.switchMarketingPage = function(subpage) {
+    if (!subpage) return;
     const rawSub = subpage.replace('view-', '');
     const views = document.querySelectorAll('.view-section');
     views.forEach(view => view.classList.remove('active'));
@@ -809,6 +804,22 @@ window.switchMarketingPage = function(subpage) {
         targetView.classList.add('active');
     }
     
+    // 1. Sync Sub-Navigation Tabs
+    document.querySelectorAll('.marketing-subnav-item').forEach(btn => {
+        const match = btn.getAttribute('data-sub') === rawSub || btn.getAttribute('data-target') === rawSub;
+        btn.classList.toggle('active', match);
+    });
+
+    // 2. Sync Sidebar Active State
+    const sidebarGroup = document.getElementById('marketingNavGroup');
+    if (sidebarGroup) {
+        sidebarGroup.querySelectorAll('.nav-sub-btn').forEach(btn => {
+            const match = btn.getAttribute('data-sub') === rawSub || btn.getAttribute('data-sub') === 'view-' + rawSub;
+            btn.classList.toggle('active', match);
+        });
+    }
+
+    // 3. Update Breadcrumb
     const breadcrumbTitle = document.getElementById('current-view-title');
     if (breadcrumbTitle) {
         const titles = {
@@ -816,17 +827,130 @@ window.switchMarketingPage = function(subpage) {
             'ai-engine': 'AI Content Engine & 7-Day Planner',
             'approval-queue': 'Antrean Persetujuan',
             'calendar': 'Content Calendar',
-            'distribution': 'Distribution Manager',
-            'asset-library': 'Brand Asset Library',
+            'distribution': 'Distribution Hub',
+            'asset-library': 'Brankas Aset DAM',
             'social-listening': 'Social Listening & Competitors',
             'inbox': 'Omnichannel Inbox',
             'content-history': 'Riwayat Konten & Arsip',
-            'kanban': 'Kanban AI Workflow',
+            'kanban': 'Kanban Content AI',
             'analytics': 'Reporting & Analytics',
             'settings': 'Settings & Rules'
         };
         if (titles[rawSub]) breadcrumbTitle.textContent = titles[rawSub];
     }
+
+    // 4. Update URL Hash cleanly
+    if (window.location.hash !== '#' + rawSub) {
+        try {
+            history.replaceState(null, '', '#' + rawSub);
+        } catch(e) {}
+    }
+};
+
+// --- GLOBAL TOPBAR ACTIONS (Search & Notifications) ---
+window.handleGlobalMarketingSearch = function(keyword) {
+    const q = (keyword || '').toLowerCase().trim();
+    const activeSection = document.querySelector('.view-section.active');
+    if (!activeSection) return;
+
+    // Search across cards, table rows, and items in active view
+    const items = activeSection.querySelectorAll('.kanban-card-pro, tr, .asset-item-card, .platform-int-card');
+    if (!q) {
+        items.forEach(el => el.style.display = '');
+        return;
+    }
+
+    let foundCount = 0;
+    items.forEach(el => {
+        const text = el.textContent.toLowerCase();
+        if (text.includes(q)) {
+            el.style.display = '';
+            foundCount++;
+        } else {
+            el.style.display = 'none';
+        }
+    });
+};
+
+window.showMarketingNotifications = function(e) {
+    if (e) e.stopPropagation();
+    window.showToast('🔔 Notifikasi: 2 Konten di Antrean Approval siap ditinjau & 1 Draft siap dipublikasikan.', 'info');
+};
+
+// --- APPROVAL QUEUE INTERACTIVE ACTIONS ---
+window.openReviewModal = function(topic, platform, quality, edu) {
+    const modal = document.getElementById('reviewModal');
+    if (!modal) return;
+    
+    if (topic) {
+        const titleEl = modal.querySelector('h3');
+        if (titleEl) titleEl.textContent = `Review Konten: ${topic}`;
+        const metaEl = modal.querySelector('div > .fa-brands')?.parentElement;
+        if (metaEl) metaEl.innerHTML = `<i class="fa-brands ${platform.toLowerCase().includes('tiktok') ? 'fa-tiktok' : 'fa-instagram'}"></i> ${platform} • Menunggu Persetujuan Tim Brand`;
+    }
+    modal.style.display = 'flex';
+};
+
+window.closeReviewModal = function() {
+    const modal = document.getElementById('reviewModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.approveAndClose = function() {
+    window.showToast('✅ Konten berhasil disetujui & otomatis dijadwalkan ke Content Calendar!', 'success');
+    window.closeReviewModal();
+
+    // Update row badge in approval table
+    const row = document.getElementById('rowApprovalQueue1');
+    if (row) {
+        const badge = row.querySelector('.status-badge');
+        if (badge) {
+            badge.className = 'status-badge';
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#166534';
+            badge.innerHTML = '<i class="fa-solid fa-check"></i> DISETUJUI (MANUAL)';
+        }
+        row.style.background = '#f0fdf4';
+    }
+
+    const counter = document.getElementById('subnavApprovalBadge');
+    if (counter) counter.textContent = '1';
+};
+
+window.approveQueueItem = function(btn, topic) {
+    const row = btn.closest('tr');
+    if (row) {
+        const badge = row.querySelector('.status-badge');
+        if (badge) {
+            badge.className = 'status-badge';
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#166534';
+            badge.innerHTML = '<i class="fa-solid fa-check"></i> DISETUJUI';
+        }
+        row.style.background = '#f0fdf4';
+        btn.parentElement.innerHTML = '<span style="font-size:11px; color:#16a34a; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Terjadwal</span>';
+    }
+    window.showToast(`✅ Konten "${topic}" telah disetujui dan dijadwalkan!`, 'success');
+    const counter = document.getElementById('subnavApprovalBadge');
+    if (counter) {
+        const current = parseInt(counter.textContent) || 2;
+        counter.textContent = Math.max(0, current - 1);
+    }
+};
+
+window.rejectQueueItem = function(btn, topic) {
+    const row = btn.closest('tr');
+    if (row) {
+        const badge = row.querySelector('.status-badge');
+        if (badge) {
+            badge.className = 'status-badge';
+            badge.style.background = '#fee2e2';
+            badge.style.color = '#b91c1c';
+            badge.innerHTML = '<i class="fa-solid fa-rotate-left"></i> BUTUH REVISI';
+        }
+        row.style.background = '#fef2f2';
+    }
+    window.showToast(`📝 Catatan revisi dikirim ke AI Generator untuk topik "${topic}".`, 'warning');
 };
 
 // --- 7-DAY SPRINT PLANNER & SMART TOKEN LOGIC ---
@@ -4293,6 +4417,41 @@ window.toggleAllKanbanAccounts = function(selectAll) {
     checkboxes.forEach(cb => cb.checked = selectAll);
 };
 
+window.selectKanbanAccountPreset = function(brand) {
+    const checkboxes = document.querySelectorAll('input[name="kTargetAccount"]');
+    checkboxes.forEach(cb => {
+        const b = cb.getAttribute('data-brand') || 'utama';
+        cb.checked = (brand === 'all' || b === brand);
+    });
+    if (brand === 'utama') {
+        window.showToast('🎯 Target Akun: HANYA Asta Utama aktif (Asta Kids di-uncheck otomatis)', 'info');
+    } else if (brand === 'kids') {
+        window.showToast('🧸 Target Akun: HANYA Asta Kids aktif (Asta Utama di-uncheck otomatis)', 'info');
+    }
+};
+
+window.selectDispatchBrandPreset = function(brand) {
+    const items = document.querySelectorAll('#dispatchAccountsGrid .multi-account-item');
+    items.forEach(item => {
+        const itemBrand = item.getAttribute('data-brand') || 'utama';
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+            const shouldCheck = (brand === 'all' || itemBrand === brand);
+            checkbox.checked = shouldCheck;
+            if (shouldCheck) item.classList.add('selected');
+            else item.classList.remove('selected');
+        }
+    });
+    if (typeof updateDispatchSelectedCount === 'function') {
+        updateDispatchSelectedCount();
+    }
+    if (brand === 'utama') {
+        window.showToast('🏷️ Filter aktif: HANYA akun Asta Utama yang dipilih. Akun Asta Kids terisolasi & TIDAK akan ter-upload!', 'success');
+    } else if (brand === 'kids') {
+        window.showToast('🧸 Filter aktif: HANYA akun Asta Kids yang dipilih. Akun Asta Utama terisolasi!', 'info');
+    }
+};
+
 window.handleSaveKanbanCard = function(e) {
     e.preventDefault();
     const title = document.getElementById('kInputTitle')?.value.trim();
@@ -4632,10 +4791,20 @@ window.runMultiAccountDispatchSimulation = function() {
     }
 
     if (consoleBox) consoleBox.style.display = 'block';
+    // Identifikasi akun yang TIDAK dicentang (misal Asta Kids jika upload ke Asta Utama)
+    const uncheckedBoxes = document.querySelectorAll('#dispatchAccountsGrid input[type="checkbox"]:not(:checked)');
+    const skippedNames = [];
+    uncheckedBoxes.forEach(cb => {
+        const itemEl = cb.closest('.multi-account-item');
+        const h = itemEl ? (itemEl.querySelector('strong')?.textContent || cb.value) : cb.value;
+        skippedNames.push(h);
+    });
+
     if (logBox) {
         logBox.innerHTML = `
-            <div style="color:#a5b4fc;">[INIT] Starting Selective Channel Dispatcher... (ID: JOB-${Date.now()})</div>
-            <div style="color:#94a3b8;">[CONFIG] Memproses ${selectedBoxes.length} akun sasaran spesifik (akun tidak dicentang diabaikan)</div>
+            <div style="color:#a5b4fc;">[INIT] Starting Selective Channel Dispatcher Engine... (ID: JOB-${Date.now()})</div>
+            <div style="color:#94a3b8;">[CONFIG] Memproses ${selectedBoxes.length} akun sasaran aktif.</div>
+            ${skippedNames.length > 0 ? `<div style="color:#fbbf24; background:rgba(251,191,36,0.1); padding:4px 8px; border-radius:4px; margin:4px 0;"><i class="fa-solid fa-shield-halved"></i> <strong>[ISOLASI BRAND]</strong> ${skippedNames.length} Akun TIDAK dipilih: <code>${skippedNames.join(', ')}</code> diabaikan 100% & TIDAK menerima API call.</div>` : ''}
         `;
     }
 
@@ -4649,7 +4818,7 @@ window.runMultiAccountDispatchSimulation = function() {
         let api = 'REST Graph API Protocol';
         if (handle.includes('official') || handle.includes('career') || handle.includes('community')) {
             api = 'Instagram Graph API v19.0';
-        } else if (handle.includes('tech') || handle.includes('life') || handle.includes('academy') || handle.includes('gaming')) {
+        } else if (handle.includes('tech') || handle.includes('life') || handle.includes('academy') || handle.includes('gaming') || handle.includes('kids') || handle.includes('astakids')) {
             api = 'TikTok Content Posting API v2';
         } else if (handle.includes('Enterprise')) {
             api = 'LinkedIn Organization API v2';
@@ -4685,7 +4854,7 @@ window.runMultiAccountDispatchSimulation = function() {
             finishRow.style.color = '#34d399';
             finishRow.style.fontWeight = 'bold';
             finishRow.style.marginTop = '6px';
-            finishRow.innerHTML = `[COMPLETED] Konten sukses terbit HANYA di ${targets.length} akun sasaran yang dipilih!`;
+            finishRow.innerHTML = `[COMPLETED] Konten sukses terbit HANYA di ${targets.length} akun sasaran! ${skippedNames.length > 0 ? `Akun lain (${skippedNames.join(', ')}) tetap steril & aman.` : ''}`;
             logBox.appendChild(finishRow);
             logBox.scrollTop = logBox.scrollHeight;
         }
@@ -4696,7 +4865,8 @@ window.runMultiAccountDispatchSimulation = function() {
         }
 
         const targetHandles = targets.map(t => t.name.split(' ')[0]).join(', ');
-        window.showToast(`🚀 Sukses! Konten terbit spesifik di ${targets.length} akun (${targetHandles}), akun lain tetap aman & tidak terkirim.`, 'success');
+        const skippedPreview = skippedNames.length > 0 ? ` (Akun lain seperti ${skippedNames[0]} aman & tidak terkirim)` : '';
+        window.showToast(`🚀 Sukses! Konten terbit spesifik di ${targets.length} akun: ${targetHandles}.${skippedPreview}`, 'success');
 
         // Jika ada kartu aktif, pindahkan ke published & arsipkan ke Brankas Aset DAM
         if (currentDetailKanbanId) {
@@ -4815,11 +4985,13 @@ window.simulateTikTokLeadMagnetHook = function() {
 // ============================================================================
 const connectedSocialAccounts = {
     instagram: [
-        { id: 'ig-official', handle: '@astacode.official', name: 'Astacode Official Brand', category: 'Brand Utama', followers: '48.2K', expiry: '58 Hari', isPrimary: true },
+        { id: 'ig-official', handle: '@astacode.official', name: 'Asta Official (Utama)', category: 'Brand Utama', followers: '145K', expiry: '58 Hari', isPrimary: true },
+        { id: 'ig-kids', handle: '@astakids.official', name: 'Asta Kids Indonesia', category: 'Asta Kids / Parenting', followers: '25.6K', expiry: '60 Hari', isPrimary: false },
         { id: 'ig-career', handle: '@astacode.career', name: 'Astacode Careers & Life', category: 'Employer / Hiring', followers: '12.4K', expiry: '58 Hari', isPrimary: false }
     ],
     tiktok: [
-        { id: 'tt-tech', handle: '@astacode.tech', name: 'Astacode Tech Lab', category: 'Coding & Edukasi', followers: '185K', expiry: '89 Hari', isPrimary: true },
+        { id: 'tt-tech', handle: '@astacode.tech', name: 'Asta Tech / Utama', category: 'Asta Utama (Coding & Tech)', followers: '210K', expiry: '89 Hari', isPrimary: true },
+        { id: 'tt-kids', handle: '@astakids.id', name: 'Asta Kids Official', category: 'Asta Kids (Edukasi Anak)', followers: '34K', expiry: '85 Hari', isPrimary: false },
         { id: 'tt-life', handle: '@astacode.life', name: 'Astacode Culture', category: 'Work Culture & BTS', followers: '42K', expiry: '89 Hari', isPrimary: false },
         { id: 'tt-academy', handle: '@astacode.academy', name: 'Astacode Academy', category: 'Bootcamp & Sertifikasi', followers: '28K', expiry: '89 Hari', isPrimary: false }
     ]
@@ -5084,6 +5256,614 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 } else {
     document.addEventListener('DOMContentLoaded', initAllMarketingModules);
 }
+
+/* ==========================================================================
+   INTERACTIVE ACTION HANDLERS & MODAL ENGINES (CRM & MASTER ERP HARMONIZATION)
+   ========================================================================== */
+
+// 1. Goal Progress Modal
+window.showGoalProgressDetail = function() {
+    const modal = document.getElementById('goalProgressModal');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.closeGoalProgressModal = function() {
+    const modal = document.getElementById('goalProgressModal');
+    if (modal) modal.style.display = 'none';
+};
+
+// 2. Dashboard Calendar Toggle (Week vs Month)
+window.toggleDashboardCalendarMode = function(mode) {
+    const weekBtn = document.getElementById('dashCalWeekBtn');
+    const monthBtn = document.getElementById('dashCalMonthBtn');
+    const grid = document.getElementById('dashCalendarGrid');
+
+    if (!weekBtn || !monthBtn || !grid) return;
+
+    if (mode === 'week') {
+        weekBtn.style.background = '#fff';
+        weekBtn.style.color = 'var(--brand-primary)';
+        weekBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        weekBtn.classList.add('active');
+
+        monthBtn.style.background = 'transparent';
+        monthBtn.style.color = 'var(--text-secondary)';
+        monthBtn.style.boxShadow = 'none';
+        monthBtn.classList.remove('active');
+
+        grid.innerHTML = `
+            <div class="cal-head">SEN (28 OKT)</div>
+            <div class="cal-head">SEL (29 OKT)</div>
+            <div class="cal-head">RAB (30 OKT)</div>
+            <div class="cal-head">KAM (31 OKT)</div>
+            <div class="cal-head">JUM (01 NOV)</div>
+            <div class="cal-head">SAB (02 NOV)</div>
+            <div class="cal-head">MIN (03 NOV)</div>
+            
+            <div class="cal-col" style="min-height:140px;">
+                <div class="cal-day-num">28</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('Laravel Tips (Blog)', 'Blog', '28 Okt 2026', '10:00')">Laravel Tips (Blog)</div>
+                    <div class="pill-event pill-green" onclick="window.openCalendarDetailModal('IG Carousel (Done)', 'Instagram', '28 Okt 2026', '18:00')">IG Carousel (Done)</div>
+                </div>
+            </div>
+            <div class="cal-col" style="min-height:140px;">
+                <div class="cal-day-num">29</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('Case Study ERP', 'Blog', '29 Okt 2026', '12:00')">Case Study (Draft)</div>
+                </div>
+            </div>
+            <div class="cal-col today" style="min-height:140px; background:#eff6ff;">
+                <div class="cal-day-num" style="color:var(--brand-primary); font-weight:700;">30 (Hari Ini)</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-orange" onclick="window.switchMarketingPage('approval-queue')">Setujui Queue: 3</div>
+                    <div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('TikTok Auto Publish', 'TikTok', '30 Okt 2026', '19:00')">TikTok Auto Publish</div>
+                </div>
+            </div>
+            <div class="cal-col" style="min-height:140px;">
+                <div class="cal-day-num">31</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-green" onclick="window.openCalendarDetailModal('Reels Dev Tips', 'Instagram', '31 Okt 2026', '20:00')">Reels (Scheduled)</div>
+                </div>
+            </div>
+            <div class="cal-col" style="min-height:140px;">
+                <div class="cal-day-num">1</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('Founder Note', 'LinkedIn', '01 Nov 2026', '09:00')">Founder Note</div>
+                </div>
+            </div>
+            <div class="cal-col" style="min-height:140px;"><div class="cal-day-num">2</div><div class="cal-events"><div class="pill-event pill-orange" onclick="window.openCalendarDetailModal('Weekend Tech Meme', 'Instagram', '02 Nov 2026', '20:00')">Meme Saturday</div></div></div>
+            <div class="cal-col" style="min-height:140px;"><div class="cal-day-num">3</div><div class="cal-events"><div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('Weekly Tech Digest', 'Instagram', '03 Nov 2026', '19:30')">Weekly Digest</div></div></div>
+        `;
+        window.showToast('Tampilan Kalender diubah ke mode Mingguan (Week)', 'info');
+    } else {
+        monthBtn.style.background = '#fff';
+        monthBtn.style.color = 'var(--brand-primary)';
+        monthBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        monthBtn.classList.add('active');
+
+        weekBtn.style.background = 'transparent';
+        weekBtn.style.color = 'var(--text-secondary)';
+        weekBtn.style.boxShadow = 'none';
+        weekBtn.classList.remove('active');
+
+        grid.innerHTML = `
+            <div class="cal-head">MON</div><div class="cal-head">TUE</div><div class="cal-head">WED</div><div class="cal-head">THU</div><div class="cal-head">FRI</div><div class="cal-head">SAT</div><div class="cal-head">SUN</div>
+            
+            <div class="cal-col">
+                <div class="cal-day-num">28</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('Laravel Tips (Blog)', 'Blog', '28 Okt 2026', '10:00')">Laravel Tips (Blog)</div>
+                    <div class="pill-event pill-green" onclick="window.openCalendarDetailModal('IG Carousel (Done)', 'Instagram', '28 Okt 2026', '18:00')">IG Carousel (Done)</div>
+                </div>
+            </div>
+            <div class="cal-col">
+                <div class="cal-day-num">29</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('Case Study (Draft)', 'Blog', '29 Okt 2026', '12:00')">Case Study (Draft)</div>
+                </div>
+            </div>
+            <div class="cal-col today">
+                <div class="cal-day-num">30 (Today)</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-orange" onclick="window.switchMarketingPage('approval-queue')">Setujui Queue: 3</div>
+                    <div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('TikTok Auto Publish', 'TikTok', '30 Okt 2026', '19:00')">TikTok Auto Publish</div>
+                </div>
+            </div>
+            <div class="cal-col">
+                <div class="cal-day-num">1</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-green" onclick="window.openCalendarDetailModal('Reels (Scheduled)', 'Instagram', '01 Nov 2026', '20:00')">Reels (Scheduled)</div>
+                </div>
+            </div>
+            <div class="cal-col">
+                <div class="cal-day-num">2</div>
+                <div class="cal-events">
+                    <div class="pill-event pill-blue" onclick="window.openCalendarDetailModal('Founder Note', 'LinkedIn', '02 Nov 2026', '09:00')">Founder Note</div>
+                </div>
+            </div>
+            <div class="cal-col"><div class="cal-day-num">3</div></div>
+            <div class="cal-col"><div class="cal-day-num">4</div></div>
+        `;
+        window.showToast('Tampilan Kalender diubah ke mode Bulanan (Month)', 'info');
+    }
+};
+
+// 3. Marketing Ops Dashboard Approval Actions
+window.approveDashboardQueue = function(btnEl, topicName) {
+    const row = btnEl.closest('tr');
+    if (!row) return;
+    const badge = row.querySelector('.status-badge');
+    if (badge) {
+        badge.className = 'status-badge badge-done';
+        badge.textContent = 'APPROVED';
+    }
+    const tdAksi = row.querySelector('td:last-child');
+    if (tdAksi) {
+        tdAksi.innerHTML = '<span style="color:#059669; font-size:11.5px; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Disetujui</span>';
+    }
+    window.showToast(`Berhasil disetujui: "${topicName}"`, 'success');
+};
+
+window.rejectDashboardQueue = function(btnEl, topicName) {
+    const row = btnEl.closest('tr');
+    if (!row) return;
+    const badge = row.querySelector('.status-badge');
+    if (badge) {
+        badge.className = 'status-badge badge-danger';
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#dc2626';
+        badge.textContent = 'REVISI';
+    }
+    const tdAksi = row.querySelector('td:last-child');
+    if (tdAksi) {
+        tdAksi.innerHTML = '<span style="color:#dc2626; font-size:11.5px; font-weight:700;"><i class="fa-solid fa-rotate-left"></i> Dikembalikan</span>';
+    }
+    window.showToast(`Konten "${topicName}" ditolak & dikembalikan untuk perbaikan.`, 'warning');
+};
+
+// 4. Sprint Day Actions (Preview & Regenerate)
+window.executeDaySprintAction = function(day, action) {
+    if (typeof setActiveRow === 'function') setActiveRow(day);
+    if (typeof renderPreviewForDay === 'function') renderPreviewForDay(day);
+
+    if (action === 'preview') {
+        const previewSec = document.getElementById('previewSection');
+        if (previewSec) previewSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.showToast(`Menampilkan Pratinjau Konten Hari ke-${day}`, 'info');
+    } else if (action === 'generate') {
+        window.showToast(`Sedang men-generate ulang konten Hari ke-${day} via AI Engine...`, 'info');
+        setTimeout(() => {
+            const row = document.querySelector(`.sprint-row[data-day="${day}"]`);
+            if (row) {
+                const indicator = row.querySelector('.status-indicator');
+                if (indicator) {
+                    indicator.className = 'status-indicator status-ready';
+                    indicator.innerHTML = '<i class="fa-solid fa-check"></i> Siap Ditinjau';
+                }
+            }
+            if (typeof renderPreviewForDay === 'function') renderPreviewForDay(day);
+            const previewSec = document.getElementById('previewSection');
+            if (previewSec) previewSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.showToast(`Konten Hari ke-${day} berhasil diperbarui oleh AI!`, 'success');
+        }, 600);
+    }
+};
+
+// 5. Distribution Sub-Tabs Switcher
+window.switchDistTab = function(tabName) {
+    document.querySelectorAll('.dist-nav-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-dist-tab') === tabName);
+    });
+    document.querySelectorAll('.dist-tab-content').forEach(content => {
+        content.style.display = (content.id === `distTab-${tabName}`) ? 'block' : 'none';
+    });
+};
+
+// 6. Platform Ping Tester
+window.testPlatformPing = function(platformName) {
+    window.showToast(`Mengirim sinyal handshake ping ke ${platformName}...`, 'info');
+    setTimeout(() => {
+        window.showToast(`Ping ke ${platformName} Sukses! Status: 200 OK (Latency: 142ms)`, 'success');
+    }, 500);
+};
+
+// 7. A/B Testing Winner Promotion
+window.promoteWinner = function(winnerName) {
+    window.showToast(`Menetapkan "${winnerName}" sebagai pemenang pengujian...`, 'info');
+    setTimeout(() => {
+        window.showToast(`Sukses: ${winnerName} berhasil dijadikan varian final 100% traffic distribusi!`, 'success');
+    }, 400);
+};
+
+// 8. Copy JSON Payload
+window.copyJson = function(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const text = el.innerText || el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        window.showToast('JSON Payload berhasil disalin ke clipboard!', 'success');
+    }).catch(() => {
+        window.showToast('Payload siap digunakan.', 'info');
+    });
+};
+
+// 9. Analytics Reporting Export Modal & Real Download
+window.exportAnalyticsReport = function() {
+    const modal = document.getElementById('analyticsExportModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        const prog = document.getElementById('exportProgressBox');
+        if (prog) prog.style.display = 'none';
+    }
+};
+
+window.closeAnalyticsExportModal = function() {
+    const modal = document.getElementById('analyticsExportModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.startExportDownload = function() {
+    const progBox = document.getElementById('exportProgressBox');
+    const progPct = document.getElementById('exportProgressPct');
+    const progBar = document.getElementById('exportProgressBar');
+    const btn = document.getElementById('btnDownloadExportFinal');
+
+    const selectedFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'pdf';
+
+    if (progBox && progPct && progBar) {
+        progBox.style.display = 'block';
+        if (btn) btn.disabled = true;
+
+        let pct = 15;
+        const interval = setInterval(() => {
+            pct += 25;
+            if (pct > 100) pct = 100;
+            progPct.textContent = `${pct}%`;
+            progBar.style.width = `${pct}%`;
+
+            if (pct >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    const filename = `Astacode_Marketing_Analytics_Report_Oct2026.${selectedFormat === 'xlsx' ? 'xlsx' : selectedFormat === 'csv' ? 'csv' : 'pdf'}`;
+                    const content = `ASTACODE ENTERPRISE ERP - MARKETING & AI CONTENT PERFORMANCE REPORT\nPeriode: Oktober 2026\nKonten Dipublikasi: 42 Posts\nRata-rata Engagement: 5.8%\nAd Spend: Rp 14.200.000 (ROAS 3.4x)\nQualified Leads: 340 Inbound\nGenerated at: ${new Date().toISOString()}`;
+                    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    window.closeAnalyticsExportModal();
+                    if (btn) btn.disabled = false;
+                    window.showToast(`Laporan ${filename} berhasil diunduh!`, 'success');
+                }, 400);
+            }
+        }, 150);
+    }
+};
+
+// 10. Omnichannel Inbox Chat Thread Simulator
+const inboxChatData = {
+    'Budi Santoso': {
+        avatar: 'B',
+        avatarBg: '#3b82f6',
+        platform: 'Instagram DM',
+        icon: 'fa-brands fa-instagram',
+        iconColor: '#e11d48',
+        messages: [
+            { sender: 'user', time: '10:12', text: 'Halo selamat pagi admin Astacode! Mau tanya untuk jasa pembuatan website company profile berbasis React/Next.js berapa biayanya ya?' },
+            { sender: 'bot', time: '10:13', text: 'Halo Kak Budi Santoso! Terima kasih sudah menghubungi Astacode. Untuk paket Company Profile berkinerja tinggi (Next.js 14 SSR) start mulai dari Rp 4.5jt sudah mencakup responsive mobile UI/UX, SEO Optimization, domain .com, dan free server cloud 1 tahun.' },
+            { sender: 'user', time: '10:14', text: 'Min, mau tanya kalau biaya bikin website company profile (React.js) berapa ya? Apakah bisa sekalian sambung ke database CRM?' }
+        ]
+    },
+    'Siska Media': {
+        avatar: 'S',
+        avatarBg: '#10b981',
+        platform: 'TikTok Comment',
+        icon: 'fa-brands fa-tiktok',
+        iconColor: '#000',
+        messages: [
+            { sender: 'user', time: '09:45', text: 'Kak, kalo bikin ERP custom untuk pabrik lebih bagus pakai Laravel atau Node.js?' },
+            { sender: 'bot', time: '09:46', text: 'Halo Kak Siska! Pertanyaan yang bagus. Tergantung karakteristik proses bisnis pabrik kakak. Jika membutuhkan proses transaksi data finansial kompleks dengan integritas ACID kuat, kami merekomendasikan Laravel 11.' }
+        ]
+    },
+    'Agus Setiawan': {
+        avatar: 'A',
+        avatarBg: '#8b5cf6',
+        platform: 'Instagram DM',
+        icon: 'fa-brands fa-instagram',
+        iconColor: '#e11d48',
+        messages: [
+            { sender: 'user', time: '08:30', text: 'Wah makasih tutorial deploy servernya min, sangat membantu project aplikasi saya!' },
+            { sender: 'bot', time: '08:32', text: 'Sama-sama Kak Agus! Senang tutorial Astacode bermanfaat. Jangan lupa follow untuk tips arsitektur cloud server mingguan kami berikutnya ya!' }
+        ]
+    }
+};
+
+let activeChatCustomer = 'Budi Santoso';
+
+window.openInboxChatModal = function(customerName, platform, lastMsg, aiStatus) {
+    activeChatCustomer = customerName;
+    const modal = document.getElementById('inboxChatModal');
+    if (!modal) return;
+
+    const nameEl = document.getElementById('inboxModalCustomerName');
+    const badgeEl = document.getElementById('inboxModalPlatformBadge');
+    const avatarEl = document.getElementById('inboxModalAvatar');
+    const subEl = document.getElementById('inboxModalStatusSub');
+    const listEl = document.getElementById('inboxModalMessagesList');
+
+    if (nameEl) nameEl.textContent = customerName;
+    if (subEl) subEl.innerHTML = `Status AI: <span style="color:#059669; font-weight:600;">${aiStatus}</span> • Baru saja`;
+
+    const chat = inboxChatData[customerName] || {
+        avatar: customerName.charAt(0),
+        avatarBg: '#3b82f6',
+        platform: platform,
+        icon: 'fa-solid fa-message',
+        iconColor: '#2563eb',
+        messages: [
+            { sender: 'user', time: 'Baru saja', text: lastMsg }
+        ]
+    };
+
+    if (avatarEl) {
+        avatarEl.textContent = chat.avatar;
+        avatarEl.style.background = chat.avatarBg;
+    }
+    if (badgeEl) {
+        badgeEl.innerHTML = `<i class="${chat.icon}" style="color:${chat.iconColor};"></i> ${chat.platform}`;
+    }
+
+    if (listEl) {
+        listEl.innerHTML = '';
+        chat.messages.forEach(msg => {
+            const isUser = msg.sender === 'user';
+            const bubble = document.createElement('div');
+            bubble.style.display = 'flex';
+            bubble.style.flexDirection = 'column';
+            bubble.style.alignItems = isUser ? 'flex-start' : 'flex-end';
+
+            bubble.innerHTML = `
+                <div style="max-width:75%; background:${isUser ? '#fff' : 'var(--brand-primary)'}; color:${isUser ? 'var(--text-primary)' : '#fff'}; padding:10px 14px; border-radius:${isUser ? '12px 12px 12px 2px' : '12px 12px 2px 12px'}; border:${isUser ? '1px solid var(--border-light)' : 'none'}; box-shadow:0 1px 3px rgba(0,0,0,0.05); font-size:12.5px; line-height:1.45;">
+                    ${msg.text}
+                </div>
+                <span style="font-size:10px; color:var(--text-tertiary); margin-top:3px; padding:0 4px;">${msg.time} ${isUser ? '• Pelanggan' : '• Astacode AI'}</span>
+            `;
+            listEl.appendChild(bubble);
+        });
+        setTimeout(() => { listEl.scrollTop = listEl.scrollHeight; }, 50);
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closeInboxChatModal = function() {
+    const modal = document.getElementById('inboxChatModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.insertCannedReply = function(text) {
+    const input = document.getElementById('inboxReplyInput');
+    if (input) {
+        input.value = text;
+        input.focus();
+    }
+};
+
+window.sendInboxReply = function() {
+    const input = document.getElementById('inboxReplyInput');
+    if (!input || !input.value.trim()) {
+        window.showToast('Harap ketik pesan balasan terlebih dahulu.', 'warning');
+        return;
+    }
+
+    const replyText = input.value.trim();
+    const listEl = document.getElementById('inboxModalMessagesList');
+
+    if (listEl) {
+        const bubble = document.createElement('div');
+        bubble.style.display = 'flex';
+        bubble.style.flexDirection = 'column';
+        bubble.style.alignItems = 'flex-end';
+        bubble.innerHTML = `
+            <div style="max-width:75%; background:var(--brand-primary); color:#fff; padding:10px 14px; border-radius:12px 12px 2px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); font-size:12.5px; line-height:1.45;">
+                ${replyText}
+            </div>
+            <span style="font-size:10px; color:var(--text-tertiary); margin-top:3px; padding:0 4px;">Baru saja • Operator Astacode</span>
+        `;
+        listEl.appendChild(bubble);
+        listEl.scrollTop = listEl.scrollHeight;
+    }
+
+    // Save to memory
+    if (inboxChatData[activeChatCustomer]) {
+        inboxChatData[activeChatCustomer].messages.push({
+            sender: 'bot',
+            time: 'Baru saja',
+            text: replyText
+        });
+    }
+
+    input.value = '';
+    window.showToast(`Balasan berhasil dikirim ke ${activeChatCustomer}!`, 'success');
+};
+
+// 11. Omnichannel Inbox Filter & Batch Actions
+window.filterInboxMessages = function() {
+    const searchVal = (document.getElementById('inboxSearchInput')?.value || '').toLowerCase().trim();
+    const platformVal = document.getElementById('inboxPlatformFilter')?.value || 'all';
+    const statusVal = document.getElementById('inboxStatusFilter')?.value || 'all';
+
+    document.querySelectorAll('.inbox-row').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowPlatform = row.getAttribute('data-platform') || '';
+        const rowStatus = row.getAttribute('data-status') || '';
+
+        const matchSearch = !searchVal || text.includes(searchVal);
+        const matchPlatform = platformVal === 'all' || rowPlatform.toLowerCase() === platformVal.toLowerCase();
+        const matchStatus = statusVal === 'all' || rowStatus.toLowerCase() === statusVal.toLowerCase();
+
+        row.style.display = (matchSearch && matchPlatform && matchStatus) ? '' : 'none';
+    });
+};
+
+window.resetInboxFilters = function() {
+    const search = document.getElementById('inboxSearchInput');
+    const plat = document.getElementById('inboxPlatformFilter');
+    const stat = document.getElementById('inboxStatusFilter');
+    if (search) search.value = '';
+    if (plat) plat.value = 'all';
+    if (stat) stat.value = 'all';
+    window.filterInboxMessages();
+    window.showToast('Filter Omnichannel Inbox di-reset ke Semua.', 'info');
+};
+
+window.toggleSelectAllInbox = function(checked) {
+    document.querySelectorAll('.chk-inbox-item').forEach(chk => {
+        chk.checked = checked;
+    });
+};
+
+window.markAllInboxRead = function() {
+    document.querySelectorAll('.chk-inbox-item').forEach(chk => chk.checked = true);
+    window.showToast('Semua pesan percakapan ditandai telah dibaca.', 'success');
+};
+
+// 12. Content History Modal & Live Table Actions
+window.openAddContentHistoryModal = function() {
+    const modal = document.getElementById('addContentHistoryModal');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.closeAddContentHistoryModal = function() {
+    const modal = document.getElementById('addContentHistoryModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.saveNewContentHistory = function(e) {
+    if (e) e.preventDefault();
+    const title = document.getElementById('histInputTitle')?.value.trim();
+    const platform = document.getElementById('histInputPlatform')?.value || 'Instagram';
+    const format = document.getElementById('histInputFormat')?.value || 'Video';
+    const views = document.getElementById('histInputViews')?.value.trim() || '12.0K';
+    const engage = document.getElementById('histInputEngage')?.value.trim() || '8.5%';
+
+    if (!title) {
+        window.showToast('Harap masukkan judul konten.', 'warning');
+        return;
+    }
+
+    const tbody = document.querySelector('#history-list-view table tbody');
+    if (tbody) {
+        const randId = '#' + Math.floor(100 + Math.random() * 900);
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--border-light)';
+        tr.style.transition = '0.1s';
+        tr.setAttribute('onclick', `window.openHistoryDetail('${randId.replace('#','')}', '${title.replace(/'/g, "\\'")}', '${platform}', '${views}', '${engage}', 'PUBLISHED')`);
+        tr.onmouseover = function() { this.style.background = '#f1f5f9'; };
+        tr.onmouseout = function() { this.style.background = 'transparent'; };
+
+        tr.innerHTML = `
+            <td style="padding:12px 24px;" onclick="event.stopPropagation();"><input type="checkbox" class="chk-hist-item"></td>
+            <td style="padding:12px 16px; color:var(--text-secondary);">${randId}</td>
+            <td style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+                <div style="width:32px; height:32px; background:linear-gradient(135deg, var(--brand-primary), #60a5fa); border-radius:4px; flex-shrink:0;"></div>
+                <div>
+                    <strong style="color:var(--text-primary); font-weight:600; display:block;">${title}</strong>
+                    <span style="color:var(--text-tertiary); font-size:11px;">Oleh Asta Marketing • Baru Ditambahkan</span>
+                </div>
+            </td>
+            <td style="padding:12px 16px; color:var(--text-secondary);">${platform}</td>
+            <td style="padding:12px 16px; color:var(--text-primary); font-weight:500;">${views}</td>
+            <td style="padding:12px 16px; color:var(--status-success); font-weight:600;">${engage} <i class="fa-solid fa-arrow-trend-up" style="font-size:10px;"></i></td>
+            <td style="padding:12px 16px;"><span class="status-badge badge-done" style="background:#e0e7ff; color:#4338ca;">PUBLISHED</span></td>
+            <td style="padding:12px 24px; text-align:right;" onclick="event.stopPropagation();">
+                <div style="display:flex; gap:12px; justify-content:flex-end; color:var(--text-tertiary);">
+                    <i class="fa-solid fa-chart-line" style="cursor:pointer;" title="Lihat Analitik" onclick="window.openHistoryDetail('${randId.replace('#','')}', '${title.replace(/'/g, "\\'")}', '${platform}', '${views}', '${engage}', 'PUBLISHED')"></i>
+                    <i class="fa-solid fa-arrow-up-right-from-square" style="cursor:pointer;" title="Buka Postingan"></i>
+                </div>
+            </td>
+        `;
+        tbody.insertBefore(tr, tbody.firstChild);
+    }
+
+    window.closeAddContentHistoryModal();
+    window.showToast(`Konten "${title}" berhasil dicatat ke arsip riwayat!`, 'success');
+};
+
+// 13. Content History Detail Viewer & Filter Sync
+window.openHistoryDetail = function(id, title, platform, views, engagement, status) {
+    const list = document.getElementById('history-list-view');
+    const detail = document.getElementById('history-detail-view');
+    if (!list || !detail) return;
+
+    list.style.display = 'none';
+    detail.style.display = 'block';
+
+    const titleEl = detail.querySelector('h2');
+    const subEl = detail.querySelector('p');
+    if (titleEl) titleEl.textContent = `Detail Performa Konten #${id}`;
+    if (subEl) subEl.textContent = `Analitik mendalam untuk "${title}" (${platform})`;
+
+    const previewBox = detail.querySelector('.card-body .aspect-ratio-box, .card-body div[style*="aspect-ratio"]');
+    if (previewBox) {
+        previewBox.textContent = title;
+    }
+
+    window.showToast(`Membuka rincian analitik: "${title}"`, 'info');
+};
+
+window.filterHistoryTable = function() {
+    const searchVal = (document.getElementById('historySearchInput')?.value || '').toLowerCase().trim();
+    const platformVal = document.getElementById('historyPlatformFilter')?.value || 'all';
+
+    const rows = document.querySelectorAll('#history-list-view table tbody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const matchSearch = !searchVal || text.includes(searchVal);
+        const matchPlatform = platformVal === 'all' || text.includes(platformVal.toLowerCase());
+        row.style.display = (matchSearch && matchPlatform) ? '' : 'none';
+    });
+};
+
+window.resetHistoryFilters = function() {
+    const search = document.getElementById('historySearchInput');
+    const plat = document.getElementById('historyPlatformFilter');
+    const fmt = document.getElementById('historyFormatFilter');
+    const per = document.getElementById('historyPeriodFilter');
+    if (search) search.value = '';
+    if (plat) plat.value = 'all';
+    if (fmt) fmt.value = 'all';
+    if (per) per.value = 'all';
+    window.filterHistoryTable();
+    window.showToast('Filter Riwayat Konten di-reset ke Semua.', 'info');
+};
+
+window.editSelectedHistory = function() {
+    const checked = document.querySelectorAll('#history-list-view table tbody input[type="checkbox"]:checked');
+    if (checked.length === 0) {
+        window.showToast('Pilih setidaknya satu baris konten untuk diedit.', 'warning');
+        return;
+    }
+    window.showToast(`Membuka editor untuk ${checked.length} item konten yang dipilih.`, 'info');
+};
+
+window.deleteSelectedHistory = function() {
+    const checked = document.querySelectorAll('#history-list-view table tbody input[type="checkbox"]:checked');
+    if (checked.length === 0) {
+        window.showToast('Pilih setidaknya satu baris konten untuk dihapus.', 'warning');
+        return;
+    }
+    checked.forEach(chk => {
+        const row = chk.closest('tr');
+        if (row) row.remove();
+    });
+    window.showToast(`${checked.length} item konten berhasil dihapus dari arsip.`, 'success');
+};
+
 
 
 
