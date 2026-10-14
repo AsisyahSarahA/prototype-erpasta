@@ -4417,6 +4417,11 @@ input, select, textarea {
    APP LOGIC & STATE (Vanilla JavaScript) - TASK 2 DATA LAYER & MODELS
    ========================================================================== -->
 <script>
+// Global error handler to prevent raw code display issues
+window.onerror = function(msg, url, lineNo, colNo, error) {
+  console.error('CRM Module Error:', msg, 'at line', lineNo, error);
+  return false;
+};
 /**
  * ASTACODE ERP - CRM ENTERPRISE STATE & DATA ARCHITECTURE
  * Single-file Local Storage Engine (Pure Vanilla JS)
@@ -12460,33 +12465,32 @@ function printPrdDocument(prdId) {
   const prd = (db.prds || []).find(p => p.id === prdId);
   if (!prd) return;
 
-  const md = exportPrdDocument(prdId, 'markdown');
-  const printWindow = window.open('', '_blank');
+  const textContent = esc(exportPrdDocument(prdId, 'text'));
+  const titleText = esc(prd.code || prd.title);
+  const htmlContent = '<!DOCTYPE ' + 'html><' + 'html><' + 'head><' + 'title>PRD - ' + titleText + '<' + '/title>' +
+    '<' + 'style>' +
+    'body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; color: #1E293B; line-height: 1.5; font-size: 12px; }' +
+    'h1 { font-size: 18px; border-bottom: 2px solid #0F172A; padding-bottom: 6px; }' +
+    'h2 { font-size: 14px; color: #1E40AF; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; margin-top: 16px; }' +
+    'table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11px; }' +
+    'th, td { border: 1px solid #CBD5E1; padding: 6px 8px; text-align: left; }' +
+    'th { background: #F1F5F9; }' +
+    'pre { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px; border-radius: 4px; }' +
+    '<' + '/style><' + '/head><' + 'body>' +
+    '<div style="white-space:pre-wrap;font-family:inherit;">' + textContent + '</div>' +
+    '<' + '/body><' + '/html>';
+
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const printWindow = window.open(url, '_blank');
   if (printWindow) {
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>PRD - ${esc(prd.code || prd.title)}</title>
-        <style>
-          body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; color: #1E293B; line-height: 1.5; font-size: 12px; }
-          h1 { font-size: 18px; border-bottom: 2px solid #0F172A; padding-bottom: 6px; }
-          h2 { font-size: 14px; color: #1E40AF; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; margin-top: 16px; }
-          table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11px; }
-          th, td { border: 1px solid #CBD5E1; padding: 6px 8px; text-align: left; }
-          th { background: #F1F5F9; }
-          pre { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px; border-radius: 4px; }
-        </style>
-      </head>
-      <body>
-        <div style="white-space:pre-wrap;font-family:inherit;">${esc(exportPrdDocument(prdId, 'text'))}</div>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    setTimeout(() => { printWindow.print(); }, 300);
+    printWindow.onload = function() {
+      printWindow.print();
+      URL.revokeObjectURL(url);
+    };
   } else {
-    setTimeout(() => { window.print(); }, 300);
+    URL.revokeObjectURL(url);
+    window.print();
   }
 }
 
