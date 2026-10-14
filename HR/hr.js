@@ -80,10 +80,48 @@ let TEAM_TODAY = EMP.filter(e => e.tipe !== 'PKL').map((e, i) => ({
 }));
 
 const JOBS = [
-  { id: 1, judul: 'Senior Backend Engineer', tim: 'Engineering', level: 'Senior', lokasi: 'Hybrid — Jakarta', skill: 'Node.js, PostgreSQL, AWS', status: 'Published', deskripsi: 'Merancang dan memelihara API untuk produk klien enterprise.' },
-  { id: 2, judul: 'UI/UX Designer', tim: 'Design', level: 'Mid', lokasi: 'WFH', skill: 'Figma, Design System', status: 'Published', deskripsi: 'Membangun pengalaman produk yang konsisten dan indah.' },
-  { id: 3, judul: 'QA Automation Engineer', tim: 'QA', level: 'Mid', lokasi: 'Hybrid — Jakarta', skill: 'Cypress, Playwright', status: 'Draft', deskripsi: 'Mengotomasi pengujian regresi lintas produk.' },
-  { id: 4, judul: 'Project Manager', tim: 'PMO', level: 'Senior', lokasi: 'Onsite', skill: 'Agile, Jira, Stakeholder', status: 'Closed', deskripsi: 'Memimpin delivery proyek software.' }
+  {
+    id: 1, judul: 'Senior Backend Engineer', tim: 'Engineering', level: 'Senior', lokasi: 'Hybrid — Jakarta',
+    skills: [
+      { name: 'Node.js', level: 'Senior' },
+      { name: 'PostgreSQL', level: 'Senior' },
+      { name: 'AWS Cloud', level: 'Mid' },
+      { name: 'Docker / K8s', level: 'Mid' }
+    ],
+    skill: 'Node.js (Senior), PostgreSQL (Senior), AWS Cloud (Mid), Docker / K8s (Mid)',
+    status: 'Published', deskripsi: 'Merancang dan memelihara API untuk produk klien enterprise dengan skalabilitas tinggi.'
+  },
+  {
+    id: 2, judul: 'UI/UX Designer', tim: 'Design', level: 'Mid', lokasi: 'WFH',
+    skills: [
+      { name: 'Figma', level: 'Senior' },
+      { name: 'Design System', level: 'Mid' },
+      { name: 'User Research', level: 'Mid' },
+      { name: 'Prototyping', level: 'Junior' }
+    ],
+    skill: 'Figma (Senior), Design System (Mid), User Research (Mid), Prototyping (Junior)',
+    status: 'Published', deskripsi: 'Membangun antarmuka dan pengalaman produk yang konsisten, modern, dan intuitif.'
+  },
+  {
+    id: 3, judul: 'QA Automation Engineer', tim: 'QA', level: 'Mid', lokasi: 'Hybrid — Jakarta',
+    skills: [
+      { name: 'Cypress', level: 'Mid' },
+      { name: 'Playwright', level: 'Mid' },
+      { name: 'API Testing (Postman)', level: 'Senior' }
+    ],
+    skill: 'Cypress (Mid), Playwright (Mid), API Testing (Senior)',
+    status: 'Draft', deskripsi: 'Mengotomasi pengujian regresi end-to-end dan integrasi API lintas platform.'
+  },
+  {
+    id: 4, judul: 'Project Manager', tim: 'PMO', level: 'Senior', lokasi: 'Onsite',
+    skills: [
+      { name: 'Agile & Scrum', level: 'Senior' },
+      { name: 'Jira Software', level: 'Senior' },
+      { name: 'Stakeholder Management', level: 'Senior' }
+    ],
+    skill: 'Agile & Scrum (Senior), Jira Software (Senior), Stakeholder Management (Senior)',
+    status: 'Closed', deskripsi: 'Memimpin delivery sprint software dan mengkoordinasikan komunikasi klien enterprise.'
+  }
 ];
 const STAGES = ['Applied', 'Screening', 'Interview', 'Technical Test', 'Offering', 'Hired', 'Rejected'];
 const APP = [
@@ -464,27 +502,279 @@ reg('Workload Malam', ['Absensi', 'Workload Malam'], () => `
 })}</div>`, () => paintAll());
 
 /* ===== Rekap Tim ===== */
+let rekapFilterStatus = '';
+
+function showTeamDetail(t) {
+  if (!t) return;
+  const emp = EMP.find(e => e.nama === t.nama) || {};
+  const logs = LOGS.filter(l => l.nama === t.nama);
+  const p = Math.round(t.load / t.cap * 100);
+  const isOk = t.status.includes('Onsite');
+  const isInf = t.status.includes('WFH');
+  const isWarn = t.status.includes('Belum');
+  const statusCls = isOk ? 'success' : isInf ? 'info' : isWarn ? 'warning' : 'danger';
+  const iconStatus = isOk ? 'fi-rr-building' : isInf ? 'fi-rr-home' : isWarn ? 'fi-rr-clock' : 'fi-rr-cross-circle';
+
+  const body = `
+    <div class="stack" style="gap:16px">
+      <!-- Header Profile Card -->
+      <div class="row" style="gap:14px;align-items:center;padding:12px 14px;background:#F8FAFC;border:1px solid var(--border);border-radius:var(--r-md)">
+        ${av(t.nama, 2)}
+        <div style="flex:1">
+          <div class="row" style="gap:8px;align-items:center">
+            <h3 style="margin:0;font-size:16px;font-weight:700">${esc(t.nama)}</h3>
+            ${lz(t.tipe, t.tipe === 'Tetap' ? 'primary' : 'info')}
+          </div>
+          <div class="caption" style="margin-top:2px;color:#475569">
+            <b>${esc(emp.jabatan || 'Staff')}</b> · Tim <b>${esc(t.tim)}</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid g2" style="gap:10px">
+        <div class="card card-b" style="padding:12px;border:1px solid var(--border)">
+          <div class="caption" style="color:var(--text-secondary)">Status Absensi Hari Ini</div>
+          <div class="row" style="gap:6px;margin-top:4px;align-items:center">
+            <i class="${iconStatus}" style="font-size:16px;color:var(--${statusCls})"></i>
+            <b style="font-size:13px">${esc(t.status)}</b>
+          </div>
+          <div class="caption" style="margin-top:4px;color:#64748B">
+            ${isOk ? 'Wifi Kantor "Asta" (IP: 182.253.11.45)' : isInf ? 'Lokasi WFH: Jakarta Selatan (GPS Terverifikasi)' : 'Belum tercatat absensi hari ini'}
+          </div>
+        </div>
+        <div class="card card-b" style="padding:12px;border:1px solid var(--border)">
+          <div class="caption" style="color:var(--text-secondary)">Beban Kerja Harian</div>
+          <div class="row" style="justify-content:space-between;margin-top:4px;align-items:center">
+            <b style="font-size:14px">${t.load} / ${t.cap} SP</b>
+            <span class="caption num" style="font-weight:600">${p}%</span>
+          </div>
+          <div class="bar ${p > 100 ? 'bad' : p > 85 ? 'warn' : 'ok'}" style="margin-top:6px"><i style="width:${Math.min(p, 100)}%"></i></div>
+          <div class="caption" style="margin-top:4px;color:${p > 100 ? 'var(--danger)' : '#64748B'}">
+            ${p > 100 ? 'Overload — perlu pembagian tugas' : p >= 85 ? 'Kapasitas Penuh' : 'Kapasitas Normal'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Task & Progres Hari Ini -->
+      <div class="card card-b" style="border:1px solid var(--border)">
+        <div class="row" style="gap:6px;align-items:center;margin-bottom:8px">
+          <i class="fi-rr-clipboard-list" style="color:var(--primary)"></i>
+          <b style="font-size:13px">Task & Aktivitas Aktif</b>
+        </div>
+        <div style="background:#F1F5F9;padding:10px 12px;border-radius:6px;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--primary)">TASK HARI INI:</div>
+          <div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:2px">${esc(t.task)}</div>
+        </div>
+        ${logs.length ? `
+          <div class="caption" style="margin-bottom:4px">Ringkasan Daily Log Terakhir:</div>
+          <div style="margin:0;font-size:13px;color:#334155;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;line-height:1.5">
+            ${esc(logs[0].ringkasan)}
+          </div>
+          ${logs[0].commit ? `<div class="caption" style="margin-top:6px"><i class="fi-rr-code-commit"></i> Commit: <a href="https://${esc(logs[0].commit)}" target="_blank" style="color:var(--primary);text-decoration:underline">${esc(logs[0].commit)}</a></div>` : ''}
+        ` : `<div class="caption muted" style="font-style:italic">Belum ada submission daily log untuk hari ini.</div>`}
+      </div>
+
+      <!-- Informasi Kontak & Karyawan -->
+      <div class="card card-b" style="border:1px solid var(--border)">
+        <div class="row" style="gap:6px;align-items:center;margin-bottom:8px">
+          <i class="fi-rr-user" style="color:var(--primary)"></i>
+          <b style="font-size:13px">Informasi Karyawan</b>
+        </div>
+        <dl class="kv" style="grid-template-columns:100px 1fr;gap:6px 10px;font-size:12px">
+          <dt>Email</dt><dd>${esc(emp.email || '-')}</dd>
+          <dt>Tim</dt><dd>${esc(t.tim)}</dd>
+          <dt>Atasan</dt><dd>${esc(emp.atasan || '-')}</dd>
+          <dt>Tipe Pekerja</dt><dd>${esc(t.tipe)}</dd>
+        </dl>
+      </div>
+
+      <!-- Riwayat Log Singkat -->
+      ${logs.length > 1 ? `
+        <div class="card card-b" style="border:1px solid var(--border)">
+          <b style="font-size:12px;margin-bottom:8px;display:block">Riwayat Log Sebelumnya</b>
+          <div class="stack" style="gap:8px">
+            ${logs.slice(1).map(l => `
+              <div style="font-size:12px;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <div class="row" style="justify-content:space-between">
+                  <b>${fmtD(l.tgl)}</b>
+                  <span class="caption">${l.jam} jam · ${l.mode}</span>
+                </div>
+                <div class="muted">${esc(l.ringkasan)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  const foot = `
+    <button class="btn" onclick="closeDrawer()">Tutup</button>
+    <button class="btn btn-primary" id="btnNudgeEmployee"><i class="fi-rr-paper-plane"></i> Kirim Pesan / Notif</button>
+  `;
+
+  openDrawer('Detail Anggota Tim — ' + t.nama, body, foot);
+  if ($('#btnNudgeEmployee')) {
+    $('#btnNudgeEmployee').onclick = () => {
+      toast(`Notifikasi terkirim ke ${t.nama}`, 'success');
+      audit('Kirim Pesan', 'Rekap Tim', `Pesan ke ${t.nama}`);
+      closeDrawer();
+    };
+  }
+}
+
 reg('rekap', 'Rekap Tim', ['Absensi', 'Rekap Tim'], () => `
-  <div class="grid g4" style="margin-bottom:16px">
-    ${['Hadir Onsite', 'Hadir WFH', 'Belum Submit Progres', 'Tanpa Keterangan'].map(s => `<div class="card stat ${s.includes('Onsite') ? 'ok' : s.includes('WFH') ? 'inf' : s.includes('Belum') ? 'warn' : 'bad'}"><div class="k">${s}</div><div class="v">${TEAM_TODAY.filter(t => t.status === s).length}</div></div>`).join('')}
+  <div class="grid g4" style="margin-bottom:16px" id="rekapStatCards">
+    ${['Hadir Onsite', 'Hadir WFH', 'Belum Submit Progres', 'Tanpa Keterangan'].map(s => {
+      const count = TEAM_TODAY.filter(t => t.status === s).length;
+      const isOk = s.includes('Onsite'), isInf = s.includes('WFH'), isWarn = s.includes('Belum');
+      const cls = isOk ? 'ok' : isInf ? 'inf' : isWarn ? 'warn' : 'bad';
+      const isActive = rekapFilterStatus === s;
+      return `
+        <div class="card stat interactive ${cls} ${isActive ? 'active-stat' : ''}" data-stat="${s}" title="Klik untuk memfilter dan melihat detail anggota">
+          <div class="k">${s}</div>
+          <div class="v">${count}</div>
+          <div class="stat-click-hint"><i class="fi-rr-eye"></i> Klik untuk filter & detail</div>
+        </div>`;
+    }).join('')}
   </div>
-  <div class="tabs" id="rekTabs"><button class="on" data-t="tbl">Tabel</button><button data-t="load">Dashboard Workload</button></div>
+  <div class="tabs" id="rekTabs">
+    <button class="on" data-t="tbl"><i class="fi-rr-table"></i> Tabel Anggota</button>
+    <button data-t="load"><i class="fi-rr-chart-histogram"></i> Dashboard Workload</button>
+  </div>
   <div id="rekBody"></div>`, () => {
   const show = t => {
     $$('#rekTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
     if (t === 'tbl') {
       $('#rekBody').innerHTML = `<div class="card">${table('rekap', {
-        rows: () => TEAM_TODAY.map((t, i) => ({ id: i + 1, ...t })),
-        toolbar: () => `<select class="input" id="fStatus"><option value="">Semua status</option>${['Hadir Onsite', 'Hadir WFH', 'Belum Submit Progres', 'Tanpa Keterangan'].map(s => `<option>${s}</option>`).join('')}</select>`,
-        cols: [{ k: 'nama', label: 'Karyawan', fmt: r => person(r.nama, r.tim) }, { k: 'tipe', label: 'Tipe', fmt: r => lz(r.tipe, r.tipe === 'Tetap' ? 'primary' : 'info') }, { k: 'status', label: 'Status', fmt: r => lz(r.status) }, { k: 'task', label: 'Task' }, { k: 'load', label: 'Beban (SP)', cls: 'r num', fmt: r => `${r.load}/${r.cap}` }]
+        rows: () => {
+          let rows = TEAM_TODAY.map((item, i) => ({ id: i + 1, ...item }));
+          if (rekapFilterStatus) {
+            rows = rows.filter(r => r.status === rekapFilterStatus);
+          }
+          return rows;
+        },
+        toolbar: () => `
+          <select class="input" id="fStatus" style="font-weight:500">
+            <option value="" ${rekapFilterStatus === '' ? 'selected' : ''}>— Semua Status (${TEAM_TODAY.length}) —</option>
+            ${['Hadir Onsite', 'Hadir WFH', 'Belum Submit Progres', 'Tanpa Keterangan'].map(s => `
+              <option value="${s}" ${rekapFilterStatus === s ? 'selected' : ''}>${s} (${TEAM_TODAY.filter(x => x.status === s).length})</option>
+            `).join('')}
+          </select>
+          ${rekapFilterStatus ? `<button class="btn btn-sm btn-outline" id="btnResetRekapFilter"><i class="fi-rr-cross-small"></i> Reset Filter</button>` : ''}
+        `,
+        cols: [
+          { k: 'nama', label: 'Karyawan', fmt: r => person(r.nama, r.tim) },
+          { k: 'tipe', label: 'Tipe', fmt: r => lz(r.tipe, r.tipe === 'Tetap' ? 'primary' : 'info') },
+          { k: 'status', label: 'Status Absensi', fmt: r => lz(r.status) },
+          { k: 'task', label: 'Task Harian', fmt: r => `<div style="font-weight:500">${esc(r.task)}</div>` },
+          { k: 'load', label: 'Beban (SP)', cls: 'r num', fmt: r => {
+            const p = Math.round(r.load / r.cap * 100);
+            return `<div style="display:inline-block;text-align:right"><div><b>${r.load}/${r.cap}</b></div><div class="caption ${p > 100 ? 'down' : ''}">${p}%</div></div>`;
+          } },
+          { k: 'aksi', label: 'Aksi', sort: false, cls: 'r', fmt: r => `<button class="btn btn-sm btn-outline" data-team-detail="${r.nama}" style="padding:4px 10px"><i class="fi-rr-eye"></i> Detail</button>` }
+        ],
+        onRow: id => {
+          const item = TEAM_TODAY[id - 1];
+          if (item) showTeamDetail(item);
+        },
+        after: h => {
+          const fs = $('#fStatus', h);
+          if (fs) {
+            fs.onchange = () => {
+              rekapFilterStatus = fs.value;
+              updateStatCardsHighlight();
+              paintTable('rekap');
+            };
+          }
+          const rst = $('#btnResetRekapFilter', h);
+          if (rst) {
+            rst.onclick = () => {
+              rekapFilterStatus = '';
+              updateStatCardsHighlight();
+              paintTable('rekap');
+            };
+          }
+          $$('[data-team-detail]', h).forEach(btn => {
+            btn.onclick = e => {
+              e.stopPropagation();
+              const item = TEAM_TODAY.find(x => x.nama === btn.dataset.teamDetail);
+              if (item) showTeamDetail(item);
+            };
+          });
+        }
       })}</div>`;
       paintTable('rekap');
     } else {
-      $('#rekBody').innerHTML = `<div class="card"><div class="card-h"><h3>Kapasitas & Beban Kerja (story point harian)</h3></div><div class="card-b stack">
-        ${TEAM_TODAY.map(t => { const p = Math.round(t.load / t.cap * 100); return `<div><div class="row"><b>${esc(t.nama)}</b><span class="spacer"></span><span class="caption num">${t.load}/${t.cap} SP · ${p}%</span></div><div class="bar ${p > 100 ? 'bad' : p > 85 ? 'warn' : 'ok'}"><i style="width:${Math.min(p, 100)}%"></i></div>${p > 100 ? '<div class="caption down">Overload — pertimbangkan redistribusi</div>' : ''}</div>`; }).join('')}</div></div>`;
+      $('#rekBody').innerHTML = `<div class="card"><div class="card-h" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="margin:0">Kapasitas & Beban Kerja (Story Point Harian)</h3>
+          <span class="caption">Klik kartu untuk melihat rincian progres & data karyawan</span>
+        </div>
+        <span class="badge" style="background:#eef2ff;color:#3730a3">Kapasitas standar: 8 SP</span>
+      </div>
+      <div class="card-b stack" style="gap:10px">
+        ${TEAM_TODAY.map(t => {
+          const p = Math.round(t.load / t.cap * 100);
+          return `
+            <div class="workload-card-item" data-team-workload="${t.nama}">
+              <div class="row" style="justify-content:space-between;align-items:center">
+                <div class="row" style="gap:10px;align-items:center">
+                  ${av(t.nama, 1)}
+                  <div>
+                    <div class="row" style="gap:6px;align-items:center">
+                      <b style="color:#0f172a">${esc(t.nama)}</b>
+                      <span class="caption muted">(${esc(t.tim)})</span>
+                      ${lz(t.status)}
+                    </div>
+                    <div class="caption" style="margin-top:2px;color:#64748b">Task: ${esc(t.task)}</div>
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div class="num" style="font-weight:700;font-size:14px">${t.load}/${t.cap} SP <span style="font-size:12px;font-weight:normal;color:#64748b">(${p}%)</span></div>
+                  <button class="btn btn-sm btn-outline" style="padding:2px 8px;font-size:11px;margin-top:4px"><i class="fi-rr-eye"></i> Detail</button>
+                </div>
+              </div>
+              <div class="bar ${p > 100 ? 'bad' : p > 85 ? 'warn' : 'ok'}" style="margin-top:8px"><i style="width:${Math.min(p, 100)}%"></i></div>
+              ${p > 100 ? '<div class="caption down" style="margin-top:4px;font-weight:600"><i class="fi-rr-triangle-warning"></i> Overload kapasitas — pertimbangkan redistribusi task</div>' : ''}
+            </div>`;
+        }).join('')}</div></div>`;
+
+      $$('[data-team-workload]').forEach(card => {
+        card.onclick = () => {
+          const item = TEAM_TODAY.find(x => x.nama === card.dataset.teamWorkload);
+          if (item) showTeamDetail(item);
+        };
+      });
     }
   };
-  $$('#rekTabs button').forEach(b => b.onclick = () => show(b.dataset.t)); show('tbl');
+
+  const updateStatCardsHighlight = () => {
+    $$('#rekapStatCards [data-stat]').forEach(card => {
+      card.classList.toggle('active-stat', card.dataset.stat === rekapFilterStatus);
+    });
+  };
+
+  // Wire up stat cards click
+  $$('#rekapStatCards [data-stat]').forEach(card => {
+    card.onclick = () => {
+      const s = card.dataset.stat;
+      if (rekapFilterStatus === s) {
+        rekapFilterStatus = '';
+        toast('Filter status dibatalkan', 'info');
+      } else {
+        rekapFilterStatus = s;
+        const matching = TEAM_TODAY.filter(t => t.status === s);
+        toast(`Memfilter status: ${s} (${matching.length} orang)`, 'info');
+      }
+      updateStatCardsHighlight();
+      show('tbl');
+    };
+  });
+
+  $$('#rekTabs button').forEach(b => b.onclick = () => show(b.dataset.t));
+  show('tbl');
 });
 
 /* ===== Karyawan ===== */
@@ -545,39 +835,311 @@ function empDrawer(e) {
 
 /* ===== Lowongan ===== */
 function jobForm(j = {}) {
-  return `<form id="jobForm" class="form-grid" novalidate>
-    <div class="field full"><label class="lbl" for="jJudul">Posisi *</label><input class="input" id="jJudul" value="${esc(j.judul)}"><div class="err">Wajib diisi</div></div>
-    <div class="field"><label class="lbl" for="jTim">Tim</label><input class="input" id="jTim" value="${esc(j.tim)}"></div>
-    <div class="field"><label class="lbl" for="jLevel">Level</label><select class="input" id="jLevel">${['Junior', 'Mid', 'Senior', 'Lead'].map(l => `<option ${j.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    <div class="field"><label class="lbl" for="jLok">Lokasi</label><input class="input" id="jLok" value="${esc(j.lokasi || 'Hybrid — Jakarta')}"></div>
-    <div class="field"><label class="lbl" for="jStatus">Status</label><select class="input" id="jStatus">${['Draft', 'Published', 'Closed'].map(l => `<option ${j.status === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    <div class="field full"><label class="lbl" for="jSkill">Skill</label><input class="input" id="jSkill" value="${esc(j.skill)}"></div>
-    <div class="field full"><label class="lbl" for="jDesk">Deskripsi</label><textarea class="input" id="jDesk">${esc(j.deskripsi)}</textarea></div></form>`;
+  return `<form id="jobForm" class="stack" style="gap:16px" novalidate>
+    <div class="form-grid">
+      <div class="field full">
+        <label class="lbl" for="jJudul">Posisi / Judul Lowongan *</label>
+        <input class="input" id="jJudul" value="${esc(j.judul || '')}" placeholder="Contoh: Senior Backend Engineer">
+        <div class="err">Wajib diisi</div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="jTim">Tim / Divisi</label>
+        <input class="input" id="jTim" value="${esc(j.tim || 'Engineering')}" placeholder="Engineering, Design, QA, PMO...">
+      </div>
+      <div class="field">
+        <label class="lbl" for="jLevel">Level Jabatan</label>
+        <select class="input" id="jLevel">
+          ${['Junior', 'Mid', 'Senior', 'Lead'].map(l => `<option ${j.level === l ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label class="lbl" for="jLok">Lokasi Kerja</label>
+        <input class="input" id="jLok" value="${esc(j.lokasi || 'Hybrid — Jakarta')}" placeholder="Hybrid, WFH, Onsite...">
+      </div>
+      <div class="field">
+        <label class="lbl" for="jStatus">Status Publikasi</label>
+        <select class="input" id="jStatus">
+          ${['Draft', 'Published', 'Closed'].map(l => `<option ${j.status === l ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <!-- Multi-Skill dengan Level Input -->
+    <div class="field">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label class="lbl" style="margin:0;font-weight:600;display:flex;align-items:center;gap:6px">
+          <i class="fi-rr-star" style="color:var(--primary)"></i> Keahlian / Skill yang Dibutuhkan (Multi-Skill & Level) *
+        </label>
+        <span class="caption" id="skillCountText" style="color:#64748b">0 Skill terdaftar</span>
+      </div>
+
+      <div class="skill-box-container">
+        <!-- Input Row -->
+        <div class="row" style="gap:8px;align-items:flex-end;margin-bottom:10px">
+          <div style="flex:2;min-width:200px">
+            <label class="lbl" for="newSkillName" style="font-size:11px;color:#64748b;margin-bottom:4px">Nama Keahlian / Teknologi</label>
+            <input class="input" id="newSkillName" placeholder="Ketik nama skill (misal: React, Node.js, PostgreSQL...)" style="height:38px">
+          </div>
+          <div style="flex:1;min-width:140px">
+            <label class="lbl" for="newSkillLevel" style="font-size:11px;color:#64748b;margin-bottom:4px">Tingkat Kemahiran (Level)</label>
+            <select class="input" id="newSkillLevel" style="height:38px">
+              <option value="Junior">Pemula (Junior)</option>
+              <option value="Mid" selected>Menengah (Mid)</option>
+              <option value="Senior">Mahir (Senior)</option>
+              <option value="Lead">Ahli (Lead / Expert)</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary" id="btnAddSkillBtn" style="height:38px;padding:0 16px;white-space:nowrap">
+            <i class="fi-rr-plus"></i> Tambah Skill
+          </button>
+        </div>
+
+        <!-- Quick Recommendations -->
+        <div class="row" style="gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <span class="caption" style="font-size:11px;color:#64748b">Rekomendasi Cepat:</span>
+          ${['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'Figma', 'Docker', 'Python', 'Go', 'Cypress', 'Git', 'AWS'].map(tag => `
+            <button type="button" class="chip" data-quick-skill="${tag}" style="font-size:11px;height:24px;padding:0 8px">+ ${tag}</button>
+          `).join('')}
+        </div>
+
+        <!-- Container Daftar Skill yang Sudah Ditambahkan -->
+        <div style="border-top:1px dashed var(--border);padding-top:10px">
+          <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:6px">DAFTAR SKILL DIPERLUKAN:</div>
+          <div id="skillsChipsContainer" class="skill-chips-wrap"></div>
+        </div>
+      </div>
+      <div class="err" id="skillErr" style="color:var(--danger);font-size:12px;display:none;margin-top:4px">Tambahkan minimal 1 skill untuk posisi ini</div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="jDesk">Deskripsi & Tanggung Jawab Pekerjaan</label>
+      <textarea class="input" id="jDesk" rows="3" placeholder="Tuliskan gambaran pekerjaan, kualifikasi umum, dan ekspektasi peran...">${esc(j.deskripsi || '')}</textarea>
+    </div>
+  </form>`;
 }
+
 function openJob(j) {
-  openModal(j ? 'Ubah Lowongan' : 'Lowongan Baru', jobForm(j), '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave">Simpan</button>');
+  let jobSkills = [];
+  if (j && Array.isArray(j.skills) && j.skills.length) {
+    jobSkills = j.skills.map(s => ({ ...s }));
+  } else if (j && j.skill) {
+    jobSkills = j.skill.split(',').map(s => {
+      const m = s.match(/(.+?)\s*\((.+?)\)$/);
+      if (m) return { name: m[1].trim(), level: m[2].trim() };
+      return { name: s.trim(), level: j.level || 'Mid' };
+    }).filter(s => s.name);
+  } else {
+    jobSkills = [
+      { name: 'JavaScript / TypeScript', level: 'Mid' },
+      { name: 'Git & Version Control', level: 'Mid' }
+    ];
+  }
+
+  openModal(j ? 'Ubah Lowongan Pekerjaan' : 'Buat Lowongan Baru', jobForm(j), '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave"><i class="fi-rr-disk"></i> Simpan Lowongan</button>', true);
+
+  const renderSkills = () => {
+    const container = $('#skillsChipsContainer');
+    const countEl = $('#skillCountText');
+    const errEl = $('#skillErr');
+    if (!container) return;
+
+    if (countEl) countEl.textContent = `${jobSkills.length} Skill terdaftar`;
+    if (errEl) errEl.style.display = jobSkills.length === 0 ? 'block' : 'none';
+
+    if (jobSkills.length === 0) {
+      container.innerHTML = '<span class="caption muted" style="font-style:italic;padding:4px 0">Belum ada skill yang ditambahkan. Gunakan form di atas atau klik rekomendasi cepat.</span>';
+      return;
+    }
+
+    container.innerHTML = jobSkills.map((s, idx) => {
+      const lvl = (s.level || 'Mid');
+      const lvlCls = 'level-' + lvl.toLowerCase();
+      return `
+        <div class="skill-chip-item">
+          <i class="fi-rr-check" style="font-size:10px;color:var(--primary)"></i>
+          <b>${esc(s.name)}</b>
+          <span class="skill-level-badge ${lvlCls}">${esc(lvl)}</span>
+          <button type="button" class="skill-remove-btn" data-rem-skill="${idx}" title="Hapus skill ${esc(s.name)}">
+            <i class="fi-rr-cross-small"></i>
+          </button>
+        </div>`;
+    }).join('');
+
+    $$('[data-rem-skill]', container).forEach(b => {
+      b.onclick = () => {
+        const idx = +b.dataset.remSkill;
+        jobSkills.splice(idx, 1);
+        renderSkills();
+      };
+    });
+  };
+
+  const addSkill = (name, level) => {
+    const n = name.trim();
+    if (!n) return;
+    const exists = jobSkills.find(s => s.name.toLowerCase() === n.toLowerCase());
+    if (exists) {
+      exists.level = level;
+      toast(`Level skill ${n} diperbarui menjadi ${level}`, 'info');
+    } else {
+      jobSkills.push({ name: n, level });
+    }
+    const inp = $('#newSkillName');
+    if (inp) { inp.value = ''; inp.focus(); }
+    renderSkills();
+  };
+
+  $('#btnAddSkillBtn').onclick = () => {
+    const n = $('#newSkillName').value;
+    const l = $('#newSkillLevel').value;
+    if (!n.trim()) {
+      toast('Ketikkan nama skill terlebih dahulu', 'warning');
+      $('#newSkillName').focus();
+      return;
+    }
+    addSkill(n, l);
+  };
+
+  $('#newSkillName').onkeydown = e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      $('#btnAddSkillBtn').click();
+    }
+  };
+
+  $$('[data-quick-skill]').forEach(btn => {
+    btn.onclick = () => {
+      const name = btn.dataset.quickSkill;
+      const level = $('#newSkillLevel').value || 'Mid';
+      addSkill(name, level);
+    };
+  });
+
+  renderSkills();
+
   $('#mCancel').onclick = closeModal;
   $('#mSave').onclick = () => {
-    const ju = $('#jJudul').value.trim(); $('#jJudul').closest('.field').classList.toggle('has-err', !ju); if (!ju) return;
-    const d = { judul: ju, tim: $('#jTim').value, level: $('#jLevel').value, lokasi: $('#jLok').value, status: $('#jStatus').value, skill: $('#jSkill').value, deskripsi: $('#jDesk').value };
-    if (j) Object.assign(j, d); else JOBS.unshift({ id: Date.now(), ...d });
-    audit(j ? 'Ubah' : 'Buat', 'Lowongan', ju); toast('Lowongan disimpan', 'success'); closeModal(); paintAll();
+    const ju = $('#jJudul').value.trim();
+    $('#jJudul').closest('.field').classList.toggle('has-err', !ju);
+    if (!ju) {
+      $('#jJudul').focus();
+      return;
+    }
+    if (jobSkills.length === 0) {
+      toast('Tambahkan minimal 1 skill/keahlian untuk lowongan ini', 'warning');
+      $('#skillErr').style.display = 'block';
+      $('#newSkillName').focus();
+      return;
+    }
+
+    const d = {
+      judul: ju,
+      tim: $('#jTim').value || 'Engineering',
+      level: $('#jLevel').value,
+      lokasi: $('#jLok').value || 'Hybrid — Jakarta',
+      status: $('#jStatus').value,
+      skills: jobSkills,
+      skill: jobSkills.map(s => `${s.name} (${s.level})`).join(', '),
+      deskripsi: $('#jDesk').value
+    };
+
+    if (j) Object.assign(j, d);
+    else JOBS.unshift({ id: Date.now(), ...d });
+
+    audit(j ? 'Ubah' : 'Buat', 'Lowongan', `${ju} — ${jobSkills.length} skills`);
+    toast('Data lowongan berhasil disimpan', 'success');
+    closeModal();
+    paintAll();
   };
 }
+
 reg('lowongan', 'Lowongan', ['Rekrutmen', 'Lowongan'], () => `
-  <div class="banner info"><i class=fi-rr-info></i> <span>Integrasi LinkedIn bergantung pada akses partner resmi. Cadangan: tautan “Apply with LinkedIn” atau impor manual.</span></div>
+  <div class="banner info"><i class="fi-rr-info"></i> <span>Kebutuhan skill pada setiap lowongan kini mendukung multi-skill terstruktur lengkap dengan level kemahiran (Junior, Mid, Senior, Lead).</span></div>
   <div class="card">${table('jobs', {
   rows: () => JOBS.map(j => ({ ...j, pelamar: APP.filter(a => a.job === j.id).length })),
-  cols: [{ k: 'judul', label: 'Posisi', fmt: r => `<b>${esc(r.judul)}</b><div class="caption">${esc(r.skill)}</div>` }, { k: 'tim', label: 'Tim' }, { k: 'level', label: 'Level' }, { k: 'lokasi', label: 'Lokasi' }, { k: 'pelamar', label: 'Pelamar', cls: 'r num' }, { k: 'status', label: 'Status', fmt: r => lz(r.status) },
-    { k: 'x', label: '', sort: false, fmt: r => `<button class="btn btn-sm" data-ej="${r.id}">Ubah</button>` }],
+  cols: [
+    {
+      k: 'judul',
+      label: 'Posisi & Kebutuhan Keahlian (Multi-Skill)',
+      fmt: r => {
+        const skillList = Array.isArray(r.skills) && r.skills.length
+          ? r.skills
+          : (r.skill ? r.skill.split(',').map(s => {
+              const m = s.match(/(.+?)\s*\((.+?)\)$/);
+              return m ? { name: m[1].trim(), level: m[2].trim() } : { name: s.trim(), level: r.level || 'Mid' };
+            }) : []);
+        const skillsHtml = skillList.map(s => {
+          const lvlCls = 'level-' + (s.level || 'mid').toLowerCase();
+          return `<span class="skill-pill-badge">${esc(s.name)} <b class="${lvlCls}">${esc(s.level)}</b></span>`;
+        }).join('');
+        return `<div><b style="font-size:14px;color:#0F172A">${esc(r.judul)}</b></div><div style="margin-top:4px">${skillsHtml || '<span class="muted">-</span>'}</div>`;
+      }
+    },
+    { k: 'tim', label: 'Tim' },
+    { k: 'level', label: 'Level' },
+    { k: 'lokasi', label: 'Lokasi' },
+    { k: 'pelamar', label: 'Pelamar', cls: 'r num' },
+    { k: 'status', label: 'Status', fmt: r => lz(r.status) },
+    { k: 'x', label: '', sort: false, fmt: r => `<button class="btn btn-sm" data-ej="${r.id}"><i class="fi-rr-edit"></i> Ubah</button>` }
+  ],
   after: h => $$('[data-ej]', h).forEach(b => b.onclick = () => openJob(JOBS.find(j => j.id == b.dataset.ej)))
 })}</div>`, () => paintAll(),
-  () => `<button class="btn" id="btnCareer"><i class=fi-rr-globe></i> Pratinjau Career Page</button><button class="btn btn-primary" id="btnAddJob">+ Lowongan</button>`);
+  () => `<button class="btn" id="btnCareer"><i class="fi-rr-globe"></i> Pratinjau Career Page</button><button class="btn btn-primary" id="btnAddJob"><i class="fi-rr-plus"></i> Tambah Lowongan</button>`);
 
 function careerPage() {
-  openModal('Career Page Publik', `<div class="pub card-b" style="border-radius:12px"><h2>Bergabung dengan AstaCode</h2><p class="muted" style="margin-bottom:16px">Software house dengan kultur fleksibel & kekeluargaan.</p>
-    ${JOBS.filter(j => j.status === 'Published').map(j => `<div class="card card-b" style="margin-bottom:10px"><div class="row"><div style="flex:1"><b>${esc(j.judul)}</b><div class="caption">${esc(j.tim)} · ${esc(j.level)} · ${esc(j.lokasi)}</div></div><button class="btn btn-primary btn-sm" data-apply="${j.id}">Lamar</button></div></div>`).join('')}</div>`, '', true);
-  $$('[data-apply]').forEach(b => b.onclick = () => { toast('Form lamaran terkirim (demo). Pelamar masuk ke pipeline “Applied”.', 'success'); APP.push({ id: Date.now(), nama: 'Pelamar Baru ' + (APP.length + 1), job: +b.dataset.apply, stage: 'Applied', skor: 0, email: 'baru@mail.com', hp: '-', edu: '-', exp: '-', skill: '-' }); closeModal(); paintAll(); });
+  openModal('Career Page Publik', `
+    <div class="pub card-b" style="border-radius:12px;padding:20px">
+      <h2>Bergabung dengan AstaCode</h2>
+      <p class="muted" style="margin-bottom:16px">Software house dengan kultur fleksibel & kekeluargaan. Bangun karir terbaik Anda bersama tim engineering & desain kami.</p>
+      ${JOBS.filter(j => j.status === 'Published').map(j => {
+        const skillList = Array.isArray(j.skills) && j.skills.length
+          ? j.skills
+          : (j.skill ? j.skill.split(',').map(s => {
+              const m = s.match(/(.+?)\s*\((.+?)\)$/);
+              return m ? { name: m[1].trim(), level: m[2].trim() } : { name: s.trim(), level: j.level || 'Mid' };
+            }) : []);
+        return `
+          <div class="card card-b" style="margin-bottom:12px;border:1px solid var(--border)">
+            <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+              <div style="flex:1;min-width:280px">
+                <div class="row" style="gap:8px;align-items:center">
+                  <b style="font-size:15px;color:#0F172A">${esc(j.judul)}</b>
+                  <span class="lz lz-primary">${esc(j.level)}</span>
+                </div>
+                <div class="caption" style="margin:4px 0 8px;color:#475569">
+                  ${esc(j.tim)} · Lokasi: <b>${esc(j.lokasi)}</b>
+                </div>
+                <div style="margin-top:6px">
+                  <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:4px">Kebutuhan Skill:</div>
+                  ${skillList.map(s => `<span class="skill-pill-badge">${esc(s.name)} <b class="level-${(s.level||'mid').toLowerCase()}">${esc(s.level)}</b></span>`).join('')}
+                </div>
+                <p class="caption" style="margin-top:8px;color:#334155">${esc(j.deskripsi || '')}</p>
+              </div>
+              <button class="btn btn-primary" data-apply="${j.id}" style="padding:8px 18px">
+                <i class="fi-rr-paper-plane"></i> Lamar Posisi Ini
+              </button>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`, '', true);
+
+  $$('[data-apply]').forEach(b => b.onclick = () => {
+    toast('Form lamaran terkirim (demo). Pelamar masuk ke pipeline “Applied”.', 'success');
+    APP.push({
+      id: Date.now(),
+      nama: 'Pelamar Baru ' + (APP.length + 1),
+      job: +b.dataset.apply,
+      stage: 'Applied',
+      skor: 0,
+      email: 'baru@mail.com',
+      hp: '0812-9999-8888',
+      edu: 'S1 Teknik Informatika',
+      exp: '2 th Pengalaman',
+      skill: 'Sesuai Kualifikasi Lowongan'
+    });
+    closeModal();
+    paintAll();
+  });
 }
 
 /* ===== Pipeline (Kanban) ===== */
@@ -637,20 +1199,44 @@ function letterPaper(txt, signed) {
   <div style="position:absolute;right:32px;bottom:28px;text-align:center">${signed ? '<div class="sig">Rina A.</div>' : '<div style="height:36px"></div>'}<div style="border-top:1px solid #333;padding-top:2px">${esc(S.settings.signer)}</div>${signed ? '<div class="row" style="justify-content:center;margin-top:4px"><div class="qr" style="width:36px;height:36px"></div><span class="caption">TTD digital</span></div>' : ''}</div></div>`;
 }
 function reviewPkl(id) {
-  const p = PKL.find(x => x.id === id), q = checkQuota(p.mulai, p.selesai, p.id);
+  const p = PKL.find(x => x.id === id);
+  if (!p) return;
+  const q = checkQuota(p.mulai, p.selesai, p.id);
   const days = [];
   for (let d = parse(p.mulai), i = 0; iso(d) <= p.selesai && i < 120; d = addDays(d, 1), i++) days.push(occupancy(iso(d), p.id));
   const mx = S.settings.quotaMax;
   openDrawer(p.nama, `
-    <div class="row" style="margin-bottom:12px"><h3 style="flex:1">${esc(p.instansi)}</h3>${lz(p.status)}</div>
-    <dl class="kv"><dt>Jurusan</dt><dd>${esc(p.jurusan)}</dd><dt>Kontak</dt><dd>${esc(p.kontak)}</dd><dt>Periode</dt><dd>${fmtD(p.mulai)} – ${fmtD(p.selesai)}</dd><dt>Surat</dt><dd><i class=fi-rr-document></i> surat-permohonan.pdf <a href="#" data-dl>Lihat</a></dd><dt>No. surat</dt><dd>${esc(p.nomor || '—')}</dd></dl>
-    <div class="sep"></div><h3 style="margin-bottom:8px">Hasil cek kuota (auto-overlap)</h3>
-    <div class="banner ${q.available ? 'ok' : 'danger'}">${q.available ? '<i class=fi-rr-check-circle></i>' : '<i class=fi-rr-cross-circle></i>'} <span>${q.available ? `<b>Available</b> — okupansi tertinggi ${q.max}/${mx} dalam ${q.days} hari.` : `<b>Kuota Penuh</b> mulai ${fmtD(q.fullDay)} (${q.max}/${mx}).`}</span></div>
-    <div class="caption" style="margin-bottom:4px">Okupansi harian dalam rentang</div>
+    <div class="row" style="margin-bottom:12px;align-items:center"><h3 style="flex:1;margin:0">${esc(p.instansi)}</h3>${lz(p.status)}</div>
+    <dl class="kv">
+      <dt>Jurusan</dt><dd>${esc(p.jurusan || '-')}</dd>
+      <dt>Email Kontak</dt><dd>${esc(p.kontak || '-')}</dd>
+      ${p.hp ? `<dt>WhatsApp / HP</dt><dd>${esc(p.hp)}</dd>` : ''}
+      <dt>Minat Divisi</dt><dd><b>${esc(p.minatDivisi || p.divisi || 'Engineering')}</b></dd>
+      <dt>Periode</dt><dd>${fmtD(p.mulai)} – ${fmtD(p.selesai)}</dd>
+      <dt>Surat</dt><dd><i class=fi-rr-document></i> ${esc(p.fileName || 'surat-permohonan.pdf')} <a href="#" data-dl style="color:var(--primary);margin-left:6px;text-decoration:underline">Lihat PDF</a></dd>
+      ${p.porto ? `<dt>Portofolio</dt><dd><a href="${esc(p.porto)}" target="_blank" style="color:var(--primary);text-decoration:underline">${esc(p.porto)}</a></dd>` : ''}
+      <dt>No. surat</dt><dd>${esc(p.nomor || '—')}</dd>
+    </dl>
+    <div class="sep"></div>
+    <h3 style="margin-bottom:8px">Hasil Analisis Kuota (Realtime Overlap)</h3>
+    <div class="banner ${q.available ? 'ok' : 'danger'}">
+      ${q.available ? '<i class=fi-rr-check-circle></i>' : '<i class=fi-rr-cross-circle></i>'}
+      <span>${q.available ? `<b>Available</b> — okupansi tertinggi ${q.max}/${mx} dalam ${q.days} hari.` : `<b>Kuota Penuh</b> mulai ${fmtD(q.fullDay)} (${q.max}/${mx}).`}</span>
+    </div>
+    <div class="caption" style="margin-bottom:4px">Okupansi harian dalam rentang periode magang</div>
     <div class="chart" style="height:80px;gap:1px">${days.map(d => `<div class="c" style="gap:0"><i style="height:${d / mx * 100}%;max-width:none;background:${d >= mx ? '#DC2626' : d >= mx - 1 ? '#D97706' : '#16A34A'}"></i></div>`).join('')}</div>
-    ${p.status === 'Menunggu' ? `<div class="sep"></div><div class="field"><label class="lbl" for="pDiv">Divisi</label><select class="input" id="pDiv">${['Engineering', 'Design', 'QA'].map(d => `<option>${d}</option>`).join('')}</select></div><div class="field"><label class="lbl" for="pPemb">Pembimbing</label><select class="input" id="pPemb">${EMP.filter(e => e.tipe === 'Tetap').map(e => `<option>${esc(e.nama)}</option>`).join('')}</select></div>` : ''}`,
+    ${p.status === 'Menunggu' ? `
+      <div class="sep"></div>
+      <div class="field">
+        <label class="lbl" for="pDiv">Divisi Penempatan</label>
+        <select class="input" id="pDiv">${['Engineering', 'Design', 'QA'].map(d => `<option ${(p.minatDivisi === d || p.divisi === d) ? 'selected' : ''}>${d}</option>`).join('')}</select>
+      </div>
+      <div class="field">
+        <label class="lbl" for="pPemb">Pembimbing Lapangan</label>
+        <select class="input" id="pPemb">${EMP.filter(e => e.tipe === 'Tetap').map(e => `<option>${esc(e.nama)}</option>`).join('')}</select>
+      </div>` : ''}`,
     ['hr'].includes(S.role) && p.status === 'Menunggu' ? `<button class="btn btn-danger" id="pRej">Tolak (surat otomatis)</button><button class="btn btn-success" id="pAcc" ${q.available ? '' : 'disabled'}>Terima & Terbitkan Surat</button>` : (p.nomor ? '<button class="btn" id="pLet">Lihat Surat</button>' : ''));
-  $$('[data-dl]').forEach(a => a.onclick = e => { e.preventDefault(); toast('Membuka PDF surat permohonan', 'info'); });
+  $$('[data-dl]').forEach(a => a.onclick = e => { e.preventDefault(); toast('Membuka PDF surat permohonan resmi', 'info'); });
   const finish = (accept) => {
     const re = checkQuota(p.mulai, p.selesai, p.id);
     if (accept && !re.available) { toast('Kuota berubah saat approval — pengecekan ulang gagal', 'error'); return; }
@@ -666,53 +1252,429 @@ function reviewPkl(id) {
   if ($('#pLet')) $('#pLet').onclick = () => openModal('Surat PKL', letterPaper(letterText(p.status === 'Ditolak' ? 'reject' : 'accept', p, p.nomor), true), '<button class="btn" onclick="window.print()">Cetak</button>');
 }
 reg('pengajuan', 'Pengajuan PKL', ['Manajemen PKL', 'Pengajuan'], () => `
-  <div class="banner info"><i class=fi-rr-shield-check></i> <span>Mode kuota penuh: <b>${S.settings.autoReject ? 'Auto-reject dengan surat penolakan' : 'Tinjau manual oleh HR'}</b> (dapat diubah di Pengaturan).</span></div>
+  <!-- Ringkasan Statistik Pengajuan PKL -->
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card stat ok">
+      <div class="k">Total Pengajuan</div>
+      <div class="v">${PKL.length}</div>
+      <div class="caption" style="color:#64748b;margin-top:2px">Semua permohonan masuk</div>
+    </div>
+    <div class="card stat warn">
+      <div class="k">Menunggu Review</div>
+      <div class="v">${PKL.filter(p => p.status === 'Menunggu').length}</div>
+      <div class="caption" style="color:#64748b;margin-top:2px">Perlu keputusan HR</div>
+    </div>
+    <div class="card stat inf">
+      <div class="k">Peserta Aktif</div>
+      <div class="v">${PKL.filter(p => p.status === 'Aktif').length}</div>
+      <div class="caption" style="color:#64748b;margin-top:2px">Sedang menjalani magang</div>
+    </div>
+    <div class="card stat bad">
+      <div class="k">Selesai / Ditolak</div>
+      <div class="v">${PKL.filter(p => ['Selesai', 'Ditolak'].includes(p.status)).length}</div>
+      <div class="caption" style="color:#64748b;margin-top:2px">Arsip permohonan</div>
+    </div>
+  </div>
+
+  <div class="banner info">
+    <i class="fi-rr-shield-check"></i>
+    <span>Mode kuota penuh: <b>${S.settings.autoReject ? 'Auto-reject dengan surat penolakan otomatis' : 'Tinjau manual oleh HR'}</b> (konfigurasi dapat diatur di menu Pengaturan).</span>
+  </div>
+
   <div class="card">${table('pkl', {
-  rows: () => PKL.map(p => ({ ...p, q: p.status === 'Menunggu' ? (checkQuota(p.mulai, p.selesai, p.id).available ? 'Available' : 'Kuota Penuh') : '—' })),
-  toolbar: () => `<select class="input" id="fPkl"><option value="">Semua status</option>${['Menunggu', 'Aktif', 'Ditolak', 'Selesai'].map(s => `<option ${TBL.pkl.f === s ? 'selected' : ''}>${s}</option>`).join('')}</select>`,
-  cols: [{ k: 'nama', label: 'Pemohon', fmt: r => person(r.nama, r.jurusan) }, { k: 'instansi', label: 'Instansi' }, { k: 'mulai', label: 'Periode', fmt: r => `${fmtD(r.mulai)} – ${fmtD(r.selesai)}` }, { k: 'q', label: 'Cek kuota', fmt: r => r.q === '—' ? '—' : lz(r.q) }, { k: 'status', label: 'Status', fmt: r => lz(r.status) }],
+  rows: () => PKL.map(p => ({
+    ...p,
+    q: p.status === 'Menunggu' ? (checkQuota(p.mulai, p.selesai, p.id).available ? 'Available' : 'Kuota Penuh') : '—'
+  })),
+  toolbar: () => `
+    <select class="input" id="fPkl" style="font-weight:500">
+      <option value="">— Semua Status (${PKL.length}) —</option>
+      ${['Menunggu', 'Aktif', 'Ditolak', 'Selesai'].map(s => `
+        <option value="${s}" ${TBL.pkl.f === s ? 'selected' : ''}>${s} (${PKL.filter(p => p.status === s).length})</option>
+      `).join('')}
+    </select>
+  `,
+  cols: [
+    { k: 'nama', label: 'Nama Pemohon & Jurusan', fmt: r => person(r.nama, `${r.jurusan || '-'} · ${r.kontak || ''}`) },
+    { k: 'instansi', label: 'Asal Sekolah / Kampus', fmt: r => `<span class="badge" style="background:#eef2ff;color:#3730a3"><i class="fi-rr-school" style="margin-right:4px"></i>${esc(r.instansi)}</span>` },
+    { k: 'divisi', label: 'Divisi', fmt: r => r.divisi ? `<b>${esc(r.divisi)}</b>` : `<span class="muted">${esc(r.minatDivisi || 'Belum diatur')}</span>` },
+    { k: 'mulai', label: 'Periode Magang', fmt: r => `${fmtD(r.mulai)} – ${fmtD(r.selesai)}` },
+    { k: 'q', label: 'Validasi Kuota', fmt: r => r.q === '—' ? '—' : lz(r.q, r.q === 'Available' ? 'success' : 'danger') },
+    { k: 'status', label: 'Status', fmt: r => lz(r.status) },
+    { k: 'aksi', label: 'Aksi', sort: false, cls: 'r', fmt: r => `<button class="btn btn-sm btn-outline" data-rev="${r.id}" style="padding:4px 10px"><i class="fi-rr-search-alt"></i> Tinjau</button>` }
+  ],
   onRow: reviewPkl,
-  after: h => { const f = $('#fPkl', h); if (f) f.onchange = () => { TBL.pkl.f = f.value; TBL.pkl.page = 1; paintTable('pkl'); }; }
-})}</div>`, () => { const t = TBL.pkl, b = t.rows; t.rows = () => b().filter(p => !t.f || p.status === t.f); paintTable('pkl'); },
-  () => `<button class="btn" id="btnPublicForm"><i class=fi-rr-globe></i> Buka Form Publik</button>`);
+  after: h => {
+    const f = $('#fPkl', h);
+    if (f) {
+      f.onchange = () => {
+        TBL.pkl.f = f.value;
+        TBL.pkl.page = 1;
+        paintTable('pkl');
+      };
+    }
+    $$('[data-rev]', h).forEach(b => {
+      b.onclick = e => {
+        e.stopPropagation();
+        reviewPkl(+b.dataset.rev);
+      };
+    });
+  }
+})}</div>`, () => {
+  const t = TBL.pkl, b = t.rows;
+  t.rows = () => b().filter(p => !t.f || p.status === t.f);
+  paintTable('pkl');
+},
+  () => `
+    <button class="btn btn-primary" id="btnNewPkl"><i class="fi-rr-plus"></i> Form Pengajuan PKL</button>
+    <button class="btn btn-outline" id="btnPublicForm"><i class="fi-rr-globe"></i> Portal Publik</button>
+  `);
 
 function publicPklForm() {
-  openModal('Form Pengajuan PKL (Portal Publik)', `
-  <form id="pubForm" class="form-grid" novalidate>
-    <div class="field"><label class="lbl" for="fNama">Nama siswa/mahasiswa *</label><input class="input" id="fNama"><div class="err">Wajib diisi</div></div>
-    <div class="field"><label class="lbl" for="fInst">Sekolah / Kampus *</label><input class="input" id="fInst"><div class="err">Wajib diisi</div></div>
-    <div class="field"><label class="lbl" for="fJur">Jurusan</label><input class="input" id="fJur"></div>
-    <div class="field"><label class="lbl" for="fKon">Email kontak *</label><input class="input" id="fKon" type="email"><div class="err">Email tidak valid</div></div>
-    <div class="field"><label class="lbl" for="fMulai">Tanggal mulai *</label><input class="input" id="fMulai" type="date" value="${dOff(14)}"></div>
-    <div class="field"><label class="lbl" for="fSelesai">Tanggal selesai *</label><input class="input" id="fSelesai" type="date" value="${dOff(104)}"><div class="err">Tanggal selesai harus setelah mulai</div></div>
-    <div class="field full"><label class="lbl">Surat permohonan (PDF, maks 5 MB) *</label><label class="drop" id="drop"><input type="file" id="fFile" accept="application/pdf" hidden><span id="dropTxt"><i class=fi-rr-document></i> Klik untuk unggah PDF</span></label><div class="err" id="fileErr" style="color:var(--danger);font-size:12px;display:none"></div></div>
-    <div class="field full"><label class="row"><input type="checkbox" id="fCap"> <span>Saya bukan robot (captcha)</span></label><div class="err">Verifikasi captcha dulu</div></div>
-    <div class="full" id="quotaLive"></div></form>`, '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave">Kirim Pengajuan</button>');
-  let file = null;
+  const defaultStart = dOff(14);
+  const defaultEnd = dOff(104);
+
+  const formHTML = `
+  <div class="stack" style="gap:16px">
+    <div class="banner info" style="margin-bottom:0">
+      <i class="fi-rr-graduation-cap" style="font-size:18px"></i>
+      <span><b>Portal Publik Pendaftaran PKL / Magang Industri — AstaCode Software House.</b> Sistem melakukan validasi kuota aktif otomatis untuk mencegah bentrok jadwal.</span>
+    </div>
+
+    <form id="pubForm" novalidate style="display:flex;flex-direction:column;gap:14px">
+      <!-- 1. Identitas Pemohon & Instansi -->
+      <div class="form-section-card">
+        <div class="form-section-header">
+          <h4><i class="fi-rr-user-graduate" style="color:var(--primary)"></i> 1. Identitas Pemohon & Instansi Pendidikan</h4>
+          <span class="caption" style="color:#64748b">* Wajib diisi</span>
+        </div>
+        <div class="form-section-body">
+          <div class="form-grid">
+            <div class="field">
+              <label class="lbl" for="fNama">Nama Lengkap Siswa / Mahasiswa *</label>
+              <input class="input" id="fNama" placeholder="Contoh: Muhammad Kevin Alamsyah">
+              <div class="err">Nama pemohon wajib diisi</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fInst">Asal Sekolah / Kampus / Politeknik *</label>
+              <input class="input" id="fInst" list="instList" placeholder="Contoh: SMKN 1 Jakarta">
+              <datalist id="instList">
+                <option value="SMKN 1 Jakarta">
+                <option value="SMK Telkom Bandung">
+                <option value="SMKN 4 Bandung">
+                <option value="Universitas Indonesia">
+                <option value="Politeknik Negeri Jakarta">
+                <option value="Universitas Gunadarma">
+                <option value="SMK Negeri 2 Depok">
+                <option value="Universitas Brawijaya">
+              </datalist>
+              <div class="err">Nama instansi wajib diisi</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fJur">Jurusan / Program Studi *</label>
+              <input class="input" id="fJur" placeholder="Contoh: Rekayasa Perangkat Lunak (RPL)">
+              <div class="err">Jurusan wajib diisi</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fDivMinat">Pilihan Divisi Peminatan Magang</label>
+              <select class="input" id="fDivMinat">
+                <option value="Engineering" selected>Engineering (Software / Web / Backend / Frontend)</option>
+                <option value="Design">UI/UX Design & Product Research</option>
+                <option value="QA">Quality Assurance & Software Testing</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fKon">Email Kontak Aktif (Instansi / Siswa) *</label>
+              <input class="input" id="fKon" type="email" placeholder="Contoh: kevin@smkn1.sch.id">
+              <div class="err">Format email tidak valid</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fHp">Nomor WhatsApp / Handphone *</label>
+              <input class="input" id="fHp" type="tel" placeholder="Contoh: 0812-3456-7890" value="0812-">
+              <div class="err">Nomor kontak wajib diisi</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Rencana Periode Magang & Live Quota Check -->
+      <div class="form-section-card">
+        <div class="form-section-header">
+          <h4><i class="fi-rr-calendar" style="color:var(--primary)"></i> 2. Rencana Periode PKL & Cek Kuota Otomatis</h4>
+          <span class="badge" id="pklDurationBadge" style="background:#eef2ff;color:#3730a3;font-weight:600">Durasi: 90 Hari (~3 Bulan)</span>
+        </div>
+        <div class="form-section-body">
+          <div class="form-grid">
+            <div class="field">
+              <label class="lbl" for="fMulai">Tanggal Mulai PKL *</label>
+              <input class="input" id="fMulai" type="date" value="${defaultStart}">
+              <div class="caption" style="margin-top:3px;color:#64748b">Jadwal hari pertama magang</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fSelesai">Tanggal Selesai PKL *</label>
+              <input class="input" id="fSelesai" type="date" value="${defaultEnd}">
+              <div class="err">Tanggal selesai harus setelah tanggal mulai</div>
+            </div>
+          </div>
+
+          <!-- Live Quota Widget -->
+          <div id="quotaLive" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- 3. Berkas Permohonan & Verifikasi -->
+      <div class="form-section-card">
+        <div class="form-section-header">
+          <h4><i class="fi-rr-document" style="color:var(--primary)"></i> 3. Berkas Dokumen Persyaratan & Verifikasi</h4>
+          <span class="caption" style="color:#64748b">Format PDF Resmi (Maks 5 MB)</span>
+        </div>
+        <div class="form-section-body">
+          <!-- Drop Area -->
+          <div class="field">
+            <label class="lbl">Surat Permohonan Resmi dari Sekolah / Kampus *</label>
+            <div class="drop-zone-enhanced" id="dropZone">
+              <input type="file" id="fFile" accept="application/pdf" hidden>
+              <div id="dropContent">
+                <i class="fi-rr-cloud-upload" style="font-size:36px;color:var(--primary)"></i>
+                <div style="font-weight:600;margin-top:8px;font-size:14px;color:#0F172A">Unggah File Surat Permohonan PKL (PDF)</div>
+                <div class="caption" style="color:#64748B;margin-top:3px">
+                  Tarik & letakkan file di sini, atau <span style="color:var(--primary);text-decoration:underline;font-weight:600">klik untuk menelusuri file</span>
+                </div>
+                <div class="caption" style="font-size:11px;color:#94A3B8;margin-top:5px">
+                  Wajib bertandatangan kepala sekolah/pimpinan & stempel resmi. Ukuran maks. 5 MB.
+                </div>
+              </div>
+            </div>
+            <div class="err" id="fileErr" style="color:var(--danger);font-size:12px;display:none;margin-top:6px">Surat permohonan resmi dalam format PDF wajib diunggah</div>
+          </div>
+
+          <!-- Portofolio / CV Link -->
+          <div class="field" style="margin-top:12px">
+            <label class="lbl" for="fPorto"><i class="fi-rr-link" style="color:var(--primary)"></i> Link Portofolio / GitHub / Resume (Opsional)</label>
+            <input class="input" id="fPorto" placeholder="https://github.com/username atau link Google Drive portofolio karya">
+            <div class="caption" style="margin-top:2px;color:#64748b">Memberikan nilai tambah saat seleksi divisi peminatan</div>
+          </div>
+
+          <!-- Anti-Spam Captcha & Consent Box -->
+          <div style="margin-top:14px;padding:12px 16px;background:#F8FAFC;border:1px solid var(--border);border-radius:var(--r-md)">
+            <label class="row" style="cursor:pointer;gap:12px;align-items:flex-start;user-select:none">
+              <input type="checkbox" id="fCap" style="width:18px;height:18px;margin-top:2px;accent-color:var(--primary)">
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:13px;color:#0F172A;display:flex;align-items:center;gap:6px">
+                  <i class="fi-rr-shield-check" style="color:var(--primary)"></i> Konfirmasi Kebenaran Data & Bebas Spam
+                </div>
+                <div class="caption" style="color:#64748B;margin-top:3px;line-height:1.4">
+                  Saya menyatakan dengan sesungguhnya bahwa seluruh data yang diisikan adalah benar, dan surat permohonan PKL resmi yang dilampirkan adalah sah dikeluarkan oleh instansi pendidikan yang bersangkutan.
+                </div>
+              </div>
+            </label>
+            <div class="err" id="capErr" style="color:var(--danger);font-size:12px;display:none;margin-top:6px">Silakan centang persetujuan konfirmasi di atas</div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>`;
+
+  const footHTML = `
+    <button class="btn" id="mCancel">Batal</button>
+    <button class="btn btn-primary" id="mSave" style="padding:10px 22px;font-weight:600">
+      <i class="fi-rr-paper-plane"></i> Kirim Formulir Pengajuan
+    </button>
+  `;
+
+  openModal('Formulir Pengajuan PKL / Magang Industri', formHTML, footHTML, true);
+
+  let uploadedFile = null;
+
   const live = () => {
-    const s = $('#fMulai').value, e = $('#fSelesai').value; if (!s || !e || e < s) { $('#quotaLive').innerHTML = ''; return; }
-    const q = checkQuota(s, e); $('#quotaLive').innerHTML = `<div class="banner ${q.available ? 'ok' : 'danger'}">${q.available ? '<i class=fi-rr-check-circle></i> Kuota tersedia pada periode ini' : `<i class=fi-rr-cross-circle></i> Kuota penuh mulai ${fmtD(q.fullDay)}`}</div>`;
+    const s = $('#fMulai').value;
+    const e = $('#fSelesai').value;
+    const durBadge = $('#pklDurationBadge');
+
+    if (!s || !e || e <= s) {
+      $('#quotaLive').innerHTML = '<div class="banner warn"><i class="fi-rr-triangle-warning"></i> <span>Tanggal selesai harus setelah tanggal mulai.</span></div>';
+      if (durBadge) durBadge.textContent = 'Durasi tidak valid';
+      return;
+    }
+
+    const diffDays = Math.round((parse(e) - parse(s)) / (1000 * 60 * 60 * 24));
+    const diffMonths = (diffDays / 30).toFixed(1);
+    if (durBadge) durBadge.textContent = `Durasi: ${diffDays} Hari (~${diffMonths} Bulan)`;
+
+    const q = checkQuota(s, e);
+    const mx = S.settings.quotaMax;
+    const pct = Math.min(100, Math.round(q.max / mx * 100));
+
+    if (q.available) {
+      $('#quotaLive').innerHTML = `
+        <div class="quota-box-widget ok">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <div class="row" style="gap:8px;align-items:center">
+              <span class="lz lz-success"><i class="fi-rr-check-circle"></i> Kuota Tersedia</span>
+              <b style="font-size:13px;color:#166534">Kapasitas Mencukupi (${q.max}/${mx} Terisi)</b>
+            </div>
+            <span class="caption" style="color:#166534;font-weight:700">${pct}% Terpakai</span>
+          </div>
+          <div class="bar ok" style="margin:8px 0 6px"><i style="width:${pct}%"></i></div>
+          <div class="caption" style="color:#14532D">
+            Tersedia kuota magang yang mencukupi untuk seluruh <b>${q.days} hari</b> pada rentang tanggal yang dipilih. Pengajuan dapat langsung diproses oleh HR.
+          </div>
+        </div>`;
+    } else {
+      $('#quotaLive').innerHTML = `
+        <div class="quota-box-widget full">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <div class="row" style="gap:8px;align-items:center">
+              <span class="lz lz-danger"><i class="fi-rr-cross-circle"></i> Kuota Penuh</span>
+              <b style="font-size:13px;color:#991B1B">Maksimal Kuota Terlampaui (${q.max}/${mx})</b>
+            </div>
+            <span class="caption" style="color:#991B1B;font-weight:700">100% Penuh</span>
+          </div>
+          <div class="bar bad" style="margin:8px 0 6px"><i style="width:100%"></i></div>
+          <div class="caption" style="color:#7F1D1D">
+            Kuota magang telah terisi penuh (${mx} peserta) mulai tanggal <b>${fmtD(q.fullDay)}</b>. Mohon sesuaikan tanggal mulai atau selesai untuk memilih jadwal dengan kuota yang masih tersedia.
+          </div>
+        </div>`;
+    }
   };
-  $('#fMulai').onchange = $('#fSelesai').onchange = live; live();
-  $('#fFile').onchange = e => {
-    const f = e.target.files[0], er = $('#fileErr'); er.style.display = 'none'; file = null; $('#drop').classList.remove('ok');
+
+  $('#fMulai').onchange = live;
+  $('#fSelesai').onchange = live;
+  live();
+
+  const handleFile = (f) => {
+    const er = $('#fileErr');
+    const dropZone = $('#dropZone');
+    const dropContent = $('#dropContent');
+    er.style.display = 'none';
+    uploadedFile = null;
+
     if (!f) return;
-    if (f.type !== 'application/pdf') { er.textContent = 'File harus PDF'; er.style.display = 'block'; return; }
-    if (f.size > 5 * 1024 * 1024) { er.textContent = 'Ukuran maksimal 5 MB'; er.style.display = 'block'; return; }
-    file = f; $('#dropTxt').textContent = '<i class=fi-rr-check-circle></i> ' + f.name; $('#drop').classList.add('ok');
+    if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
+      er.textContent = 'Berkas surat harus dalam format PDF resmi (.pdf)';
+      er.style.display = 'block';
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      er.textContent = 'Ukuran file melebihi batas maksimal (5 MB)';
+      er.style.display = 'block';
+      return;
+    }
+
+    uploadedFile = f;
+    dropZone.classList.add('has-file');
+    const sizeKB = Math.round(f.size / 1024);
+    dropContent.innerHTML = `
+      <div class="row" style="justify-content:center;gap:12px;align-items:center">
+        <i class="fi-rr-document-signed" style="font-size:32px;color:#10B981"></i>
+        <div style="text-align:left">
+          <b style="color:#0F172A;font-size:14px">${esc(f.name)}</b>
+          <div class="caption" style="color:#10B981;font-weight:600"><i class="fi-rr-check-circle"></i> Berkas PDF Valid (${sizeKB} KB)</div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline" id="btnReplaceFile" style="margin-left:14px;padding:4px 10px">
+          Ganti File
+        </button>
+      </div>`;
+
+    $('#btnReplaceFile').onclick = (ev) => {
+      ev.stopPropagation();
+      $('#fFile').click();
+    };
   };
+
+  const dropZone = $('#dropZone');
+  const fileInput = $('#fFile');
+  dropZone.onclick = () => fileInput.click();
+  dropZone.ondragover = e => { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; dropZone.style.background = '#F0F7FF'; };
+  dropZone.ondragleave = () => { dropZone.style.borderColor = ''; dropZone.style.background = ''; };
+  dropZone.ondrop = e => {
+    e.preventDefault();
+    dropZone.style.borderColor = ''; dropZone.style.background = '';
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+  fileInput.onchange = e => {
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+
   $('#mCancel').onclick = closeModal;
+
   $('#mSave').onclick = () => {
-    const chk = (id, ok) => { $('#' + id).closest('.field').classList.toggle('has-err', !ok); return ok; };
-    const v = [chk('fNama', !!$('#fNama').value.trim()), chk('fInst', !!$('#fInst').value.trim()), chk('fKon', /^\S+@\S+\.\S+$/.test($('#fKon').value)), chk('fSelesai', $('#fSelesai').value > $('#fMulai').value), chk('fCap', $('#fCap').checked)];
-    if (!file) { const er = $('#fileErr'); er.textContent = 'Surat permohonan wajib diunggah'; er.style.display = 'block'; v.push(false); }
-    if (v.includes(false)) return;
-    const p = { id: Date.now(), nama: $('#fNama').value, instansi: $('#fInst').value, jurusan: $('#fJur').value, kontak: $('#fKon').value, mulai: $('#fMulai').value, selesai: $('#fSelesai').value, status: 'Menunggu', divisi: '', pembimbing: '', nomor: '' };
+    const chk = (id, ok) => {
+      const el = $('#' + id);
+      if (!el) return ok;
+      const field = el.closest('.field');
+      if (field) field.classList.toggle('has-err', !ok);
+      return ok;
+    };
+
+    const namaOk = !!$('#fNama').value.trim();
+    const instOk = !!$('#fInst').value.trim();
+    const jurOk = !!$('#fJur').value.trim();
+    const konOk = /^\S+@\S+\.\S+$/.test($('#fKon').value.trim());
+    const hpOk = $('#fHp').value.trim().length >= 8;
+    const dateOk = $('#fSelesai').value > $('#fMulai').value;
+    const capOk = $('#fCap').checked;
+
+    chk('fNama', namaOk);
+    chk('fInst', instOk);
+    chk('fJur', jurOk);
+    chk('fKon', konOk);
+    chk('fHp', hpOk);
+    chk('fSelesai', dateOk);
+
+    $('#capErr').style.display = capOk ? 'none' : 'block';
+
+    if (!uploadedFile) {
+      $('#fileErr').textContent = 'Surat permohonan resmi dalam format PDF wajib diunggah';
+      $('#fileErr').style.display = 'block';
+    } else {
+      $('#fileErr').style.display = 'none';
+    }
+
+    if (!namaOk || !instOk || !jurOk || !konOk || !hpOk || !dateOk || !capOk || !uploadedFile) {
+      toast('Lengkapi seluruh field wajib bertanda bintang (*)', 'warning');
+      return;
+    }
+
+    const p = {
+      id: Date.now(),
+      nama: $('#fNama').value.trim(),
+      instansi: $('#fInst').value.trim(),
+      jurusan: $('#fJur').value.trim(),
+      kontak: $('#fKon').value.trim(),
+      hp: $('#fHp').value.trim(),
+      minatDivisi: $('#fDivMinat').value,
+      mulai: $('#fMulai').value,
+      selesai: $('#fSelesai').value,
+      porto: $('#fPorto').value.trim(),
+      fileName: uploadedFile.name,
+      fileSize: uploadedFile.size,
+      status: 'Menunggu',
+      divisi: '',
+      pembimbing: '',
+      nomor: ''
+    };
+
     PKL.unshift(p);
+
     const q = checkQuota(p.mulai, p.selesai, p.id);
-    if (!q.available && S.settings.autoReject) { p.status = 'Ditolak'; p.nomor = nextNo('PKL-TLK'); toast('Kuota penuh — surat penolakan otomatis dikirim', 'warn'); }
-    else toast('Pengajuan diterima. Link status dikirim ke email.', 'success');
-    audit('Ajukan', 'PKL (publik)', p.nama); closeModal(); buildNav(); if (currentRoute() === 'pengajuan') render();
+    if (!q.available && S.settings.autoReject) {
+      p.status = 'Ditolak';
+      p.nomor = nextNo('PKL-TLK');
+      toast('Kuota penuh — surat penolakan otomatis dikirimkan ke email pemohon', 'warn');
+    } else {
+      toast(`Pengajuan PKL berhasil dikirim! Tanda terima dan tautan status dikirim ke ${p.kontak}.`, 'success');
+    }
+
+    audit('Ajukan', 'PKL (portal publik)', `${p.nama} (${p.instansi})`);
+    closeModal();
+    buildNav();
+    if (currentRoute() === 'pengajuan') render();
+    else paintAll();
   };
 }
 
@@ -1366,7 +2328,10 @@ function render() {
 function bindActions(id) {
   const on = (sel, fn) => { const e = $(sel); if (e) e.onclick = fn; };
   on('#btnAddEmp', () => { openModal('Tambah Karyawan', empForm(), '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave">Simpan</button>'); $('#mCancel').onclick = closeModal; $('#mSave').onclick = () => { if (saveEmp()) { closeModal(); paintAll(); } }; });
-  on('#btnAddJob', () => openJob()); on('#btnCareer', careerPage); on('#btnPublicForm', publicPklForm);
+  on('#btnAddJob', () => openJob());
+  on('#btnCareer', careerPage);
+  on('#btnNewPkl', publicPklForm);
+  on('#btnPublicForm', publicPklForm);
 }
 // Wire rendering to be done after view is injected (r.after is the 4th arg registered as render's callback)
 // reg() stores arguments as (render, actions). The "after" hook is attached below for clarity.
@@ -1375,9 +2340,9 @@ function reg2() {}
 Object.keys(R).forEach(k => { const r = R[k]; if (typeof r.actions === 'function') { /* second fn arg is "after" in our usage */ r.after = r.actions; r.actions = null; } });
 // Pages that pass a 3rd function (actions) are re-registered below
 const ACTIONS = {
-  karyawan: () => `<button class="btn btn-primary" id="btnAddEmp">+ Tambah Karyawan</button>`,
-  lowongan: () => `<button class="btn" id="btnCareer"><i class=fi-rr-globe></i> Pratinjau Career Page</button><button class="btn btn-primary" id="btnAddJob">+ Lowongan</button>`,
-  pengajuan: () => `<button class="btn" id="btnPublicForm"><i class=fi-rr-globe></i> Buka Form Publik</button>`
+  karyawan: () => `<button class="btn btn-primary" id="btnAddEmp"><i class="fi-rr-plus"></i> Tambah Karyawan</button>`,
+  lowongan: () => `<button class="btn btn-outline" id="btnCareer"><i class="fi-rr-globe"></i> Pratinjau Career Page</button><button class="btn btn-primary" id="btnAddJob"><i class="fi-rr-plus"></i> Tambah Lowongan</button>`,
+  pengajuan: () => `<button class="btn btn-primary" id="btnNewPkl"><i class="fi-rr-plus"></i> Form Pengajuan PKL</button><button class="btn btn-outline" id="btnPublicForm"><i class="fi-rr-globe"></i> Portal Publik</button>`
 };
 Object.entries(ACTIONS).forEach(([k, f]) => R[k].actions = f);
 
