@@ -65,6 +65,11 @@ const EMP = [
 const hoursFL = { 7: 96, 8: 64 };
 const absenceDays = { 3: 0, 4: 1, 5: 0, 6: 2 };
 
+const NIGHT = [
+  { id: 1, nama: 'Dewi Lestari', tgl: dOff(-1), waktu: '22:45', alasan: 'Hotfix bug login SSO klien', jam: 2, tipe: 'Insentif', status: 'Approved' },
+  { id: 2, nama: 'Fajar Nugroho', tgl: dOff(-2), waktu: '23:15', alasan: 'Penyelesaian query payroll', jam: 1.5, tipe: 'Carryover', status: 'Approved' }
+];
+
 const LOGS = [
   { id: 1, tgl: dOff(-1), nama: 'Dewi Lestari', mode: 'Hadir WFH', ringkasan: 'Slicing halaman dashboard + integrasi chart', task: 'ASTA-212', commit: 'github.com/asta/web/pull/88', jam: 7.5 },
   { id: 2, tgl: dOff(-1), nama: 'Fajar Nugroho', mode: 'Hadir Onsite', ringkasan: 'Optimasi query laporan payroll', task: 'ASTA-219', commit: 'github.com/asta/api/commit/a91f3', jam: 8 },
@@ -194,18 +199,21 @@ function haversine(a, b, c, d) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 function computePayslip(e) {
+  if (!e) return null;
   if (e.tipe === 'Freelance') {
-    const jam = hoursFL[e.id] || 0, gross = jam * e.rate;
-    return { e, items: [{ n: `Jam terlog (${jam} jam × ${rp(e.rate)})`, v: gross }], gross, ded: 0, net: gross };
+    const jam = (typeof hoursFL !== 'undefined' && hoursFL[e.id]) || 0, gross = jam * (e.rate || 0);
+    return { e, items: [{ n: `Jam terlog (${jam} jam × ${rp(e.rate || 0)})`, v: gross }], gross, ded: 0, net: gross };
   }
   if (e.tipe === 'Tetap') {
-    const night = NIGHT.filter(n => n.nama === e.nama && n.status === 'Approved' && n.tipe === 'Insentif').reduce((a, n) => a + n.jam, 0);
-    const insentif = Math.min(night, S.settings.incentiveMax) * S.settings.incentiveRate;
-    const potong = (absenceDays[e.id] || 0) * Math.round(e.gaji / 22);
-    const items = [{ n: 'Gaji pokok', v: e.gaji }, { n: 'Tunjangan', v: e.tunj }];
+    const nightList = typeof NIGHT !== 'undefined' ? NIGHT : [];
+    const night = nightList.filter(n => n && n.nama === e.nama && n.status === 'Approved' && n.tipe === 'Insentif').reduce((a, n) => a + (n.jam || 0), 0);
+    const insentif = Math.min(night, S.settings.incentiveMax || 8) * (S.settings.incentiveRate || 0);
+    const potong = ((typeof absenceDays !== 'undefined' && absenceDays[e.id]) || 0) * Math.round((e.gaji || 0) / 22);
+    const items = [{ n: 'Gaji pokok', v: e.gaji || 0 }, { n: 'Tunjangan', v: e.tunj || 0 }];
     if (insentif) items.push({ n: `Insentif Workload Malam (${night} jam)`, v: insentif });
-    const gross = e.gaji + e.tunj + insentif;
-    return { e, items, gross, ded: potong, net: gross - potong, dedNote: potong ? `Potongan ${absenceDays[e.id]} hari tanpa keterangan` : '' };
+    const gross = (e.gaji || 0) + (e.tunj || 0) + insentif;
+    const absCount = (typeof absenceDays !== 'undefined' && absenceDays[e.id]) || 0;
+    return { e, items, gross, ded: potong, net: gross - potong, dedNote: potong ? `Potongan ${absCount} hari tanpa keterangan` : '' };
   }
   return null;
 }
@@ -281,13 +289,13 @@ const paintAll = () => Object.keys(TBL).forEach(paintTable);
 /* ---------------- Navigation & roles ---------------- */
 const ROLE_ACCESS = {
   hr: ['*'],
-  manager: ['beranda', 'absensi', 'presensi', 'dailylog', 'rekap', 'karyawan', 'rekrutmen', 'lowongan', 'pipeline', 'pkl', 'pengajuan', 'kalender', 'peserta', 'payslip', 'laporan', 'profil'],
-  employee: ['beranda', 'absensi', 'presensi', 'dailylog', 'payslip', 'profil'],
+  manager: ['beranda', 'absensi', 'presensi', 'dailylog', 'workload', 'rekap', 'karyawan', 'rekrutmen', 'lowongan', 'pipeline', 'pkl', 'pengajuan', 'kalender', 'peserta', 'payslip', 'laporan', 'profil'],
+  employee: ['beranda', 'absensi', 'presensi', 'dailylog', 'workload', 'payslip', 'profil'],
   finance: ['beranda', 'payroll', 'payslip', 'laporan', 'dokumen', 'profil']
 };
 const NAV = [
   { id: 'beranda', ico: '<i class=fi-rr-home></i>', label: 'Dashboard' },
-  { id: 'absensi', ico: '<i class=fi-rr-check-circle></i>', label: 'Absensi', kids: [['presensi', 'Presensi Saya'], ['dailylog', 'Daily Log'], ['Workload Malam'], ['rekap', 'Rekap Tim']] },
+  { id: 'absensi', ico: '<i class=fi-rr-check-circle></i>', label: 'Absensi', kids: [['presensi', 'Presensi Saya'], ['dailylog', 'Daily Log'], ['rekap', 'Rekap Tim']] },
   { id: 'karyawan', ico: '<i class=fi-rr-users></i>', label: 'Karyawan' },
   { id: 'rekrutmen', ico: '<i class=fi-rr-bullseye-arrow></i>', label: 'Rekrutmen', kids: [['lowongan', 'Lowongan'], ['pipeline', 'Pipeline Pelamar']] },
   { id: 'pkl', ico: '<i class=fi-rr-graduation-cap></i>', label: 'Manajemen PKL', kids: [['pengajuan', 'Pengajuan'], ['kalender', 'Kalender Kuota'], ['peserta', 'Peserta Aktif'], ['evaluasi', 'Evaluasi'], ['sertifikat', 'Sertifikat']] },
@@ -299,7 +307,10 @@ const NAV = [
   { id: 'profil', ico: '<i class=fi-rr-user></i>', label: 'Profil Pengguna' }
 ];
 const allowed = id => { const a = ROLE_ACCESS[S.role]; return a.includes('*') || a.includes(id); };
-const badges = () => ({ pengajuan: PKL.filter(p => p.status === 'Menunggu').length });
+const badges = () => ({
+  workload: typeof NIGHT !== 'undefined' ? NIGHT.filter(n => n.status === 'Pending').length : 0,
+  pengajuan: PKL.filter(p => p.status === 'Menunggu').length
+});
 function buildNav() {
   const b = badges(), cur = currentRoute();
   const sbNav = $('#sbNav');
@@ -356,7 +367,7 @@ reg('beranda', 'Beranda', ['Beranda'], () => {
       <div class="grid g4">
         <div class="card stat ok"><div class="k">Hadir hari ini</div><div class="v">${hadir}/${TEAM_TODAY.length}</div><div class="s up">▲ ${Math.round(hadir / TEAM_TODAY.length * 100)}% tim</div></div>
         <div class="card stat inf"><div class="k">Progres terkirim</div><div class="v">${TEAM_TODAY.filter(t => t.load > 0).length}</div><div class="s muted">Daily log hari ini</div></div>
-        <div class="card stat warn"><div class="k">Menunggu approval</div><div class="v">${b.workload + b.pengajuan}</div><div class="s muted">Klaim malam + PKL</div></div>
+        <div class="card stat warn"><div class="k">Menunggu approval</div><div class="v">${(b.workload || 0) + (b.pengajuan || 0)}</div><div class="s muted">Klaim malam + PKL</div></div>
         <div class="card stat"><div class="k">Kuota PKL terisi</div><div class="v">${occupancy(iso(TODAY))}/${S.settings.quotaMax}</div><div class="s muted">Hari ini</div></div>
       </div>
       <div class="card"><div class="card-h"><h3>Ringkasan Progres Tim</h3><a href="#rekap">Lihat rekap →</a></div>
@@ -484,10 +495,10 @@ reg('dailylog', 'Daily Log', ['Absensi', 'Daily Log'], () => `
 });
 
 /* ===== Workload Malam ===== */
-reg('Workload Malam', ['Absensi', 'Workload Malam'], () => `
+reg('workload', 'Workload Malam', ['Absensi', 'Workload Malam'], () => `
   <div class="banner info"><i class=fi-rr-moon></i> <span>Revisi/bugfix setelah <b>${esc(S.settings.nightThreshold)}</b> dapat diklaim. Mode kompensasi: <b>${S.settings.compensation === 'carryover' ? 'Carryover (masuk lebih siang H+1)' : 'Insentif lembur di payroll'}</b>. Approval: <b>${S.settings.claimMode === 'auto' ? 'otomatis bila terhubung commit/task' : 'manual Manajer'}</b>.</span></div>
-  <div class="card">${table({
-  rows: () => NIGHT.map(n => ({ ...n })), size: 6,
+  <div class="card">${table('workload', {
+  rows: () => (typeof NIGHT !== 'undefined' ? NIGHT : []).map(n => ({ ...n })), size: 6,
   cols: [
     { k: 'nama', label: 'Karyawan', fmt: r => person(r.nama) }, { k: 'tgl', label: 'Tanggal', fmt: r => fmtD(r.tgl) }, { k: 'waktu', label: 'Waktu submit', cls: 'tabular' },
     { k: 'alasan', label: 'Pekerjaan' }, { k: 'jam', label: 'Jam', cls: 'r num' },
@@ -496,8 +507,8 @@ reg('Workload Malam', ['Absensi', 'Workload Malam'], () => `
     { k: 'x', label: 'Aksi', sort: false, fmt: r => r.status === 'Pending' && ['hr', 'manager'].includes(S.role) ? `<button class="btn btn-sm btn-success" data-ap="${r.id}">Setujui</button> <button class="btn btn-sm btn-danger" data-rj="${r.id}">Tolak</button>` : '—' }
   ],
   after: h => {
-    $$('[data-ap]', h).forEach(b => b.onclick = () => { const n = NIGHT.find(x => x.id == b.dataset.ap); n.status = 'Approved'; audit('Approve', 'Klaim malam #' + n.id, `${n.tipe} ${n.jam} jam — ${n.nama}`); toast(`Klaim ${n.nama} disetujui` + (n.tipe === 'Carryover' ? ' · carryover H+1 dihitung otomatis' : ' · masuk payroll'), 'success'); buildNav(); paintAll(); });
-    $$('[data-rj]', h).forEach(b => b.onclick = () => { const n = NIGHT.find(x => x.id == b.dataset.rj); n.status = 'Rejected'; audit('Reject', 'Klaim malam #' + n.id, n.nama); toast('Klaim ditolak', 'warn'); buildNav(); paintAll(); });
+    $$('[data-ap]', h).forEach(b => b.onclick = () => { const n = NIGHT.find(x => x.id == b.dataset.ap); if (!n) return; n.status = 'Approved'; audit('Approve', 'Klaim malam #' + n.id, `${n.tipe} ${n.jam} jam — ${n.nama}`); toast(`Klaim ${n.nama} disetujui` + (n.tipe === 'Carryover' ? ' · carryover H+1 dihitung otomatis' : ' · masuk payroll'), 'success'); buildNav(); paintAll(); });
+    $$('[data-rj]', h).forEach(b => b.onclick = () => { const n = NIGHT.find(x => x.id == b.dataset.rj); if (!n) return; n.status = 'Rejected'; audit('Reject', 'Klaim malam #' + n.id, n.nama); toast('Klaim ditolak', 'warn'); buildNav(); paintAll(); });
   }
 })}</div>`, () => paintAll());
 
@@ -2302,7 +2313,7 @@ reg('profil', 'Profil Pengguna', ['Profil Pengguna'], () => {
 
 /* ---------------- Router ---------------- */
 const currentRoute = () => (location.hash || '#beranda').slice(1).split('?')[0];
-const GROUP_OF = { presensi: 'absensi', dailylog: 'absensi', rekap: 'absensi', lowongan: 'rekrutmen', pipeline: 'rekrutmen', pengajuan: 'pkl', kalender: 'pkl', peserta: 'pkl', evaluasi: 'pkl', sertifikat: 'pkl' };
+const GROUP_OF = { presensi: 'absensi', dailylog: 'absensi', workload: 'absensi', rekap: 'absensi', lowongan: 'rekrutmen', pipeline: 'rekrutmen', pengajuan: 'pkl', kalender: 'pkl', peserta: 'pkl', evaluasi: 'pkl', sertifikat: 'pkl' };
 let clockT;
 function render() {
   let id = currentRoute();
@@ -2316,7 +2327,7 @@ function render() {
   $('#pageTitle').textContent = r.title;
   $('#breadcrumb').innerHTML = `<a href="#beranda">Asta HR</a> › ` + r.crumb.map((c, i) => i === r.crumb.length - 1 ? `<b>${c}</b>` : c).join(' › ');
   $('#pageActions').innerHTML = r.actions ? r.actions() : '';
-  Object.keys(TBL).forEach(k => { if (!['rekap', 'emp', 'jobs', 'pkl', 'act', 'pay', 'audit'].includes(k)) delete TBL[k]; });
+  Object.keys(TBL).forEach(k => { if (!['rekap', 'emp', 'jobs', 'pkl', 'act', 'pay', 'audit', 'workload'].includes(k)) delete TBL[k]; });
   $('#view').innerHTML = r.render(id);
   buildNav();
   $$('#hrSubnav .crm-subnav-item').forEach(el => {
