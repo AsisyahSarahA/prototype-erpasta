@@ -2319,6 +2319,9 @@ function render() {
   Object.keys(TBL).forEach(k => { if (!['rekap', 'emp', 'jobs', 'pkl', 'act', 'pay', 'audit'].includes(k)) delete TBL[k]; });
   $('#view').innerHTML = r.render(id);
   buildNav();
+  $$('#hrSubnav .crm-subnav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.nav === id);
+  });
   r.after && r.after();
   bindActions(id);
   clearInterval(clockT);

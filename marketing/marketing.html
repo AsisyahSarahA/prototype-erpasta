@@ -404,27 +404,27 @@
     <div class="app-container">
         
         <!-- Dynamic Sidebar Container -->
-        <div id="sidebar-container" data-active-page="marketing" data-active-subpage="dashboard"></div>
+        <div id="sidebar-container" data-active-page="marketing" data-active-subpage="marketing-ops"></div>
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
             
-            <!-- TOPBAR -->
+            <!-- TOPBAR (Aligned with CRM Suite) -->
             <header class="topbar">
                 <div class="topbar-left">
                     <button class="mobile-toggle icon-btn" id="mobileMenu" aria-label="Toggle Navigation">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                     </button>
                     <div class="breadcrumb">
-                        Astacode Marketing <span>/</span> <strong id="current-view-title">Marketing Ops</strong>
+                        Astacode ERP <span style="margin: 0 4px; color: #94a3b8;">/</span> Marketing & AI <span style="margin: 0 4px; color: #94a3b8;">/</span> <strong id="current-view-title" style="color: var(--brand-primary);">Marketing Ops</strong>
                     </div>
                 </div>
                 <div class="top-actions">
                     <div class="search-box">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input type="text" placeholder="Search Content, Campaigns, Tags...">
+                        <input type="text" id="globalMarketingSearchInput" placeholder="Cari konten, kampanye, atau aset..." oninput="window.handleGlobalMarketingSearch(this.value)">
                     </div>
-                    <button class="icon-btn">
+                    <button class="icon-btn" title="Notifikasi Marketing" onclick="window.showMarketingNotifications(event)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                         <span class="badge-dot"></span>
                     </button>
@@ -437,6 +437,56 @@
                     </div>
                 </div>
             </header>
+
+            <!-- SUB-NAVIGATION BAR (Quick Switcher Harmonized with CRM & Finance) -->
+            <nav class="marketing-subnav-bar" id="marketingSubnavBar">
+                <div class="marketing-subnav-tabs">
+                    <button type="button" class="marketing-subnav-item active" data-sub="marketing-ops" onclick="window.switchMarketingPage('marketing-ops')">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Marketing Ops</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="ai-engine" onclick="window.switchMarketingPage('ai-engine')">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:#7c3aed;"></i>
+                        <span>AI Content Engine</span>
+                        <span class="marketing-subnav-badge" style="background:#eff6ff; color:#2563eb;">AI</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="kanban" onclick="window.switchMarketingPage('kanban')">
+                        <i class="fa-solid fa-table-columns" style="color:#2563eb;"></i>
+                        <span>Kanban Content AI</span>
+                        <span class="marketing-subnav-badge" style="background:#f5f3ff; color:#7c3aed;">Agile</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="approval-queue" onclick="window.switchMarketingPage('approval-queue')">
+                        <i class="fa-solid fa-clipboard-check" style="color:#f59e0b;"></i>
+                        <span>Antrean Persetujuan</span>
+                        <span class="marketing-subnav-badge" id="subnavApprovalBadge" style="background:#fef3c7; color:#b45309;">2</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="calendar" onclick="window.switchMarketingPage('calendar')">
+                        <i class="fa-solid fa-calendar-days" style="color:#0284c7;"></i>
+                        <span>Content Calendar</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="distribution" onclick="window.switchMarketingPage('distribution')">
+                        <i class="fa-solid fa-tower-broadcast" style="color:#059669;"></i>
+                        <span>Distribution Hub</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="asset-library" onclick="window.switchMarketingPage('asset-library')">
+                        <i class="fa-solid fa-vault" style="color:#d97706;"></i>
+                        <span>Brankas Aset DAM</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="social-listening" onclick="window.switchMarketingPage('social-listening')">
+                        <i class="fa-solid fa-ear-listen" style="color:#6366f1;"></i>
+                        <span>Social Listening</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="inbox" onclick="window.switchMarketingPage('inbox')">
+                        <i class="fa-solid fa-inbox" style="color:#ec4899;"></i>
+                        <span>Omnichannel Inbox</span>
+                        <span class="marketing-subnav-badge" style="background:#fee2e2; color:#dc2626;">3</span>
+                    </button>
+                    <button type="button" class="marketing-subnav-item" data-sub="content-history" onclick="window.switchMarketingPage('content-history')">
+                        <i class="fa-solid fa-clock-rotate-left" style="color:#64748b;"></i>
+                        <span>Riwayat Konten</span>
+                    </button>
+                </div>
+            </nav>
 
             <div class="content-wrapper">
                 
@@ -518,7 +568,7 @@
                                     <div class="card-title">Goal Progress</div>
                                     <div class="card-subtitle">Monthly target completion</div>
                                 </div>
-                                <button class="btn btn-outline" style="font-size:11px; padding:4px 10px; height:auto;">View All</button>
+                                <button class="btn btn-outline" id="btnGoalProgressDetail" onclick="window.showGoalProgressDetail()" style="font-size:11px; padding:4px 10px; height:auto;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View All</button>
                             </div>
                             <div class="card-body" style="display:flex; flex-direction:column; gap:20px; padding-top:0;">
                                 
@@ -564,12 +614,12 @@
                                 <div class="card-subtitle">Scheduled distributions. Integrated via Platform API (IG Graph/TikTok).</div>
                             </div>
                             <div class="calendar-header-actions" style="display:flex; background:#f1f5f9; padding:4px; border-radius:8px; gap:4px;">
-                                <button style="border:none; background:transparent; padding:6px 16px; font-size:12px; font-weight:600; color:var(--text-secondary); border-radius:6px; cursor:pointer;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">Week</button>
-                                <button style="border:none; background:#fff; padding:6px 16px; font-size:12px; font-weight:600; color:var(--brand-primary); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1); cursor:pointer;">Month</button>
+                                <button id="dashCalWeekBtn" onclick="window.toggleDashboardCalendarMode('week')" style="border:none; background:transparent; padding:6px 16px; font-size:12px; font-weight:600; color:var(--text-secondary); border-radius:6px; cursor:pointer;" onmouseover="if(!this.classList.contains('active'))this.style.color='var(--text-primary)'" onmouseout="if(!this.classList.contains('active'))this.style.color='var(--text-secondary)'">Week</button>
+                                <button id="dashCalMonthBtn" class="active" onclick="window.toggleDashboardCalendarMode('month')" style="border:none; background:#fff; padding:6px 16px; font-size:12px; font-weight:600; color:var(--brand-primary); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1); cursor:pointer;">Month</button>
                             </div>
                         </div>
                         <div class="card-body p-0">
-                            <div class="calendar-grid">
+                            <div class="calendar-grid" id="dashCalendarGrid">
                                 <!-- Headers -->
                                 <div class="cal-head">MON</div><div class="cal-head">TUE</div><div class="cal-head">WED</div><div class="cal-head">THU</div><div class="cal-head">FRI</div><div class="cal-head">SAT</div><div class="cal-head">SUN</div>
                                 
@@ -621,7 +671,7 @@
                                     <div class="card-title">Antrean Persetujuan</div>
                                     <div class="card-subtitle">Manual review, quality gates, feedback</div>
                                 </div>
-                                <button class="btn btn-outline" style="font-size:12px;">Open Queue</button>
+                                <button class="btn btn-outline" id="btnDashOpenQueue" onclick="window.switchMarketingPage('approval-queue')" style="font-size:12px;"><i class="fa-solid fa-list-check"></i> Open Queue</button>
                             </div>
                             <div class="table-responsive">
                                 <table class="table">
@@ -635,37 +685,37 @@
                                             <th style="text-align:right;">Aksi</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
+                                    <tbody id="dashApprovalQueueTbody">
+                                        <tr id="dashQueueRow1">
                                             <td class="font-medium text-primary">5 Prinsip Laravel untuk Tim Kecil</td>
                                             <td>Instagram</td>
                                             <td>Maya</td>
                                             <td>91/100</td>
                                             <td><span class="status-badge badge-review">REVIEW</span></td>
                                             <td style="text-align:right;">
-                                                <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:#10b981; border-color:#10b981;"><i class="fa-solid fa-check"></i></button>
-                                                <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; color:#e11d48; border-color:#e11d48;"><i class="fa-solid fa-xmark"></i></button>
+                                                <button class="btn btn-outline" id="btnDashApprove1" onclick="window.approveDashboardQueue(this, '5 Prinsip Laravel untuk Tim Kecil')" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:#10b981; border-color:#10b981;" title="Setujui"><i class="fa-solid fa-check"></i></button>
+                                                <button class="btn btn-outline" id="btnDashReject1" onclick="window.rejectDashboardQueue(this, '5 Prinsip Laravel untuk Tim Kecil')" style="padding:4px 8px; font-size:11px; height:auto; color:#e11d48; border-color:#e11d48;" title="Tolak / Revisi"><i class="fa-solid fa-xmark"></i></button>
                                             </td>
                                         </tr>
-                                        <tr>
+                                        <tr id="dashQueueRow2">
                                             <td class="font-medium text-primary">Case Study - Asta Commerce</td>
                                             <td>Blog</td>
                                             <td>Fikri</td>
                                             <td>88/100</td>
                                             <td><span class="status-badge badge-review">REVIEW</span></td>
                                             <td style="text-align:right;">
-                                                <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:#10b981; border-color:#10b981;"><i class="fa-solid fa-check"></i></button>
-                                                <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; color:#e11d48; border-color:#e11d48;"><i class="fa-solid fa-xmark"></i></button>
+                                                <button class="btn btn-outline" id="btnDashApprove2" onclick="window.approveDashboardQueue(this, 'Case Study - Asta Commerce')" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:#10b981; border-color:#10b981;" title="Setujui"><i class="fa-solid fa-check"></i></button>
+                                                <button class="btn btn-outline" id="btnDashReject2" onclick="window.rejectDashboardQueue(this, 'Case Study - Asta Commerce')" style="padding:4px 8px; font-size:11px; height:auto; color:#e11d48; border-color:#e11d48;" title="Tolak / Revisi"><i class="fa-solid fa-xmark"></i></button>
                                             </td>
                                         </tr>
-                                        <tr>
+                                        <tr id="dashQueueRow3">
                                             <td class="font-medium text-primary">Trend: AI Agents</td>
                                             <td>TikTok</td>
                                             <td>Maya</td>
                                             <td>84/100</td>
                                             <td><span class="status-badge badge-draft">DRAFT</span></td>
                                             <td style="text-align:right;">
-                                                <button class="btn btn-primary" style="padding:4px 12px; font-size:11px; height:auto;">Review</button>
+                                                <button class="btn btn-primary" id="btnDashReview3" onclick="window.openReviewModal('Trend: AI Agents', 'TikTok', 84, 80)" style="padding:4px 12px; font-size:11px; height:auto;">Review</button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -748,29 +798,29 @@
                                         </td>
                                     </tr>
                                     <!-- Needs Review 1 -->
-                                    <tr style="border-bottom:1px solid var(--border-light); background:#fffbeb;">
+                                    <tr style="border-bottom:1px solid var(--border-light); background:#fffbeb;" id="rowApprovalQueue1">
                                         <td style="padding:12px 24px; font-weight:500; color:var(--brand-primary);">Trend: AI Agents vs Framework</td>
                                         <td style="padding:12px 16px;"><i class="fa-brands fa-tiktok" style="color:#000;"></i> TikTok</td>
                                         <td style="padding:12px 16px;"><span style="color:#d97706; font-weight:600;">72/100</span></td>
                                         <td style="padding:12px 16px;"><span style="color:#d97706; font-weight:600;">68/100</span></td>
                                         <td style="padding:12px 16px;"><span class="status-badge badge-review" style="background:#fef3c7; color:#92400e;">BUTUH REVIEW MANUSIA</span></td>
                                         <td style="padding:12px 24px; text-align:right;">
-                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:var(--brand-primary); border-color:var(--brand-primary); background:#fff;" title="Lihat Detail" onclick="openReviewModal()"><i class="fa-solid fa-eye"></i></button>
-                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:#16a34a; border-color:#16a34a; background:#fff;" title="Setujui"><i class="fa-solid fa-check"></i></button>
-                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; color:#e11d48; border-color:#e11d48; background:#fff;" title="Tolak / Revisi"><i class="fa-solid fa-xmark"></i></button>
+                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:var(--brand-primary); border-color:var(--brand-primary); background:#fff;" title="Lihat Detail & Tinjau" onclick="window.openReviewModal('Trend: AI Agents vs Framework', 'TikTok', 72, 68)"><i class="fa-solid fa-eye"></i></button>
+                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:#16a34a; border-color:#16a34a; background:#fff;" title="Setujui Konten" onclick="window.approveQueueItem(this, 'Trend: AI Agents vs Framework')"><i class="fa-solid fa-check"></i></button>
+                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; color:#e11d48; border-color:#e11d48; background:#fff;" title="Minta Revisi / Tolak" onclick="window.rejectQueueItem(this, 'Trend: AI Agents vs Framework')"><i class="fa-solid fa-xmark"></i></button>
                                         </td>
                                     </tr>
                                     <!-- Needs Review 2 (Low Education) -->
-                                    <tr style="border-bottom:1px solid var(--border-light); background:#fffbeb;">
+                                    <tr style="border-bottom:1px solid var(--border-light); background:#fffbeb;" id="rowApprovalQueue2">
                                         <td style="padding:12px 24px; font-weight:500; color:var(--brand-primary);">Meme Kodingan Error di Produksi</td>
                                         <td style="padding:12px 16px;"><i class="fa-brands fa-instagram" style="color:#e11d48;"></i> Instagram</td>
                                         <td style="padding:12px 16px;"><span style="color:#d97706; font-weight:600;">80/100</span></td>
                                         <td style="padding:12px 16px;"><span style="color:#dc2626; font-weight:600;">45/100</span> <i class="fa-solid fa-caret-down" style="color:#dc2626;"></i></td>
                                         <td style="padding:12px 16px;"><span class="status-badge badge-review" style="background:#fef3c7; color:#92400e;">BUTUH REVIEW MANUSIA</span></td>
                                         <td style="padding:12px 24px; text-align:right;">
-                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:var(--brand-primary); border-color:var(--brand-primary); background:#fff;" title="Lihat Detail" onclick="openReviewModal()"><i class="fa-solid fa-eye"></i></button>
-                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:#16a34a; border-color:#16a34a; background:#fff;" title="Setujui"><i class="fa-solid fa-check"></i></button>
-                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; color:#e11d48; border-color:#e11d48; background:#fff;" title="Tolak / Revisi"><i class="fa-solid fa-xmark"></i></button>
+                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:var(--brand-primary); border-color:var(--brand-primary); background:#fff;" title="Lihat Detail & Tinjau" onclick="window.openReviewModal('Meme Kodingan Error di Produksi', 'Instagram', 80, 45)"><i class="fa-solid fa-eye"></i></button>
+                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; margin-right:4px; color:#16a34a; border-color:#16a34a; background:#fff;" title="Setujui Konten" onclick="window.approveQueueItem(this, 'Meme Kodingan Error di Produksi')"><i class="fa-solid fa-check"></i></button>
+                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; height:auto; color:#e11d48; border-color:#e11d48; background:#fff;" title="Minta Revisi / Tolak" onclick="window.rejectQueueItem(this, 'Meme Kodingan Error di Produksi')"><i class="fa-solid fa-xmark"></i></button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -884,8 +934,8 @@
                                     <span class="status-indicator status-ready"><i class="fa-solid fa-check"></i> Siap Ditinjau</span>
                                 </div>
                                 <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                    <button class="btn btn-outline btn-preview-day" data-day="1" style="font-size:11px; padding:4px 8px; height:auto;" title="Pratinjau Hasil"><i class="fa-solid fa-eye"></i> Pratinjau</button>
-                                    <button class="btn btn-primary btn-generate-day" data-day="1" style="font-size:11px; padding:4px 10px; height:auto;"><i class="fa-solid fa-rotate"></i> Re-Gen</button>
+                                    <button class="btn btn-outline btn-preview-day" id="btnPreviewDay1" data-day="1" onclick="window.executeDaySprintAction(1, 'preview')" style="font-size:11px; padding:4px 8px; height:auto;" title="Pratinjau Hasil"><i class="fa-solid fa-eye"></i> Pratinjau</button>
+                                    <button class="btn btn-primary btn-generate-day" id="btnGenerateDay1" data-day="1" onclick="window.executeDaySprintAction(1, 'generate')" style="font-size:11px; padding:4px 10px; height:auto;"><i class="fa-solid fa-rotate"></i> Re-Gen</button>
                                 </div>
                             </div>
 
@@ -913,8 +963,8 @@
                                     <span class="status-indicator status-ready"><i class="fa-solid fa-check"></i> Siap Ditinjau</span>
                                 </div>
                                 <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                    <button class="btn btn-outline btn-preview-day" data-day="2" style="font-size:11px; padding:4px 8px; height:auto;" title="Pratinjau Hasil"><i class="fa-solid fa-eye"></i> Pratinjau</button>
-                                    <button class="btn btn-primary btn-generate-day" data-day="2" style="font-size:11px; padding:4px 10px; height:auto;"><i class="fa-solid fa-rotate"></i> Re-Gen</button>
+                                    <button class="btn btn-outline btn-preview-day" id="btnPreviewDay2" data-day="2" onclick="window.executeDaySprintAction(2, 'preview')" style="font-size:11px; padding:4px 8px; height:auto;" title="Pratinjau Hasil"><i class="fa-solid fa-eye"></i> Pratinjau</button>
+                                    <button class="btn btn-primary btn-generate-day" id="btnGenerateDay2" data-day="2" onclick="window.executeDaySprintAction(2, 'generate')" style="font-size:11px; padding:4px 10px; height:auto;"><i class="fa-solid fa-rotate"></i> Re-Gen</button>
                                 </div>
                             </div>
 
@@ -942,7 +992,7 @@
                                     <span class="status-indicator status-planned"><i class="fa-regular fa-clock"></i> Terencana (0 Token)</span>
                                 </div>
                                 <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                    <button class="btn btn-primary btn-generate-day" data-day="3" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
+                                    <button class="btn btn-primary btn-generate-day" id="btnGenerateDay3" data-day="3" onclick="window.executeDaySprintAction(3, 'generate')" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
                                 </div>
                             </div>
 
@@ -970,7 +1020,7 @@
                                     <span class="status-indicator status-planned"><i class="fa-regular fa-clock"></i> Terencana (0 Token)</span>
                                 </div>
                                 <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                    <button class="btn btn-primary btn-generate-day" data-day="4" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
+                                    <button class="btn btn-primary btn-generate-day" id="btnGenerateDay4" data-day="4" onclick="window.executeDaySprintAction(4, 'generate')" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
                                 </div>
                             </div>
 
@@ -998,7 +1048,7 @@
                                     <span class="status-indicator status-planned"><i class="fa-regular fa-clock"></i> Terencana (0 Token)</span>
                                 </div>
                                 <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                    <button class="btn btn-primary btn-generate-day" data-day="5" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
+                                    <button class="btn btn-primary btn-generate-day" id="btnGenerateDay5" data-day="5" onclick="window.executeDaySprintAction(5, 'generate')" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
                                 </div>
                             </div>
 
@@ -1026,7 +1076,7 @@
                                     <span class="status-indicator status-planned"><i class="fa-regular fa-clock"></i> Terencana (0 Token)</span>
                                 </div>
                                 <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                    <button class="btn btn-primary btn-generate-day" data-day="6" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
+                                    <button class="btn btn-primary btn-generate-day" id="btnGenerateDay6" data-day="6" onclick="window.executeDaySprintAction(6, 'generate')" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
                                 </div>
                             </div>
 
@@ -1054,7 +1104,7 @@
                                     <span class="status-indicator status-planned"><i class="fa-regular fa-clock"></i> Terencana (0 Token)</span>
                                 </div>
                                 <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                    <button class="btn btn-primary btn-generate-day" data-day="7" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
+                                    <button class="btn btn-primary btn-generate-day" id="btnGenerateDay7" data-day="7" onclick="window.executeDaySprintAction(7, 'generate')" style="font-size:11px; padding:5px 12px; height:auto;"><i class="fa-solid fa-bolt"></i> Eksekusi AI</button>
                                 </div>
                             </div>
                         </div>
@@ -1137,7 +1187,7 @@
                                             <strong style="font-size:13px; color:var(--text-primary);">Agen AI Mandiri di Enterprise</strong>
                                             <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">Trending di HackerNews (980 pts) • Content Gap: 92%</p>
                                         </div>
-                                        <button class="btn btn-outline btn-use-scraped-topic" data-topic="Agen AI Mandiri di Enterprise: Dampak terhadap Tim Developer" style="font-size:11px; padding:5px 10px; height:auto; white-space:nowrap;">
+                                        <button class="btn btn-outline btn-use-scraped-topic" id="btnUseScrapedTopic1" data-topic="Agen AI Mandiri di Enterprise: Dampak terhadap Tim Developer" onclick="window.openUseIdeaModal(this.getAttribute('data-topic'))" style="font-size:11px; padding:5px 10px; height:auto; white-space:nowrap;">
                                             <i class="fa-solid fa-plus"></i> Gunakan Ide
                                         </button>
                                     </div>
@@ -1147,7 +1197,7 @@
                                             <strong style="font-size:13px; color:var(--text-primary);">Benchmarking Laravel 11 vs Go Fiber</strong>
                                             <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">Trending di X / Twitter Tech • Views 450K</p>
                                         </div>
-                                        <button class="btn btn-outline btn-use-scraped-topic" data-topic="Benchmarking Laravel 11 vs Go Fiber: Mana yang Cocok Buat Startup Kamu?" style="font-size:11px; padding:5px 10px; height:auto; white-space:nowrap;">
+                                        <button class="btn btn-outline btn-use-scraped-topic" id="btnUseScrapedTopic2" data-topic="Benchmarking Laravel 11 vs Go Fiber: Mana yang Cocok Buat Startup Kamu?" onclick="window.openUseIdeaModal(this.getAttribute('data-topic'))" style="font-size:11px; padding:5px 10px; height:auto; white-space:nowrap;">
                                             <i class="fa-solid fa-plus"></i> Gunakan Ide
                                         </button>
                                     </div>
@@ -1157,7 +1207,7 @@
                                             <strong style="font-size:13px; color:var(--text-primary);">Bocoran Fitur Baru React 19 Compiler</strong>
                                             <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">Trending di Dev.to (Top Story) • No More useMemo!</p>
                                         </div>
-                                        <button class="btn btn-outline btn-use-scraped-topic" data-topic="Selamat Tinggal useMemo! Mengenal React 19 Auto-Memoization Compiler" style="font-size:11px; padding:5px 10px; height:auto; white-space:nowrap;">
+                                        <button class="btn btn-outline btn-use-scraped-topic" id="btnUseScrapedTopic3" data-topic="Selamat Tinggal useMemo! Mengenal React 19 Auto-Memoization Compiler" onclick="window.openUseIdeaModal(this.getAttribute('data-topic'))" style="font-size:11px; padding:5px 10px; height:auto; white-space:nowrap;">
                                             <i class="fa-solid fa-plus"></i> Gunakan Ide
                                         </button>
                                     </div>
@@ -1641,10 +1691,10 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
 
                     <!-- Distribution Sub-Tabs Segmented Navigation Bar -->
                     <div class="dist-subnav-bar">
-                        <button class="dist-nav-tab active" data-dist-tab="platforms"><i class="fa-solid fa-plug"></i> Platform & Integrasi API (5)</button>
-                        <button class="dist-nav-tab" data-dist-tab="routing"><i class="fa-solid fa-sliders"></i> Aturan & Otomasi Routing</button>
-                        <button class="dist-nav-tab" data-dist-tab="logs"><i class="fa-solid fa-terminal"></i> Log & Payload Inspector HTTP</button>
-                        <button class="dist-nav-tab" data-dist-tab="abtesting"><i class="fa-solid fa-vial-circle-check"></i> Studio A/B Testing</button>
+                        <button class="dist-nav-tab active" id="distTabBtnPlatforms" data-dist-tab="platforms" onclick="window.switchDistTab('platforms')"><i class="fa-solid fa-plug"></i> Platform & Integrasi API (5)</button>
+                        <button class="dist-nav-tab" id="distTabBtnRouting" data-dist-tab="routing" onclick="window.switchDistTab('routing')"><i class="fa-solid fa-sliders"></i> Aturan & Otomasi Routing</button>
+                        <button class="dist-nav-tab" id="distTabBtnLogs" data-dist-tab="logs" onclick="window.switchDistTab('logs')"><i class="fa-solid fa-terminal"></i> Log & Payload Inspector HTTP</button>
+                        <button class="dist-nav-tab" id="distTabBtnAbtesting" data-dist-tab="abtesting" onclick="window.switchDistTab('abtesting')"><i class="fa-solid fa-vial-circle-check"></i> Studio A/B Testing</button>
                     </div>
 
                     <!-- SUB-TAB 1: Platform & Integrasi API -->
@@ -1784,8 +1834,8 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                     </div>
                                 </div>
                                 <div class="platform-card-actions">
-                                    <button class="btn btn-outline btn-test-platform-ping" data-platform="Meta Ads Graph API"><i class="fa-solid fa-chart-pie"></i> Cek Budget</button>
-                                    <button class="btn btn-primary btn-config-platform" data-platform="Meta Ads" data-account="ACT-892104-ASTA" data-type="meta_ads"><i class="fa-solid fa-gear"></i> Konfigurasi</button>
+                                    <button class="btn btn-outline btn-test-platform-ping" id="btnPingMetaAds" data-platform="Meta Ads Graph API" onclick="window.testPlatformPing('Meta Ads Graph API')"><i class="fa-solid fa-chart-pie"></i> Cek Budget</button>
+                                    <button class="btn btn-primary btn-config-platform" id="btnConfigMetaAds" data-platform="Meta Ads" data-account="ACT-892104-ASTA" data-type="meta_ads" onclick="window.openPlatformConfigModal('Meta Ads', 'ACT-892104-ASTA', 'meta_ads')"><i class="fa-solid fa-gear"></i> Konfigurasi</button>
                                 </div>
                             </div>
 
@@ -1813,8 +1863,8 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                     </div>
                                 </div>
                                 <div class="platform-card-actions">
-                                    <button class="btn btn-outline btn-test-platform-ping" data-platform="LinkedIn Organization v2"><i class="fa-solid fa-wifi"></i> Test Ping</button>
-                                    <button class="btn btn-primary btn-config-platform" data-platform="LinkedIn" data-account="Astacode Enterprise Ltd." data-type="linkedin_api"><i class="fa-solid fa-gear"></i> Konfigurasi</button>
+                                    <button class="btn btn-outline btn-test-platform-ping" id="btnPingLinkedIn" data-platform="LinkedIn Organization v2" onclick="window.testPlatformPing('LinkedIn Organization v2')"><i class="fa-solid fa-wifi"></i> Test Ping</button>
+                                    <button class="btn btn-primary btn-config-platform" id="btnConfigLinkedIn" data-platform="LinkedIn" data-account="Astacode Enterprise Ltd." data-type="linkedin_api" onclick="window.openPlatformConfigModal('LinkedIn', 'Astacode Enterprise Ltd.', 'linkedin_api')"><i class="fa-solid fa-gear"></i> Konfigurasi</button>
                                 </div>
                             </div>
 
@@ -1842,8 +1892,8 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                     </div>
                                 </div>
                                 <div class="platform-card-actions">
-                                    <button class="btn btn-outline btn-test-platform-ping" data-platform="Zapier / Make Webhook Relay"><i class="fa-solid fa-paper-plane"></i> Test Event</button>
-                                    <button class="btn btn-primary btn-config-platform" data-platform="Custom Webhook" data-account="Zapier Automation" data-type="webhook_relay"><i class="fa-solid fa-gear"></i> Konfigurasi</button>
+                                    <button class="btn btn-outline btn-test-platform-ping" id="btnPingZapier" data-platform="Zapier / Make Webhook Relay" onclick="window.testPlatformPing('Zapier / Make Webhook Relay')"><i class="fa-solid fa-paper-plane"></i> Test Event</button>
+                                    <button class="btn btn-primary btn-config-platform" id="btnConfigZapier" data-platform="Custom Webhook" data-account="Zapier Automation" data-type="webhook_relay" onclick="window.openPlatformConfigModal('Custom Webhook', 'Zapier Automation', 'webhook_relay')"><i class="fa-solid fa-gear"></i> Konfigurasi</button>
                                 </div>
                             </div>
                         </div>
@@ -2159,7 +2209,7 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                     </div>
 
                                     <div style="display:flex; gap:8px;">
-                                        <button class="btn btn-primary w-100 btn-promote-winner" data-winner="Variant A (Casual)" style="font-size:11.5px; padding:7px;">
+                                        <button class="btn btn-primary w-100 btn-promote-winner" id="btnPromoteWinnerCasual" data-winner="Variant A (Casual)" onclick="window.promoteWinner('Variant A (Casual)')" style="font-size:11.5px; padding:7px;">
                                             <i class="fa-solid fa-trophy"></i> Tetapkan Variant A Sebagai Pemenang
                                         </button>
                                     </div>
@@ -2211,7 +2261,7 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                     </div>
 
                                     <div style="display:flex; gap:8px;">
-                                        <button class="btn btn-primary w-100 btn-promote-winner" data-winner="Variant A (Live Coding Screen)" style="font-size:11.5px; padding:7px;">
+                                        <button class="btn btn-primary w-100 btn-promote-winner" id="btnPromoteWinnerLiveCode" data-winner="Variant A (Live Coding Screen)" onclick="window.promoteWinner('Variant A (Live Coding Screen)')" style="font-size:11.5px; padding:7px;">
                                             <i class="fa-solid fa-trophy"></i> Tetapkan Variant A Sebagai Pemenang
                                         </button>
                                     </div>
@@ -2227,7 +2277,7 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                             <h2 style="font-size:20px;">Reporting & Analytics</h2>
                             <p style="font-size:13px; color:var(--text-tertiary);">Analisis mendalam performa konten dan wawasan AI.</p>
                         </div>
-                        <button class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> Ekspor Laporan</button>
+                        <button class="btn btn-primary" id="btnExportAnalyticsReport" onclick="window.exportAnalyticsReport()"><i class="fa-solid fa-file-pdf"></i> Ekspor Laporan</button>
                     </div>
 
                     <!-- Pelacak Performa -->
@@ -2771,16 +2821,24 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                         <div style="padding:16px 24px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#fff;">
                             <div style="display:flex; gap:12px;">
                                 <div style="position:relative;">
-                                <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); font-size:12px;"></i>
-                                <input type="text" placeholder="Cari..." style="height:32px; padding:0 12px 0 32px; font-size:12px; border:1px solid var(--border-light); border-radius:6px; outline:none; width:180px;">
-                            </div>
+                                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); font-size:12px;"></i>
+                                    <input type="text" id="inboxSearchInput" oninput="window.filterInboxMessages()" placeholder="Cari chat / nama..." style="height:32px; padding:0 12px 0 32px; font-size:12px; border:1px solid var(--border-light); border-radius:6px; outline:none; width:180px;">
+                                </div>
                                 
-                                <select class="form-control" style="width:130px; font-size:12px; height:32px; padding:0 12px;"><option>Platform</option><option>IG DM</option><option>TikTok Chat</option></select>
-                                <select class="form-control" style="width:120px; font-size:12px; height:32px; padding:0 12px;"><option>Status AI</option><option>Terbalas Otomatis</option><option>Butuh Manusia</option></select>
-                                <button class="btn btn-outline" style="height:32px; font-size:12px; padding:0 12px; color:var(--text-secondary);"><i class="fa-solid fa-sliders"></i> Semua Filter</button>
+                                <select class="form-control" id="inboxPlatformFilter" onchange="window.filterInboxMessages()" style="width:130px; font-size:12px; height:32px; padding:0 12px;">
+                                    <option value="all">Platform (Semua)</option>
+                                    <option value="Instagram">IG DM</option>
+                                    <option value="TikTok">TikTok Chat</option>
+                                </select>
+                                <select class="form-control" id="inboxStatusFilter" onchange="window.filterInboxMessages()" style="width:140px; font-size:12px; height:32px; padding:0 12px;">
+                                    <option value="all">Status (Semua)</option>
+                                    <option value="terbalas">Terbalas Otomatis</option>
+                                    <option value="butuh_manusia">Butuh Manusia</option>
+                                </select>
+                                <button class="btn btn-outline" id="btnInboxResetFilters" onclick="window.resetInboxFilters()" style="height:32px; font-size:12px; padding:0 12px; color:var(--text-secondary);"><i class="fa-solid fa-sliders"></i> Semua Filter</button>
                             </div>
                             <div style="display:flex; gap:8px;">
-                                <button class="btn btn-outline" style="height:32px; width:32px; padding:0; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><i class="fa-solid fa-check-double"></i></button>
+                                <button class="btn btn-outline" id="btnInboxMarkAllRead" onclick="window.markAllInboxRead()" title="Tandai Semua Terbaca" style="height:32px; width:32px; padding:0; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><i class="fa-solid fa-check-double"></i></button>
                             </div>
                         </div>
 
@@ -2788,7 +2846,7 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                             <table class="table" style="width:100%; border-collapse:collapse; text-align:left; font-size:13px;">
                                 <thead style="background:#f8fafc; color:var(--text-tertiary); font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">
                                     <tr>
-                                        <th style="padding:12px 24px; border-bottom:1px solid var(--border-light); width:40px;"><input type="checkbox"></th>
+                                        <th style="padding:12px 24px; border-bottom:1px solid var(--border-light); width:40px;"><input type="checkbox" id="chkInboxSelectAll" onchange="window.toggleSelectAllInbox(this.checked)"></th>
                                         <th style="padding:12px 16px; border-bottom:1px solid var(--border-light); font-weight:600;">PELANGGAN</th>
                                         <th style="padding:12px 16px; border-bottom:1px solid var(--border-light); font-weight:600;">PESAN TERAKHIR</th>
                                         <th style="padding:12px 16px; border-bottom:1px solid var(--border-light); font-weight:600;">TINDAKAN AI</th>
@@ -2796,9 +2854,9 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                         <th style="padding:12px 24px; border-bottom:1px solid var(--border-light); font-weight:600; text-align:right;">AKSI</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr style="border-bottom:1px solid var(--border-light); background:#f0fdf4;">
-                                        <td style="padding:12px 24px;"><input type="checkbox"></td>
+                                <tbody id="tbodyInboxMessages">
+                                    <tr class="inbox-row" data-platform="Instagram" data-status="terbalas" style="border-bottom:1px solid var(--border-light); background:#f0fdf4;">
+                                        <td style="padding:12px 24px;"><input type="checkbox" class="chk-inbox-item"></td>
                                         <td style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
                                             <div style="width:32px; height:32px; background:#3b82f6; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:14px;">B</div>
                                             <div>
@@ -2810,11 +2868,11 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                         <td style="padding:12px 16px;"><span class="status-badge badge-done" style="background:#dcfce7; color:#166534;"><i class="fa-solid fa-robot"></i> TERBALAS (PRICING AI)</span></td>
                                         <td style="padding:12px 16px; color:var(--text-tertiary);">2 mnt lalu</td>
                                         <td style="padding:12px 24px; text-align:right;">
-                                            <button class="btn btn-outline" style="font-size:11px; padding:4px 12px; height:auto;">Lihat Chat</button>
+                                            <button class="btn btn-outline" id="btnInboxChatBudi" onclick="window.openInboxChatModal('Budi Santoso', 'Instagram DM', 'Min, mau tanya kalau biaya bikin website company profile (React.js) berapa ya?', 'TERBALAS (PRICING AI)')" style="font-size:11px; padding:4px 12px; height:auto;"><i class="fa-solid fa-comments"></i> Lihat Chat</button>
                                         </td>
                                     </tr>
-                                    <tr style="border-bottom:1px solid var(--border-light);">
-                                        <td style="padding:12px 24px;"><input type="checkbox"></td>
+                                    <tr class="inbox-row" data-platform="TikTok" data-status="butuh_manusia" style="border-bottom:1px solid var(--border-light);">
+                                        <td style="padding:12px 24px;"><input type="checkbox" class="chk-inbox-item"></td>
                                         <td style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
                                             <div style="width:32px; height:32px; background:#10b981; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:14px;">S</div>
                                             <div>
@@ -2826,11 +2884,11 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                         <td style="padding:12px 16px;"><span class="status-badge badge-review" style="background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-user-tie"></i> BUTUH TIM TEKNIS</span></td>
                                         <td style="padding:12px 16px; color:var(--text-tertiary);">15 mnt lalu</td>
                                         <td style="padding:12px 24px; text-align:right;">
-                                            <button class="btn btn-primary" style="font-size:11px; padding:4px 12px; height:auto;">Balas Manual</button>
+                                            <button class="btn btn-primary" id="btnInboxReplySiska" onclick="window.openInboxChatModal('Siska Media', 'TikTok Comment', 'Kak, kalo bikin ERP custom untuk pabrik lebih bagus pakai Laravel atau Node.js?', 'BUTUH TIM TEKNIS')" style="font-size:11px; padding:4px 12px; height:auto;"><i class="fa-solid fa-reply"></i> Balas Manual</button>
                                         </td>
                                     </tr>
-                                    <tr style="border-bottom:1px solid var(--border-light); background:#f0fdf4;">
-                                        <td style="padding:12px 24px;"><input type="checkbox"></td>
+                                    <tr class="inbox-row" data-platform="Instagram" data-status="terbalas" style="border-bottom:1px solid var(--border-light); background:#f0fdf4;">
+                                        <td style="padding:12px 24px;"><input type="checkbox" class="chk-inbox-item"></td>
                                         <td style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
                                             <div style="width:32px; height:32px; background:#8b5cf6; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:14px;">A</div>
                                             <div>
@@ -2842,7 +2900,7 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                         <td style="padding:12px 16px;"><span class="status-badge badge-done" style="background:#dcfce7; color:#166534;"><i class="fa-solid fa-robot"></i> TERBALAS (PRICING AI)</span></td>
                                         <td style="padding:12px 16px; color:var(--text-tertiary);">1 jam lalu</td>
                                         <td style="padding:12px 24px; text-align:right;">
-                                            <button class="btn btn-outline" style="font-size:11px; padding:4px 12px; height:auto;">Lihat Chat</button>
+                                            <button class="btn btn-outline" id="btnInboxChatAgus" onclick="window.openInboxChatModal('Agus Setiawan', 'Instagram DM', 'Wah makasih tutorial deploy servernya min, sangat membantu project aplikasi saya!', 'TERBALAS (PRICING AI)')" style="font-size:11px; padding:4px 12px; height:auto;"><i class="fa-solid fa-comments"></i> Lihat Chat</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -2861,7 +2919,7 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                 <h2 style="font-size:20px; font-weight:600;">Riwayat Konten & Arsip</h2>
                                 <p style="font-size:13px; color:var(--text-tertiary); margin-top:4px;">Arsip seluruh video dan carousel yang telah berhasil dipublikasikan.</p>
                             </div>
-                            <button class="btn btn-primary" style="font-size:13px; padding:8px 16px;"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
+                            <button class="btn btn-primary" id="btnAddContentHistory" onclick="window.openAddContentHistoryModal()" style="font-size:13px; padding:8px 16px;"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
                         </div>
                         
                         <div class="card" style="box-shadow:0 4px 12px rgba(0,0,0,0.05); border:1px solid var(--border-light); border-radius:8px; overflow:hidden;">
@@ -2869,19 +2927,34 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                             <!-- Filter Bar -->
                             <div style="padding:16px 24px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#fff;">
                                 <div style="display:flex; gap:12px;">
-                                <div style="position:relative;">
-                                <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); font-size:12px;"></i>
-                                <input type="text" placeholder="Cari..." style="height:32px; padding:0 12px 0 32px; font-size:12px; border:1px solid var(--border-light); border-radius:6px; outline:none; width:180px;">
-                            </div>
-                                
-                                    <select class="form-control" style="width:130px; font-size:12px; height:32px; padding:0 12px;"><option>Platform</option><option>Instagram</option><option>TikTok</option></select>
-                                    <select class="form-control" style="width:120px; font-size:12px; height:32px; padding:0 12px;"><option>Format</option><option>Video</option><option>Carousel</option></select>
-                                    <select class="form-control" style="width:120px; font-size:12px; height:32px; padding:0 12px;"><option>Bulan Ini</option><option>Bulan Lalu</option></select>
-                                    <button class="btn btn-outline" style="height:32px; font-size:12px; padding:0 12px; color:var(--text-secondary);"><i class="fa-solid fa-sliders"></i> Semua Filter</button>
+                                    <div style="position:relative;">
+                                        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); font-size:12px;"></i>
+                                        <input type="text" id="historySearchInput" oninput="window.filterHistoryTable()" placeholder="Cari konten, ID, topik..." style="height:32px; padding:0 12px 0 32px; font-size:12px; border:1px solid var(--border-light); border-radius:6px; outline:none; width:180px;">
+                                    </div>
+                                    
+                                    <select class="form-control" id="historyPlatformFilter" onchange="window.filterHistoryTable()" style="width:130px; font-size:12px; height:32px; padding:0 12px;">
+                                        <option value="all">Platform (Semua)</option>
+                                        <option value="Instagram">Instagram</option>
+                                        <option value="TikTok">TikTok</option>
+                                        <option value="Blog CMS">Blog CMS</option>
+                                        <option value="Meta Ads">Meta Ads</option>
+                                    </select>
+                                    <select class="form-control" id="historyFormatFilter" onchange="window.filterHistoryTable()" style="width:120px; font-size:12px; height:32px; padding:0 12px;">
+                                        <option value="all">Format (Semua)</option>
+                                        <option value="Video">Video</option>
+                                        <option value="Carousel">Carousel</option>
+                                        <option value="Artikel">Artikel</option>
+                                    </select>
+                                    <select class="form-control" id="historyPeriodFilter" onchange="window.filterHistoryTable()" style="width:120px; font-size:12px; height:32px; padding:0 12px;">
+                                        <option value="all">Semua Periode</option>
+                                        <option value="month">Bulan Ini</option>
+                                        <option value="last_month">Bulan Lalu</option>
+                                    </select>
+                                    <button class="btn btn-outline" id="btnHistoryResetFilter" onclick="window.resetHistoryFilters()" style="height:32px; font-size:12px; padding:0 12px; color:var(--text-secondary);"><i class="fa-solid fa-sliders"></i> Semua Filter</button>
                                 </div>
                                 <div style="display:flex; gap:8px;">
-                                    <button class="btn btn-outline" style="height:32px; width:32px; padding:0; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><i class="fa-solid fa-pen"></i></button>
-                                    <button class="btn btn-outline" style="height:32px; width:32px; padding:0; display:flex; align-items:center; justify-content:center; color:var(--status-danger);"><i class="fa-regular fa-trash-can"></i></button>
+                                    <button class="btn btn-outline" id="btnHistoryEditSelected" onclick="window.editSelectedHistory()" title="Ubah Item Dipilih" style="height:32px; width:32px; padding:0; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn btn-outline" id="btnHistoryDeleteSelected" onclick="window.deleteSelectedHistory()" title="Hapus Item Dipilih" style="height:32px; width:32px; padding:0; display:flex; align-items:center; justify-content:center; color:var(--status-danger);"><i class="fa-regular fa-trash-can"></i></button>
                                 </div>
                             </div>
 
@@ -3486,9 +3559,9 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                     <div class="form-group">
                         <label class="form-label">Tujuan Pemasangan Ide</label>
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; background:#f1f5f9; padding:4px; border-radius:8px;" id="ideaDestPills">
-                            <button type="button" class="btn active idea-dest-btn" data-dest="sprint" style="font-size:11.5px; padding:6px; background:#fff; color:var(--brand-primary); font-weight:700; border-radius:6px; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.1);">Sprint 7 Hari</button>
-                            <button type="button" class="btn idea-dest-btn" data-dest="calendar" style="font-size:11.5px; padding:6px; background:transparent; color:var(--text-secondary); border:none;">Pilih Tanggal</button>
-                            <button type="button" class="btn idea-dest-btn" data-dest="queue" style="font-size:11.5px; padding:6px; background:transparent; color:var(--text-secondary); border:none;">Antrean Draf</button>
+                            <button type="button" class="btn active idea-dest-btn" id="ideaDestBtnSprint" data-dest="sprint" style="font-size:11.5px; padding:6px; background:#fff; color:var(--brand-primary); font-weight:700; border-radius:6px; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.1);">Sprint 7 Hari</button>
+                            <button type="button" class="btn idea-dest-btn" id="ideaDestBtnCalendar" data-dest="calendar" style="font-size:11.5px; padding:6px; background:transparent; color:var(--text-secondary); border:none;">Pilih Tanggal</button>
+                            <button type="button" class="btn idea-dest-btn" id="ideaDestBtnQueue" data-dest="queue" style="font-size:11.5px; padding:6px; background:transparent; color:var(--text-secondary); border:none;">Antrean Draf</button>
                         </div>
                     </div>
 
@@ -3632,7 +3705,7 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                 <div style="margin-bottom:14px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <strong style="font-size:11.5px; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">Request Body (JSON Payload):</strong>
-                        <button class="btn btn-outline btn-copy-json" data-target="inspJsonRequest" style="font-size:10.5px; padding:2px 8px; height:auto;"><i class="fa-solid fa-copy"></i> Salin JSON</button>
+                        <button class="btn btn-outline btn-copy-json" id="btnCopyJsonReq" data-target="inspJsonRequest" onclick="window.copyJson('inspJsonRequest')" style="font-size:10.5px; padding:2px 8px; height:auto;"><i class="fa-solid fa-copy"></i> Salin JSON</button>
                     </div>
                     <pre class="code-inspector-pre" id="inspJsonRequest">{
   "platform": "instagram",
@@ -3652,7 +3725,7 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                 <div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <strong style="font-size:11.5px; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">Response Body (Server Response):</strong>
-                        <button class="btn btn-outline btn-copy-json" data-target="inspJsonResponse" style="font-size:10.5px; padding:2px 8px; height:auto;"><i class="fa-solid fa-copy"></i> Salin JSON</button>
+                        <button class="btn btn-outline btn-copy-json" id="btnCopyJsonRes" data-target="inspJsonResponse" onclick="window.copyJson('inspJsonResponse')" style="font-size:10.5px; padding:2px 8px; height:auto;"><i class="fa-solid fa-copy"></i> Salin JSON</button>
                     </div>
                     <pre class="code-inspector-pre" id="inspJsonResponse">{
   "id": "17928491028301994",
@@ -4123,34 +4196,45 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
 
                     <!-- Target Multi-Akun Selector -->
                     <div class="form-group" style="margin-bottom:14px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; display:flex; justify-content:space-between;">
+                        <label class="form-label" style="font-size:12px; font-weight:700; display:flex; justify-content:space-between; align-items:center;">
                             <span>Target Akun Media Sosial (Bisa Multi-Akun)</span>
-                            <span style="font-size:11px; color:#2563eb; cursor:pointer;" onclick="window.toggleAllKanbanAccounts(true)">Pilih Semua</span>
+                            <div style="display:flex; gap:6px; font-size:11px;">
+                                <span style="color:#2563eb; cursor:pointer; font-weight:600;" onclick="window.selectKanbanAccountPreset('utama')">🏷️ Asta Utama Saja</span>
+                                <span style="color:#cbd5e1;">|</span>
+                                <span style="color:#d97706; cursor:pointer; font-weight:600;" onclick="window.selectKanbanAccountPreset('kids')">🧸 Asta Kids Saja</span>
+                                <span style="color:#cbd5e1;">|</span>
+                                <span style="color:#64748b; cursor:pointer;" onclick="window.toggleAllKanbanAccounts(false)">Reset</span>
+                            </div>
                         </label>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px;">
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="checkbox" name="kTargetAccount" value="Instagram: @astacode.official" checked>
-                                <span><i class="fa-brands fa-instagram" style="color:#db2777;"></i> @astacode.official</span>
+                            <!-- ASTA UTAMA -->
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;" title="Brand: Asta Utama">
+                                <input type="checkbox" name="kTargetAccount" data-brand="utama" value="TikTok: @astacode.tech" checked>
+                                <span><i class="fa-brands fa-tiktok"></i> @astacode.tech <small style="background:#eff6ff; color:#2563eb; padding:1px 5px; border-radius:3px; font-weight:700; font-size:9.5px;">Asta Utama</small></span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="checkbox" name="kTargetAccount" value="Instagram: @astacode.career" checked>
-                                <span><i class="fa-brands fa-instagram" style="color:#db2777;"></i> @astacode.career</span>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;" title="Brand: Asta Utama">
+                                <input type="checkbox" name="kTargetAccount" data-brand="utama" value="Instagram: @astacode.official" checked>
+                                <span><i class="fa-brands fa-instagram" style="color:#db2777;"></i> @astacode.official <small style="background:#eff6ff; color:#2563eb; padding:1px 5px; border-radius:3px; font-weight:700; font-size:9.5px;">Asta Utama</small></span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="checkbox" name="kTargetAccount" value="TikTok: @astacode.tech" checked>
-                                <span><i class="fa-brands fa-tiktok"></i> @astacode.tech</span>
+
+                            <!-- ASTA KIDS (TERPISAH) -->
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;" title="Brand: Asta Kids">
+                                <input type="checkbox" name="kTargetAccount" data-brand="kids" value="TikTok: @astakids.id">
+                                <span><i class="fa-brands fa-tiktok" style="color:#d97706;"></i> @astakids.id <small style="background:#fef3c7; color:#b45309; padding:1px 5px; border-radius:3px; font-weight:700; font-size:9.5px;">Asta Kids</small></span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="checkbox" name="kTargetAccount" value="LinkedIn: Astacode Enterprise" checked>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;" title="Brand: Asta Kids">
+                                <input type="checkbox" name="kTargetAccount" data-brand="kids" value="Instagram: @astakids.official">
+                                <span><i class="fa-brands fa-instagram" style="color:#db2777;"></i> @astakids.official <small style="background:#fef3c7; color:#b45309; padding:1px 5px; border-radius:3px; font-weight:700; font-size:9.5px;">Asta Kids</small></span>
+                            </label>
+
+                            <!-- LAINNYA -->
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;" title="Brand: Asta Utama">
+                                <input type="checkbox" name="kTargetAccount" data-brand="utama" value="LinkedIn: Astacode Enterprise">
                                 <span><i class="fa-brands fa-linkedin" style="color:#0284c7;"></i> Astacode Enterprise</span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="checkbox" name="kTargetAccount" value="YouTube: Astacode Tech TV">
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;" title="Brand: Asta Utama">
+                                <input type="checkbox" name="kTargetAccount" data-brand="utama" value="YouTube: Astacode Tech TV">
                                 <span><i class="fa-brands fa-youtube" style="color:#dc2626;"></i> Astacode Tech TV</span>
-                            </label>
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="checkbox" name="kTargetAccount" value="X: @astacode_dev">
-                                <span><i class="fa-brands fa-x-twitter"></i> @astacode_dev</span>
                             </label>
                         </div>
                     </div>
@@ -4277,47 +4361,24 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                 <div style="margin-bottom:18px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         <label style="font-size:12px; font-weight:700; color:#1e293b; text-transform:uppercase; letter-spacing:0.5px;">Pilih Akun Tujuan Publikasi (Multi-Sosmed):</label>
-                        <div style="display:flex; gap:8px; font-size:11.5px;">
-                            <span style="color:#2563eb; cursor:pointer; font-weight:600;" onclick="window.toggleAllDispatchAccounts(true)">Pilih Semua (6)</span>
-                            <span style="color:#64748b;">•</span>
-                            <span style="color:#64748b; cursor:pointer;" onclick="window.toggleAllDispatchAccounts(false)">Reset Pilihan</span>
+                        <div style="display:flex; gap:6px; font-size:11.5px; align-items:center;">
+                            <button type="button" class="btn btn-outline" style="font-size:11px; padding:3px 9px; height:auto; color:#2563eb; border-color:#bfdbfe; background:#eff6ff;" onclick="window.selectDispatchBrandPreset('utama')">
+                                <i class="fa-solid fa-building"></i> 🏷️ Asta Utama Saja
+                            </button>
+                            <button type="button" class="btn btn-outline" style="font-size:11px; padding:3px 9px; height:auto; color:#d97706; border-color:#fde68a; background:#fefce8;" onclick="window.selectDispatchBrandPreset('kids')">
+                                <i class="fa-solid fa-child"></i> 🧸 Asta Kids Saja
+                            </button>
+                            <span style="color:#cbd5e1;">|</span>
+                            <span style="color:#2563eb; cursor:pointer; font-weight:600;" onclick="window.toggleAllDispatchAccounts(true)">Semua</span>
+                            <span style="color:#cbd5e1;">•</span>
+                            <span style="color:#64748b; cursor:pointer;" onclick="window.toggleAllDispatchAccounts(false)">Reset</span>
                         </div>
                     </div>
 
                     <!-- Account List Grid -->
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;" id="dispatchAccountsGrid">
-                        <!-- Instagram Official -->
-                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <input type="checkbox" checked value="ig-official">
-                                <div style="width:32px; height:32px; border-radius:8px; background:#fdf2f8; color:#db2777; display:flex; align-items:center; justify-content:center; font-size:16px;">
-                                    <i class="fa-brands fa-instagram"></i>
-                                </div>
-                                <div>
-                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astacode.official</strong>
-                                    <span style="font-size:10.5px; color:#64748b;">Instagram • 145K Followers</span>
-                                </div>
-                            </div>
-                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
-                        </div>
-
-                        <!-- Instagram Career -->
-                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <input type="checkbox" checked value="ig-career">
-                                <div style="width:32px; height:32px; border-radius:8px; background:#fdf2f8; color:#db2777; display:flex; align-items:center; justify-content:center; font-size:16px;">
-                                    <i class="fa-brands fa-instagram"></i>
-                                </div>
-                                <div>
-                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astacode.career</strong>
-                                    <span style="font-size:10.5px; color:#64748b;">Instagram • 32K Followers</span>
-                                </div>
-                            </div>
-                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
-                        </div>
-
-                        <!-- TikTok Tech -->
-                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                        <!-- TikTok Asta Utama -->
+                        <div class="multi-account-item selected" data-brand="utama" onclick="window.toggleDispatchAccountItem(this)">
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <input type="checkbox" checked value="tt-tech">
                                 <div style="width:32px; height:32px; border-radius:8px; background:#f1f5f9; color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:16px;">
@@ -4325,52 +4386,82 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                                 </div>
                                 <div>
                                     <strong style="display:block; font-size:12px; color:#0f172a;">@astacode.tech</strong>
-                                    <span style="font-size:10.5px; color:#64748b;">TikTok • 210K Followers</span>
+                                    <span style="font-size:10.5px; color:#64748b;">TikTok • <strong>Asta Utama</strong> (210K)</span>
                                 </div>
                             </div>
                             <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
                         </div>
 
-                        <!-- LinkedIn Corp -->
-                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                        <!-- TikTok Asta Kids (Terisolasi) -->
+                        <div class="multi-account-item" data-brand="kids" onclick="window.toggleDispatchAccountItem(this)">
                             <div style="display:flex; align-items:center; gap:10px;">
-                                <input type="checkbox" checked value="li-corp">
+                                <input type="checkbox" value="tt-kids">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-tiktok"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astakids.id</strong>
+                                    <span style="font-size:10.5px; color:#d97706;">TikTok • <strong>Asta Kids</strong> (34K)</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-draft" style="font-size:9.5px;">Terisolasi</span>
+                        </div>
+
+                        <!-- Instagram Asta Utama -->
+                        <div class="multi-account-item selected" data-brand="utama" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" checked value="ig-official">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#fdf2f8; color:#db2777; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-instagram"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astacode.official</strong>
+                                    <span style="font-size:10.5px; color:#64748b;">Instagram • <strong>Asta Utama</strong> (145K)</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
+                        </div>
+
+                        <!-- Instagram Asta Kids (Terisolasi) -->
+                        <div class="multi-account-item" data-brand="kids" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" value="ig-kids">
+                                <div style="width:32px; height:32px; border-radius:8px; background:#fdf2f8; color:#db2777; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                    <i class="fa-brands fa-instagram"></i>
+                                </div>
+                                <div>
+                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astakids.official</strong>
+                                    <span style="font-size:10.5px; color:#d97706;">Instagram • <strong>Asta Kids</strong> (25K)</span>
+                                </div>
+                            </div>
+                            <span class="status-badge badge-draft" style="font-size:9.5px;">Terisolasi</span>
+                        </div>
+
+                        <!-- LinkedIn Corp (Asta Utama) -->
+                        <div class="multi-account-item" data-brand="utama" onclick="window.toggleDispatchAccountItem(this)">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" value="li-corp">
                                 <div style="width:32px; height:32px; border-radius:8px; background:#e0f2fe; color:#0284c7; display:flex; align-items:center; justify-content:center; font-size:16px;">
                                     <i class="fa-brands fa-linkedin"></i>
                                 </div>
                                 <div>
                                     <strong style="display:block; font-size:12px; color:#0f172a;">Astacode Enterprise Ltd.</strong>
-                                    <span style="font-size:10.5px; color:#64748b;">LinkedIn Page • 14.2K Connections</span>
+                                    <span style="font-size:10.5px; color:#64748b;">LinkedIn Page • Asta B2B (14K)</span>
                                 </div>
                             </div>
                             <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
                         </div>
 
-                        <!-- YouTube Channel -->
-                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
+                        <!-- YouTube Channel (Asta Utama) -->
+                        <div class="multi-account-item" data-brand="utama" onclick="window.toggleDispatchAccountItem(this)">
                             <div style="display:flex; align-items:center; gap:10px;">
-                                <input type="checkbox" checked value="yt-shorts">
+                                <input type="checkbox" value="yt-shorts">
                                 <div style="width:32px; height:32px; border-radius:8px; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:16px;">
                                     <i class="fa-brands fa-youtube"></i>
                                 </div>
                                 <div>
                                     <strong style="display:block; font-size:12px; color:#0f172a;">Astacode Tech TV</strong>
                                     <span style="font-size:10.5px; color:#64748b;">YouTube Shorts • 54K Subs</span>
-                                </div>
-                            </div>
-                            <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
-                        </div>
-
-                        <!-- X Dev -->
-                        <div class="multi-account-item selected" onclick="window.toggleDispatchAccountItem(this)">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <input type="checkbox" checked value="tw-dev">
-                                <div style="width:32px; height:32px; border-radius:8px; background:#f0f9ff; color:#0284c7; display:flex; align-items:center; justify-content:center; font-size:16px;">
-                                    <i class="fa-brands fa-x-twitter"></i>
-                                </div>
-                                <div>
-                                    <strong style="display:block; font-size:12px; color:#0f172a;">@astacode_dev</strong>
-                                    <span style="font-size:10.5px; color:#64748b;">X / Twitter • 28K Followers</span>
                                 </div>
                             </div>
                             <span class="status-badge badge-done" style="font-size:9.5px;">OAuth OK</span>
@@ -4515,6 +4606,297 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
             <div style="padding:14px 20px; border-top:1px solid var(--border-light); background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:11.5px; color:#64748b;"><i class="fa-solid fa-lock" style="color:#059669;"></i> Token disimpan aman di Credential Vault (AES-256)</span>
                 <button type="button" class="btn btn-outline" onclick="window.closeMultiAccountModal()">Selesai & Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: GOAL PROGRESS DETAIL BREAKDOWN -->
+    <div id="goalProgressModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:#fff; width:680px; max-width:95%; border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden; display:flex; flex-direction:column; animation: modalFadeIn 0.3s ease-out;">
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; border-radius:8px; background:var(--brand-light); color:var(--brand-primary); display:flex; align-items:center; justify-content:center; font-size:16px;">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--text-primary);">Rincian Target Marketing Bulanan</h3>
+                        <p style="margin:2px 0 0; font-size:12px; color:var(--text-tertiary);">Periode: Oktober 2026 • Astacode Unified Operations</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.closeGoalProgressModal()" style="background:transparent; border:none; font-size:18px; color:var(--text-tertiary); cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding:22px; display:flex; flex-direction:column; gap:16px; max-height:75vh; overflow-y:auto;">
+                <!-- KPI 1 -->
+                <div style="padding:14px 16px; border:1px solid var(--border-light); border-radius:8px; background:#fff;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div>
+                            <strong style="font-size:13px; color:var(--text-primary);">Qualified Leads Inbound (CRM Sync)</strong>
+                            <div style="font-size:11.5px; color:var(--text-tertiary);">Target bulanan tim Marketing ke Sales Pipeline</div>
+                        </div>
+                        <span style="font-size:13px; font-weight:700; color:var(--brand-primary);">85% (340 / 400 Leads)</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                        <div style="width:85%; height:100%; background:linear-gradient(90deg, #3b82f6, #60a5fa); border-radius:4px;"></div>
+                    </div>
+                    <div style="font-size:11px; color:#059669; margin-top:6px; font-weight:600;"><i class="fa-solid fa-arrow-trend-up"></i> On Track (+18% dibandingkan bulan September)</div>
+                </div>
+
+                <!-- KPI 2 -->
+                <div style="padding:14px 16px; border:1px solid var(--border-light); border-radius:8px; background:#fff;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div>
+                            <strong style="font-size:13px; color:var(--text-primary);">Pertumbuhan Traffic Organik (Web & Blog)</strong>
+                            <div style="font-size:11.5px; color:var(--text-tertiary);">Kunjungan unik portal Astacode dari konten SEO & medsos</div>
+                        </div>
+                        <span style="font-size:13px; font-weight:700; color:#10b981;">62% (+12.4k / 20.0k)</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                        <div style="width:62%; height:100%; background:linear-gradient(90deg, #10b981, #34d399); border-radius:4px;"></div>
+                    </div>
+                    <div style="font-size:11px; color:#10b981; margin-top:6px; font-weight:600;"><i class="fa-solid fa-check"></i> Konten tutorial Laravel & Next.js menjadi penyumbang terbesar</div>
+                </div>
+
+                <!-- KPI 3 -->
+                <div style="padding:14px 16px; border:1px solid var(--border-light); border-radius:8px; background:#fff;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div>
+                            <strong style="font-size:13px; color:var(--text-primary);">Tingkat Konversi Pengunjung ke Lead (CVR)</strong>
+                            <div style="font-size:11.5px; color:var(--text-tertiary);">Persentase visitor yang klik tombol Konsultasi / DM</div>
+                        </div>
+                        <span style="font-size:13px; font-weight:700; color:#f59e0b;">4.2% (Target: 5.0%)</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                        <div style="width:84%; height:100%; background:linear-gradient(90deg, #f59e0b, #fbbf24); border-radius:4px;"></div>
+                    </div>
+                    <div style="font-size:11px; color:#d97706; margin-top:6px; font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> Kurang 0.8% dari target akhir bulan</div>
+                </div>
+
+                <!-- KPI 4 -->
+                <div style="padding:14px 16px; border:1px solid var(--border-light); border-radius:8px; background:#fff;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div>
+                            <strong style="font-size:13px; color:var(--text-primary);">Biaya Per Akuisisi Lead (CPL Ad Spend)</strong>
+                            <div style="font-size:11.5px; color:var(--text-tertiary);">Meta Ads & TikTok Ads CPL Efektif</div>
+                        </div>
+                        <span style="font-size:13px; font-weight:700; color:#059669;">Rp 41.764 (Target: &lt; Rp 50.000)</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                        <div style="width:92%; height:100%; background:linear-gradient(90deg, #059669, #34d399); border-radius:4px;"></div>
+                    </div>
+                    <div style="font-size:11px; color:#059669; margin-top:6px; font-weight:600;"><i class="fa-solid fa-shield-check"></i> Efisiensi anggaran iklan 16.4% di bawah budget maksimal</div>
+                </div>
+            </div>
+            <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; color:var(--text-tertiary);"><i class="fa-solid fa-clock"></i> Data diperbarui: Hari ini, 10:00 WIB</span>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn btn-outline" onclick="window.closeGoalProgressModal()">Tutup</button>
+                    <button type="button" class="btn btn-primary" onclick="window.closeGoalProgressModal(); window.switchMarketingPage('analytics');"><i class="fa-solid fa-chart-line"></i> Lihat Analisis Lengkap</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: OMNICHANNEL INBOX CHAT & LIVE REPLY -->
+    <div id="inboxChatModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:#fff; width:720px; max-width:95%; border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden; display:flex; flex-direction:column; animation: modalFadeIn 0.3s ease-out; height:620px; max-height:92vh;">
+            <!-- Header -->
+            <div style="padding:14px 20px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div id="inboxModalAvatar" style="width:38px; height:38px; border-radius:50%; background:#3b82f6; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:15px;">
+                        B
+                    </div>
+                    <div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <strong id="inboxModalCustomerName" style="font-size:15px; color:var(--text-primary);">Budi Santoso</strong>
+                            <span id="inboxModalPlatformBadge" class="status-badge badge-done" style="font-size:10.5px; padding:2px 8px;"><i class="fa-brands fa-instagram" style="color:#e11d48;"></i> Instagram DM</span>
+                        </div>
+                        <div id="inboxModalStatusSub" style="font-size:11.5px; color:var(--text-tertiary);">Status AI: <span style="color:#059669; font-weight:600;">Terbalas Otomatis</span> • 2 menit lalu</div>
+                    </div>
+                </div>
+                <button type="button" onclick="window.closeInboxChatModal()" style="background:transparent; border:none; font-size:18px; color:var(--text-tertiary); cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Chat History Thread Body -->
+            <div id="inboxModalMessagesList" style="flex:1; padding:20px; overflow-y:auto; background:#f8fafc; display:flex; flex-direction:column; gap:14px;">
+                <!-- Dynamically populated by window.openInboxChatModal -->
+            </div>
+
+            <!-- Quick Canned AI Responses -->
+            <div style="padding:8px 16px; background:#fff; border-top:1px solid var(--border-light); display:flex; gap:6px; overflow-x:auto;">
+                <button type="button" class="btn btn-outline" onclick="window.insertCannedReply('Halo kak! Untuk pembuatan website company profile berbasis React/Next.js mulai dari Rp 4.5jt sudah include UI/UX, domain, dan hosting selama 1 tahun. Apakah kakak ingin tim sales kami jadwalkan demo 15 menit?')" style="font-size:11px; padding:4px 10px; white-space:nowrap; height:auto; color:var(--brand-primary); border-color:#bfdbfe; background:#eff6ff;">
+                    💡 Kirim Estimasi Biaya
+                </button>
+                <button type="button" class="btn btn-outline" onclick="window.insertCannedReply('Bisa dibantu tinggalkan nomor WhatsApp aktif kak? Nanti Account Executive kami dari tim Presales Astacode langsung kirimkan PDF proposal portofolio dan konsultasi gratis.')" style="font-size:11px; padding:4px 10px; white-space:nowrap; height:auto; color:#059669; border-color:#bbf7d0; background:#f0fdf4;">
+                    📲 Minta WhatsApp Lead
+                </button>
+                <button type="button" class="btn btn-outline" onclick="window.insertCannedReply('Untuk sistem ERP pabrik dengan transaksi tinggi, arsitektur kami menggunakan Laravel 11 API Backend dipadu Go Service dan database PostgreSQL terisolasi sehingga menjamin zero data-loss.')" style="font-size:11px; padding:4px 10px; white-space:nowrap; height:auto; color:#d97706; border-color:#fde68a; background:#fffbeb;">
+                    ⚙️ Jawaban Stack Teknis
+                </button>
+            </div>
+
+            <!-- Reply Box Footer -->
+            <div style="padding:14px 20px; background:#fff; border-top:1px solid var(--border-light); display:flex; gap:10px; align-items:flex-end;">
+                <textarea id="inboxReplyInput" class="form-control" placeholder="Ketik balasan untuk pelanggan ini... (Ctrl+Enter untuk kirim)" rows="2" style="resize:none; font-size:12.5px;"></textarea>
+                <button type="button" class="btn btn-primary" id="btnSendInboxReply" onclick="window.sendInboxReply()" style="padding:10px 18px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-paper-plane"></i> Kirim
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: TAMBAH RIWAYAT KONTEN MANUAL -->
+    <div id="addContentHistoryModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:#fff; width:580px; max-width:95%; border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden; display:flex; flex-direction:column; animation: modalFadeIn 0.3s ease-out;">
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:34px; height:34px; border-radius:8px; background:var(--brand-light); color:var(--brand-primary); display:flex; align-items:center; justify-content:center; font-size:16px;">
+                        <i class="fa-solid fa-file-circle-plus"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--text-primary);">Tambah Arsip Konten Manual</h3>
+                        <p style="margin:2px 0 0; font-size:12px; color:var(--text-tertiary);">Catat publikasi yang dilakukan langsung di aplikasi media sosial</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.closeAddContentHistoryModal()" style="background:transparent; border:none; font-size:18px; color:var(--text-tertiary); cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="formAddHistory" onsubmit="window.saveNewContentHistory(event)" style="margin:0;">
+                <div style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Judul / Topik Konten <span style="color:#e11d48;">*</span></label>
+                        <input type="text" id="histInputTitle" class="form-control" placeholder="Contoh: 5 Tips Deploy Server Docker" required>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">Platform Publikasi</label>
+                            <select id="histInputPlatform" class="form-control">
+                                <option value="Instagram">Instagram</option>
+                                <option value="TikTok">TikTok</option>
+                                <option value="Blog CMS">Blog CMS</option>
+                                <option value="Meta Ads">Meta Ads</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">Format Konten</label>
+                            <select id="histInputFormat" class="form-control">
+                                <option value="Video">Video Skrip / Reels</option>
+                                <option value="Carousel">Carousel Multi-Slide</option>
+                                <option value="Artikel">Artikel Blog SEO</option>
+                                <option value="Single">Single Image + Caption</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">Estimasi Views</label>
+                            <input type="text" id="histInputViews" class="form-control" placeholder="Contoh: 18.2K" value="10.5K" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">Tingkat Engagement (%)</label>
+                            <input type="text" id="histInputEngage" class="form-control" placeholder="Contoh: 8.4%" value="7.2%" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Tautan Publikasi Postingan (Opsional)</label>
+                        <input type="url" id="histInputUrl" class="form-control" placeholder="https://instagram.com/p/..." value="https://instagram.com/astacode.official">
+                    </div>
+                </div>
+
+                <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid var(--border-light); display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn btn-outline" onclick="window.closeAddContentHistoryModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitAddHistory"><i class="fa-solid fa-save"></i> Simpan ke Riwayat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: EKSPOR LAPORAN ANALYTICS -->
+    <div id="analyticsExportModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:#fff; width:540px; max-width:95%; border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden; display:flex; flex-direction:column; animation: modalFadeIn 0.3s ease-out;">
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:34px; height:34px; border-radius:8px; background:#eff6ff; color:var(--brand-primary); display:flex; align-items:center; justify-content:center; font-size:16px;">
+                        <i class="fa-solid fa-file-export"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--text-primary);">Ekspor Laporan Performa</h3>
+                        <p style="margin:2px 0 0; font-size:12px; color:var(--text-tertiary);">Unduh analitik marketing & metrik konversi omni-channel</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.closeAnalyticsExportModal()" style="background:transparent; border:none; font-size:18px; color:var(--text-tertiary); cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Pilih Format Berkas</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                        <label style="border:1.5px solid var(--brand-primary); background:#eff6ff; padding:10px; border-radius:8px; cursor:pointer; text-align:center;">
+                            <input type="radio" name="exportFormat" value="pdf" checked style="display:none;">
+                            <i class="fa-solid fa-file-pdf" style="color:#e11d48; font-size:22px; display:block; margin-bottom:4px;"></i>
+                            <strong style="font-size:12px; display:block; color:var(--brand-primary);">PDF Ringkas</strong>
+                            <span style="font-size:10px; color:var(--text-tertiary);">Executive Brief</span>
+                        </label>
+                        <label style="border:1px solid var(--border-light); background:#fff; padding:10px; border-radius:8px; cursor:pointer; text-align:center;">
+                            <input type="radio" name="exportFormat" value="xlsx" style="display:none;">
+                            <i class="fa-solid fa-file-excel" style="color:#10b981; font-size:22px; display:block; margin-bottom:4px;"></i>
+                            <strong style="font-size:12px; display:block; color:var(--text-primary);">Excel .xlsx</strong>
+                            <span style="font-size:10px; color:var(--text-tertiary);">Data Tabulasi</span>
+                        </label>
+                        <label style="border:1px solid var(--border-light); background:#fff; padding:10px; border-radius:8px; cursor:pointer; text-align:center;">
+                            <input type="radio" name="exportFormat" value="csv" style="display:none;">
+                            <i class="fa-solid fa-file-csv" style="color:#6366f1; font-size:22px; display:block; margin-bottom:4px;"></i>
+                            <strong style="font-size:12px; display:block; color:var(--text-primary);">CSV Mentah</strong>
+                            <span style="font-size:10px; color:var(--text-tertiary);">Log Metrik</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Rentang Waktu Laporan</label>
+                    <select id="exportPeriodSelect" class="form-control">
+                        <option value="month">Bulan Ini (Oktober 2026)</option>
+                        <option value="last_30">30 Hari Terakhir</option>
+                        <option value="quarter">Kuartal Ini (Q4 2026)</option>
+                        <option value="year">Tahun 2026 (YTD)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Komponen yang Disertakan</label>
+                    <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px;">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" checked> Ringkasan Eksekutif & Pencapaian Target Bulanan
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" checked> Distribusi Platform & Kinerja Konten Viral
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" checked> Efisiensi Anggaran Iklan (Meta/TikTok Ads ROAS)
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" checked> Metrik Auto-Reply Omnichannel & SLA CS
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Simulation Progress (Hidden until clicked) -->
+                <div id="exportProgressBox" style="display:none; padding:12px 14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; color:#166534; margin-bottom:6px;">
+                        <span><i class="fa-solid fa-spinner fa-spin"></i> Sedang mengompilasi berkas...</span>
+                        <span id="exportProgressPct">45%</span>
+                    </div>
+                    <div style="width:100%; height:6px; background:#dcfce7; border-radius:3px; overflow:hidden;">
+                        <div id="exportProgressBar" style="width:45%; height:100%; background:#16a34a; transition:width 0.3s ease;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid var(--border-light); display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-outline" onclick="window.closeAnalyticsExportModal()">Batal</button>
+                <button type="button" class="btn btn-primary" id="btnDownloadExportFinal" onclick="window.startExportDownload()"><i class="fa-solid fa-download"></i> Unduh Berkas</button>
             </div>
         </div>
     </div>
