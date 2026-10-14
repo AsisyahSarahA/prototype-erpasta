@@ -4716,6 +4716,21 @@ Ada yang tim Next.js atau masih setia dengan Vite? Yuk diskusi di kolom komentar
                 <button type="button" onclick="window.closeInboxChatModal()" style="background:transparent; border:none; font-size:18px; color:var(--text-tertiary); cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
+            <!-- AI Lead Intent & CRM Integration Banner -->
+            <div id="inboxCrmLeadBar" style="background:linear-gradient(90deg, #eff6ff 0%, #f0fdf4 100%); border-bottom:1px solid #bfdbfe; padding:9px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span id="inboxCrmTag" style="background:#2563eb; color:#fff; font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; letter-spacing:0.04em;">AI INTENT: HOT LEAD</span>
+                    <span id="inboxCrmLeadSummary" style="font-size:11.5px; color:#1e3a8a; font-weight:600;">
+                        Inquiry: Jasa Pembuatan Website Company Profile (Next.js) • Skor Kualifikasi: 92/100
+                    </span>
+                </div>
+                <div id="inboxCrmActionContainer" style="flex-shrink:0;">
+                    <button type="button" id="btnSyncToCrm" class="btn btn-sm btn-primary" onclick="window.syncChatToCrmLead()" style="font-size:11px; padding:5px 12px; height:auto; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Konversi ke CRM Lead
+                    </button>
+                </div>
+            </div>
+
             <!-- Chat History Thread Body -->
             <div id="inboxModalMessagesList" style="flex:1; padding:20px; overflow-y:auto; background:#f8fafc; display:flex; flex-direction:column; gap:14px;">
                 <!-- Dynamically populated by window.openInboxChatModal -->

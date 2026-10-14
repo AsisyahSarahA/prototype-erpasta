@@ -5637,7 +5637,118 @@ window.openInboxChatModal = function(customerName, platform, lastMsg, aiStatus) 
         setTimeout(() => { listEl.scrollTop = listEl.scrollHeight; }, 50);
     }
 
+    // Configure CRM Lead Intent Banner & Sync Button
+    const leadBar = document.getElementById('inboxCrmLeadBar');
+    const leadTag = document.getElementById('inboxCrmTag');
+    const leadSummary = document.getElementById('inboxCrmLeadSummary');
+    const leadActionCont = document.getElementById('inboxCrmActionContainer');
+    const syncedLeads = JSON.parse(localStorage.getItem('astacode_synced_crm_leads') || '{}');
+
+    if (leadBar) {
+        if (customerName === 'Budi Santoso') {
+            leadBar.style.display = 'flex';
+            if (leadTag) leadTag.textContent = 'AI INTENT: HOT LEAD (92/100)';
+            if (leadSummary) leadSummary.textContent = 'Inquiry: Jasa Pembuatan Website Company Profile (Next.js) • Estimasi: Rp 4.500.000';
+        } else if (customerName === 'Siska Media') {
+            leadBar.style.display = 'flex';
+            if (leadTag) leadTag.textContent = 'AI INTENT: ERP PROSPECT (85/100)';
+            if (leadSummary) leadSummary.textContent = 'Inquiry: Arsitektur ERP Custom Pabrik (Laravel/Node) • Estimasi: Rp 45.000.000';
+        } else {
+            leadBar.style.display = 'none';
+        }
+
+        if (syncedLeads[customerName]) {
+            const info = syncedLeads[customerName];
+            if (leadActionCont) {
+                leadActionCont.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-check"></i> CRM Lead (${info.code})</span>
+                        <a href="../crm/crm.html#leads" class="btn btn-sm btn-outline" style="font-size:10.5px; padding:4px 8px; height:auto; color:var(--brand-primary); text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka CRM</a>
+                    </div>
+                `;
+            }
+        } else {
+            if (leadActionCont) {
+                leadActionCont.innerHTML = `
+                    <button type="button" id="btnSyncToCrm" class="btn btn-sm btn-primary" onclick="window.syncChatToCrmLead()" style="font-size:11px; padding:5px 12px; height:auto; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Konversi ke CRM Lead
+                    </button>
+                `;
+            }
+        }
+    }
+
     modal.style.display = 'flex';
+};
+
+window.syncChatToCrmLead = function() {
+    const customer = activeChatCustomer || 'Budi Santoso';
+    const syncedLeads = JSON.parse(localStorage.getItem('astacode_synced_crm_leads') || '{}');
+    const leadCode = 'LEAD-' + Math.floor(1000 + Math.random() * 9000);
+    const leadId = 'lead-' + Date.now();
+    const isBudi = customer === 'Budi Santoso';
+
+    // Payload Lead CRM
+    const newLead = {
+        id: leadId,
+        code: leadCode,
+        type: 'Company',
+        company: isBudi ? 'Budi Santoso (Inquiry Website)' : `${customer} (Inquiry Medsos)`,
+        title: isBudi ? 'Pembuatan Website Company Profile Next.js 14 SSR' : 'Custom Software & ERP Platform',
+        pic: customer,
+        jobTitle: 'Prospect / Decision Maker',
+        email: `${customer.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
+        phone: '+62 812-8899-2310',
+        industry: 'Technology & Services',
+        source: 'Instagram DM (Marketing Omnichannel)',
+        softwareId: 'prod-custom',
+        priority: 'High',
+        owner: 'Sarah Andini',
+        budget: isBudi ? 4500000 : 45000000,
+        stage: 0,
+        status: 'Open',
+        createdAt: new Date().toISOString(),
+        notes: `Otomatis dikonversi dari percakapan Omnichannel Marketing DM (${customer}). Terdeteksi niat pembelian jasa pembuatan website via AI intent classifier.`
+    };
+
+    // Inject ke database CRM di localStorage (astacode_crm_enterprise_v3)
+    try {
+        const crmKey = 'astacode_crm_enterprise_v3';
+        const rawCrm = localStorage.getItem(crmKey);
+        let crmDb = rawCrm ? JSON.parse(rawCrm) : {};
+        if (!crmDb.leads) crmDb.leads = [];
+        crmDb.leads.unshift(newLead);
+        localStorage.setItem(crmKey, JSON.stringify(crmDb));
+    } catch (e) {
+        console.warn('Gagal inject ke crmDb:', e);
+    }
+
+    // Catat status tersinkronisasi
+    syncedLeads[customer] = { code: leadCode, time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), budget: newLead.budget };
+    localStorage.setItem('astacode_synced_crm_leads', JSON.stringify(syncedLeads));
+
+    // Perbarui UI di modal
+    const leadActionCont = document.getElementById('inboxCrmActionContainer');
+    if (leadActionCont) {
+        leadActionCont.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-check"></i> CRM Lead (${leadCode})</span>
+                <a href="../crm/crm.html#leads" class="btn btn-sm btn-outline" style="font-size:10.5px; padding:4px 8px; height:auto; color:var(--brand-primary); text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka CRM</a>
+            </div>
+        `;
+    }
+
+    // Perbarui badge baris pada tabel Omnichannel Inbox jika ada
+    document.querySelectorAll('.inbox-row').forEach(row => {
+        if (row.textContent.includes(customer)) {
+            const badgeCol = row.querySelector('td:nth-child(5)');
+            if (badgeCol && !badgeCol.querySelector('.crm-lead-badge')) {
+                badgeCol.innerHTML += ` <span class="crm-lead-badge status-badge badge-done" style="font-size:10px; margin-left:4px; background:#dcfce7; color:#15803d;"><i class="fa-solid fa-cloud-check"></i> ${leadCode}</span>`;
+            }
+        }
+    });
+
+    window.showToast(`✓ API CRM Sukses! ${customer} berhasil dikonversi menjadi Lead Baru #${leadCode} (Rp ${(newLead.budget).toLocaleString('id-ID')}).`, 'success');
 };
 
 window.closeInboxChatModal = function() {
