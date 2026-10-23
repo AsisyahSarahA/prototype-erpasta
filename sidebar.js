@@ -151,7 +151,7 @@
             </div>
           </div>
 
-          <!-- 2. Project Management (Forge PM) (Accordion) -->
+           <!-- 2. Project Management (Forge PM) (Accordion) -->
           <div class="nav-group ${activeModule === 'project' ? 'open' : ''}" id="projectNavGroup" data-module-group="project">
             <button type="button" class="nav-btn nav-parent-btn ${activeModule === 'project' ? 'active' : ''}" id="projectParentToggle" onclick="window.toggleModuleAccordion('projectNavGroup', event)">
               <div class="nav-left">
@@ -167,36 +167,32 @@
               </a>
               <a href="${prefix}project/Forge PM.html#project" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'project' ? 'active' : ''}" data-module="project" data-sub="project" onclick="window.navigateToModuleSubpage('project', 'project', '${prefix}project/Forge PM.html#project', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Projects Portfolio</span>
+                <span>Proyek</span>
               </a>
-              <a href="${prefix}project/Forge PM.html#handover" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'handover' ? 'active' : ''}" data-module="project" data-sub="handover" onclick="window.navigateToModuleSubpage('project', 'handover', '${prefix}project/Forge PM.html#handover', event)">
+              <a href="${prefix}project/Forge PM.html#task" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'task' ? 'active' : ''}" data-module="project" data-sub="task" onclick="window.navigateToModuleSubpage('project', 'task', '${prefix}project/Forge PM.html#task', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Handover CRM</span>
+                <span>Task</span>
               </a>
               <a href="${prefix}project/Forge PM.html#tickets" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'tickets' ? 'active' : ''}" data-module="project" data-sub="tickets" onclick="window.navigateToModuleSubpage('project', 'tickets', '${prefix}project/Forge PM.html#tickets', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Tickets & Backlog</span>
               </a>
-              <a href="${prefix}project/Forge PM.html#mytasks" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'mytasks' ? 'active' : ''}" data-module="project" data-sub="mytasks" onclick="window.navigateToModuleSubpage('project', 'mytasks', '${prefix}project/Forge PM.html#mytasks', event)">
+              <a href="${prefix}project/Forge PM.html#timesheet" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'timesheet' ? 'active' : ''}" data-module="project" data-sub="timesheet" onclick="window.navigateToModuleSubpage('project', 'timesheet', '${prefix}project/Forge PM.html#timesheet', event)">
                 <span class="nav-sub-dot"></span>
-                <span>My Tasks</span>
+                <span>Timesheet Global</span>
               </a>
               <a href="${prefix}project/Forge PM.html#automation" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'automation' ? 'active' : ''}" data-module="project" data-sub="automation" onclick="window.navigateToModuleSubpage('project', 'automation', '${prefix}project/Forge PM.html#automation', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Automation Fix Bug</span>
+                <span>Auto Fix Bug</span>
                 <span class="nav-badge-accent">AI</span>
               </a>
               <a href="${prefix}project/Forge PM.html#events" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'events' ? 'active' : ''}" data-module="project" data-sub="events" onclick="window.navigateToModuleSubpage('project', 'events', '${prefix}project/Forge PM.html#events', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Events & Schedule</span>
               </a>
-              <a href="${prefix}project/Forge PM.html#notes" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'notes' ? 'active' : ''}" data-module="project" data-sub="notes" onclick="window.navigateToModuleSubpage('project', 'notes', '${prefix}project/Forge PM.html#notes', event)">
+              <a href="${prefix}project/Forge PM.html#handover" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'handover' ? 'active' : ''}" data-module="project" data-sub="handover" onclick="window.navigateToModuleSubpage('project', 'handover', '${prefix}project/Forge PM.html#handover', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Knowledge Notes</span>
-              </a>
-              <a href="${prefix}project/Forge PM.html#team" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'team' ? 'active' : ''}" data-module="project" data-sub="team" onclick="window.navigateToModuleSubpage('project', 'team', '${prefix}project/Forge PM.html#team', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Team Workload</span>
+                <span>Handover</span>
               </a>
             </div>
           </div>
