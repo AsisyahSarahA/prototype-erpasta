@@ -329,7 +329,7 @@
             <button type="button" class="nav-btn nav-parent-btn ${activeModule === 'hr' ? 'active' : ''}" id="hrParentToggle" onclick="window.toggleModuleAccordion('hrNavGroup', event)">
               <div class="nav-left">
                 ${svg('hr')}
-                <span>HR & Payroll</span>
+                <span>Human Resources (SDM)</span>
               </div>
               ${svg('chevron', 'nav-chevron')}
             </button>
