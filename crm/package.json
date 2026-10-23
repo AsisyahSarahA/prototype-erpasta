@@ -1,0 +1,15 @@
+{
+  "name": "astacode-crm",
+  "version": "1.0.0",
+  "description": "ASTACODE CRM — Sales Pipeline & Project Management Vanilla JS Application",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite --open",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

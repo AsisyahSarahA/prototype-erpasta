@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>ASTACODE CRM — Redirect</title>
+  <meta name="robots" content="noindex" />
+  <!--
+    The shared ERP sidebar and the other modules link to "crm/crm.html#<subpage>".
+    The CRM app itself lives in index.html, so forward there and keep the #hash.
+  -->
+  <script>window.location.replace('index.html' + window.location.hash);</script>
+  <noscript><meta http-equiv="refresh" content="0; url=index.html" /></noscript>
+</head>
+<body>
+  <p>Mengalihkan ke <a href="index.html">ASTACODE CRM</a>…</p>
+</body>
+</html>

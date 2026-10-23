@@ -78,6 +78,14 @@
       window.location.hash = cleanId;
     }
 
+    // Re-render charts if navigating to dashboard
+    if (cleanId === 'dashboard' || cleanId === 'overview') {
+      setTimeout(() => {
+        initCashflowChart();
+        initExpenseDonutChart();
+      }, 50);
+    }
+
     // Scroll to top of content
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -127,30 +135,74 @@
     }
   };
 
+  // Close modal when clicking backdrop or pressing Escape
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-backdrop') && e.target.classList.contains('show')) {
+      e.target.classList.remove('show');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-backdrop.show').forEach(m => m.classList.remove('show'));
+    }
+  });
+
   // Initialize Chart.js
-  function initCashflowChart() {
+  let cashflowChartInstance = null;
+  let expenseDonutChartInstance = null;
+
+  const cashflowDataPeriods = {
+    '3m': {
+      labels: ['Agu 2026', 'Sep 2026', 'Okt 2026 (Berjalan)'],
+      inflow: [240000000, 310000000, 450000000],
+      outflow: [140000000, 155000000, 174850000]
+    },
+    '6m': {
+      labels: ['Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt (Berjalan)'],
+      inflow: [150000000, 180000000, 210000000, 240000000, 310000000, 450000000],
+      outflow: [90000000, 110000000, 125000000, 140000000, 155000000, 174850000]
+    },
+    '1y': {
+      labels: ['Nov 25', 'Des 25', 'Jan 26', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt'],
+      inflow: [110000000, 130000000, 140000000, 120000000, 160000000, 175000000, 150000000, 180000000, 210000000, 240000000, 310000000, 450000000],
+      outflow: [75000000, 85000000, 95000000, 80000000, 100000000, 115000000, 90000000, 110000000, 125000000, 140000000, 155000000, 174850000]
+    }
+  };
+
+  function initCashflowChart(period = '6m') {
     const canvas = document.getElementById('financeCashflowChart');
     if (!canvas) return;
 
+    const dataConfig = cashflowDataPeriods[period] || cashflowDataPeriods['6m'];
+
+    if (cashflowChartInstance) {
+      cashflowChartInstance.data.labels = dataConfig.labels;
+      cashflowChartInstance.data.datasets[0].data = dataConfig.inflow;
+      cashflowChartInstance.data.datasets[1].data = dataConfig.outflow;
+      cashflowChartInstance.update();
+      return;
+    }
+
     const ctx = canvas.getContext('2d');
-    new Chart(ctx, {
+    cashflowChartInstance = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: ['Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt (Berjalan)'],
+        labels: dataConfig.labels,
         datasets: [
           {
             label: 'Uang Masuk (AR)',
-            data: [150000000, 180000000, 210000000, 240000000, 310000000, 450000000],
+            data: dataConfig.inflow,
             backgroundColor: '#10B981',
             borderRadius: 6,
-            barThickness: 16
+            barThickness: period === '1y' ? 10 : 16
           },
           {
             label: 'Uang Keluar (AP & OPEX)',
-            data: [90000000, 110000000, 125000000, 140000000, 155000000, 174850000],
+            data: dataConfig.outflow,
             backgroundColor: '#F87171',
             borderRadius: 6,
-            barThickness: 16
+            barThickness: period === '1y' ? 10 : 16
           }
         ]
       },
@@ -160,7 +212,7 @@
         plugins: {
           legend: {
             position: 'top',
-            labels: { font: { family: 'Inter', size: 11, weight: '600' }, boxWidth: 12, padding: 16 }
+            labels: { font: { family: 'Inter', size: 11, weight: '600' }, boxWidth: 12, padding: 14 }
           },
           tooltip: {
             callbacks: {
@@ -186,6 +238,76 @@
             }
           }
         }
+      }
+    });
+  }
+
+  window.updateCashflowPeriod = function(periodKey, btn) {
+    const parent = document.getElementById('dashboardPeriodToggles');
+    if (parent) {
+      parent.querySelectorAll('button').forEach(b => b.classList.remove('primary'));
+    }
+    if (btn) btn.classList.add('primary');
+    initCashflowChart(periodKey);
+    const pNames = { '3m': '3 Bulan Terakhir', '6m': '6 Bulan Terakhir', '1y': '1 Tahun Penuh' };
+    window.showFinanceToast(`Rentang Arus Kas disetel ke: ${pNames[periodKey] || periodKey}`, 'info');
+  };
+
+  function initExpenseDonutChart() {
+    const canvas = document.getElementById('financeExpenseDonutChart');
+    if (!canvas) return;
+
+    if (expenseDonutChartInstance) {
+      expenseDonutChartInstance.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    expenseDonutChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: [
+          'Gaji Karyawan (Payroll)',
+          'Upah Freelancer (SPK)',
+          'Cloud Server AWS & Infra',
+          'Sewa Kantor & Internet',
+          'Utilitas & Lembur'
+        ],
+        datasets: [{
+          data: [85000000, 42000000, 23000000, 15000000, 9850000],
+          backgroundColor: [
+            '#3B82F6',
+            '#F59E0B',
+            '#8B5CF6',
+            '#EF4444',
+            '#10B981'
+          ],
+          borderWidth: 2,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              font: { family: 'Inter', size: 10.5, weight: '600' },
+              boxWidth: 10,
+              padding: 8
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = ((context.raw / total) * 100).toFixed(1);
+                return `${context.label}: Rp ${context.raw.toLocaleString('id-ID')} (${pct}%)`;
+              }
+            }
+          }
+        },
+        cutout: '68%'
       }
     });
   }
@@ -381,8 +503,8 @@
 
   // COA Category Filter
   window.filterCoaCategory = function(catCode, btn) {
-    document.querySelectorAll('.coa-cat-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
+    document.querySelectorAll('.coa-cat-btn').forEach(b => b.classList.remove('primary'));
+    if (btn) btn.classList.add('primary');
 
     document.querySelectorAll('.coa-table-row').forEach(row => {
       const code = row.getAttribute('data-code');
@@ -393,6 +515,140 @@
       }
     });
   };
+
+  function updateCoaTotalBadge() {
+    const rows = document.querySelectorAll('.coa-table-row');
+    const allBtn = document.querySelector('.coa-cat-btn');
+    if (allBtn) {
+      allBtn.textContent = `Semua (${rows.length})`;
+    }
+  }
+
+  // Submit Create New COA Account
+  window.submitCreateCoaForm = function() {
+    const code = document.getElementById('new-coa-code')?.value?.trim() || '1199';
+    const name = document.getElementById('new-coa-name')?.value?.trim() || 'Akun Baru';
+    const cat = document.getElementById('new-coa-cat')?.value || '1000';
+    const pos = document.getElementById('new-coa-pos')?.value || 'DEBIT';
+
+    const catLabels = {
+      '1000': { label: '1000 - Aset Lancar', badge: 'info' },
+      '2000': { label: '2000 - Kewajiban', badge: 'warning' },
+      '3000': { label: '3000 - Ekuitas', badge: 'neutral' },
+      '4000': { label: '4000 - Pendapatan', badge: 'purple' },
+      '5000': { label: '5000 - HPP Proyek', badge: 'warning' },
+      '6000': { label: '6000 - Beban OPEX', badge: 'danger' }
+    };
+    const catInfo = catLabels[cat] || { label: cat, badge: 'info' };
+
+    const tbody = document.getElementById('coaTableBody');
+    if (tbody) {
+      const tr = document.createElement('tr');
+      tr.className = 'coa-table-row';
+      tr.setAttribute('data-code', cat);
+      tr.style.backgroundColor = '#ECFDF5';
+      tr.innerHTML = `
+        <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">${code}</span></td>
+        <td><strong>${name}</strong></td>
+        <td><span class="badge ${catInfo.badge}">${catInfo.label}</span></td>
+        <td><strong style="color:${pos === 'DEBIT' ? '#10B981' : '#8B5CF6'};">${pos}</strong></td>
+        <td style="text-align:right; font-weight:800;">Rp 0</td>
+        <td style="text-align:center;">
+          <button class="btn btn-xs outline" onclick="editCoaRow(this)" title="Edit Akun"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-xs outline text-danger" onclick="deleteCoaRow(this)" title="Hapus Akun" style="color:#EF4444; margin-left:4px;"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      `;
+      tbody.prepend(tr);
+      setTimeout(() => tr.style.backgroundColor = '', 1500);
+    }
+
+    updateCoaTotalBadge();
+    window.closeFinanceModal('modalCreateCoa');
+    window.showFinanceToast(`✅ Akun COA [${code}] ${name} berhasil ditambahkan ke Buku Besar!`, 'success');
+  };
+
+  // Currently active row being edited
+  let activeEditingCoaRow = null;
+
+  // Edit COA Row Modal Trigger
+  window.editCoaRow = function(btn) {
+    const row = btn.closest('tr');
+    if (!row) return;
+    activeEditingCoaRow = row;
+
+    const code = row.querySelector('td:nth-child(1)')?.textContent?.trim() || '';
+    const name = row.querySelector('td:nth-child(2)')?.textContent?.trim() || '';
+    const pos = row.querySelector('td:nth-child(4)')?.textContent?.trim() || 'DEBIT';
+    const catCode = row.getAttribute('data-code') || '1000';
+
+    const codeInp = document.getElementById('edit-coa-code');
+    const nameInp = document.getElementById('edit-coa-name');
+    const catSel = document.getElementById('edit-coa-cat');
+    const posSel = document.getElementById('edit-coa-pos');
+
+    if (codeInp) codeInp.value = code;
+    if (nameInp) nameInp.value = name;
+    if (catSel) catSel.value = catCode;
+    if (posSel) posSel.value = pos;
+
+    window.openFinanceModal('modalEditCoa');
+  };
+
+  // Submit Edit COA Form
+  window.submitEditCoaForm = function() {
+    if (!activeEditingCoaRow) return;
+
+    const code = document.getElementById('edit-coa-code')?.value?.trim() || '';
+    const name = document.getElementById('edit-coa-name')?.value?.trim() || '';
+    const cat = document.getElementById('edit-coa-cat')?.value || '1000';
+    const pos = document.getElementById('edit-coa-pos')?.value || 'DEBIT';
+
+    const catLabels = {
+      '1000': { label: '1000 - Aset Lancar', badge: 'info' },
+      '2000': { label: '2000 - Kewajiban', badge: 'warning' },
+      '3000': { label: '3000 - Ekuitas', badge: 'neutral' },
+      '4000': { label: '4000 - Pendapatan', badge: 'purple' },
+      '5000': { label: '5000 - HPP Proyek', badge: 'warning' },
+      '6000': { label: '6000 - Beban OPEX', badge: 'danger' }
+    };
+    const catInfo = catLabels[cat] || { label: cat, badge: 'info' };
+
+    activeEditingCoaRow.setAttribute('data-code', cat);
+    activeEditingCoaRow.querySelector('td:nth-child(1)').innerHTML = `<span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">${code}</span>`;
+    activeEditingCoaRow.querySelector('td:nth-child(2)').innerHTML = `<strong>${name}</strong>`;
+    activeEditingCoaRow.querySelector('td:nth-child(3)').innerHTML = `<span class="badge ${catInfo.badge}">${catInfo.label}</span>`;
+    activeEditingCoaRow.querySelector('td:nth-child(4)').innerHTML = `<strong style="color:${pos === 'DEBIT' ? '#10B981' : '#8B5CF6'};">${pos}</strong>`;
+
+    const targetRow = activeEditingCoaRow;
+    targetRow.style.backgroundColor = '#FEF3C7';
+    setTimeout(() => {
+      targetRow.style.backgroundColor = '';
+    }, 1200);
+
+    activeEditingCoaRow = null;
+    window.closeFinanceModal('modalEditCoa');
+    window.showFinanceToast(`✅ Data Akun COA [${code}] ${name} berhasil diperbarui!`, 'success');
+  };
+
+  // Delete COA Row with confirmation
+  window.deleteCoaRow = function(btn) {
+    const row = btn.closest('tr');
+    if (!row) return;
+    const code = row.querySelector('td:nth-child(1)')?.textContent?.trim() || '';
+    const name = row.querySelector('td:nth-child(2)')?.textContent?.trim() || '';
+
+    if (confirm(`Apakah Anda yakin ingin menghapus akun [${code}] ${name} dari daftar COA?`)) {
+      row.style.transition = 'all 0.3s ease';
+      row.style.opacity = '0';
+      row.style.transform = 'translateX(20px)';
+      setTimeout(() => {
+        row.remove();
+        updateCoaTotalBadge();
+        window.showFinanceToast(`🗑️ Akun COA [${code}] ${name} berhasil dihapus.`, 'info');
+      }, 300);
+    }
+  };
+
 
   // ==========================================================================
   // PPN & PPh 23 TAX ENGINE & PROJECT MANAGEMENT (PM) TRIGGER INTEGRATION
@@ -954,12 +1210,44 @@
     }, 800);
   };
 
+  // ==========================================================================
+  // GENERAL JOURNAL (JURNAL UMUM) CONTROLLER
+  // ==========================================================================
+
+  window.filterJournalEntries = function(sourceFilter) {
+    const entries = document.querySelectorAll('.journal-entry-card');
+    let visibleCount = 0;
+
+    entries.forEach(entry => {
+      const src = entry.getAttribute('data-source');
+      if (sourceFilter === 'all' || src === sourceFilter) {
+        entry.style.display = 'block';
+        visibleCount++;
+      } else {
+        entry.style.display = 'none';
+      }
+    });
+
+    const filterNames = {
+      'all': 'Semua Modul',
+      'ar': 'Piutang & AR (Invoice)',
+      'ap': 'Hutang & Tagihan (AP / Freelancer)',
+      'hr': 'Payroll & Gaji (HR)',
+      'opex': 'Beban Operasional (OPEX)',
+      'trf': 'Mutasi Internal Kas'
+    };
+    window.showFinanceToast(`Filter jurnal: ${filterNames[sourceFilter] || sourceFilter} (${visibleCount} entri ditampilkan).`, 'info');
+  };
+
+
+
   // Initialize on DOM Ready
   document.addEventListener('DOMContentLoaded', () => {
     const hash = (window.location.hash || '').replace('#', '');
     const initialPage = hash || 'dashboard';
     window.switchFinancePage(initialPage);
     initCashflowChart();
+    initExpenseDonutChart();
 
     // Setup drag and drop for OCR upload
     const dropArea = document.getElementById('ocrDropArea');

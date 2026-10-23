@@ -4958,7 +4958,7 @@ window.simulateTikTokLeadMagnetHook = function() {
             newRow.innerHTML = `
                 <td style="padding:12px 24px;"><input type="checkbox" checked></td>
                 <td style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
-                    <div style="width:32px; height:32px; background:#4f46e5; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:14px;">B</div>
+                    <div style="width:32px; height:32px; background:#305ba3; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:14px;">B</div>
                     <div>
                         <strong style="color:var(--text-primary); font-weight:600; display:block;">Budi Dev (@budi_dev)</strong>
                         <span style="color:var(--text-tertiary); font-size:11px;"><i class="fa-brands fa-tiktok" style="color:#000;"></i> TikTok Lead Magnet Hook</span>
