@@ -19,7 +19,9 @@ const testFiles = [
   'test_task6_prd_generator.js',
   'test_task7_discovery_clarification_approval.js',
   'test_task8_leads_pipeline_conversion.js',
-  'test_task9_master_catalog_rate_card.js'
+  'test_task9_master_catalog_rate_card.js',
+  'test_task10_wbs_estimation_builder.js',
+  'test_task11_offering_builder.js'
 ];
 
 let totalPassed = 0;

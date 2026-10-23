@@ -372,7 +372,7 @@
             <button type="button" class="nav-btn nav-parent-btn ${activeModule === 'hr' ? 'active' : ''}" id="hrParentToggle" onclick="window.toggleModuleAccordion('hrNavGroup', event)">
               <div class="nav-left">
                 ${svg('hr')}
-                <span>HR & Payroll</span>
+                <span>Human Resources (SDM)</span>
               </div>
               ${svg('chevron', 'nav-chevron')}
             </button>
@@ -390,10 +390,7 @@
                 <span class="nav-sub-dot"></span>
                 <span>Daily Log</span>
               </a>
-              <a href="${prefix}HR/hr.html#workload" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'workload' ? 'active' : ''}" data-module="hr" data-sub="workload" onclick="window.navigateToModuleSubpage('hr', 'workload', '${prefix}HR/hr.html#workload', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Workload Malam</span>
-              </a>
+            
               <a href="${prefix}HR/hr.html#rekap" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'rekap' ? 'active' : ''}" data-module="hr" data-sub="rekap" onclick="window.navigateToModuleSubpage('hr', 'rekap', '${prefix}HR/hr.html#rekap', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Rekap Tim</span>

@@ -1,6 +1,6 @@
 /* ==========================================================================
-   ASTA HR — Prototype logic (mengikuti HR_PRD.md)
-   Modul: Absensi & Workload, Rekrutmen, PKL, Payroll, Karyawan, Pengaturan
+   ASTA HR — Modul Manajemen SDM & Talenta
+   Fokus: Karyawan Tetap, Freelance (Per Proyek), PKL, Rekrutmen, Absensi & Evaluasi
    ========================================================================== */
 (() => {
 'use strict';
@@ -25,6 +25,17 @@ const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
 const dOff = n => iso(addDays(TODAY, n));
 const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const fmtD = s => { const d = parse(s); return `${d.getDate()} ${BULAN[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`; };
+const getTenure = s => {
+  if (!s) return '-';
+  const start = parse(s), now = TODAY;
+  let m = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  if (now.getDate() < start.getDate()) m--;
+  m = Math.max(0, m);
+  const y = Math.floor(m / 12), rem = m % 12;
+  if (y > 0 && rem > 0) return `${y} Thn ${rem} Bln`;
+  if (y > 0) return `${y} Tahun`;
+  return `${m} Bulan`;
+};
 const initials = n => n.split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase();
 const COLORS = ['#2563EB', '#0891B2', '#7C3AED', '#DB2777', '#D97706', '#16A34A', '#0B1F4B', '#DC2626'];
 const colorOf = n => COLORS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
@@ -51,23 +62,37 @@ const S = {
 };
 
 const EMP = [
-  { id: 1, nama: 'Rina Anggraini', email: 'rina@astacode.id', tipe: 'Tetap', tim: 'People Ops', jabatan: 'HR Manager', atasan: 'CEO', gaji: 14000000, tunj: 2500000, rate: 0, status: 'Aktif', masuk: '2021-02-01' },
-  { id: 2, nama: 'Bagas Prakoso', email: 'bagas@astacode.id', tipe: 'Tetap', tim: 'Engineering', jabatan: 'Tech Lead', atasan: 'CTO', gaji: 18000000, tunj: 3000000, rate: 0, status: 'Aktif', masuk: '2020-06-15' },
-  { id: 3, nama: 'Dewi Lestari', email: 'dewi@astacode.id', tipe: 'Tetap', tim: 'Engineering', jabatan: 'Frontend Developer', atasan: 'Bagas Prakoso', gaji: 11000000, tunj: 1500000, rate: 0, status: 'Aktif', masuk: '2022-03-07' },
-  { id: 4, nama: 'Fajar Nugroho', email: 'fajar@astacode.id', tipe: 'Tetap', tim: 'Engineering', jabatan: 'Backend Developer', atasan: 'Bagas Prakoso', gaji: 12000000, tunj: 1500000, rate: 0, status: 'Aktif', masuk: '2022-08-22' },
-  { id: 5, nama: 'Citra Maharani', email: 'citra@astacode.id', tipe: 'Tetap', tim: 'Design', jabatan: 'UI/UX Designer', atasan: 'Bagas Prakoso', gaji: 10500000, tunj: 1200000, rate: 0, status: 'Aktif', masuk: '2023-01-09' },
-  { id: 6, nama: 'Galih Pratama', email: 'galih@astacode.id', tipe: 'Tetap', tim: 'QA', jabatan: 'QA Engineer', atasan: 'Bagas Prakoso', gaji: 9500000, tunj: 1000000, rate: 0, status: 'Aktif', masuk: '2023-05-02' },
-  { id: 7, nama: 'Hana Putri', email: 'hana@gmail.com', tipe: 'Freelance', tim: 'Engineering', jabatan: 'Mobile Developer', atasan: 'Bagas Prakoso', gaji: 0, tunj: 0, rate: 95000, status: 'Aktif', masuk: '2024-02-01' },
-  { id: 8, nama: 'Indra Wijaya', email: 'indra@gmail.com', tipe: 'Freelance', tim: 'Design', jabatan: 'Illustrator', atasan: 'Citra Maharani', gaji: 0, tunj: 0, rate: 80000, status: 'Aktif', masuk: '2024-07-15' },
-  { id: 9, nama: 'Nadin', email: 'kevin@smkn1.sch.id', tipe: 'PKL', tim: 'Engineering', jabatan: 'Peserta PKL', atasan: 'Fajar Nugroho', gaji: 0, tunj: 0, rate: 0, status: 'Aktif', masuk: dOff(-30) },
-  { id: 10, nama: 'Laila Zahra', email: 'laila@ui.ac.id', tipe: 'PKL', tim: 'Design', jabatan: 'Peserta PKL', atasan: 'Citra Maharani', gaji: 0, tunj: 0, rate: 0, status: 'Aktif', masuk: dOff(-45) }
+  { id: 1, nama: 'Rina Anggraini', email: 'rina@astacode.id', tipe: 'Tetap', tim: 'People Ops', jabatan: 'HR Manager', atasan: 'CEO', level: 'Head of People', statusKerja: 'PKWTT (Tetap)', cutiSisa: 10, workPolicy: 'Hybrid (Onsite & WFH)', status: 'Aktif', masuk: '2021-02-01' },
+  { id: 2, nama: 'Bagas Prakoso', email: 'bagas@astacode.id', tipe: 'Tetap', tim: 'Engineering', jabatan: 'Tech Lead', atasan: 'CTO', level: 'Lead / Principal', statusKerja: 'PKWTT (Tetap)', cutiSisa: 8, workPolicy: 'Hybrid (Onsite & WFH)', status: 'Aktif', masuk: '2020-06-15' },
+  { id: 3, nama: 'Dewi Lestari', email: 'dewi@astacode.id', tipe: 'Tetap', tim: 'Engineering', jabatan: 'Frontend Developer', atasan: 'Bagas Prakoso', level: 'Senior Specialist', statusKerja: 'PKWTT (Tetap)', cutiSisa: 12, workPolicy: 'Hybrid (Onsite & WFH)', status: 'Aktif', masuk: '2022-03-07' },
+  { id: 4, nama: 'Fajar Nugroho', email: 'fajar@astacode.id', tipe: 'Tetap', tim: 'Engineering', jabatan: 'Backend Developer', atasan: 'Bagas Prakoso', level: 'Senior Specialist', statusKerja: 'PKWTT (Tetap)', cutiSisa: 9, workPolicy: 'Hybrid (Onsite & WFH)', status: 'Aktif', masuk: '2022-08-22' },
+  { id: 5, nama: 'Citra Maharani', email: 'citra@astacode.id', tipe: 'Tetap', tim: 'Design', jabatan: 'UI/UX Designer', atasan: 'Bagas Prakoso', level: 'Mid-Level Specialist', statusKerja: 'PKWTT (Tetap)', cutiSisa: 11, workPolicy: 'Hybrid (Onsite & WFH)', status: 'Aktif', masuk: '2023-01-09' },
+  { id: 6, nama: 'Galih Pratama', email: 'galih@astacode.id', tipe: 'Tetap', tim: 'QA', jabatan: 'QA Engineer', atasan: 'Bagas Prakoso', level: 'Mid-Level Specialist', statusKerja: 'PKWT (Kontrak)', cutiSisa: 6, workPolicy: 'Full Onsite', status: 'Aktif', masuk: '2023-05-02' },
+  {
+    id: 7, nama: 'Hana Putri', email: 'hana@gmail.com', tipe: 'Freelance', tim: 'Engineering', jabatan: 'Mobile Developer', atasan: 'Bagas Prakoso', status: 'Aktif', masuk: '2024-02-01',
+    projects: [
+      { id: 'PRJ-MOB-01', nama: 'ASTA Mobile Banking App (Flutter)', fee: 8500000, deadline: '2026-10-30', status: 'In Progress', progres: 75, deliverables: 'Slicing UI & Integrasi REST API Payment' },
+      { id: 'PRJ-MOB-02', nama: 'Push Notification Service & Deep Link', fee: 3500000, deadline: '2026-10-18', status: 'Selesai', progres: 100, deliverables: 'FCM Worker & Foreground Notification' }
+    ]
+  },
+  {
+    id: 8, nama: 'Indra Wijaya', email: 'indra@gmail.com', tipe: 'Freelance', tim: 'Design', jabatan: 'Illustrator & 3D Artist', atasan: 'Citra Maharani', status: 'Aktif', masuk: '2024-07-15',
+    projects: [
+      { id: 'PRJ-DSG-01', nama: 'Design System 3D Iconography & Asset Pack', fee: 6500000, deadline: '2026-10-28', status: 'In Progress', progres: 60, deliverables: '30 Asset 3D Render High-Res Figma' }
+    ]
+  },
+  { id: 9, nama: 'Nadin', email: 'kevin@smkn1.sch.id', tipe: 'PKL', tim: 'Engineering', jabatan: 'Peserta PKL', atasan: 'Fajar Nugroho', status: 'Aktif', masuk: dOff(-30) },
+  { id: 10, nama: 'Laila Zahra', email: 'laila@ui.ac.id', tipe: 'PKL', tim: 'Design', jabatan: 'Peserta PKL', atasan: 'Citra Maharani', status: 'Aktif', masuk: dOff(-45) }
 ];
-const hoursFL = { 7: 96, 8: 64 };
-const absenceDays = { 3: 0, 4: 1, 5: 0, 6: 2 };
+
+const NIGHT = [
+  { id: 1, nama: 'Dewi Lestari', tgl: dOff(-1), waktu: '22:45', alasan: 'Hotfix bug login SSO klien', jam: 2, tipe: 'Insentif', status: 'Approved' },
+  { id: 2, nama: 'Fajar Nugroho', tgl: dOff(-2), waktu: '23:15', alasan: 'Penyelesaian sinkronisasi data SDM', jam: 1.5, tipe: 'Carryover', status: 'Approved' }
+];
 
 const LOGS = [
   { id: 1, tgl: dOff(-1), nama: 'Dewi Lestari', mode: 'Hadir WFH', ringkasan: 'Slicing halaman dashboard + integrasi chart', task: 'ASTA-212', commit: 'github.com/asta/web/pull/88', jam: 7.5 },
-  { id: 2, tgl: dOff(-1), nama: 'Fajar Nugroho', mode: 'Hadir Onsite', ringkasan: 'Optimasi query laporan payroll', task: 'ASTA-219', commit: 'github.com/asta/api/commit/a91f3', jam: 8 },
+  { id: 2, tgl: dOff(-1), nama: 'Fajar Nugroho', mode: 'Hadir Onsite', ringkasan: 'Optimasi query laporan analitik SDM', task: 'ASTA-219', commit: 'github.com/asta/api/commit/a91f3', jam: 8 },
   { id: 3, tgl: dOff(-2), nama: 'Citra Maharani', mode: 'Hadir Onsite', ringkasan: 'Revisi desain onboarding klien', task: 'ASTA-205', commit: '', jam: 6 },
   { id: 4, tgl: dOff(-1), nama: 'Galih Pratama', mode: 'Hadir WFH', ringkasan: 'Regression test rilis 2.4', task: 'ASTA-221', commit: '', jam: 8 }
 ];
@@ -80,10 +105,48 @@ let TEAM_TODAY = EMP.filter(e => e.tipe !== 'PKL').map((e, i) => ({
 }));
 
 const JOBS = [
-  { id: 1, judul: 'Senior Backend Engineer', tim: 'Engineering', level: 'Senior', lokasi: 'Hybrid — Jakarta', skill: 'Node.js, PostgreSQL, AWS', status: 'Published', deskripsi: 'Merancang dan memelihara API untuk produk klien enterprise.' },
-  { id: 2, judul: 'UI/UX Designer', tim: 'Design', level: 'Mid', lokasi: 'WFH', skill: 'Figma, Design System', status: 'Published', deskripsi: 'Membangun pengalaman produk yang konsisten dan indah.' },
-  { id: 3, judul: 'QA Automation Engineer', tim: 'QA', level: 'Mid', lokasi: 'Hybrid — Jakarta', skill: 'Cypress, Playwright', status: 'Draft', deskripsi: 'Mengotomasi pengujian regresi lintas produk.' },
-  { id: 4, judul: 'Project Manager', tim: 'PMO', level: 'Senior', lokasi: 'Onsite', skill: 'Agile, Jira, Stakeholder', status: 'Closed', deskripsi: 'Memimpin delivery proyek software.' }
+  {
+    id: 1, judul: 'Senior Backend Engineer', tim: 'Engineering', level: 'Senior', lokasi: 'Hybrid — Jakarta',
+    skills: [
+      { name: 'Node.js', level: 'Senior' },
+      { name: 'PostgreSQL', level: 'Senior' },
+      { name: 'AWS Cloud', level: 'Mid' },
+      { name: 'Docker / K8s', level: 'Mid' }
+    ],
+    skill: 'Node.js (Senior), PostgreSQL (Senior), AWS Cloud (Mid), Docker / K8s (Mid)',
+    status: 'Published', deskripsi: 'Merancang dan memelihara API untuk produk klien enterprise dengan skalabilitas tinggi.'
+  },
+  {
+    id: 2, judul: 'UI/UX Designer', tim: 'Design', level: 'Mid', lokasi: 'WFH',
+    skills: [
+      { name: 'Figma', level: 'Senior' },
+      { name: 'Design System', level: 'Mid' },
+      { name: 'User Research', level: 'Mid' },
+      { name: 'Prototyping', level: 'Junior' }
+    ],
+    skill: 'Figma (Senior), Design System (Mid), User Research (Mid), Prototyping (Junior)',
+    status: 'Published', deskripsi: 'Membangun antarmuka dan pengalaman produk yang konsisten, modern, dan intuitif.'
+  },
+  {
+    id: 3, judul: 'QA Automation Engineer', tim: 'QA', level: 'Mid', lokasi: 'Hybrid — Jakarta',
+    skills: [
+      { name: 'Cypress', level: 'Mid' },
+      { name: 'Playwright', level: 'Mid' },
+      { name: 'API Testing (Postman)', level: 'Senior' }
+    ],
+    skill: 'Cypress (Mid), Playwright (Mid), API Testing (Senior)',
+    status: 'Draft', deskripsi: 'Mengotomasi pengujian regresi end-to-end dan integrasi API lintas platform.'
+  },
+  {
+    id: 4, judul: 'Project Manager', tim: 'PMO', level: 'Senior', lokasi: 'Onsite',
+    skills: [
+      { name: 'Agile & Scrum', level: 'Senior' },
+      { name: 'Jira Software', level: 'Senior' },
+      { name: 'Stakeholder Management', level: 'Senior' }
+    ],
+    skill: 'Agile & Scrum (Senior), Jira Software (Senior), Stakeholder Management (Senior)',
+    status: 'Closed', deskripsi: 'Memimpin delivery sprint software dan mengkoordinasikan komunikasi klien enterprise.'
+  }
 ];
 const STAGES = ['Applied', 'Screening', 'Interview', 'Technical Test', 'Offering', 'Hired', 'Rejected'];
 const APP = [
@@ -118,20 +181,17 @@ const EVALS = {
 };
 const CERTS = [{ no: 'CERT/ASTA/2025/013', placement: 8, nama: 'Raka Aditya', tampil: true, tgl: dOff(-100), token: 'a1b2c3' }];
 
-const PAYRUN = [
-  { id: 'PR-2026-09', periode: 'September 2026', status: 'Paid', total: 0 },
-  { id: 'PR-2026-10', periode: 'Oktober 2026', status: 'Draft', total: 0 }
-];
 const AUDIT = [
   { t: dOff(-1) + ' 16:20', actor: 'Rina Anggraini', aksi: 'Approve', entitas: 'Klaim malam #2', detail: 'Carryover 1.5 jam — Dewi Lestari' },
   { t: dOff(-2) + ' 10:05', actor: 'Rina Anggraini', aksi: 'Terbitkan', entitas: 'Sertifikat PKL', detail: 'CERT/ASTA/2025/013 — Raka Aditya' },
   { t: dOff(-3) + ' 09:12', actor: 'Super Admin', aksi: 'Ubah', entitas: 'Pengaturan', detail: 'Radius WFH default 200 m' },
-  { t: dOff(-5) + ' 14:41', actor: 'Finance', aksi: 'Finalisasi', entitas: 'PR-2026-09', detail: 'Payroll September dibayar' }
+  { t: dOff(-5) + ' 14:41', actor: 'Rina Anggraini', aksi: 'Sinkronisasi', entitas: 'Rekap SDM', detail: 'Sinkronisasi kehadiran & kinerja bulanan selesai' }
 ];
 const TEMPLATES = {
   accept: { nama: 'Surat Balasan Penerimaan PKL', body: 'Nomor: {{nomor_surat}}\n\nKepada Yth.\nPimpinan {{sekolah}}\n\nDengan hormat,\nMenindaklanjuti surat permohonan PKL, kami dengan senang hati menerima:\n\nNama      : {{nama_siswa}}\nInstansi  : {{sekolah}}\nPeriode   : {{tanggal_mulai}} s.d. {{tanggal_selesai}}\n\nDemikian surat ini kami sampaikan. Atas perhatiannya kami ucapkan terima kasih.' },
   reject: { nama: 'Surat Penolakan PKL (Kuota Penuh)', body: 'Nomor: {{nomor_surat}}\n\nKepada Yth.\nPimpinan {{sekolah}}\n\nDengan hormat,\nMohon maaf, permohonan PKL atas nama {{nama_siswa}} untuk periode {{tanggal_mulai}} s.d. {{tanggal_selesai}} belum dapat kami terima karena kuota peserta pada periode tersebut telah penuh.\n\nKami mempersilakan mengajukan kembali pada periode lain.' },
-  payslip: { nama: 'Slip Gaji', body: 'SLIP GAJI — {{periode}}\nNama: {{nama}}\nTipe: {{tipe}}' },
+  spk: { nama: 'Surat Perjanjian Kerja Sama Proyek Freelance (SPK)', body: 'SURAT PERJANJIAN KERJA SAMA (SPK) PENUGASAN PROYEK\nNomor: SPK/ASTA/HR/{{nomor_surat}}\n\nPada hari ini, telah disepakati penugasan proyek antara Astacode Digital dan:\n\nNama Freelancer : {{nama_karyawan}}\nPeran / Bidang  : {{jabatan}}\nNama Proyek     : {{nama_proyek}}\nTarget Output   : {{deliverables}}\nJangka Waktu    : s.d. {{deadline}}\nNilai Kontrak   : {{nilai_kontrak}}\n\nKedua belah pihak sepakat mematuhi standar kerahasiaan (NDA) dan milestone penyerahan hasil kerja.' },
+  sk_tetap: { nama: 'Surat Keputusan Pengangkatan Karyawan Tetap (SK)', body: 'SURAT KEPUTUSAN DIREKSI & PEOPLE OPS\nNomor: SK/ASTA/HR/{{nomor_surat}}\n\nMenetapkan:\nNama     : {{nama_karyawan}}\nJabatan  : {{jabatan}}\nDivisi   : {{departemen}}\nStatus   : Karyawan Tetap (PKWTT)\nTerhitung: {{tanggal_mulai}}\n\nDengan hak dan kewajiban sebagaimana tertuang dalam Peraturan Perusahaan.' },
   cert: { nama: 'Sertifikat PKL', body: 'Diberikan kepada {{nama_siswa}} atas keberhasilan menyelesaikan PKL.' }
 };
 
@@ -155,23 +215,6 @@ function haversine(a, b, c, d) {
   const h = Math.sin(dLa / 2) ** 2 + Math.cos(t(a)) * Math.cos(t(c)) * Math.sin(dLo / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
-function computePayslip(e) {
-  if (e.tipe === 'Freelance') {
-    const jam = hoursFL[e.id] || 0, gross = jam * e.rate;
-    return { e, items: [{ n: `Jam terlog (${jam} jam × ${rp(e.rate)})`, v: gross }], gross, ded: 0, net: gross };
-  }
-  if (e.tipe === 'Tetap') {
-    const night = NIGHT.filter(n => n.nama === e.nama && n.status === 'Approved' && n.tipe === 'Insentif').reduce((a, n) => a + n.jam, 0);
-    const insentif = Math.min(night, S.settings.incentiveMax) * S.settings.incentiveRate;
-    const potong = (absenceDays[e.id] || 0) * Math.round(e.gaji / 22);
-    const items = [{ n: 'Gaji pokok', v: e.gaji }, { n: 'Tunjangan', v: e.tunj }];
-    if (insentif) items.push({ n: `Insentif Workload Malam (${night} jam)`, v: insentif });
-    const gross = e.gaji + e.tunj + insentif;
-    return { e, items, gross, ded: potong, net: gross - potong, dedNote: potong ? `Potongan ${absenceDays[e.id]} hari tanpa keterangan` : '' };
-  }
-  return null;
-}
-const slips = () => EMP.filter(e => e.tipe !== 'PKL').map(computePayslip);
 
 /* ---------------- UI primitives ---------------- */
 function toast(msg, type = 'info') {
@@ -182,7 +225,7 @@ function toast(msg, type = 'info') {
   setTimeout(() => { el.style.opacity = 0; el.style.transition = '.3s'; setTimeout(() => el.remove(), 300); }, 3600);
 }
 function audit(aksi, entitas, detail) {
-  const u = { hr: 'Rina Anggraini', manager: 'Bagas Prakoso', employee: 'Dewi Lestari', finance: 'Finance' }[S.role];
+  const u = { hr: 'Rina Anggraini', manager: 'Bagas Prakoso', employee: 'Dewi Lestari', freelance: 'Hana Putri', finance: 'Finance' }[S.role] || 'User';
   const n = new Date(); AUDIT.unshift({ t: `${iso(n)} ${nowTime()}`, actor: u, aksi, entitas, detail });
 }
 function openDrawer(title, body, foot = '') {
@@ -243,25 +286,27 @@ const paintAll = () => Object.keys(TBL).forEach(paintTable);
 /* ---------------- Navigation & roles ---------------- */
 const ROLE_ACCESS = {
   hr: ['*'],
-  manager: ['beranda', 'absensi', 'presensi', 'dailylog', 'rekap', 'karyawan', 'rekrutmen', 'lowongan', 'pipeline', 'pkl', 'pengajuan', 'kalender', 'peserta', 'payslip', 'laporan', 'profil'],
-  employee: ['beranda', 'absensi', 'presensi', 'dailylog', 'payslip', 'profil'],
-  finance: ['beranda', 'payroll', 'payslip', 'laporan', 'dokumen', 'profil']
+  manager: ['beranda', 'absensi', 'presensi', 'dailylog', 'workload', 'rekap', 'karyawan', 'rekrutmen', 'lowongan', 'pipeline', 'pkl', 'pengajuan', 'kalender', 'peserta', 'evaluasi', 'sertifikat', 'dokumen', 'laporan', 'profil'],
+  employee: ['beranda', 'absensi', 'presensi', 'dailylog', 'workload', 'dokumen', 'profil'],
+  freelance: ['beranda', 'absensi', 'dailylog', 'dokumen', 'profil']
 };
 const NAV = [
   { id: 'beranda', ico: '<i class=fi-rr-home></i>', label: 'Dashboard' },
-  { id: 'absensi', ico: '<i class=fi-rr-check-circle></i>', label: 'Absensi', kids: [['presensi', 'Presensi Saya'], ['dailylog', 'Daily Log'], ['Workload Malam'], ['rekap', 'Rekap Tim']] },
+  { id: 'absensi', ico: '<i class=fi-rr-check-circle></i>', label: 'Absensi', kids: [['presensi', 'Presensi Saya'], ['dailylog', 'Daily Log'], ['rekap', 'Rekap Tim']] },
   { id: 'karyawan', ico: '<i class=fi-rr-users></i>', label: 'Karyawan' },
   { id: 'rekrutmen', ico: '<i class=fi-rr-bullseye-arrow></i>', label: 'Rekrutmen', kids: [['lowongan', 'Lowongan'], ['pipeline', 'Pipeline Pelamar']] },
   { id: 'pkl', ico: '<i class=fi-rr-graduation-cap></i>', label: 'Manajemen PKL', kids: [['pengajuan', 'Pengajuan'], ['kalender', 'Kalender Kuota'], ['peserta', 'Peserta Aktif'], ['evaluasi', 'Evaluasi'], ['sertifikat', 'Sertifikat']] },
-  { id: 'payroll', ico: '<i class=fi-rr-coins></i>', label: 'Payroll' },
   { id: 'dokumen', ico: '<i class=fi-rr-document></i>', label: 'Dokumen & Template' },
-  { id: 'laporan', ico: '<i class=fi-rr-chart-histogram></i>', label: 'Laporan' },
+  { id: 'laporan', ico: '<i class=fi-rr-chart-histogram></i>', label: 'Laporan SDM' },
   { sep: 1 },
   { id: 'pengaturan', ico: '<i class=fi-rr-settings></i>', label: 'Pengaturan' },
   { id: 'profil', ico: '<i class=fi-rr-user></i>', label: 'Profil Pengguna' }
 ];
 const allowed = id => { const a = ROLE_ACCESS[S.role]; return a.includes('*') || a.includes(id); };
-const badges = () => ({ pengajuan: PKL.filter(p => p.status === 'Menunggu').length });
+const badges = () => ({
+  workload: typeof NIGHT !== 'undefined' ? NIGHT.filter(n => n.status === 'Pending').length : 0,
+  pengajuan: PKL.filter(p => p.status === 'Menunggu').length
+});
 function buildNav() {
   const b = badges(), cur = currentRoute();
   const sbNav = $('#sbNav');
@@ -318,7 +363,7 @@ reg('beranda', 'Beranda', ['Beranda'], () => {
       <div class="grid g4">
         <div class="card stat ok"><div class="k">Hadir hari ini</div><div class="v">${hadir}/${TEAM_TODAY.length}</div><div class="s up">▲ ${Math.round(hadir / TEAM_TODAY.length * 100)}% tim</div></div>
         <div class="card stat inf"><div class="k">Progres terkirim</div><div class="v">${TEAM_TODAY.filter(t => t.load > 0).length}</div><div class="s muted">Daily log hari ini</div></div>
-        <div class="card stat warn"><div class="k">Menunggu approval</div><div class="v">${b.workload + b.pengajuan}</div><div class="s muted">Klaim malam + PKL</div></div>
+        <div class="card stat warn"><div class="k">Menunggu approval</div><div class="v">${(b.workload || 0) + (b.pengajuan || 0)}</div><div class="s muted">Klaim malam + PKL</div></div>
         <div class="card stat"><div class="k">Kuota PKL terisi</div><div class="v">${occupancy(iso(TODAY))}/${S.settings.quotaMax}</div><div class="s muted">Hari ini</div></div>
       </div>
       <div class="card"><div class="card-h"><h3>Ringkasan Progres Tim</h3><a href="#rekap">Lihat rekap →</a></div>
@@ -332,7 +377,7 @@ reg('beranda', 'Beranda', ['Beranda'], () => {
         ${PKL.filter(p => p.status === 'Menunggu').map(p => `<div class="row">${av(p.nama)}<div style="flex:1"><b>${esc(p.nama)}</b><div class="caption">Pengajuan PKL · ${esc(p.instansi)}</div></div><a class="btn btn-sm" href="#pengajuan">Tinjau</a></div>`).join('')}
       </div></div>
       <div class="card"><div class="card-h"><h3>Pengumuman</h3></div><div class="card-b stack">
-        <div class="banner info" style="margin:0"><i class=fi-rr-megaphone></i> <span>Payroll Oktober ditutup tanggal 25. Pastikan Daily Log lengkap.</span></div>
+        <div class="banner info" style="margin:0"><i class=fi-rr-megaphone></i> <span>Rekap absensi &amp; evaluasi SDM bulanan ditutup tanggal 25. Pastikan Daily Log terisi.</span></div>
         <div class="banner ok" style="margin:0"><i class=fi-rr-graduation-cap></i> <span>${PKL.filter(p => p.status === 'Aktif').length} peserta PKL aktif bulan ini.</span></div>
       </div></div>
     </div>
@@ -446,10 +491,10 @@ reg('dailylog', 'Daily Log', ['Absensi', 'Daily Log'], () => `
 });
 
 /* ===== Workload Malam ===== */
-reg('Workload Malam', ['Absensi', 'Workload Malam'], () => `
-  <div class="banner info"><i class=fi-rr-moon></i> <span>Revisi/bugfix setelah <b>${esc(S.settings.nightThreshold)}</b> dapat diklaim. Mode kompensasi: <b>${S.settings.compensation === 'carryover' ? 'Carryover (masuk lebih siang H+1)' : 'Insentif lembur di payroll'}</b>. Approval: <b>${S.settings.claimMode === 'auto' ? 'otomatis bila terhubung commit/task' : 'manual Manajer'}</b>.</span></div>
-  <div class="card">${table({
-  rows: () => NIGHT.map(n => ({ ...n })), size: 6,
+reg('workload', 'Workload Malam', ['Absensi', 'Workload Malam'], () => `
+  <div class="banner info"><i class=fi-rr-moon></i> <span>Revisi/bugfix setelah <b>${esc(S.settings.nightThreshold)}</b> dapat diklaim. Mode kompensasi: <b>${S.settings.compensation === 'carryover' ? 'Carryover (masuk lebih siang H+1)' : 'Insentif jam kerja SDM'}</b>. Approval: <b>${S.settings.claimMode === 'auto' ? 'otomatis bila terhubung commit/task' : 'manual Manajer'}</b>.</span></div>
+  <div class="card">${table('workload', {
+  rows: () => (typeof NIGHT !== 'undefined' ? NIGHT : []).map(n => ({ ...n })), size: 6,
   cols: [
     { k: 'nama', label: 'Karyawan', fmt: r => person(r.nama) }, { k: 'tgl', label: 'Tanggal', fmt: r => fmtD(r.tgl) }, { k: 'waktu', label: 'Waktu submit', cls: 'tabular' },
     { k: 'alasan', label: 'Pekerjaan' }, { k: 'jam', label: 'Jam', cls: 'r num' },
@@ -458,126 +503,1332 @@ reg('Workload Malam', ['Absensi', 'Workload Malam'], () => `
     { k: 'x', label: 'Aksi', sort: false, fmt: r => r.status === 'Pending' && ['hr', 'manager'].includes(S.role) ? `<button class="btn btn-sm btn-success" data-ap="${r.id}">Setujui</button> <button class="btn btn-sm btn-danger" data-rj="${r.id}">Tolak</button>` : '—' }
   ],
   after: h => {
-    $$('[data-ap]', h).forEach(b => b.onclick = () => { const n = NIGHT.find(x => x.id == b.dataset.ap); n.status = 'Approved'; audit('Approve', 'Klaim malam #' + n.id, `${n.tipe} ${n.jam} jam — ${n.nama}`); toast(`Klaim ${n.nama} disetujui` + (n.tipe === 'Carryover' ? ' · carryover H+1 dihitung otomatis' : ' · masuk payroll'), 'success'); buildNav(); paintAll(); });
-    $$('[data-rj]', h).forEach(b => b.onclick = () => { const n = NIGHT.find(x => x.id == b.dataset.rj); n.status = 'Rejected'; audit('Reject', 'Klaim malam #' + n.id, n.nama); toast('Klaim ditolak', 'warn'); buildNav(); paintAll(); });
+    $$('[data-ap]', h).forEach(b => b.onclick = () => { const n = NIGHT.find(x => x.id == b.dataset.ap); if (!n) return; n.status = 'Approved'; audit('Approve', 'Klaim malam #' + n.id, `${n.tipe} ${n.jam} jam — ${n.nama}`); toast(`Klaim ${n.nama} disetujui` + (n.tipe === 'Carryover' ? ' · carryover H+1 dihitung otomatis' : ' · kompensasi SDM dicatat'), 'success'); buildNav(); paintAll(); });
+    $$('[data-rj]', h).forEach(b => b.onclick = () => { const n = NIGHT.find(x => x.id == b.dataset.rj); if (!n) return; n.status = 'Rejected'; audit('Reject', 'Klaim malam #' + n.id, n.nama); toast('Klaim ditolak', 'warn'); buildNav(); paintAll(); });
   }
 })}</div>`, () => paintAll());
 
 /* ===== Rekap Tim ===== */
+let rekapFilterStatus = '';
+
+function showTeamDetail(t) {
+  if (!t) return;
+  const emp = EMP.find(e => e.nama === t.nama) || {};
+  const logs = LOGS.filter(l => l.nama === t.nama);
+  const p = Math.round(t.load / t.cap * 100);
+  const isOk = t.status.includes('Onsite');
+  const isInf = t.status.includes('WFH');
+  const isWarn = t.status.includes('Belum');
+  const statusCls = isOk ? 'success' : isInf ? 'info' : isWarn ? 'warning' : 'danger';
+  const iconStatus = isOk ? 'fi-rr-building' : isInf ? 'fi-rr-home' : isWarn ? 'fi-rr-clock' : 'fi-rr-cross-circle';
+
+  const body = `
+    <div class="stack" style="gap:16px">
+      <!-- Header Profile Card -->
+      <div class="row" style="gap:14px;align-items:center;padding:12px 14px;background:#F8FAFC;border:1px solid var(--border);border-radius:var(--r-md)">
+        ${av(t.nama, 2)}
+        <div style="flex:1">
+          <div class="row" style="gap:8px;align-items:center">
+            <h3 style="margin:0;font-size:16px;font-weight:700">${esc(t.nama)}</h3>
+            ${lz(t.tipe, t.tipe === 'Tetap' ? 'primary' : 'info')}
+          </div>
+          <div class="caption" style="margin-top:2px;color:#475569">
+            <b>${esc(emp.jabatan || 'Staff')}</b> · Tim <b>${esc(t.tim)}</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid g2" style="gap:10px">
+        <div class="card card-b" style="padding:12px;border:1px solid var(--border)">
+          <div class="caption" style="color:var(--text-secondary)">Status Absensi Hari Ini</div>
+          <div class="row" style="gap:6px;margin-top:4px;align-items:center">
+            <i class="${iconStatus}" style="font-size:16px;color:var(--${statusCls})"></i>
+            <b style="font-size:13px">${esc(t.status)}</b>
+          </div>
+          <div class="caption" style="margin-top:4px;color:#64748B">
+            ${emp.tipe === 'Freelance' ? 'Remote Project-Based (Milestone)' : isOk ? 'Wifi Kantor "Asta" (IP: 182.253.11.45)' : isInf ? 'Lokasi WFH: Jakarta Selatan (GPS Terverifikasi)' : 'Belum tercatat absensi hari ini'}
+          </div>
+        </div>
+        <div class="card card-b" style="padding:12px;border:1px solid var(--border)">
+          <div class="caption" style="color:var(--text-secondary)">${emp.tipe === 'Freelance' ? 'Penugasan Proyek' : 'Beban Kerja Harian'}</div>
+          <div class="row" style="justify-content:space-between;margin-top:4px;align-items:center">
+            <b style="font-size:14px">${emp.tipe === 'Freelance' ? `${(emp.projects || []).length} Proyek Aktif` : `${t.load} / ${t.cap} SP`}</b>
+            <span class="caption num" style="font-weight:600">${emp.tipe === 'Freelance' ? 'Per Project' : `${p}%`}</span>
+          </div>
+          <div class="bar ${emp.tipe === 'Freelance' ? 'ok' : p > 100 ? 'bad' : p > 85 ? 'warn' : 'ok'}" style="margin-top:6px"><i style="width:${emp.tipe === 'Freelance' ? '100%' : Math.min(p, 100) + '%'}"></i></div>
+          <div class="caption" style="margin-top:4px;color:#64748B">
+            ${emp.tipe === 'Freelance' ? 'Skema Pembayaran Berbasis Proyek' : p > 100 ? 'Overload — perlu pembagian tugas' : p >= 85 ? 'Kapasitas Penuh' : 'Kapasitas Normal'}
+          </div>
+        </div>
+      </div>
+
+      <!-- KHUSUS FREELANCE: Penugasan Proyek Per-Project -->
+      ${emp.tipe === 'Freelance' ? `
+        <div class="card card-b" style="border:1px solid #BBF7D0;background:#F0FDF4">
+          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div class="row" style="gap:6px;align-items:center">
+              <i class="fi-rr-briefcase" style="color:#16A34A"></i>
+              <b style="font-size:13px;color:#166534">Daftar Proyek Freelance (Per Project)</b>
+            </div>
+            <span class="badge" style="background:#DCFCE7;color:#15803D;font-size:11px"><i class="fi-rr-check"></i> Fee Per Proyek</span>
+          </div>
+          <div class="stack" style="gap:6px">
+            ${(emp.projects && emp.projects.length ? emp.projects : [{ id: 'PRJ', nama: 'Proyek Software Kontrak', fee: 6500000, deadline: dOff(20), status: 'In Progress', progres: 50, deliverables: 'Milestone proyek' }]).map(prj => `
+              <div style="background:#fff;border:1px solid #BBF7D0;border-radius:6px;padding:8px 10px;font-size:12px">
+                <div class="row" style="justify-content:space-between">
+                  <b>${esc(prj.nama)}</b>
+                  <span style="font-weight:700;color:#16A34A">${rp(prj.fee)}</span>
+                </div>
+                <div class="caption" style="margin-top:2px;color:#475569">Deliverables: ${esc(prj.deliverables || '-')}</div>
+                <div class="row" style="justify-content:space-between;margin-top:4px;font-size:11px">
+                  <span>Progres: <b>${prj.progres || 0}%</b> (${esc(prj.status)})</span>
+                  <span>Target: ${fmtD(prj.deadline)}</span>
+                </div>
+                <div class="bar ok" style="margin-top:4px"><i style="width:${prj.progres || 0}%"></i></div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="row" style="justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px dashed #BBF7D0;font-size:12px">
+            <span style="color:#166534;font-weight:600">Total Kompensasi Proyek:</span>
+            <b style="font-size:15px;color:#166534">${rp((emp.projects || []).reduce((sum, prj) => sum + prj.fee, 0))}</b>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Task & Progres Hari Ini -->
+      <div class="card card-b" style="border:1px solid var(--border)">
+        <div class="row" style="gap:6px;align-items:center;margin-bottom:8px">
+          <i class="fi-rr-clipboard-list" style="color:var(--primary)"></i>
+          <b style="font-size:13px">Task & Aktivitas Aktif</b>
+        </div>
+        <div style="background:#F1F5F9;padding:10px 12px;border-radius:6px;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--primary)">TASK HARI INI:</div>
+          <div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:2px">${esc(t.task)}</div>
+        </div>
+        ${logs.length ? `
+          <div class="caption" style="margin-bottom:4px">Ringkasan Daily Log Terakhir:</div>
+          <div style="margin:0;font-size:13px;color:#334155;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;line-height:1.5">
+            ${esc(logs[0].ringkasan)}
+          </div>
+          ${logs[0].commit ? `<div class="caption" style="margin-top:6px"><i class="fi-rr-code-commit"></i> Commit: <a href="https://${esc(logs[0].commit)}" target="_blank" style="color:var(--primary);text-decoration:underline">${esc(logs[0].commit)}</a></div>` : ''}
+        ` : `<div class="caption muted" style="font-style:italic">Belum ada submission daily log untuk hari ini.</div>`}
+      </div>
+
+      <!-- Informasi Kontak & Karyawan -->
+      <div class="card card-b" style="border:1px solid var(--border)">
+        <div class="row" style="gap:6px;align-items:center;margin-bottom:8px">
+          <i class="fi-rr-user" style="color:var(--primary)"></i>
+          <b style="font-size:13px">Informasi Karyawan</b>
+        </div>
+        <dl class="kv" style="grid-template-columns:100px 1fr;gap:6px 10px;font-size:12px">
+          <dt>Email</dt><dd>${esc(emp.email || '-')}</dd>
+          <dt>Tim</dt><dd>${esc(t.tim)}</dd>
+          <dt>Atasan</dt><dd>${esc(emp.atasan || '-')}</dd>
+          <dt>Tipe Pekerja</dt><dd>${esc(t.tipe)}</dd>
+        </dl>
+      </div>
+
+      <!-- Riwayat Log Singkat -->
+      ${logs.length > 1 ? `
+        <div class="card card-b" style="border:1px solid var(--border)">
+          <b style="font-size:12px;margin-bottom:8px;display:block">Riwayat Log Sebelumnya</b>
+          <div class="stack" style="gap:8px">
+            ${logs.slice(1).map(l => `
+              <div style="font-size:12px;border-bottom:1px solid var(--border);padding-bottom:6px">
+                <div class="row" style="justify-content:space-between">
+                  <b>${fmtD(l.tgl)}</b>
+                  <span class="caption">${l.jam} jam · ${l.mode}</span>
+                </div>
+                <div class="muted">${esc(l.ringkasan)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  const foot = `
+    <button class="btn" onclick="closeDrawer()">Tutup</button>
+    ${emp.id ? `<button class="btn btn-outline" id="btnDetailEmpFull"><i class="fi-rr-user"></i> Lihat Profil Lengkap</button>` : ''}
+    <button class="btn btn-primary" id="btnNudgeEmployee"><i class="fi-rr-paper-plane"></i> Kirim Pesan / Notif</button>
+  `;
+
+  openDrawer('Detail Anggota Tim — ' + t.nama, body, foot);
+  if ($('#btnDetailEmpFull')) {
+    $('#btnDetailEmpFull').onclick = () => {
+      closeDrawer();
+      empDrawer(emp);
+    };
+  }
+  if ($('#btnNudgeEmployee')) {
+    $('#btnNudgeEmployee').onclick = () => {
+      toast(`Notifikasi terkirim ke ${t.nama}`, 'success');
+      audit('Kirim Pesan', 'Rekap Tim', `Pesan ke ${t.nama}`);
+      closeDrawer();
+    };
+  }
+}
+
 reg('rekap', 'Rekap Tim', ['Absensi', 'Rekap Tim'], () => `
-  <div class="grid g4" style="margin-bottom:16px">
-    ${['Hadir Onsite', 'Hadir WFH', 'Belum Submit Progres', 'Tanpa Keterangan'].map(s => `<div class="card stat ${s.includes('Onsite') ? 'ok' : s.includes('WFH') ? 'inf' : s.includes('Belum') ? 'warn' : 'bad'}"><div class="k">${s}</div><div class="v">${TEAM_TODAY.filter(t => t.status === s).length}</div></div>`).join('')}
+  <div class="grid g4" style="margin-bottom:16px" id="rekapStatCards">
+    ${['Hadir Onsite', 'Hadir WFH', 'Belum Submit Progres', 'Tanpa Keterangan'].map(s => {
+      const count = TEAM_TODAY.filter(t => t.status === s).length;
+      const isOk = s.includes('Onsite'), isInf = s.includes('WFH'), isWarn = s.includes('Belum');
+      const cls = isOk ? 'ok' : isInf ? 'inf' : isWarn ? 'warn' : 'bad';
+      const isActive = rekapFilterStatus === s;
+      return `
+        <div class="card stat interactive ${cls} ${isActive ? 'active-stat' : ''}" data-stat="${s}" title="Klik untuk memfilter dan melihat detail anggota">
+          <div class="k">${s}</div>
+          <div class="v">${count}</div>
+          <div class="stat-click-hint"><i class="fi-rr-eye"></i> Klik untuk filter & detail</div>
+        </div>`;
+    }).join('')}
   </div>
-  <div class="tabs" id="rekTabs"><button class="on" data-t="tbl">Tabel</button><button data-t="load">Dashboard Workload</button></div>
+  <div class="tabs" id="rekTabs">
+    <button class="on" data-t="tbl"><i class="fi-rr-table"></i> Tabel Anggota</button>
+    <button data-t="load"><i class="fi-rr-chart-histogram"></i> Dashboard Workload</button>
+  </div>
   <div id="rekBody"></div>`, () => {
   const show = t => {
     $$('#rekTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
     if (t === 'tbl') {
       $('#rekBody').innerHTML = `<div class="card">${table('rekap', {
-        rows: () => TEAM_TODAY.map((t, i) => ({ id: i + 1, ...t })),
-        toolbar: () => `<select class="input" id="fStatus"><option value="">Semua status</option>${['Hadir Onsite', 'Hadir WFH', 'Belum Submit Progres', 'Tanpa Keterangan'].map(s => `<option>${s}</option>`).join('')}</select>`,
-        cols: [{ k: 'nama', label: 'Karyawan', fmt: r => person(r.nama, r.tim) }, { k: 'tipe', label: 'Tipe', fmt: r => lz(r.tipe, r.tipe === 'Tetap' ? 'primary' : 'info') }, { k: 'status', label: 'Status', fmt: r => lz(r.status) }, { k: 'task', label: 'Task' }, { k: 'load', label: 'Beban (SP)', cls: 'r num', fmt: r => `${r.load}/${r.cap}` }]
+        rows: () => {
+          let rows = TEAM_TODAY.map((item, i) => ({ id: i + 1, ...item }));
+          if (rekapFilterStatus) {
+            rows = rows.filter(r => r.status === rekapFilterStatus);
+          }
+          return rows;
+        },
+        toolbar: () => `
+          <select class="input" id="fStatus" style="font-weight:500">
+            <option value="" ${rekapFilterStatus === '' ? 'selected' : ''}>— Semua Status (${TEAM_TODAY.length}) —</option>
+            ${['Hadir Onsite', 'Hadir WFH', 'Belum Submit Progres', 'Tanpa Keterangan'].map(s => `
+              <option value="${s}" ${rekapFilterStatus === s ? 'selected' : ''}>${s} (${TEAM_TODAY.filter(x => x.status === s).length})</option>
+            `).join('')}
+          </select>
+          ${rekapFilterStatus ? `<button class="btn btn-sm btn-outline" id="btnResetRekapFilter"><i class="fi-rr-cross-small"></i> Reset Filter</button>` : ''}
+        `,
+        cols: [
+          { k: 'nama', label: 'Karyawan', fmt: r => person(r.nama, r.tim) },
+          { k: 'tipe', label: 'Tipe', fmt: r => lz(r.tipe, r.tipe === 'Tetap' ? 'primary' : 'info') },
+          { k: 'status', label: 'Status Absensi', fmt: r => lz(r.status) },
+          { k: 'task', label: 'Task Harian', fmt: r => `<div style="font-weight:500">${esc(r.task)}</div>` },
+          { k: 'load', label: 'Beban (SP)', cls: 'r num', fmt: r => {
+            const p = Math.round(r.load / r.cap * 100);
+            return `<div style="display:inline-block;text-align:right"><div><b>${r.load}/${r.cap}</b></div><div class="caption ${p > 100 ? 'down' : ''}">${p}%</div></div>`;
+          } },
+          { k: 'aksi', label: 'Aksi', sort: false, cls: 'r', fmt: r => `<button class="btn btn-sm btn-outline" data-team-detail="${r.nama}" style="padding:4px 10px"><i class="fi-rr-eye"></i> Detail</button>` }
+        ],
+        onRow: id => {
+          const item = TEAM_TODAY[id - 1];
+          if (item) showTeamDetail(item);
+        },
+        after: h => {
+          const fs = $('#fStatus', h);
+          if (fs) {
+            fs.onchange = () => {
+              rekapFilterStatus = fs.value;
+              updateStatCardsHighlight();
+              paintTable('rekap');
+            };
+          }
+          const rst = $('#btnResetRekapFilter', h);
+          if (rst) {
+            rst.onclick = () => {
+              rekapFilterStatus = '';
+              updateStatCardsHighlight();
+              paintTable('rekap');
+            };
+          }
+          $$('[data-team-detail]', h).forEach(btn => {
+            btn.onclick = e => {
+              e.stopPropagation();
+              const item = TEAM_TODAY.find(x => x.nama === btn.dataset.teamDetail);
+              if (item) showTeamDetail(item);
+            };
+          });
+        }
       })}</div>`;
       paintTable('rekap');
     } else {
-      $('#rekBody').innerHTML = `<div class="card"><div class="card-h"><h3>Kapasitas & Beban Kerja (story point harian)</h3></div><div class="card-b stack">
-        ${TEAM_TODAY.map(t => { const p = Math.round(t.load / t.cap * 100); return `<div><div class="row"><b>${esc(t.nama)}</b><span class="spacer"></span><span class="caption num">${t.load}/${t.cap} SP · ${p}%</span></div><div class="bar ${p > 100 ? 'bad' : p > 85 ? 'warn' : 'ok'}"><i style="width:${Math.min(p, 100)}%"></i></div>${p > 100 ? '<div class="caption down">Overload — pertimbangkan redistribusi</div>' : ''}</div>`; }).join('')}</div></div>`;
+      $('#rekBody').innerHTML = `<div class="card"><div class="card-h" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="margin:0">Kapasitas & Beban Kerja (Story Point Harian)</h3>
+          <span class="caption">Klik kartu untuk melihat rincian progres & data karyawan</span>
+        </div>
+        <span class="badge" style="background:#eef2ff;color:#3730a3">Kapasitas standar: 8 SP</span>
+      </div>
+      <div class="card-b stack" style="gap:10px">
+        ${TEAM_TODAY.map(t => {
+          const p = Math.round(t.load / t.cap * 100);
+          return `
+            <div class="workload-card-item" data-team-workload="${t.nama}">
+              <div class="row" style="justify-content:space-between;align-items:center">
+                <div class="row" style="gap:10px;align-items:center">
+                  ${av(t.nama, 1)}
+                  <div>
+                    <div class="row" style="gap:6px;align-items:center">
+                      <b style="color:#0f172a">${esc(t.nama)}</b>
+                      <span class="caption muted">(${esc(t.tim)})</span>
+                      ${lz(t.status)}
+                    </div>
+                    <div class="caption" style="margin-top:2px;color:#64748b">Task: ${esc(t.task)}</div>
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div class="num" style="font-weight:700;font-size:14px">${t.load}/${t.cap} SP <span style="font-size:12px;font-weight:normal;color:#64748b">(${p}%)</span></div>
+                  <button class="btn btn-sm btn-outline" style="padding:2px 8px;font-size:11px;margin-top:4px"><i class="fi-rr-eye"></i> Detail</button>
+                </div>
+              </div>
+              <div class="bar ${p > 100 ? 'bad' : p > 85 ? 'warn' : 'ok'}" style="margin-top:8px"><i style="width:${Math.min(p, 100)}%"></i></div>
+              ${p > 100 ? '<div class="caption down" style="margin-top:4px;font-weight:600"><i class="fi-rr-triangle-warning"></i> Overload kapasitas — pertimbangkan redistribusi task</div>' : ''}
+            </div>`;
+        }).join('')}</div></div>`;
+
+      $$('[data-team-workload]').forEach(card => {
+        card.onclick = () => {
+          const item = TEAM_TODAY.find(x => x.nama === card.dataset.teamWorkload);
+          if (item) showTeamDetail(item);
+        };
+      });
     }
   };
-  $$('#rekTabs button').forEach(b => b.onclick = () => show(b.dataset.t)); show('tbl');
+
+  const updateStatCardsHighlight = () => {
+    $$('#rekapStatCards [data-stat]').forEach(card => {
+      card.classList.toggle('active-stat', card.dataset.stat === rekapFilterStatus);
+    });
+  };
+
+  // Wire up stat cards click
+  $$('#rekapStatCards [data-stat]').forEach(card => {
+    card.onclick = () => {
+      const s = card.dataset.stat;
+      if (rekapFilterStatus === s) {
+        rekapFilterStatus = '';
+        toast('Filter status dibatalkan', 'info');
+      } else {
+        rekapFilterStatus = s;
+        const matching = TEAM_TODAY.filter(t => t.status === s);
+        toast(`Memfilter status: ${s} (${matching.length} orang)`, 'info');
+      }
+      updateStatCardsHighlight();
+      show('tbl');
+    };
+  });
+
+  $$('#rekTabs button').forEach(b => b.onclick = () => show(b.dataset.t));
+  show('tbl');
 });
 
 /* ===== Karyawan ===== */
+function renderPrjRow(p = {}, idx = 0) {
+  return `
+    <div class="prj-row" data-prj-idx="${idx}" style="background:#fff;border:1px solid #BBF7D0;border-radius:var(--r-md);padding:12px;margin-bottom:10px">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+        <b style="font-size:12px;color:#166534"><i class="fi-rr-folder"></i> Proyek Kontrak #${idx + 1}</b>
+        ${idx > 0 ? `<button type="button" class="btn btn-sm btn-outline btn-del-prj-row" style="color:var(--danger);padding:2px 8px;font-size:11px"><i class="fi-rr-trash"></i> Hapus</button>` : ''}
+      </div>
+      <div class="form-grid">
+        <div class="field full"><label class="lbl">Nama Proyek Kontrak *</label><input class="input prj-nama" value="${esc(p.nama || '')}" placeholder="Contoh: ASTA Mobile Banking App (Flutter)"><div class="err">Nama proyek wajib diisi</div></div>
+        <div class="field"><label class="lbl">Fee Kontrak Proyek (Rp) *</label><input class="input prj-fee" type="number" value="${p.fee || 7500000}" placeholder="Contoh: 7500000"></div>
+        <div class="field"><label class="lbl">Status Proyek</label>
+          <select class="input prj-status">
+            <option value="In Progress" ${p.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+            <option value="Review" ${p.status === 'Review' ? 'selected' : ''}>Review / QA</option>
+            <option value="Selesai" ${p.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+          </select>
+        </div>
+        <div class="field full"><label class="lbl">Deliverables / Output Pekerjaan</label><input class="input prj-deliverables" value="${esc(p.deliverables || '')}" placeholder="Contoh: Slicing UI 15 Screen & Integrasi Payment Gateway REST API"></div>
+        <div class="field"><label class="lbl">Target Deadline</label><input class="input prj-deadline" type="date" value="${p.deadline || dOff(30)}"></div>
+        <div class="field"><label class="lbl">Progres Pengerjaan (%)</label><input class="input prj-progres" type="number" min="0" max="100" value="${p.progres || 50}"></div>
+      </div>
+    </div>
+  `;
+}
+
 function empForm(e = {}) {
-  return `<form id="empForm" class="form-grid" novalidate>
-    <div class="field"><label class="lbl" for="eNama">Nama *</label><input class="input" id="eNama" value="${esc(e.nama)}"><div class="err">Wajib diisi</div></div>
-    <div class="field"><label class="lbl" for="eEmail">Email *</label><input class="input" id="eEmail" type="email" value="${esc(e.email)}"><div class="err">Email tidak valid</div></div>
-    <div class="field"><label class="lbl" for="eTipe">Tipe pekerja</label><select class="input" id="eTipe">${['Tetap', 'Freelance', 'PKL'].map(t => `<option ${e.tipe === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-    <div class="field"><label class="lbl" for="eTim">Tim</label><input class="input" id="eTim" value="${esc(e.tim || 'Engineering')}"></div>
-    <div class="field"><label class="lbl" for="eJab">Jabatan</label><input class="input" id="eJab" value="${esc(e.jabatan)}"></div>
-    <div class="field"><label class="lbl" for="eAtasan">Atasan</label><input class="input" id="eAtasan" value="${esc(e.atasan)}"></div>
-    <div class="field"><label class="lbl" for="eGaji">Gaji pokok (Tetap)</label><input class="input" id="eGaji" type="number" value="${e.gaji || 0}"></div>
-    <div class="field"><label class="lbl" for="eRate">Hourly rate (Freelance)</label><input class="input" id="eRate" type="number" value="${e.rate || 0}"></div>
+  const isFreelance = e.tipe === 'Freelance';
+  const prjs = (Array.isArray(e.projects) && e.projects.length) ? e.projects : [{
+    nama: 'ASTA Mobile Banking App (Flutter)',
+    fee: 8500000,
+    status: 'In Progress',
+    deliverables: 'Slicing UI & Integrasi REST API Payment',
+    deadline: dOff(30),
+    progres: 50
+  }];
+  return `<form id="empForm" class="stack" style="gap:14px" novalidate>
+    <div class="form-grid">
+      <div class="field"><label class="lbl" for="eNama">Nama Lengkap *</label><input class="input" id="eNama" value="${esc(e.nama || '')}" placeholder="Nama lengkap karyawan..."><div class="err">Wajib diisi</div></div>
+      <div class="field"><label class="lbl" for="eEmail">Email Resmi *</label><input class="input" id="eEmail" type="email" value="${esc(e.email || '')}" placeholder="nama@astacode.id atau gmail.com"><div class="err">Email tidak valid</div></div>
+      <div class="field"><label class="lbl" for="eTipe">Tipe Pekerja *</label>
+        <select class="input" id="eTipe">
+          ${['Tetap', 'Freelance', 'PKL'].map(t => `<option ${e.tipe === t ? 'selected' : ''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label class="lbl" for="eTim">Tim / Divisi</label><input class="input" id="eTim" value="${esc(e.tim || 'Engineering')}" placeholder="Engineering, Design, QA..."></div>
+      <div class="field"><label class="lbl" for="eJab">Jabatan / Posisi</label><input class="input" id="eJab" value="${esc(e.jabatan || '')}" placeholder="Mobile Developer, UI Designer..."></div>
+      <div class="field"><label class="lbl" for="eAtasan">Atasan Langsung</label><input class="input" id="eAtasan" value="${esc(e.atasan || 'Bagas Prakoso')}" placeholder="Nama manager/lead..."></div>
+    </div>
+
+    <!-- Dynamic Section: Penempatan & Hubungan Kerja SDM (Tetap) -->
+    <div id="compSecTetap" style="display:${isFreelance || e.tipe === 'PKL' ? 'none' : 'block'};background:#F8FAFC;border:1px solid var(--border);border-radius:var(--r-md);padding:14px">
+      <div style="font-weight:700;font-size:13px;color:#0F172A;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        <i class="fi-rr-user-gear" style="color:var(--primary)"></i> Penempatan & Hubungan Kerja SDM (Karyawan Tetap)
+      </div>
+      <div class="form-grid">
+        <div class="field"><label class="lbl" for="eLevel">Jenjang / Level SDM</label>
+          <select class="input" id="eLevel">
+            ${['Junior Staff', 'Mid-Level Specialist', 'Senior Specialist', 'Lead / Principal', 'Head of People'].map(l => `<option value="${l}" ${(e.level || 'Senior Specialist') === l ? 'selected' : ''}>${l}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label class="lbl" for="eStatusKerja">Status Hubungan Kerja</label>
+          <select class="input" id="eStatusKerja">
+            ${['PKWTT (Tetap)', 'PKWT (Kontrak)', 'Probation (Masa Percobaan)'].map(s => `<option value="${s}" ${(e.statusKerja || 'PKWTT (Tetap)') === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label class="lbl" for="eWorkPolicy">Kebijakan Kerja</label>
+          <select class="input" id="eWorkPolicy">
+            ${['Hybrid (Onsite & WFH)', 'Full Onsite', 'Remote Approved'].map(p => `<option value="${p}" ${(e.workPolicy || 'Hybrid (Onsite & WFH)') === p ? 'selected' : ''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label class="lbl" for="eCutiSisa">Hak Cuti Tahunan (Hari)</label><input class="input" id="eCutiSisa" type="number" min="0" max="24" value="${e.cutiSisa ?? 12}"></div>
+      </div>
+    </div>
+
+    <div id="compSecFreelance" style="display:${isFreelance ? 'block' : 'none'};background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--r-md);padding:14px">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-weight:700;font-size:13px;color:#166534;display:flex;align-items:center;gap:6px">
+          <i class="fi-rr-briefcase" style="color:#16A34A"></i> Skema Freelance: Pembayaran Berbasis Proyek (Per Project)
+        </div>
+        <span class="badge" style="background:#DCFCE7;color:#15803D;font-weight:600;font-size:11px">Kontrak Per Proyek</span>
+      </div>
+      <div class="caption" style="color:#15803D;margin-bottom:12px">
+        Freelancer dikelola berdasarkan penugasan proyek, ruang lingkup (deliverables), dan target deadline (bukan jam kerja presensi harian).
+      </div>
+      <div id="prjRowsContainer">
+        ${prjs.map((p, i) => renderPrjRow(p, i)).join('')}
+      </div>
+      <button type="button" class="btn btn-sm btn-outline" id="btnAddPrjRow" style="color:#166534;border-color:#86EFAC">
+        <i class="fi-rr-plus"></i> Tambah Proyek Lain
+      </button>
+    </div>
   </form>`;
 }
+
 function saveEmp(existing) {
-  const nama = $('#eNama').value.trim(), email = $('#eEmail').value.trim();
+  const nama = $('#eNama').value.trim(), email = $('#eEmail').value.trim(), tipe = $('#eTipe').value;
   const okN = !!nama, okE = /^\S+@\S+\.\S+$/.test(email);
   $('#eNama').closest('.field').classList.toggle('has-err', !okN); $('#eEmail').closest('.field').classList.toggle('has-err', !okE);
   if (!okN || !okE) return false;
-  const d = { nama, email, tipe: $('#eTipe').value, tim: $('#eTim').value, jabatan: $('#eJab').value, atasan: $('#eAtasan').value, gaji: +$('#eGaji').value, rate: +$('#eRate').value };
-  if (existing) Object.assign(existing, d); else EMP.push({ id: Date.now(), tunj: 0, status: 'Aktif', masuk: iso(TODAY), ...d });
-  audit(existing ? 'Ubah' : 'Tambah', 'Karyawan', nama); toast('Data karyawan disimpan', 'success'); return true;
+
+  let projects = [];
+  if (tipe === 'Freelance') {
+    const rows = $$('#prjRowsContainer .prj-row');
+    rows.forEach((row, i) => {
+      const pNama = $('.prj-nama', row)?.value.trim() || `Proyek Kontrak #${i + 1}`;
+      const pFee = +$('.prj-fee', row)?.value || 5000000;
+      const pStatus = $('.prj-status', row)?.value || 'In Progress';
+      const pDeliverables = $('.prj-deliverables', row)?.value.trim() || 'Penyelesaian milestone proyek';
+      const pDeadline = $('.prj-deadline', row)?.value || dOff(30);
+      const pProgres = +$('.prj-progres', row)?.value || 0;
+      const oldId = existing?.projects?.[i]?.id || `PRJ-${Date.now().toString().slice(-4)}-${i + 1}`;
+      projects.push({
+        id: oldId,
+        nama: pNama,
+        fee: pFee,
+        status: pStatus,
+        deliverables: pDeliverables,
+        deadline: pDeadline,
+        progres: pProgres
+      });
+    });
+    if (!projects.length) {
+      projects.push({
+        id: 'PRJ-' + Date.now().toString().slice(-4),
+        nama: 'Proyek Software Kontrak',
+        fee: 6500000,
+        status: 'In Progress',
+        deliverables: 'Penyelesaian milestone proyek',
+        deadline: dOff(30),
+        progres: 50
+      });
+    }
+  }
+
+  const d = {
+    nama, email, tipe,
+    tim: $('#eTim').value || 'Engineering',
+    jabatan: $('#eJab').value || 'Staff',
+    atasan: $('#eAtasan').value || 'Bagas Prakoso',
+    level: tipe === 'Tetap' ? ($('#eLevel')?.value || 'Senior Specialist') : '',
+    statusKerja: tipe === 'Tetap' ? ($('#eStatusKerja')?.value || 'PKWTT (Tetap)') : '',
+    workPolicy: tipe === 'Tetap' ? ($('#eWorkPolicy')?.value || 'Hybrid (Onsite & WFH)') : 'Remote Project-Based',
+    cutiSisa: tipe === 'Tetap' ? +($('#eCutiSisa')?.value || 12) : 0,
+    rate: 0,
+    projects: tipe === 'Freelance' ? projects : []
+  };
+
+  if (existing) Object.assign(existing, d);
+  else EMP.push({ id: Date.now(), status: 'Aktif', masuk: iso(TODAY), ...d });
+
+  audit(existing ? 'Ubah' : 'Tambah', 'Karyawan', `${nama} (${tipe})`);
+  toast('Data karyawan disimpan', 'success');
+  return true;
 }
-reg('karyawan', 'Karyawan', ['Karyawan'], () => `
+
+function openEmpModal(existing) {
+  openModal(existing ? 'Ubah Data Karyawan' : 'Tambah Karyawan', empForm(existing),
+    '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave"><i class="fi-rr-disk"></i> Simpan Data</button>', true);
+  
+  const selT = $('#eTipe');
+  if (selT) {
+    const updateTipe = () => {
+      const isTetap = selT.value === 'Tetap';
+      const isFL = selT.value === 'Freelance';
+      if ($('#compSecTetap')) $('#compSecTetap').style.display = isTetap ? 'block' : 'none';
+      if ($('#compSecFreelance')) $('#compSecFreelance').style.display = isFL ? 'block' : 'none';
+    };
+    selT.onchange = updateTipe;
+    updateTipe();
+  }
+
+  const bindDelPrjButtons = () => {
+    $$('.btn-del-prj-row').forEach(b => {
+      b.onclick = () => {
+        const row = b.closest('.prj-row');
+        const container = $('#prjRowsContainer');
+        if (row && container && container.querySelectorAll('.prj-row').length > 1) {
+          row.remove();
+        } else {
+          toast('Minimal 1 penugasan proyek untuk skema freelance', 'warn');
+        }
+      };
+    });
+  };
+  bindDelPrjButtons();
+
+  const btnAddRow = $('#btnAddPrjRow');
+  if (btnAddRow) {
+    btnAddRow.onclick = () => {
+      const container = $('#prjRowsContainer');
+      if (!container) return;
+      const count = container.querySelectorAll('.prj-row').length;
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = renderPrjRow({ nama: '', fee: 5000000, status: 'In Progress', deliverables: '', deadline: dOff(30), progres: 0 }, count);
+      container.appendChild(tempDiv.firstElementChild);
+      bindDelPrjButtons();
+    };
+  }
+
+  $('#mCancel').onclick = closeModal;
+  $('#mSave').onclick = () => {
+    if (saveEmp(existing)) {
+      closeModal();
+      paintTable('emp');
+      if (existing) empDrawer(existing);
+    }
+  };
+}
+
+function openProjectModal(emp, prj = null) {
+  const isEdit = !!prj;
+  const p = prj || {
+    id: 'PRJ-' + Date.now().toString().slice(-4),
+    nama: '',
+    fee: 5000000,
+    status: 'In Progress',
+    deliverables: '',
+    deadline: dOff(30),
+    progres: 0
+  };
+
+  const body = `
+    <form id="prjSingleForm" class="stack" style="gap:12px" novalidate>
+      <div class="field"><label class="lbl" for="pNama">Nama Proyek Kontrak *</label><input class="input" id="pNama" value="${esc(p.nama)}" placeholder="Contoh: Implementasi Payment Gateway API"><div class="err">Nama proyek wajib diisi</div></div>
+      <div class="form-grid">
+        <div class="field"><label class="lbl" for="pFee">Fee Proyek (Rp) *</label><input class="input" id="pFee" type="number" value="${p.fee}" placeholder="Contoh: 7500000"></div>
+        <div class="field"><label class="lbl" for="pStatus">Status Proyek</label>
+          <select class="input" id="pStatus">
+            <option value="In Progress" ${p.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+            <option value="Review" ${p.status === 'Review' ? 'selected' : ''}>Review / QA</option>
+            <option value="Selesai" ${p.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label class="lbl" for="pDeliv">Deliverables / Milestone Output</label><input class="input" id="pDeliv" value="${esc(p.deliverables)}" placeholder="Contoh: Modul checkout, callback webhook, & unit testing"></div>
+      <div class="form-grid">
+        <div class="field"><label class="lbl" for="pDeadline">Target Deadline</label><input class="input" id="pDeadline" type="date" value="${p.deadline || dOff(30)}"></div>
+        <div class="field"><label class="lbl" for="pProgres">Progres Milestone (%)</label><input class="input" id="pProgres" type="number" min="0" max="100" value="${p.progres || 0}"></div>
+      </div>
+    </form>
+  `;
+
+  openModal(isEdit ? 'Ubah Proyek — ' + emp.nama : 'Tambah Proyek Freelance — ' + emp.nama, body,
+    '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSavePrj"><i class="fi-rr-disk"></i> Simpan Proyek</button>');
+
+  $('#mCancel').onclick = closeModal;
+  $('#mSavePrj').onclick = () => {
+    const nama = $('#pNama').value.trim();
+    if (!nama) {
+      $('#pNama').closest('.field').classList.add('has-err');
+      return;
+    }
+    const fee = +$('#pFee').value || 0;
+    const status = $('#pStatus').value;
+    const deliverables = $('#pDeliv').value.trim();
+    const deadline = $('#pDeadline').value;
+    const progres = +$('#pProgres').value || 0;
+
+    if (!Array.isArray(emp.projects)) emp.projects = [];
+
+    if (isEdit) {
+      Object.assign(prj, { nama, fee, status, deliverables, deadline, progres });
+      audit('Ubah Proyek Freelance', 'Karyawan', `${emp.nama} — ${nama} (${rp(fee)})`);
+      toast(`Proyek "${nama}" diperbarui`, 'success');
+    } else {
+      emp.projects.push({
+        id: p.id,
+        nama,
+        fee,
+        status,
+        deliverables,
+        deadline,
+        progres
+      });
+      audit('Tambah Proyek Freelance', 'Karyawan', `${emp.nama} — ${nama} (${rp(fee)})`);
+      toast(`Proyek "${nama}" berhasil ditambahkan ke ${emp.nama}`, 'success');
+    }
+    closeModal();
+    paintTable('emp');
+    empDrawer(emp);
+  };
+}
+
+reg('karyawan', 'Data Karyawan', ['Data Karyawan'], () => `
+  <!-- Stat Cards Interaktif Karyawan -->
+  <div class="grid g4" style="margin-bottom:16px" id="empStatCards">
+    ${[
+      { label: 'Semua Karyawan', key: 'Semua', count: EMP.length, cls: 'ok' },
+      { label: 'Karyawan Tetap', key: 'Tetap', count: EMP.filter(e => e.tipe === 'Tetap').length, cls: 'inf' },
+      { label: 'Freelance (Per Proyek)', key: 'Freelance', count: EMP.filter(e => e.tipe === 'Freelance').length, cls: 'warn' },
+      { label: 'Peserta PKL', key: 'PKL', count: EMP.filter(e => e.tipe === 'PKL').length, cls: 'bad' }
+    ].map(s => {
+      const isSel = (TBL.emp?.f || 'Semua') === s.key;
+      return `
+        <div class="card stat interactive ${s.cls} ${isSel ? 'active-stat' : ''}" data-emp-stat="${s.key}" title="Klik untuk memfilter & melihat data ${s.label}">
+          <div class="k">${s.label}</div>
+          <div class="v">${s.count}</div>
+          <div class="stat-click-hint"><i class="fi-rr-eye"></i> Klik untuk filter & detail</div>
+        </div>`;
+    }).join('')}
+  </div>
+
   <div class="card">${table('emp', {
-  rows: () => EMP, size: 8,
+  rows: () => EMP.filter(e => !TBL.emp?.f || TBL.emp.f === 'Semua' || e.tipe === TBL.emp.f),
+  size: 8,
   bulk: '<button class="btn btn-sm" id="bulkExport">Ekspor</button> <button class="btn btn-sm" id="bulkMsg">Kirim pengumuman</button>',
-  toolbar: () => `<div class="row" id="empChips">${['Semua', 'Tetap', 'Freelance', 'PKL'].map(c => `<button class="chip ${(TBL.emp.f || 'Semua') === c ? 'on' : ''}" data-f="${c}">${c}</button>`).join('')}</div>`,
+  toolbar: () => `
+    <div class="row" id="empChips">
+      ${['Semua', 'Tetap', 'Freelance', 'PKL'].map(c => `
+        <button class="chip ${(TBL.emp.f || 'Semua') === c ? 'on' : ''}" data-f="${c}">${c === 'Freelance' ? 'Freelance (Per Proyek)' : c}</button>
+      `).join('')}
+    </div>
+  `,
   cols: [
-    { k: 'nama', label: 'Nama', fmt: r => person(r.nama, r.email) },
-    { k: 'tipe', label: 'Tipe', fmt: r => lz(r.tipe, { Tetap: 'primary', Freelance: 'info', PKL: 'warning' }[r.tipe]) },
-    { k: 'tim', label: 'Tim' }, { k: 'jabatan', label: 'Jabatan' }, { k: 'atasan', label: 'Atasan' }, { k: 'status', label: 'Status', fmt: r => lz(r.status) }
+    { k: 'nama', label: 'Nama & Kontak', fmt: r => person(r.nama, r.email) },
+    { k: 'tipe', label: 'Tipe Pekerja', fmt: r => lz(r.tipe, { Tetap: 'primary', Freelance: 'info', PKL: 'warning' }[r.tipe]) },
+    { k: 'tim', label: 'Tim / Divisi' },
+    { k: 'jabatan', label: 'Jabatan / Peran' },
+    {
+      k: 'penugasan',
+      label: 'Penugasan & Peran SDM',
+      fmt: r => {
+        if (r.tipe === 'Freelance') {
+          const prjCount = (r.projects || []).length;
+          const firstPrj = r.projects?.[0]?.nama || 'Penugasan SPK Proyek';
+          return `<div><span class="badge" style="background:#DCFCE7;color:#15803D;font-size:11px"><i class="fi-rr-briefcase"></i> Per Proyek</span></div><div style="font-size:11px;color:#166534;margin-top:2px"><b>${prjCount} Proyek Aktif</b> · ${esc(firstPrj.length > 20 ? firstPrj.slice(0, 18) + '...' : firstPrj)}</div>`;
+        }
+        if (r.tipe === 'Tetap') {
+          return `<div><span class="badge" style="background:#EFF6FF;color:#1D4ED8;font-size:11px"><i class="fi-rr-badge-check"></i> ${esc(r.level || 'Senior Specialist')}</span></div><div class="caption">${esc(r.statusKerja || 'PKWTT (Tetap)')}</div>`;
+        }
+        return `<div><span class="badge" style="background:#FEF3C7;color:#92400E;font-size:11px"><i class="fi-rr-graduation-cap"></i> Siswa PKL</span></div><div class="caption">Program Vokasi</div>`;
+      }
+    },
+    { k: 'status', label: 'Status', fmt: r => lz(r.status) },
+    { k: 'aksi', label: 'Aksi', sort: false, cls: 'r', fmt: r => `<button class="btn btn-sm btn-outline" data-emp-view="${r.id}" style="padding:4px 10px"><i class="fi-rr-eye"></i> Detail</button>` }
   ],
-  onRow: id => { const e = EMP.find(x => x.id === id); empDrawer(e); },
+  onRow: id => { const e = EMP.find(x => x.id === id); if (e) empDrawer(e); },
   after: h => {
-    $$('[data-f]', h).forEach(b => b.onclick = () => { TBL.emp.f = b.dataset.f; TBL.emp.page = 1; paintTable('emp'); });
+    $$('[data-f]', h).forEach(b => b.onclick = () => {
+      TBL.emp.f = b.dataset.f;
+      TBL.emp.page = 1;
+      updateEmpStatHighlight();
+      paintTable('emp');
+    });
+    $$('[data-emp-view]', h).forEach(b => b.onclick = (ev) => {
+      ev.stopPropagation();
+      const emp = EMP.find(x => x.id === +b.dataset.empView);
+      if (emp) empDrawer(emp);
+    });
     const bx = $('#bulkExport', h); if (bx) bx.onclick = () => toast(`${TBL.emp.sel.size} karyawan diekspor ke CSV`, 'success');
-    const bm = $('#bulkMsg', h); if (bm) bm.onclick = () => toast('Pengumuman terkirim', 'success');
+    const bm = $('#bulkMsg', h); if (bm) bm.onclick = () => toast('Pengumuman terkirim ke anggota terpilih', 'success');
   }
 })}</div>`, () => {
-  const t = TBL.emp, base = t.rows; t.rows = () => base().filter(e => !t.f || t.f === 'Semua' || e.tipe === t.f); paintTable('emp');
-}, () => `<button class="btn btn-primary" id="btnAddEmp">+ Tambah Karyawan</button>`);
+  const updateEmpStatHighlight = () => {
+    const curF = TBL.emp?.f || 'Semua';
+    $$('#empStatCards [data-emp-stat]').forEach(card => {
+      card.classList.toggle('active-stat', card.dataset.empStat === curF);
+    });
+    $$('#empChips .chip').forEach(ch => ch.classList.toggle('on', ch.dataset.f === curF));
+  };
+
+  $$('#empStatCards [data-emp-stat]').forEach(card => {
+    card.onclick = () => {
+      const k = card.dataset.empStat;
+      TBL.emp.f = k;
+      TBL.emp.page = 1;
+      const count = k === 'Semua' ? EMP.length : EMP.filter(e => e.tipe === k).length;
+      toast(`Menampilkan kategori: ${k} (${count} orang)`, 'info');
+      updateEmpStatHighlight();
+      paintTable('emp');
+    };
+  });
+
+  paintTable('emp');
+}, () => `<button class="btn btn-primary" id="btnAddEmp"><i class="fi-rr-plus"></i> Tambah Karyawan</button>`);
+
 function empDrawer(e) {
-  const s = e.tipe === 'PKL' ? null : computePayslip(e);
-  openDrawer(e.nama, `
-    <div class="person" style="margin-bottom:16px">${av(e.nama)}<div><h3>${esc(e.nama)}</h3><div class="caption">${esc(e.jabatan)} · ${esc(e.tim)}</div></div></div>
-    <dl class="kv"><dt>Email</dt><dd>${esc(e.email)}</dd><dt>Tipe</dt><dd>${lz(e.tipe, { Tetap: 'primary', Freelance: 'info', PKL: 'warning' }[e.tipe])}</dd><dt>Atasan</dt><dd>${esc(e.atasan)}</dd><dt>Bergabung</dt><dd>${fmtD(e.masuk)}</dd>
-    <dt>${e.tipe === 'Freelance' ? 'Hourly rate' : 'Gaji pokok'}</dt><dd class="num">${S.role === 'hr' || S.role === 'finance' ? (e.tipe === 'Freelance' ? rp(e.rate) + '/jam' : e.tipe === 'Tetap' ? rp(e.gaji) : '—') : '••••••'}</dd></dl>
-    <div class="sep"></div><h3 style="margin-bottom:8px">Dokumen</h3>
-    ${['Kontrak kerja.pdf', 'KTP.jpg', 'NPWP.pdf'].map(d => `<div class="row" style="padding:4px 0"><i class=fi-rr-clip></i> ${d}<span class="spacer"></span>${S.role === 'hr' ? '<a href="#" data-dl>Unduh</a>' : lz('Terbatas')}</div>`).join('')}
-    ${s ? `<div class="sep"></div><h3 style="margin-bottom:8px">Estimasi gaji bulan ini</h3><div class="num" style="font-size:22px;font-weight:600">${rp(s.net)}</div>` : ''}`,
-    S.role === 'hr' ? '<button class="btn" id="dEdit">Ubah</button><button class="btn btn-danger" id="dOff">Nonaktifkan</button>' : '');
-  $$('[data-dl]').forEach(a => a.onclick = ev => { ev.preventDefault(); toast('Mengunduh dokumen (dicatat di audit log)', 'info'); audit('Unduh', 'Dokumen', e.nama); });
-  if ($('#dEdit')) $('#dEdit').onclick = () => { closeDrawer(); openModal('Ubah Karyawan', empForm(e), '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave">Simpan</button>'); $('#mCancel').onclick = closeModal; $('#mSave').onclick = () => { if (saveEmp(e)) { closeModal(); paintAll(); } }; };
-  if ($('#dOff')) $('#dOff').onclick = () => { e.status = e.status === 'Aktif' ? 'Nonaktif' : 'Aktif'; audit('Ubah status', 'Karyawan', `${e.nama} → ${e.status}`); toast('Status diperbarui', 'success'); closeDrawer(); paintAll(); };
+  if (!e) return;
+  const teamInfo = TEAM_TODAY.find(t => t.nama === e.nama);
+  const logs = LOGS.filter(l => l.nama === e.nama);
+  const tenure = getTenure(e.masuk);
+  const empId = `ASTA-EMP-${pad(e.id, 4)}`;
+  const phone = `0812-${pad(e.id, 4)}-${pad(e.id * 11, 4)}`;
+
+  const isOk = teamInfo ? teamInfo.status.includes('Onsite') : false;
+  const isWfh = teamInfo ? teamInfo.status.includes('WFH') : false;
+  const attCls = isOk ? 'success' : isWfh ? 'info' : 'warning';
+  const attIcon = isOk ? 'fi-rr-building' : isWfh ? 'fi-rr-home' : 'fi-rr-clock';
+  const attStatus = teamInfo ? teamInfo.status : (e.tipe === 'Freelance' ? 'Bekerja Berbasis Proyek' : 'Belum Ada Data Presensi');
+
+  const body = `
+    <div class="stack" style="gap:16px">
+      <!-- Header Profile Card -->
+      <div class="row" style="gap:16px;align-items:center;padding:14px 16px;background:#F8FAFC;border:1px solid var(--border);border-radius:var(--r-md)">
+        <span class="av" style="width:58px;height:58px;font-size:20px;background:${colorOf(e.nama)}">${initials(e.nama)}</span>
+        <div style="flex:1">
+          <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+            <h3 style="margin:0;font-size:17px;font-weight:700;color:#0F172A">${esc(e.nama)}</h3>
+            ${lz(e.tipe, { Tetap: 'primary', Freelance: 'info', PKL: 'warning' }[e.tipe])}
+            ${lz(e.status, e.status === 'Aktif' ? 'success' : 'danger')}
+          </div>
+          <div class="caption" style="margin-top:3px;color:#475569;font-size:12px">
+            <b>${esc(e.jabatan || 'Staff')}</b> · Tim <b>${esc(e.tim || 'Umum')}</b> · <span class="badge" style="background:#EEF2FF;color:#3730A3;font-size:11px">${empId}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats Metrics Grid (3 Kolom) -->
+      <div class="grid g3" style="gap:10px">
+        <div class="card card-b" style="padding:10px 12px;border:1px solid var(--border)">
+          <div class="caption" style="color:var(--text-secondary);font-size:11px">Masa Kerja / Kontrak</div>
+          <div style="font-weight:700;font-size:14px;color:#0F172A;margin-top:3px">${tenure}</div>
+          <div class="caption" style="color:#64748B;font-size:10px;margin-top:2px">Mulai ${fmtD(e.masuk)}</div>
+        </div>
+        <div class="card card-b" style="padding:10px 12px;border:1px solid var(--border)">
+          <div class="caption" style="color:var(--text-secondary);font-size:11px">Status Kerja Hari Ini</div>
+          <div class="row" style="gap:5px;align-items:center;margin-top:3px">
+            <i class="${attIcon}" style="font-size:13px;color:var(--${attCls})"></i>
+            <b style="font-size:12px;color:var(--${attCls})">${esc(attStatus)}</b>
+          </div>
+          <div class="caption" style="color:#64748B;font-size:10px;margin-top:2px">${e.tipe === 'Freelance' ? 'Remote Project-Based' : isOk ? 'Onsite Office' : isWfh ? 'Lokasi WFH' : 'Standby'}</div>
+        </div>
+        <div class="card card-b" style="padding:10px 12px;border:1px solid var(--border)">
+          <div class="caption" style="color:var(--text-secondary);font-size:11px">${e.tipe === 'Freelance' ? 'Proyek Ditugaskan' : 'Beban Harian (SP)'}</div>
+          <div style="font-weight:700;font-size:14px;color:#0F172A;margin-top:3px">${e.tipe === 'Freelance' ? `${(e.projects || []).length} Proyek Aktif` : teamInfo ? `${teamInfo.load} / ${teamInfo.cap} SP` : '0 SP'}</div>
+          <div class="caption" style="color:#64748B;font-size:10px;margin-top:2px">${e.tipe === 'Freelance' ? 'Sistem Per Proyek' : teamInfo ? `${Math.round(teamInfo.load / teamInfo.cap * 100)}% Kapasitas` : '-'}</div>
+        </div>
+      </div>
+
+      <!-- Informasi Lengkap & Kontak -->
+      <div class="card card-b" style="border:1px solid var(--border)">
+        <div class="row" style="gap:6px;align-items:center;margin-bottom:10px">
+          <i class="fi-rr-id-badge" style="color:var(--primary);font-size:15px"></i>
+          <b style="font-size:13px">Informasi Kepegawaian & Kontak</b>
+        </div>
+        <dl class="kv" style="grid-template-columns:130px 1fr;gap:8px 12px;font-size:12px">
+          <dt>ID Karyawan</dt><dd><b>${empId}</b></dd>
+          <dt>Email</dt><dd><a href="mailto:${esc(e.email)}" style="color:var(--primary);text-decoration:underline">${esc(e.email)}</a></dd>
+          <dt>Nomor Telepon / WA</dt><dd>${phone} <button class="btn btn-sm btn-outline" id="btnCallEmp" style="padding:1px 6px;margin-left:6px;font-size:10px"><i class="fi-rr-phone-call"></i> Hubungi</button></dd>
+          <dt>Tim / Departemen</dt><dd>${esc(e.tim)}</dd>
+          <dt>Jabatan / Peran</dt><dd><b>${esc(e.jabatan)}</b></dd>
+          <dt>Atasan Langsung</dt><dd>${person(e.atasan || 'Direksi')}</dd>
+          <dt>Status Kepegawaian</dt><dd>${lz(e.status, e.status === 'Aktif' ? 'success' : 'danger')}</dd>
+          <dt>Tanggal Bergabung</dt><dd>${fmtD(e.masuk)} (${tenure})</dd>
+        </dl>
+      </div>
+
+      <!-- KHUSUS FREELANCE: Daftar Proyek & Skema Fee Per Project -->
+      ${e.tipe === 'Freelance' ? `
+        <div class="card card-b" style="border:1px solid #BBF7D0;background:#F0FDF4">
+          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div class="row" style="gap:6px;align-items:center">
+              <i class="fi-rr-briefcase" style="color:#16A34A;font-size:16px"></i>
+              <b style="font-size:13px;color:#166534">Daftar Penugasan Proyek Freelance (Per Project)</b>
+            </div>
+            <div class="row" style="gap:6px">
+              <button class="btn btn-sm btn-primary" id="btnAddPrjFreelance" style="font-size:11px;padding:3px 10px">
+                <i class="fi-rr-plus"></i> Tambah Proyek
+              </button>
+              <span class="badge" style="background:#DCFCE7;color:#15803D;font-weight:600;font-size:11px">
+                <i class="fi-rr-check"></i> Fee Per Proyek
+              </span>
+            </div>
+          </div>
+
+          <div class="stack" style="gap:8px">
+            ${(e.projects && e.projects.length ? e.projects : [{ id: 'PRJ-DEF', nama: 'Proyek Pengembangan Fitur Software', fee: 6500000, deadline: dOff(20), status: 'In Progress', progres: 50, deliverables: 'Penyelesaian modul & dokumentasi API' }]).map(p => `
+              <div style="background:#fff;border:1px solid #BBF7D0;border-radius:8px;padding:12px">
+                <div class="row" style="justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div class="row" style="gap:6px;align-items:center">
+                      <b style="font-size:13px;color:#0F172A">${esc(p.nama)}</b>
+                      <span class="badge" style="background:#E0F2FE;color:#0369A1;font-size:10px">${esc(p.id || 'PRJ')}</span>
+                    </div>
+                    <div class="caption" style="color:#475569;margin-top:3px">
+                      <b>Target Deliverable:</b> ${esc(p.deliverables || '-')}
+                    </div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-weight:700;font-size:15px;color:#16A34A">${rp(p.fee)}</div>
+                    <span class="lz lz-${p.status === 'Selesai' ? 'success' : 'info'}" style="font-size:10px">${esc(p.status)}</span>
+                  </div>
+                </div>
+                <div style="margin-top:8px">
+                  <div class="row" style="justify-content:space-between;font-size:11px;color:#64748B;margin-bottom:3px">
+                    <span>Progres Milestone</span>
+                    <b>${p.progres || 0}% · Target: ${fmtD(p.deadline || dOff(30))}</b>
+                  </div>
+                  <div class="bar ok"><i style="width:${p.progres || 0}%"></i></div>
+                </div>
+                <div class="row" style="justify-content:flex-end;gap:6px;margin-top:8px;padding-top:6px;border-top:1px dashed #E2E8F0">
+                  ${p.status !== 'Selesai' ? `<button class="btn btn-sm btn-outline" data-prj-done="${p.id}" style="padding:2px 8px;font-size:11px;color:#16A34A;border-color:#BBF7D0"><i class="fi-rr-check"></i> Selesai</button>` : ''}
+                  <button class="btn btn-sm btn-outline" data-prj-edit="${p.id}" style="padding:2px 8px;font-size:11px"><i class="fi-rr-edit"></i> Ubah</button>
+                  <button class="btn btn-sm btn-outline" data-prj-del="${p.id}" style="padding:2px 8px;font-size:11px;color:var(--danger)"><i class="fi-rr-trash"></i></button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="row" style="justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px dashed #BBF7D0">
+            <span style="font-size:12px;font-weight:600;color:#166534">Total Nilai Kontrak Penugasan Proyek:</span>
+            <b style="font-size:17px;color:#166534">${rp((e.projects || []).reduce((sum, p) => sum + p.fee, 0))}</b>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Penempatan & Karir SDM (Karyawan Tetap) -->
+      ${e.tipe === 'Tetap' ? `
+        <div class="card card-b" style="border:1px solid var(--border)">
+          <div class="row" style="gap:6px;align-items:center;margin-bottom:10px">
+            <i class="fi-rr-user-gear" style="color:var(--primary);font-size:15px"></i>
+            <b style="font-size:13px">Penempatan, Jenjang Karir & Kebijakan SDM</b>
+          </div>
+          <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+            <div class="grid g2" style="gap:12px;font-size:12px">
+              <div>
+                <div class="caption" style="color:#64748B">Jenjang / Level SDM</div>
+                <div style="font-size:14px;font-weight:700;color:#0F172A;margin-top:2px">${esc(e.level || 'Senior Specialist')}</div>
+              </div>
+              <div>
+                <div class="caption" style="color:#64748B">Status Hubungan Kerja</div>
+                <div style="font-size:14px;font-weight:700;color:#0F172A;margin-top:2px">${esc(e.statusKerja || 'PKWTT (Tetap)')}</div>
+              </div>
+              <div>
+                <div class="caption" style="color:#64748B">Kebijakan Kehadiran</div>
+                <div style="font-size:13px;font-weight:600;color:var(--primary);margin-top:2px"><i class="fi-rr-building"></i> ${esc(e.workPolicy || 'Hybrid (Onsite & WFH)')}</div>
+              </div>
+              <div>
+                <div class="caption" style="color:#64748B">Hak Cuti Tahunan</div>
+                <div style="font-size:13px;font-weight:600;color:#16A34A;margin-top:2px"><i class="fi-rr-calendar"></i> ${e.cutiSisa ?? 12} Hari Kerja Tersedia</div>
+              </div>
+            </div>
+            <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);font-size:11px;color:#64748B">
+              <i class="fi-rr-info"></i> Seluruh data finansial dan pencairan kompensasi diproses terpusat pada Modul Finance (ERP Keuangan).
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Task & Daily Log Terkini -->
+      ${teamInfo || logs.length ? `
+        <div class="card card-b" style="border:1px solid var(--border)">
+          <div class="row" style="gap:6px;align-items:center;margin-bottom:8px">
+            <i class="fi-rr-clipboard-list" style="color:var(--primary);font-size:15px"></i>
+            <b style="font-size:13px">Aktivitas & Task Terkini</b>
+          </div>
+          ${teamInfo && teamInfo.task && teamInfo.task !== '—' ? `
+            <div style="background:#F1F5F9;padding:8px 12px;border-radius:6px;margin-bottom:8px">
+              <div style="font-size:11px;font-weight:700;color:var(--primary)">TASK AKTIF HARI INI:</div>
+              <div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:2px">${esc(teamInfo.task)}</div>
+            </div>
+          ` : ''}
+          ${logs.length ? `
+            <div class="caption" style="margin-bottom:4px">Riwayat Daily Log Terakhir:</div>
+            <div style="font-size:12px;color:#334155;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;line-height:1.5">
+              ${esc(logs[0].ringkasan)}
+            </div>
+            ${logs[0].task ? `<div class="caption" style="margin-top:4px"><i class="fi-rr-link"></i> Task: <b>${esc(logs[0].task)}</b></div>` : ''}
+            ${logs[0].commit ? `<div class="caption" style="margin-top:2px"><i class="fi-rr-code-commit"></i> Commit: <a href="https://${esc(logs[0].commit)}" target="_blank" style="color:var(--primary);text-decoration:underline">${esc(logs[0].commit)}</a></div>` : ''}
+          ` : '<div class="caption muted" style="font-style:italic">Belum ada catatan daily log tersimpan.</div>'}
+        </div>
+      ` : ''}
+
+      <!-- Berkas & Dokumen Digital SDM -->
+      <div class="card card-b" style="border:1px solid var(--border)">
+        <div class="row" style="gap:6px;align-items:center;margin-bottom:8px">
+          <i class="fi-rr-document" style="color:var(--primary);font-size:15px"></i>
+          <b style="font-size:13px">Dokumen & Berkas Digital SDM</b>
+        </div>
+        <div class="stack" style="gap:6px">
+          ${(e.tipe === 'Freelance' ? [
+            { n: 'Surat Perjanjian Kerja Sama Proyek (SPK).pdf', size: '1.2 MB' },
+            { n: 'Pakta Integritas & NDA Perusahaan.pdf', size: '940 KB' },
+            { n: 'Kartu Tanda Penduduk (KTP).jpg', size: '820 KB' },
+            { n: 'Kartu NPWP Elektronik.pdf', size: '540 KB' }
+          ] : e.tipe === 'Tetap' ? [
+            { n: 'Surat Keputusan Pengangkatan Karyawan (SK).pdf', size: '1.4 MB' },
+            { n: 'Perjanjian Kerja Waktu Tidak Tertentu (PKWTT).pdf', size: '1.1 MB' },
+            { n: 'Pakta Integritas & NDA Perusahaan.pdf', size: '940 KB' },
+            { n: 'Kartu BPJS Ketenagakerjaan & Kesehatan.pdf', size: '620 KB' }
+          ] : [
+            { n: 'Surat Penerimaan Siswa PKL.pdf', size: '890 KB' },
+            { n: 'Form Evaluasi Pembimbing Industri.pdf', size: '750 KB' },
+            { n: 'Sertifikat Kelulusan PKL.pdf', size: '1.5 MB' }
+          ]).map(d => `
+            <div class="row" style="justify-content:space-between;align-items:center;padding:6px 10px;background:#F8FAFC;border:1px solid var(--border);border-radius:6px;font-size:12px">
+              <div class="row" style="gap:8px;align-items:center">
+                <i class="fi-rr-file-pdf" style="font-size:15px;color:var(--primary)"></i>
+                <div>
+                  <div style="font-weight:600;color:#0F172A">${d.n}</div>
+                  <div class="caption" style="font-size:10px;color:#64748B">${d.size} · Terverifikasi SDM</div>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-outline" data-dl="${d.n}" style="padding:2px 8px;font-size:11px">
+                <i class="fi-rr-download"></i> Unduh
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const foot = `
+    <button class="btn" onclick="closeDrawer()">Tutup</button>
+    <button class="btn btn-outline" id="btnNudgeEmployee"><i class="fi-rr-paper-plane"></i> Kirim Pesan</button>
+    ${S.role === 'hr' ? `
+      <button class="btn btn-primary" id="dEdit"><i class="fi-rr-edit"></i> Ubah Data</button>
+      <button class="btn ${e.status === 'Aktif' ? 'btn-danger' : 'btn-success'}" id="dOff">
+        <i class="fi-rr-power"></i> ${e.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
+      </button>
+    ` : ''}
+  `;
+
+  openDrawer(`Detail Karyawan — ${e.nama}`, body, foot);
+
+  if ($('#btnCallEmp')) {
+    $('#btnCallEmp').onclick = () => {
+      toast(`Menghubungi ${e.nama} (${phone}) via WhatsApp...`, 'info');
+      audit('Hubungi Karyawan', 'Karyawan', `${e.nama} — ${phone}`);
+    };
+  }
+
+  if ($('#btnNudgeEmployee')) {
+    $('#btnNudgeEmployee').onclick = () => {
+      toast(`Pesan notifikasi berhasil dikirimkan ke ${e.nama}`, 'success');
+      audit('Kirim Pesan', 'Karyawan', e.nama);
+    };
+  }
+
+  $$('[data-dl]').forEach(a => a.onclick = ev => {
+    ev.preventDefault();
+    const docName = a.dataset.dl;
+    toast(`Mengunduh dokumen: ${docName}`, 'success');
+    audit('Unduh Dokumen', 'Karyawan', `${e.nama} — ${docName}`);
+  });
+
+  if ($('#dEdit')) {
+    $('#dEdit').onclick = () => {
+      closeDrawer();
+      openEmpModal(e);
+    };
+  }
+
+  if ($('#btnAddPrjFreelance')) {
+    $('#btnAddPrjFreelance').onclick = () => openProjectModal(e);
+  }
+
+  $$('[data-prj-done]').forEach(b => {
+    b.onclick = () => {
+      const pId = b.dataset.prjDone;
+      const prj = (e.projects || []).find(x => x.id === pId);
+      if (prj) {
+        prj.status = 'Selesai';
+        prj.progres = 100;
+        audit('Selesaikan Proyek', 'Freelance', `${e.nama} — ${prj.nama}`);
+        toast(`Proyek "${prj.nama}" ditandai Selesai (100%)`, 'success');
+        paintTable('emp');
+        empDrawer(e);
+      }
+    };
+  });
+
+  $$('[data-prj-edit]').forEach(b => {
+    b.onclick = () => {
+      const pId = b.dataset.prjEdit;
+      const prj = (e.projects || []).find(x => x.id === pId);
+      if (prj) openProjectModal(e, prj);
+    };
+  });
+
+  $$('[data-prj-del]').forEach(b => {
+    b.onclick = () => {
+      const pId = b.dataset.prjDel;
+      const prj = (e.projects || []).find(x => x.id === pId);
+      if (prj && confirm(`Hapus penugasan proyek "${prj.nama}"?`)) {
+        e.projects = e.projects.filter(x => x.id !== pId);
+        audit('Hapus Proyek', 'Freelance', `${e.nama} — ${prj.nama}`);
+        toast(`Proyek "${prj.nama}" dihapus`, 'info');
+        paintTable('emp');
+        empDrawer(e);
+      }
+    };
+  });
+
+  if ($('#dOff')) {
+    $('#dOff').onclick = () => {
+      e.status = e.status === 'Aktif' ? 'Nonaktif' : 'Aktif';
+      audit('Ubah status', 'Karyawan', `${e.nama} → ${e.status}`);
+      toast(`Status ${e.nama} diubah menjadi ${e.status}`, 'success');
+      closeDrawer();
+      paintTable('emp');
+      empDrawer(e);
+    };
+  }
 }
 
 /* ===== Lowongan ===== */
 function jobForm(j = {}) {
-  return `<form id="jobForm" class="form-grid" novalidate>
-    <div class="field full"><label class="lbl" for="jJudul">Posisi *</label><input class="input" id="jJudul" value="${esc(j.judul)}"><div class="err">Wajib diisi</div></div>
-    <div class="field"><label class="lbl" for="jTim">Tim</label><input class="input" id="jTim" value="${esc(j.tim)}"></div>
-    <div class="field"><label class="lbl" for="jLevel">Level</label><select class="input" id="jLevel">${['Junior', 'Mid', 'Senior', 'Lead'].map(l => `<option ${j.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    <div class="field"><label class="lbl" for="jLok">Lokasi</label><input class="input" id="jLok" value="${esc(j.lokasi || 'Hybrid — Jakarta')}"></div>
-    <div class="field"><label class="lbl" for="jStatus">Status</label><select class="input" id="jStatus">${['Draft', 'Published', 'Closed'].map(l => `<option ${j.status === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    <div class="field full"><label class="lbl" for="jSkill">Skill</label><input class="input" id="jSkill" value="${esc(j.skill)}"></div>
-    <div class="field full"><label class="lbl" for="jDesk">Deskripsi</label><textarea class="input" id="jDesk">${esc(j.deskripsi)}</textarea></div></form>`;
+  return `<form id="jobForm" class="stack" style="gap:16px" novalidate>
+    <div class="form-grid">
+      <div class="field full">
+        <label class="lbl" for="jJudul">Posisi / Judul Lowongan *</label>
+        <input class="input" id="jJudul" value="${esc(j.judul || '')}" placeholder="Contoh: Senior Backend Engineer">
+        <div class="err">Wajib diisi</div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="jTim">Tim / Divisi</label>
+        <input class="input" id="jTim" value="${esc(j.tim || 'Engineering')}" placeholder="Engineering, Design, QA, PMO...">
+      </div>
+      <div class="field">
+        <label class="lbl" for="jLevel">Level Jabatan</label>
+        <select class="input" id="jLevel">
+          ${['Junior', 'Mid', 'Senior', 'Lead'].map(l => `<option ${j.level === l ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label class="lbl" for="jLok">Lokasi Kerja</label>
+        <input class="input" id="jLok" value="${esc(j.lokasi || 'Hybrid — Jakarta')}" placeholder="Hybrid, WFH, Onsite...">
+      </div>
+      <div class="field">
+        <label class="lbl" for="jStatus">Status Publikasi</label>
+        <select class="input" id="jStatus">
+          ${['Draft', 'Published', 'Closed'].map(l => `<option ${j.status === l ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <!-- Multi-Skill dengan Level Input -->
+    <div class="field">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label class="lbl" style="margin:0;font-weight:600;display:flex;align-items:center;gap:6px">
+          <i class="fi-rr-star" style="color:var(--primary)"></i> Keahlian / Skill yang Dibutuhkan (Multi-Skill & Level) *
+        </label>
+        <span class="caption" id="skillCountText" style="color:#64748b">0 Skill terdaftar</span>
+      </div>
+
+      <div class="skill-box-container">
+        <!-- Input Row -->
+        <div class="row" style="gap:8px;align-items:flex-end;margin-bottom:10px">
+          <div style="flex:2;min-width:200px">
+            <label class="lbl" for="newSkillName" style="font-size:11px;color:#64748b;margin-bottom:4px">Nama Keahlian / Teknologi</label>
+            <input class="input" id="newSkillName" placeholder="Ketik nama skill (misal: React, Node.js, PostgreSQL...)" style="height:38px">
+          </div>
+          <div style="flex:1;min-width:140px">
+            <label class="lbl" for="newSkillLevel" style="font-size:11px;color:#64748b;margin-bottom:4px">Tingkat Kemahiran (Level)</label>
+            <select class="input" id="newSkillLevel" style="height:38px">
+              <option value="Junior">Pemula (Junior)</option>
+              <option value="Mid" selected>Menengah (Mid)</option>
+              <option value="Senior">Mahir (Senior)</option>
+              <option value="Lead">Ahli (Lead / Expert)</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary" id="btnAddSkillBtn" style="height:38px;padding:0 16px;white-space:nowrap">
+            <i class="fi-rr-plus"></i> Tambah Skill
+          </button>
+        </div>
+
+        <!-- Quick Recommendations -->
+        <div class="row" style="gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <span class="caption" style="font-size:11px;color:#64748b">Rekomendasi Cepat:</span>
+          ${['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'Figma', 'Docker', 'Python', 'Go', 'Cypress', 'Git', 'AWS'].map(tag => `
+            <button type="button" class="chip" data-quick-skill="${tag}" style="font-size:11px;height:24px;padding:0 8px">+ ${tag}</button>
+          `).join('')}
+        </div>
+
+        <!-- Container Daftar Skill yang Sudah Ditambahkan -->
+        <div style="border-top:1px dashed var(--border);padding-top:10px">
+          <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:6px">DAFTAR SKILL DIPERLUKAN:</div>
+          <div id="skillsChipsContainer" class="skill-chips-wrap"></div>
+        </div>
+      </div>
+      <div class="err" id="skillErr" style="color:var(--danger);font-size:12px;display:none;margin-top:4px">Tambahkan minimal 1 skill untuk posisi ini</div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="jDesk">Deskripsi & Tanggung Jawab Pekerjaan</label>
+      <textarea class="input" id="jDesk" rows="3" placeholder="Tuliskan gambaran pekerjaan, kualifikasi umum, dan ekspektasi peran...">${esc(j.deskripsi || '')}</textarea>
+    </div>
+  </form>`;
 }
+
 function openJob(j) {
-  openModal(j ? 'Ubah Lowongan' : 'Lowongan Baru', jobForm(j), '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave">Simpan</button>');
+  let jobSkills = [];
+  if (j && Array.isArray(j.skills) && j.skills.length) {
+    jobSkills = j.skills.map(s => ({ ...s }));
+  } else if (j && j.skill) {
+    jobSkills = j.skill.split(',').map(s => {
+      const m = s.match(/(.+?)\s*\((.+?)\)$/);
+      if (m) return { name: m[1].trim(), level: m[2].trim() };
+      return { name: s.trim(), level: j.level || 'Mid' };
+    }).filter(s => s.name);
+  } else {
+    jobSkills = [
+      { name: 'JavaScript / TypeScript', level: 'Mid' },
+      { name: 'Git & Version Control', level: 'Mid' }
+    ];
+  }
+
+  openModal(j ? 'Ubah Lowongan Pekerjaan' : 'Buat Lowongan Baru', jobForm(j), '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave"><i class="fi-rr-disk"></i> Simpan Lowongan</button>', true);
+
+  const renderSkills = () => {
+    const container = $('#skillsChipsContainer');
+    const countEl = $('#skillCountText');
+    const errEl = $('#skillErr');
+    if (!container) return;
+
+    if (countEl) countEl.textContent = `${jobSkills.length} Skill terdaftar`;
+    if (errEl) errEl.style.display = jobSkills.length === 0 ? 'block' : 'none';
+
+    if (jobSkills.length === 0) {
+      container.innerHTML = '<span class="caption muted" style="font-style:italic;padding:4px 0">Belum ada skill yang ditambahkan. Gunakan form di atas atau klik rekomendasi cepat.</span>';
+      return;
+    }
+
+    container.innerHTML = jobSkills.map((s, idx) => {
+      const lvl = (s.level || 'Mid');
+      const lvlCls = 'level-' + lvl.toLowerCase();
+      return `
+        <div class="skill-chip-item">
+          <i class="fi-rr-check" style="font-size:10px;color:var(--primary)"></i>
+          <b>${esc(s.name)}</b>
+          <span class="skill-level-badge ${lvlCls}">${esc(lvl)}</span>
+          <button type="button" class="skill-remove-btn" data-rem-skill="${idx}" title="Hapus skill ${esc(s.name)}">
+            <i class="fi-rr-cross-small"></i>
+          </button>
+        </div>`;
+    }).join('');
+
+    $$('[data-rem-skill]', container).forEach(b => {
+      b.onclick = () => {
+        const idx = +b.dataset.remSkill;
+        jobSkills.splice(idx, 1);
+        renderSkills();
+      };
+    });
+  };
+
+  const addSkill = (name, level) => {
+    const n = name.trim();
+    if (!n) return;
+    const exists = jobSkills.find(s => s.name.toLowerCase() === n.toLowerCase());
+    if (exists) {
+      exists.level = level;
+      toast(`Level skill ${n} diperbarui menjadi ${level}`, 'info');
+    } else {
+      jobSkills.push({ name: n, level });
+    }
+    const inp = $('#newSkillName');
+    if (inp) { inp.value = ''; inp.focus(); }
+    renderSkills();
+  };
+
+  $('#btnAddSkillBtn').onclick = () => {
+    const n = $('#newSkillName').value;
+    const l = $('#newSkillLevel').value;
+    if (!n.trim()) {
+      toast('Ketikkan nama skill terlebih dahulu', 'warning');
+      $('#newSkillName').focus();
+      return;
+    }
+    addSkill(n, l);
+  };
+
+  $('#newSkillName').onkeydown = e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      $('#btnAddSkillBtn').click();
+    }
+  };
+
+  $$('[data-quick-skill]').forEach(btn => {
+    btn.onclick = () => {
+      const name = btn.dataset.quickSkill;
+      const level = $('#newSkillLevel').value || 'Mid';
+      addSkill(name, level);
+    };
+  });
+
+  renderSkills();
+
   $('#mCancel').onclick = closeModal;
   $('#mSave').onclick = () => {
-    const ju = $('#jJudul').value.trim(); $('#jJudul').closest('.field').classList.toggle('has-err', !ju); if (!ju) return;
-    const d = { judul: ju, tim: $('#jTim').value, level: $('#jLevel').value, lokasi: $('#jLok').value, status: $('#jStatus').value, skill: $('#jSkill').value, deskripsi: $('#jDesk').value };
-    if (j) Object.assign(j, d); else JOBS.unshift({ id: Date.now(), ...d });
-    audit(j ? 'Ubah' : 'Buat', 'Lowongan', ju); toast('Lowongan disimpan', 'success'); closeModal(); paintAll();
+    const ju = $('#jJudul').value.trim();
+    $('#jJudul').closest('.field').classList.toggle('has-err', !ju);
+    if (!ju) {
+      $('#jJudul').focus();
+      return;
+    }
+    if (jobSkills.length === 0) {
+      toast('Tambahkan minimal 1 skill/keahlian untuk lowongan ini', 'warning');
+      $('#skillErr').style.display = 'block';
+      $('#newSkillName').focus();
+      return;
+    }
+
+    const d = {
+      judul: ju,
+      tim: $('#jTim').value || 'Engineering',
+      level: $('#jLevel').value,
+      lokasi: $('#jLok').value || 'Hybrid — Jakarta',
+      status: $('#jStatus').value,
+      skills: jobSkills,
+      skill: jobSkills.map(s => `${s.name} (${s.level})`).join(', '),
+      deskripsi: $('#jDesk').value
+    };
+
+    if (j) Object.assign(j, d);
+    else JOBS.unshift({ id: Date.now(), ...d });
+
+    audit(j ? 'Ubah' : 'Buat', 'Lowongan', `${ju} — ${jobSkills.length} skills`);
+    toast('Data lowongan berhasil disimpan', 'success');
+    closeModal();
+    paintAll();
   };
 }
+
 reg('lowongan', 'Lowongan', ['Rekrutmen', 'Lowongan'], () => `
-  <div class="banner info"><i class=fi-rr-info></i> <span>Integrasi LinkedIn bergantung pada akses partner resmi. Cadangan: tautan “Apply with LinkedIn” atau impor manual.</span></div>
+  <div class="banner info"><i class="fi-rr-info"></i> <span>Kebutuhan skill pada setiap lowongan kini mendukung multi-skill terstruktur lengkap dengan level kemahiran (Junior, Mid, Senior, Lead).</span></div>
   <div class="card">${table('jobs', {
   rows: () => JOBS.map(j => ({ ...j, pelamar: APP.filter(a => a.job === j.id).length })),
-  cols: [{ k: 'judul', label: 'Posisi', fmt: r => `<b>${esc(r.judul)}</b><div class="caption">${esc(r.skill)}</div>` }, { k: 'tim', label: 'Tim' }, { k: 'level', label: 'Level' }, { k: 'lokasi', label: 'Lokasi' }, { k: 'pelamar', label: 'Pelamar', cls: 'r num' }, { k: 'status', label: 'Status', fmt: r => lz(r.status) },
-    { k: 'x', label: '', sort: false, fmt: r => `<button class="btn btn-sm" data-ej="${r.id}">Ubah</button>` }],
+  cols: [
+    {
+      k: 'judul',
+      label: 'Posisi & Kebutuhan Keahlian (Multi-Skill)',
+      fmt: r => {
+        const skillList = Array.isArray(r.skills) && r.skills.length
+          ? r.skills
+          : (r.skill ? r.skill.split(',').map(s => {
+              const m = s.match(/(.+?)\s*\((.+?)\)$/);
+              return m ? { name: m[1].trim(), level: m[2].trim() } : { name: s.trim(), level: r.level || 'Mid' };
+            }) : []);
+        const skillsHtml = skillList.map(s => {
+          const lvlCls = 'level-' + (s.level || 'mid').toLowerCase();
+          return `<span class="skill-pill-badge">${esc(s.name)} <b class="${lvlCls}">${esc(s.level)}</b></span>`;
+        }).join('');
+        return `<div><b style="font-size:14px;color:#0F172A">${esc(r.judul)}</b></div><div style="margin-top:4px">${skillsHtml || '<span class="muted">-</span>'}</div>`;
+      }
+    },
+    { k: 'tim', label: 'Tim' },
+    { k: 'level', label: 'Level' },
+    { k: 'lokasi', label: 'Lokasi' },
+    { k: 'pelamar', label: 'Pelamar', cls: 'r num' },
+    { k: 'status', label: 'Status', fmt: r => lz(r.status) },
+    { k: 'x', label: '', sort: false, fmt: r => `<button class="btn btn-sm" data-ej="${r.id}"><i class="fi-rr-edit"></i> Ubah</button>` }
+  ],
   after: h => $$('[data-ej]', h).forEach(b => b.onclick = () => openJob(JOBS.find(j => j.id == b.dataset.ej)))
 })}</div>`, () => paintAll(),
-  () => `<button class="btn" id="btnCareer"><i class=fi-rr-globe></i> Pratinjau Career Page</button><button class="btn btn-primary" id="btnAddJob">+ Lowongan</button>`);
+  () => `<button class="btn" id="btnCareer"><i class="fi-rr-globe"></i> Pratinjau Career Page</button><button class="btn btn-primary" id="btnAddJob"><i class="fi-rr-plus"></i> Tambah Lowongan</button>`);
 
 function careerPage() {
-  openModal('Career Page Publik', `<div class="pub card-b" style="border-radius:12px"><h2>Bergabung dengan AstaCode</h2><p class="muted" style="margin-bottom:16px">Software house dengan kultur fleksibel & kekeluargaan.</p>
-    ${JOBS.filter(j => j.status === 'Published').map(j => `<div class="card card-b" style="margin-bottom:10px"><div class="row"><div style="flex:1"><b>${esc(j.judul)}</b><div class="caption">${esc(j.tim)} · ${esc(j.level)} · ${esc(j.lokasi)}</div></div><button class="btn btn-primary btn-sm" data-apply="${j.id}">Lamar</button></div></div>`).join('')}</div>`, '', true);
-  $$('[data-apply]').forEach(b => b.onclick = () => { toast('Form lamaran terkirim (demo). Pelamar masuk ke pipeline “Applied”.', 'success'); APP.push({ id: Date.now(), nama: 'Pelamar Baru ' + (APP.length + 1), job: +b.dataset.apply, stage: 'Applied', skor: 0, email: 'baru@mail.com', hp: '-', edu: '-', exp: '-', skill: '-' }); closeModal(); paintAll(); });
+  openModal('Career Page Publik', `
+    <div class="pub card-b" style="border-radius:12px;padding:20px">
+      <h2>Bergabung dengan AstaCode</h2>
+      <p class="muted" style="margin-bottom:16px">Software house dengan kultur fleksibel & kekeluargaan. Bangun karir terbaik Anda bersama tim engineering & desain kami.</p>
+      ${JOBS.filter(j => j.status === 'Published').map(j => {
+        const skillList = Array.isArray(j.skills) && j.skills.length
+          ? j.skills
+          : (j.skill ? j.skill.split(',').map(s => {
+              const m = s.match(/(.+?)\s*\((.+?)\)$/);
+              return m ? { name: m[1].trim(), level: m[2].trim() } : { name: s.trim(), level: j.level || 'Mid' };
+            }) : []);
+        return `
+          <div class="card card-b" style="margin-bottom:12px;border:1px solid var(--border)">
+            <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+              <div style="flex:1;min-width:280px">
+                <div class="row" style="gap:8px;align-items:center">
+                  <b style="font-size:15px;color:#0F172A">${esc(j.judul)}</b>
+                  <span class="lz lz-primary">${esc(j.level)}</span>
+                </div>
+                <div class="caption" style="margin:4px 0 8px;color:#475569">
+                  ${esc(j.tim)} · Lokasi: <b>${esc(j.lokasi)}</b>
+                </div>
+                <div style="margin-top:6px">
+                  <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:4px">Kebutuhan Skill:</div>
+                  ${skillList.map(s => `<span class="skill-pill-badge">${esc(s.name)} <b class="level-${(s.level||'mid').toLowerCase()}">${esc(s.level)}</b></span>`).join('')}
+                </div>
+                <p class="caption" style="margin-top:8px;color:#334155">${esc(j.deskripsi || '')}</p>
+              </div>
+              <button class="btn btn-primary" data-apply="${j.id}" style="padding:8px 18px">
+                <i class="fi-rr-paper-plane"></i> Lamar Posisi Ini
+              </button>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`, '', true);
+
+  $$('[data-apply]').forEach(b => b.onclick = () => {
+    toast('Form lamaran terkirim (demo). Pelamar masuk ke pipeline “Applied”.', 'success');
+    APP.push({
+      id: Date.now(),
+      nama: 'Pelamar Baru ' + (APP.length + 1),
+      job: +b.dataset.apply,
+      stage: 'Applied',
+      skor: 0,
+      email: 'baru@mail.com',
+      hp: '0812-9999-8888',
+      edu: 'S1 Teknik Informatika',
+      exp: '2 th Pengalaman',
+      skill: 'Sesuai Kualifikasi Lowongan'
+    });
+    closeModal();
+    paintAll();
+  });
 }
 
 /* ===== Pipeline (Kanban) ===== */
@@ -622,7 +1873,7 @@ function applicantDrawer(a, redraw) {
   $('#aSave').onclick = () => { a.skor = +(sc.reduce((s, k) => s + +$('#sc-' + sl(k)).value, 0) / 3).toFixed(1); toast('Skor rata-rata ' + a.skor, 'success'); redraw(); closeDrawer(); };
   $('#aRej').onclick = () => { a.stage = 'Rejected'; audit('Reject', 'Pelamar', a.nama); toast('Pelamar ditolak', 'warn'); redraw(); closeDrawer(); };
   if ($('#aHire')) $('#aHire').onclick = () => {
-    a.stage = 'Hired'; EMP.push({ id: Date.now(), nama: a.nama, email: a.email, tipe: 'Tetap', tim: job?.tim || '-', jabatan: job?.judul || '-', atasan: '-', gaji: 0, tunj: 0, rate: 0, status: 'Aktif', masuk: iso(TODAY) });
+    a.stage = 'Hired'; EMP.push({ id: Date.now(), nama: a.nama, email: a.email, tipe: 'Tetap', tim: job?.tim || 'Engineering', jabatan: job?.judul || 'Staff', atasan: 'Bagas Prakoso', level: 'Mid-Level Specialist', statusKerja: 'Probation (Masa Percobaan)', workPolicy: 'Hybrid (Onsite & WFH)', cutiSisa: 12, rate: 0, status: 'Aktif', masuk: iso(TODAY) });
     audit('Konversi', 'Pelamar → Karyawan', a.nama); toast(`${a.nama} kini tercatat sebagai karyawan (tanpa input ulang)`, 'success'); redraw(); closeDrawer();
   };
 }
@@ -637,20 +1888,44 @@ function letterPaper(txt, signed) {
   <div style="position:absolute;right:32px;bottom:28px;text-align:center">${signed ? '<div class="sig">Rina A.</div>' : '<div style="height:36px"></div>'}<div style="border-top:1px solid #333;padding-top:2px">${esc(S.settings.signer)}</div>${signed ? '<div class="row" style="justify-content:center;margin-top:4px"><div class="qr" style="width:36px;height:36px"></div><span class="caption">TTD digital</span></div>' : ''}</div></div>`;
 }
 function reviewPkl(id) {
-  const p = PKL.find(x => x.id === id), q = checkQuota(p.mulai, p.selesai, p.id);
+  const p = PKL.find(x => x.id === id);
+  if (!p) return;
+  const q = checkQuota(p.mulai, p.selesai, p.id);
   const days = [];
   for (let d = parse(p.mulai), i = 0; iso(d) <= p.selesai && i < 120; d = addDays(d, 1), i++) days.push(occupancy(iso(d), p.id));
   const mx = S.settings.quotaMax;
   openDrawer(p.nama, `
-    <div class="row" style="margin-bottom:12px"><h3 style="flex:1">${esc(p.instansi)}</h3>${lz(p.status)}</div>
-    <dl class="kv"><dt>Jurusan</dt><dd>${esc(p.jurusan)}</dd><dt>Kontak</dt><dd>${esc(p.kontak)}</dd><dt>Periode</dt><dd>${fmtD(p.mulai)} – ${fmtD(p.selesai)}</dd><dt>Surat</dt><dd><i class=fi-rr-document></i> surat-permohonan.pdf <a href="#" data-dl>Lihat</a></dd><dt>No. surat</dt><dd>${esc(p.nomor || '—')}</dd></dl>
-    <div class="sep"></div><h3 style="margin-bottom:8px">Hasil cek kuota (auto-overlap)</h3>
-    <div class="banner ${q.available ? 'ok' : 'danger'}">${q.available ? '<i class=fi-rr-check-circle></i>' : '<i class=fi-rr-cross-circle></i>'} <span>${q.available ? `<b>Available</b> — okupansi tertinggi ${q.max}/${mx} dalam ${q.days} hari.` : `<b>Kuota Penuh</b> mulai ${fmtD(q.fullDay)} (${q.max}/${mx}).`}</span></div>
-    <div class="caption" style="margin-bottom:4px">Okupansi harian dalam rentang</div>
+    <div class="row" style="margin-bottom:12px;align-items:center"><h3 style="flex:1;margin:0">${esc(p.instansi)}</h3>${lz(p.status)}</div>
+    <dl class="kv">
+      <dt>Jurusan</dt><dd>${esc(p.jurusan || '-')}</dd>
+      <dt>Email Kontak</dt><dd>${esc(p.kontak || '-')}</dd>
+      ${p.hp ? `<dt>WhatsApp / HP</dt><dd>${esc(p.hp)}</dd>` : ''}
+      <dt>Minat Divisi</dt><dd><b>${esc(p.minatDivisi || p.divisi || 'Engineering')}</b></dd>
+      <dt>Periode</dt><dd>${fmtD(p.mulai)} – ${fmtD(p.selesai)}</dd>
+      <dt>Surat</dt><dd><i class=fi-rr-document></i> ${esc(p.fileName || 'surat-permohonan.pdf')} <a href="#" data-dl style="color:var(--primary);margin-left:6px;text-decoration:underline">Lihat PDF</a></dd>
+      ${p.porto ? `<dt>Portofolio</dt><dd><a href="${esc(p.porto)}" target="_blank" style="color:var(--primary);text-decoration:underline">${esc(p.porto)}</a></dd>` : ''}
+      <dt>No. surat</dt><dd>${esc(p.nomor || '—')}</dd>
+    </dl>
+    <div class="sep"></div>
+    <h3 style="margin-bottom:8px">Hasil Analisis Kuota (Realtime Overlap)</h3>
+    <div class="banner ${q.available ? 'ok' : 'danger'}">
+      ${q.available ? '<i class=fi-rr-check-circle></i>' : '<i class=fi-rr-cross-circle></i>'}
+      <span>${q.available ? `<b>Available</b> — okupansi tertinggi ${q.max}/${mx} dalam ${q.days} hari.` : `<b>Kuota Penuh</b> mulai ${fmtD(q.fullDay)} (${q.max}/${mx}).`}</span>
+    </div>
+    <div class="caption" style="margin-bottom:4px">Okupansi harian dalam rentang periode magang</div>
     <div class="chart" style="height:80px;gap:1px">${days.map(d => `<div class="c" style="gap:0"><i style="height:${d / mx * 100}%;max-width:none;background:${d >= mx ? '#DC2626' : d >= mx - 1 ? '#D97706' : '#16A34A'}"></i></div>`).join('')}</div>
-    ${p.status === 'Menunggu' ? `<div class="sep"></div><div class="field"><label class="lbl" for="pDiv">Divisi</label><select class="input" id="pDiv">${['Engineering', 'Design', 'QA'].map(d => `<option>${d}</option>`).join('')}</select></div><div class="field"><label class="lbl" for="pPemb">Pembimbing</label><select class="input" id="pPemb">${EMP.filter(e => e.tipe === 'Tetap').map(e => `<option>${esc(e.nama)}</option>`).join('')}</select></div>` : ''}`,
+    ${p.status === 'Menunggu' ? `
+      <div class="sep"></div>
+      <div class="field">
+        <label class="lbl" for="pDiv">Divisi Penempatan</label>
+        <select class="input" id="pDiv">${['Engineering', 'Design', 'QA'].map(d => `<option ${(p.minatDivisi === d || p.divisi === d) ? 'selected' : ''}>${d}</option>`).join('')}</select>
+      </div>
+      <div class="field">
+        <label class="lbl" for="pPemb">Pembimbing Lapangan</label>
+        <select class="input" id="pPemb">${EMP.filter(e => e.tipe === 'Tetap').map(e => `<option>${esc(e.nama)}</option>`).join('')}</select>
+      </div>` : ''}`,
     ['hr'].includes(S.role) && p.status === 'Menunggu' ? `<button class="btn btn-danger" id="pRej">Tolak (surat otomatis)</button><button class="btn btn-success" id="pAcc" ${q.available ? '' : 'disabled'}>Terima & Terbitkan Surat</button>` : (p.nomor ? '<button class="btn" id="pLet">Lihat Surat</button>' : ''));
-  $$('[data-dl]').forEach(a => a.onclick = e => { e.preventDefault(); toast('Membuka PDF surat permohonan', 'info'); });
+  $$('[data-dl]').forEach(a => a.onclick = e => { e.preventDefault(); toast('Membuka PDF surat permohonan resmi', 'info'); });
   const finish = (accept) => {
     const re = checkQuota(p.mulai, p.selesai, p.id);
     if (accept && !re.available) { toast('Kuota berubah saat approval — pengecekan ulang gagal', 'error'); return; }
@@ -666,53 +1941,429 @@ function reviewPkl(id) {
   if ($('#pLet')) $('#pLet').onclick = () => openModal('Surat PKL', letterPaper(letterText(p.status === 'Ditolak' ? 'reject' : 'accept', p, p.nomor), true), '<button class="btn" onclick="window.print()">Cetak</button>');
 }
 reg('pengajuan', 'Pengajuan PKL', ['Manajemen PKL', 'Pengajuan'], () => `
-  <div class="banner info"><i class=fi-rr-shield-check></i> <span>Mode kuota penuh: <b>${S.settings.autoReject ? 'Auto-reject dengan surat penolakan' : 'Tinjau manual oleh HR'}</b> (dapat diubah di Pengaturan).</span></div>
+  <!-- Ringkasan Statistik Pengajuan PKL -->
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card stat ok">
+      <div class="k">Total Pengajuan</div>
+      <div class="v">${PKL.length}</div>
+      <div class="caption" style="color:#64748b;margin-top:2px">Semua permohonan masuk</div>
+    </div>
+    <div class="card stat warn">
+      <div class="k">Menunggu Review</div>
+      <div class="v">${PKL.filter(p => p.status === 'Menunggu').length}</div>
+      <div class="caption" style="color:#64748b;margin-top:2px">Perlu keputusan HR</div>
+    </div>
+    <div class="card stat inf">
+      <div class="k">Peserta Aktif</div>
+      <div class="v">${PKL.filter(p => p.status === 'Aktif').length}</div>
+      <div class="caption" style="color:#64748b;margin-top:2px">Sedang menjalani magang</div>
+    </div>
+    <div class="card stat bad">
+      <div class="k">Selesai / Ditolak</div>
+      <div class="v">${PKL.filter(p => ['Selesai', 'Ditolak'].includes(p.status)).length}</div>
+      <div class="caption" style="color:#64748b;margin-top:2px">Arsip permohonan</div>
+    </div>
+  </div>
+
+  <div class="banner info">
+    <i class="fi-rr-shield-check"></i>
+    <span>Mode kuota penuh: <b>${S.settings.autoReject ? 'Auto-reject dengan surat penolakan otomatis' : 'Tinjau manual oleh HR'}</b> (konfigurasi dapat diatur di menu Pengaturan).</span>
+  </div>
+
   <div class="card">${table('pkl', {
-  rows: () => PKL.map(p => ({ ...p, q: p.status === 'Menunggu' ? (checkQuota(p.mulai, p.selesai, p.id).available ? 'Available' : 'Kuota Penuh') : '—' })),
-  toolbar: () => `<select class="input" id="fPkl"><option value="">Semua status</option>${['Menunggu', 'Aktif', 'Ditolak', 'Selesai'].map(s => `<option ${TBL.pkl.f === s ? 'selected' : ''}>${s}</option>`).join('')}</select>`,
-  cols: [{ k: 'nama', label: 'Pemohon', fmt: r => person(r.nama, r.jurusan) }, { k: 'instansi', label: 'Instansi' }, { k: 'mulai', label: 'Periode', fmt: r => `${fmtD(r.mulai)} – ${fmtD(r.selesai)}` }, { k: 'q', label: 'Cek kuota', fmt: r => r.q === '—' ? '—' : lz(r.q) }, { k: 'status', label: 'Status', fmt: r => lz(r.status) }],
+  rows: () => PKL.map(p => ({
+    ...p,
+    q: p.status === 'Menunggu' ? (checkQuota(p.mulai, p.selesai, p.id).available ? 'Available' : 'Kuota Penuh') : '—'
+  })),
+  toolbar: () => `
+    <select class="input" id="fPkl" style="font-weight:500">
+      <option value="">— Semua Status (${PKL.length}) —</option>
+      ${['Menunggu', 'Aktif', 'Ditolak', 'Selesai'].map(s => `
+        <option value="${s}" ${TBL.pkl.f === s ? 'selected' : ''}>${s} (${PKL.filter(p => p.status === s).length})</option>
+      `).join('')}
+    </select>
+  `,
+  cols: [
+    { k: 'nama', label: 'Nama Pemohon & Jurusan', fmt: r => person(r.nama, `${r.jurusan || '-'} · ${r.kontak || ''}`) },
+    { k: 'instansi', label: 'Asal Sekolah / Kampus', fmt: r => `<span class="badge" style="background:#eef2ff;color:#3730a3"><i class="fi-rr-school" style="margin-right:4px"></i>${esc(r.instansi)}</span>` },
+    { k: 'divisi', label: 'Divisi', fmt: r => r.divisi ? `<b>${esc(r.divisi)}</b>` : `<span class="muted">${esc(r.minatDivisi || 'Belum diatur')}</span>` },
+    { k: 'mulai', label: 'Periode Magang', fmt: r => `${fmtD(r.mulai)} – ${fmtD(r.selesai)}` },
+    { k: 'q', label: 'Validasi Kuota', fmt: r => r.q === '—' ? '—' : lz(r.q, r.q === 'Available' ? 'success' : 'danger') },
+    { k: 'status', label: 'Status', fmt: r => lz(r.status) },
+    { k: 'aksi', label: 'Aksi', sort: false, cls: 'r', fmt: r => `<button class="btn btn-sm btn-outline" data-rev="${r.id}" style="padding:4px 10px"><i class="fi-rr-search-alt"></i> Tinjau</button>` }
+  ],
   onRow: reviewPkl,
-  after: h => { const f = $('#fPkl', h); if (f) f.onchange = () => { TBL.pkl.f = f.value; TBL.pkl.page = 1; paintTable('pkl'); }; }
-})}</div>`, () => { const t = TBL.pkl, b = t.rows; t.rows = () => b().filter(p => !t.f || p.status === t.f); paintTable('pkl'); },
-  () => `<button class="btn" id="btnPublicForm"><i class=fi-rr-globe></i> Buka Form Publik</button>`);
+  after: h => {
+    const f = $('#fPkl', h);
+    if (f) {
+      f.onchange = () => {
+        TBL.pkl.f = f.value;
+        TBL.pkl.page = 1;
+        paintTable('pkl');
+      };
+    }
+    $$('[data-rev]', h).forEach(b => {
+      b.onclick = e => {
+        e.stopPropagation();
+        reviewPkl(+b.dataset.rev);
+      };
+    });
+  }
+})}</div>`, () => {
+  const t = TBL.pkl, b = t.rows;
+  t.rows = () => b().filter(p => !t.f || p.status === t.f);
+  paintTable('pkl');
+},
+  () => `
+    <button class="btn btn-primary" id="btnNewPkl"><i class="fi-rr-plus"></i> Form Pengajuan PKL</button>
+    <button class="btn btn-outline" id="btnPublicForm"><i class="fi-rr-globe"></i> Portal Publik</button>
+  `);
 
 function publicPklForm() {
-  openModal('Form Pengajuan PKL (Portal Publik)', `
-  <form id="pubForm" class="form-grid" novalidate>
-    <div class="field"><label class="lbl" for="fNama">Nama siswa/mahasiswa *</label><input class="input" id="fNama"><div class="err">Wajib diisi</div></div>
-    <div class="field"><label class="lbl" for="fInst">Sekolah / Kampus *</label><input class="input" id="fInst"><div class="err">Wajib diisi</div></div>
-    <div class="field"><label class="lbl" for="fJur">Jurusan</label><input class="input" id="fJur"></div>
-    <div class="field"><label class="lbl" for="fKon">Email kontak *</label><input class="input" id="fKon" type="email"><div class="err">Email tidak valid</div></div>
-    <div class="field"><label class="lbl" for="fMulai">Tanggal mulai *</label><input class="input" id="fMulai" type="date" value="${dOff(14)}"></div>
-    <div class="field"><label class="lbl" for="fSelesai">Tanggal selesai *</label><input class="input" id="fSelesai" type="date" value="${dOff(104)}"><div class="err">Tanggal selesai harus setelah mulai</div></div>
-    <div class="field full"><label class="lbl">Surat permohonan (PDF, maks 5 MB) *</label><label class="drop" id="drop"><input type="file" id="fFile" accept="application/pdf" hidden><span id="dropTxt"><i class=fi-rr-document></i> Klik untuk unggah PDF</span></label><div class="err" id="fileErr" style="color:var(--danger);font-size:12px;display:none"></div></div>
-    <div class="field full"><label class="row"><input type="checkbox" id="fCap"> <span>Saya bukan robot (captcha)</span></label><div class="err">Verifikasi captcha dulu</div></div>
-    <div class="full" id="quotaLive"></div></form>`, '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave">Kirim Pengajuan</button>');
-  let file = null;
+  const defaultStart = dOff(14);
+  const defaultEnd = dOff(104);
+
+  const formHTML = `
+  <div class="stack" style="gap:16px">
+    <div class="banner info" style="margin-bottom:0">
+      <i class="fi-rr-graduation-cap" style="font-size:18px"></i>
+      <span><b>Portal Publik Pendaftaran PKL / Magang Industri — AstaCode Software House.</b> Sistem melakukan validasi kuota aktif otomatis untuk mencegah bentrok jadwal.</span>
+    </div>
+
+    <form id="pubForm" novalidate style="display:flex;flex-direction:column;gap:14px">
+      <!-- 1. Identitas Pemohon & Instansi -->
+      <div class="form-section-card">
+        <div class="form-section-header">
+          <h4><i class="fi-rr-user-graduate" style="color:var(--primary)"></i> 1. Identitas Pemohon & Instansi Pendidikan</h4>
+          <span class="caption" style="color:#64748b">* Wajib diisi</span>
+        </div>
+        <div class="form-section-body">
+          <div class="form-grid">
+            <div class="field">
+              <label class="lbl" for="fNama">Nama Lengkap Siswa / Mahasiswa *</label>
+              <input class="input" id="fNama" placeholder="Contoh: Muhammad Kevin Alamsyah">
+              <div class="err">Nama pemohon wajib diisi</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fInst">Asal Sekolah / Kampus / Politeknik *</label>
+              <input class="input" id="fInst" list="instList" placeholder="Contoh: SMKN 1 Jakarta">
+              <datalist id="instList">
+                <option value="SMKN 1 Jakarta">
+                <option value="SMK Telkom Bandung">
+                <option value="SMKN 4 Bandung">
+                <option value="Universitas Indonesia">
+                <option value="Politeknik Negeri Jakarta">
+                <option value="Universitas Gunadarma">
+                <option value="SMK Negeri 2 Depok">
+                <option value="Universitas Brawijaya">
+              </datalist>
+              <div class="err">Nama instansi wajib diisi</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fJur">Jurusan / Program Studi *</label>
+              <input class="input" id="fJur" placeholder="Contoh: Rekayasa Perangkat Lunak (RPL)">
+              <div class="err">Jurusan wajib diisi</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fDivMinat">Pilihan Divisi Peminatan Magang</label>
+              <select class="input" id="fDivMinat">
+                <option value="Engineering" selected>Engineering (Software / Web / Backend / Frontend)</option>
+                <option value="Design">UI/UX Design & Product Research</option>
+                <option value="QA">Quality Assurance & Software Testing</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fKon">Email Kontak Aktif (Instansi / Siswa) *</label>
+              <input class="input" id="fKon" type="email" placeholder="Contoh: kevin@smkn1.sch.id">
+              <div class="err">Format email tidak valid</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fHp">Nomor WhatsApp / Handphone *</label>
+              <input class="input" id="fHp" type="tel" placeholder="Contoh: 0812-3456-7890" value="0812-">
+              <div class="err">Nomor kontak wajib diisi</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Rencana Periode Magang & Live Quota Check -->
+      <div class="form-section-card">
+        <div class="form-section-header">
+          <h4><i class="fi-rr-calendar" style="color:var(--primary)"></i> 2. Rencana Periode PKL & Cek Kuota Otomatis</h4>
+          <span class="badge" id="pklDurationBadge" style="background:#eef2ff;color:#3730a3;font-weight:600">Durasi: 90 Hari (~3 Bulan)</span>
+        </div>
+        <div class="form-section-body">
+          <div class="form-grid">
+            <div class="field">
+              <label class="lbl" for="fMulai">Tanggal Mulai PKL *</label>
+              <input class="input" id="fMulai" type="date" value="${defaultStart}">
+              <div class="caption" style="margin-top:3px;color:#64748b">Jadwal hari pertama magang</div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="fSelesai">Tanggal Selesai PKL *</label>
+              <input class="input" id="fSelesai" type="date" value="${defaultEnd}">
+              <div class="err">Tanggal selesai harus setelah tanggal mulai</div>
+            </div>
+          </div>
+
+          <!-- Live Quota Widget -->
+          <div id="quotaLive" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- 3. Berkas Permohonan & Verifikasi -->
+      <div class="form-section-card">
+        <div class="form-section-header">
+          <h4><i class="fi-rr-document" style="color:var(--primary)"></i> 3. Berkas Dokumen Persyaratan & Verifikasi</h4>
+          <span class="caption" style="color:#64748b">Format PDF Resmi (Maks 5 MB)</span>
+        </div>
+        <div class="form-section-body">
+          <!-- Drop Area -->
+          <div class="field">
+            <label class="lbl">Surat Permohonan Resmi dari Sekolah / Kampus *</label>
+            <div class="drop-zone-enhanced" id="dropZone">
+              <input type="file" id="fFile" accept="application/pdf" hidden>
+              <div id="dropContent">
+                <i class="fi-rr-cloud-upload" style="font-size:36px;color:var(--primary)"></i>
+                <div style="font-weight:600;margin-top:8px;font-size:14px;color:#0F172A">Unggah File Surat Permohonan PKL (PDF)</div>
+                <div class="caption" style="color:#64748B;margin-top:3px">
+                  Tarik & letakkan file di sini, atau <span style="color:var(--primary);text-decoration:underline;font-weight:600">klik untuk menelusuri file</span>
+                </div>
+                <div class="caption" style="font-size:11px;color:#94A3B8;margin-top:5px">
+                  Wajib bertandatangan kepala sekolah/pimpinan & stempel resmi. Ukuran maks. 5 MB.
+                </div>
+              </div>
+            </div>
+            <div class="err" id="fileErr" style="color:var(--danger);font-size:12px;display:none;margin-top:6px">Surat permohonan resmi dalam format PDF wajib diunggah</div>
+          </div>
+
+          <!-- Portofolio / CV Link -->
+          <div class="field" style="margin-top:12px">
+            <label class="lbl" for="fPorto"><i class="fi-rr-link" style="color:var(--primary)"></i> Link Portofolio / GitHub / Resume (Opsional)</label>
+            <input class="input" id="fPorto" placeholder="https://github.com/username atau link Google Drive portofolio karya">
+            <div class="caption" style="margin-top:2px;color:#64748b">Memberikan nilai tambah saat seleksi divisi peminatan</div>
+          </div>
+
+          <!-- Anti-Spam Captcha & Consent Box -->
+          <div style="margin-top:14px;padding:12px 16px;background:#F8FAFC;border:1px solid var(--border);border-radius:var(--r-md)">
+            <label class="row" style="cursor:pointer;gap:12px;align-items:flex-start;user-select:none">
+              <input type="checkbox" id="fCap" style="width:18px;height:18px;margin-top:2px;accent-color:var(--primary)">
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:13px;color:#0F172A;display:flex;align-items:center;gap:6px">
+                  <i class="fi-rr-shield-check" style="color:var(--primary)"></i> Konfirmasi Kebenaran Data & Bebas Spam
+                </div>
+                <div class="caption" style="color:#64748B;margin-top:3px;line-height:1.4">
+                  Saya menyatakan dengan sesungguhnya bahwa seluruh data yang diisikan adalah benar, dan surat permohonan PKL resmi yang dilampirkan adalah sah dikeluarkan oleh instansi pendidikan yang bersangkutan.
+                </div>
+              </div>
+            </label>
+            <div class="err" id="capErr" style="color:var(--danger);font-size:12px;display:none;margin-top:6px">Silakan centang persetujuan konfirmasi di atas</div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>`;
+
+  const footHTML = `
+    <button class="btn" id="mCancel">Batal</button>
+    <button class="btn btn-primary" id="mSave" style="padding:10px 22px;font-weight:600">
+      <i class="fi-rr-paper-plane"></i> Kirim Formulir Pengajuan
+    </button>
+  `;
+
+  openModal('Formulir Pengajuan PKL / Magang Industri', formHTML, footHTML, true);
+
+  let uploadedFile = null;
+
   const live = () => {
-    const s = $('#fMulai').value, e = $('#fSelesai').value; if (!s || !e || e < s) { $('#quotaLive').innerHTML = ''; return; }
-    const q = checkQuota(s, e); $('#quotaLive').innerHTML = `<div class="banner ${q.available ? 'ok' : 'danger'}">${q.available ? '<i class=fi-rr-check-circle></i> Kuota tersedia pada periode ini' : `<i class=fi-rr-cross-circle></i> Kuota penuh mulai ${fmtD(q.fullDay)}`}</div>`;
+    const s = $('#fMulai').value;
+    const e = $('#fSelesai').value;
+    const durBadge = $('#pklDurationBadge');
+
+    if (!s || !e || e <= s) {
+      $('#quotaLive').innerHTML = '<div class="banner warn"><i class="fi-rr-triangle-warning"></i> <span>Tanggal selesai harus setelah tanggal mulai.</span></div>';
+      if (durBadge) durBadge.textContent = 'Durasi tidak valid';
+      return;
+    }
+
+    const diffDays = Math.round((parse(e) - parse(s)) / (1000 * 60 * 60 * 24));
+    const diffMonths = (diffDays / 30).toFixed(1);
+    if (durBadge) durBadge.textContent = `Durasi: ${diffDays} Hari (~${diffMonths} Bulan)`;
+
+    const q = checkQuota(s, e);
+    const mx = S.settings.quotaMax;
+    const pct = Math.min(100, Math.round(q.max / mx * 100));
+
+    if (q.available) {
+      $('#quotaLive').innerHTML = `
+        <div class="quota-box-widget ok">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <div class="row" style="gap:8px;align-items:center">
+              <span class="lz lz-success"><i class="fi-rr-check-circle"></i> Kuota Tersedia</span>
+              <b style="font-size:13px;color:#166534">Kapasitas Mencukupi (${q.max}/${mx} Terisi)</b>
+            </div>
+            <span class="caption" style="color:#166534;font-weight:700">${pct}% Terpakai</span>
+          </div>
+          <div class="bar ok" style="margin:8px 0 6px"><i style="width:${pct}%"></i></div>
+          <div class="caption" style="color:#14532D">
+            Tersedia kuota magang yang mencukupi untuk seluruh <b>${q.days} hari</b> pada rentang tanggal yang dipilih. Pengajuan dapat langsung diproses oleh HR.
+          </div>
+        </div>`;
+    } else {
+      $('#quotaLive').innerHTML = `
+        <div class="quota-box-widget full">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <div class="row" style="gap:8px;align-items:center">
+              <span class="lz lz-danger"><i class="fi-rr-cross-circle"></i> Kuota Penuh</span>
+              <b style="font-size:13px;color:#991B1B">Maksimal Kuota Terlampaui (${q.max}/${mx})</b>
+            </div>
+            <span class="caption" style="color:#991B1B;font-weight:700">100% Penuh</span>
+          </div>
+          <div class="bar bad" style="margin:8px 0 6px"><i style="width:100%"></i></div>
+          <div class="caption" style="color:#7F1D1D">
+            Kuota magang telah terisi penuh (${mx} peserta) mulai tanggal <b>${fmtD(q.fullDay)}</b>. Mohon sesuaikan tanggal mulai atau selesai untuk memilih jadwal dengan kuota yang masih tersedia.
+          </div>
+        </div>`;
+    }
   };
-  $('#fMulai').onchange = $('#fSelesai').onchange = live; live();
-  $('#fFile').onchange = e => {
-    const f = e.target.files[0], er = $('#fileErr'); er.style.display = 'none'; file = null; $('#drop').classList.remove('ok');
+
+  $('#fMulai').onchange = live;
+  $('#fSelesai').onchange = live;
+  live();
+
+  const handleFile = (f) => {
+    const er = $('#fileErr');
+    const dropZone = $('#dropZone');
+    const dropContent = $('#dropContent');
+    er.style.display = 'none';
+    uploadedFile = null;
+
     if (!f) return;
-    if (f.type !== 'application/pdf') { er.textContent = 'File harus PDF'; er.style.display = 'block'; return; }
-    if (f.size > 5 * 1024 * 1024) { er.textContent = 'Ukuran maksimal 5 MB'; er.style.display = 'block'; return; }
-    file = f; $('#dropTxt').textContent = '<i class=fi-rr-check-circle></i> ' + f.name; $('#drop').classList.add('ok');
+    if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
+      er.textContent = 'Berkas surat harus dalam format PDF resmi (.pdf)';
+      er.style.display = 'block';
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      er.textContent = 'Ukuran file melebihi batas maksimal (5 MB)';
+      er.style.display = 'block';
+      return;
+    }
+
+    uploadedFile = f;
+    dropZone.classList.add('has-file');
+    const sizeKB = Math.round(f.size / 1024);
+    dropContent.innerHTML = `
+      <div class="row" style="justify-content:center;gap:12px;align-items:center">
+        <i class="fi-rr-document-signed" style="font-size:32px;color:#10B981"></i>
+        <div style="text-align:left">
+          <b style="color:#0F172A;font-size:14px">${esc(f.name)}</b>
+          <div class="caption" style="color:#10B981;font-weight:600"><i class="fi-rr-check-circle"></i> Berkas PDF Valid (${sizeKB} KB)</div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline" id="btnReplaceFile" style="margin-left:14px;padding:4px 10px">
+          Ganti File
+        </button>
+      </div>`;
+
+    $('#btnReplaceFile').onclick = (ev) => {
+      ev.stopPropagation();
+      $('#fFile').click();
+    };
   };
+
+  const dropZone = $('#dropZone');
+  const fileInput = $('#fFile');
+  dropZone.onclick = () => fileInput.click();
+  dropZone.ondragover = e => { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; dropZone.style.background = '#F0F7FF'; };
+  dropZone.ondragleave = () => { dropZone.style.borderColor = ''; dropZone.style.background = ''; };
+  dropZone.ondrop = e => {
+    e.preventDefault();
+    dropZone.style.borderColor = ''; dropZone.style.background = '';
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+  fileInput.onchange = e => {
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+
   $('#mCancel').onclick = closeModal;
+
   $('#mSave').onclick = () => {
-    const chk = (id, ok) => { $('#' + id).closest('.field').classList.toggle('has-err', !ok); return ok; };
-    const v = [chk('fNama', !!$('#fNama').value.trim()), chk('fInst', !!$('#fInst').value.trim()), chk('fKon', /^\S+@\S+\.\S+$/.test($('#fKon').value)), chk('fSelesai', $('#fSelesai').value > $('#fMulai').value), chk('fCap', $('#fCap').checked)];
-    if (!file) { const er = $('#fileErr'); er.textContent = 'Surat permohonan wajib diunggah'; er.style.display = 'block'; v.push(false); }
-    if (v.includes(false)) return;
-    const p = { id: Date.now(), nama: $('#fNama').value, instansi: $('#fInst').value, jurusan: $('#fJur').value, kontak: $('#fKon').value, mulai: $('#fMulai').value, selesai: $('#fSelesai').value, status: 'Menunggu', divisi: '', pembimbing: '', nomor: '' };
+    const chk = (id, ok) => {
+      const el = $('#' + id);
+      if (!el) return ok;
+      const field = el.closest('.field');
+      if (field) field.classList.toggle('has-err', !ok);
+      return ok;
+    };
+
+    const namaOk = !!$('#fNama').value.trim();
+    const instOk = !!$('#fInst').value.trim();
+    const jurOk = !!$('#fJur').value.trim();
+    const konOk = /^\S+@\S+\.\S+$/.test($('#fKon').value.trim());
+    const hpOk = $('#fHp').value.trim().length >= 8;
+    const dateOk = $('#fSelesai').value > $('#fMulai').value;
+    const capOk = $('#fCap').checked;
+
+    chk('fNama', namaOk);
+    chk('fInst', instOk);
+    chk('fJur', jurOk);
+    chk('fKon', konOk);
+    chk('fHp', hpOk);
+    chk('fSelesai', dateOk);
+
+    $('#capErr').style.display = capOk ? 'none' : 'block';
+
+    if (!uploadedFile) {
+      $('#fileErr').textContent = 'Surat permohonan resmi dalam format PDF wajib diunggah';
+      $('#fileErr').style.display = 'block';
+    } else {
+      $('#fileErr').style.display = 'none';
+    }
+
+    if (!namaOk || !instOk || !jurOk || !konOk || !hpOk || !dateOk || !capOk || !uploadedFile) {
+      toast('Lengkapi seluruh field wajib bertanda bintang (*)', 'warning');
+      return;
+    }
+
+    const p = {
+      id: Date.now(),
+      nama: $('#fNama').value.trim(),
+      instansi: $('#fInst').value.trim(),
+      jurusan: $('#fJur').value.trim(),
+      kontak: $('#fKon').value.trim(),
+      hp: $('#fHp').value.trim(),
+      minatDivisi: $('#fDivMinat').value,
+      mulai: $('#fMulai').value,
+      selesai: $('#fSelesai').value,
+      porto: $('#fPorto').value.trim(),
+      fileName: uploadedFile.name,
+      fileSize: uploadedFile.size,
+      status: 'Menunggu',
+      divisi: '',
+      pembimbing: '',
+      nomor: ''
+    };
+
     PKL.unshift(p);
+
     const q = checkQuota(p.mulai, p.selesai, p.id);
-    if (!q.available && S.settings.autoReject) { p.status = 'Ditolak'; p.nomor = nextNo('PKL-TLK'); toast('Kuota penuh — surat penolakan otomatis dikirim', 'warn'); }
-    else toast('Pengajuan diterima. Link status dikirim ke email.', 'success');
-    audit('Ajukan', 'PKL (publik)', p.nama); closeModal(); buildNav(); if (currentRoute() === 'pengajuan') render();
+    if (!q.available && S.settings.autoReject) {
+      p.status = 'Ditolak';
+      p.nomor = nextNo('PKL-TLK');
+      toast('Kuota penuh — surat penolakan otomatis dikirimkan ke email pemohon', 'warn');
+    } else {
+      toast(`Pengajuan PKL berhasil dikirim! Tanda terima dan tautan status dikirim ke ${p.kontak}.`, 'success');
+    }
+
+    audit('Ajukan', 'PKL (portal publik)', `${p.nama} (${p.instansi})`);
+    closeModal();
+    buildNav();
+    if (currentRoute() === 'pengajuan') render();
+    else paintAll();
   };
 }
 
@@ -1235,47 +2886,6 @@ reg('sertifikat', 'Sertifikat PKL', ['Manajemen PKL', 'Sertifikat'], () => `
   };
   $('#certHist').onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; const c = CERTS.find(x => x.no === b.dataset.v); openModal('Verifikasi Sertifikat', `<div class="banner ok"><i class=fi-rr-check-circle></i> <span><b>Sertifikat asli.</b> ${esc(c.no)} diterbitkan untuk <b>${esc(c.nama)}</b> pada ${fmtD(c.tgl)}.</span></div>`); };
 });
-
-/* ===== Payroll ===== */
-let payTab = 'PR-2026-10';
-reg('payroll', 'Payroll Engine', ['Payroll'], () => {
-  const run = PAYRUN.find(r => r.id === payTab), sl = slips(), tot = sl.reduce((a, s) => a + s.net, 0);
-  const flow = ['Draft', 'Review', 'Approved', 'Paid'], idx = flow.indexOf(run.status);
-  const next = flow[idx + 1];
-  const can = next === 'Review' ? ['hr'].includes(S.role) : ['Approved', 'Paid'].includes(next) ? S.role === 'finance' || S.role === 'hr' && false : false;
-  return `
-  <div class="tabs" id="payTabs">${PAYRUN.map(r => `<button class="${r.id === payTab ? 'on' : ''}" data-r="${r.id}">${r.periode} ${lz(r.status)}</button>`).join('')}</div>
-  <div class="card card-b" style="margin-bottom:16px"><div class="row">${flow.map((f, i) => `<div class="row" style="flex:1;min-width:110px"><span class="av sm" style="background:${i <= idx ? '#16A34A' : '#B8C0CE'}">${i <= idx ? '<i class=fi-rr-check></i>' : i + 1}</span><b style="color:${i <= idx ? 'inherit' : 'var(--text-secondary)'}">${f}</b></div>`).join('')}</div></div>
-  <div class="grid g4" style="margin-bottom:16px"><div class="card stat"><div class="k">Total bersih</div><div class="v">${rp(tot)}</div></div><div class="card stat inf"><div class="k">Karyawan tetap</div><div class="v">${sl.filter(s => s.e.tipe === 'Tetap').length}</div></div><div class="card stat warn"><div class="k">Freelance</div><div class="v">${sl.filter(s => s.e.tipe === 'Freelance').length}</div></div><div class="card stat bad"><div class="k">Total potongan</div><div class="v">${rp(sl.reduce((a, s) => a + s.ded, 0))}</div></div></div>
-  <div class="card"><div class="card-h"><h3>Rincian per karyawan</h3><div class="row">
-    ${next ? `<button class="btn btn-primary" id="payNext" ${can ? '' : 'disabled'} title="${can ? '' : 'Hanya ' + (next === 'Review' ? 'HR Admin' : 'Finance') + ' dapat melanjutkan'}">${{ Review: 'Kirim ke Review', Approved: 'Approve (Finance)', Paid: 'Tandai Dibayar' }[next]}</button>` : lz('Selesai dibayar', 'success')}
-    <button class="btn" id="payCsv"><i class=fi-rr-download></i> CSV Bank</button></div></div>
-  ${table('pay', {
-    rows: () => sl.map(s => ({ id: s.e.id, nama: s.e.nama, tipe: s.e.tipe, gross: s.gross, ded: s.ded, net: s.net })),
-    cols: [{ k: 'nama', label: 'Karyawan', fmt: r => person(r.nama) }, { k: 'tipe', label: 'Tipe', fmt: r => lz(r.tipe, r.tipe === 'Tetap' ? 'primary' : 'info') }, { k: 'gross', label: 'Pendapatan', cls: 'r num', fmt: r => rp(r.gross) }, { k: 'ded', label: 'Potongan', cls: 'r num', fmt: r => r.ded ? `<span class="down">-${rp(r.ded)}</span>` : '—' }, { k: 'net', label: 'Bersih', cls: 'r num', fmt: r => `<b>${rp(r.net)}</b>` }, { k: 'x', label: '', sort: false, fmt: r => `<button class="btn btn-sm" data-slip="${r.id}">Slip</button>` }],
-    after: h => $$('[data-slip]', h).forEach(b => b.onclick = () => slipModal(+b.dataset.slip))
-  })}</div>`;
-}, () => {
-  $$('#payTabs button').forEach(b => b.onclick = () => { payTab = b.dataset.r; render(); });
-  paintTable('pay');
-  const run = PAYRUN.find(r => r.id === payTab), flow = ['Draft', 'Review', 'Approved', 'Paid'];
-  if ($('#payNext')) $('#payNext').onclick = () => { run.status = flow[flow.indexOf(run.status) + 1]; audit('Payroll', run.id, '→ ' + run.status); toast(`Payroll ${run.periode}: ${run.status}`, 'success'); render(); };
-  $('#payCsv').onclick = () => { const csv = 'nama,rekening,jumlah\n' + slips().map(s => `${s.e.nama},0000000000,${Math.round(s.net)}`).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'payroll-bank.csv'; a.click(); toast('CSV transfer massal diunduh', 'success'); };
-});
-function slipModal(id) {
-  const s = computePayslip(EMP.find(e => e.id === id));
-  openModal('Slip Gaji — ' + s.e.nama, `<div class="paper letter" style="aspect-ratio:auto;min-height:420px"><div class="brandline">ASTACODE · SLIP GAJI</div><div class="caption">Periode ${PAYRUN.find(r => r.id === payTab)?.periode || 'Oktober 2026'}</div><hr style="margin:10px 0">
-    <dl class="kv"><dt>Nama</dt><dd>${esc(s.e.nama)}</dd><dt>Tipe</dt><dd>${esc(s.e.tipe)}</dd><dt>Jabatan</dt><dd>${esc(s.e.jabatan)}</dd></dl><div class="sep"></div>
-    <table class="transcript">${s.items.map(i => `<tr><td>${esc(i.n)}</td><td style="text-align:right">${rp(i.v)}</td></tr>`).join('')}${s.ded ? `<tr><td class="down">${esc(s.dedNote)}</td><td style="text-align:right" class="down">-${rp(s.ded)}</td></tr>` : ''}<tr><th>Take-home pay</th><th style="text-align:right">${rp(s.net)}</th></tr></table></div>`,
-    '<button class="btn" onclick="window.print()">Cetak PDF</button><button class="btn btn-primary" id="slipSend">Kirim via Email</button>');
-  $('#slipSend').onclick = () => { toast('Slip dikirim ke ' + s.e.email, 'success'); closeModal(); };
-}
-reg('payslip', 'Slip Gaji Saya', ['Payroll', 'Slip Gaji Saya'], () => {
-  const me = EMP.find(e => e.nama === 'Dewi Lestari'), s = computePayslip(me);
-  return `<div class="card card-b" style="max-width:560px"><h3>Oktober 2026</h3><div class="num" style="font-size:32px;font-weight:600;margin:8px 0">${rp(s.net)}</div>
-  ${s.items.map(i => `<div class="row" style="padding:4px 0"><span>${esc(i.n)}</span><span class="spacer"></span><span class="num">${rp(i.v)}</span></div>`).join('')}<button class="btn btn-primary" style="margin-top:12px" id="mySlip">Lihat slip lengkap</button></div>`;
-}, () => { $('#mySlip').onclick = () => slipModal(3); });
-
 /* ===== Dokumen & Template ===== */
 reg('dokumen', 'Dokumen & Template', ['Dokumen & Template'], () => `
   <div class="grid g-main"><div class="card"><div class="card-h"><h3>Editor template (rich-text)</h3><select class="input" id="tplSel" style="width:auto">${Object.entries(TEMPLATES).map(([k, t]) => `<option value="${k}">${t.nama}</option>`).join('')}</select></div><div class="card-b">
@@ -1293,27 +2903,39 @@ reg('dokumen', 'Dokumen & Template', ['Dokumen & Template'], () => `
 });
 
 /* ===== Laporan ===== */
-reg('laporan', 'Laporan', ['Laporan'], () => {
+reg('laporan', 'Laporan SDM', ['Laporan'], () => {
   const bars = [92, 88, 95, 90, 86, 93];
-  return `<div class="grid g4" style="margin-bottom:16px"><div class="card stat ok"><div class="k">Adopsi harian</div><div class="v">92%</div><div class="s up">Target ≥ 90%</div></div><div class="card stat"><div class="k">Waktu presensi</div><div class="v">7 dtk</div><div class="s up">Target ≤ 10 dtk</div></div><div class="card stat inf"><div class="k">Proses PKL</div><div class="v">4 mnt</div><div class="s up">Target &lt; 5 menit</div></div><div class="card stat warn"><div class="k">Koreksi payroll</div><div class="v">1,4%</div><div class="s up">Target &lt; 2%</div></div></div>
+  return `<div class="grid g4" style="margin-bottom:16px"><div class="card stat ok"><div class="k">Adopsi harian</div><div class="v">92%</div><div class="s up">Target ≥ 90%</div></div><div class="card stat"><div class="k">Waktu presensi</div><div class="v">7 dtk</div><div class="s up">Target ≤ 10 dtk</div></div><div class="card stat inf"><div class="k">Proses PKL</div><div class="v">4 mnt</div><div class="s up">Target &lt; 5 menit</div></div><div class="card stat warn"><div class="k">Retensi Talenta</div><div class="v">98,2%</div><div class="s up">Target ≥ 95%</div></div></div>
   <div class="grid g2"><div class="card"><div class="card-h"><h3>Kehadiran 6 bulan terakhir (%)</h3></div><div class="card-b"><div class="chart">${bars.map((b, i) => `<div class="c"><span class="num">${b}</span><i style="height:${b}%"></i><span>${BULAN[(TODAY.getMonth() - 5 + i + 12) % 12].slice(0, 3)}</span></div>`).join('')}</div></div></div>
   <div class="card"><div class="card-h"><h3>Komposisi pekerja</h3></div><div class="card-b stack">${['Tetap', 'Freelance', 'PKL'].map(t => { const n = EMP.filter(e => e.tipe === t).length, p = Math.round(n / EMP.length * 100); return `<div><div class="row"><b>${t}</b><span class="spacer"></span><span class="num caption">${n} orang · ${p}%</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`; }).join('')}
-  <button class="btn" id="repExp"><i class=fi-rr-download></i> Ekspor laporan</button></div></div></div>`;
-}, () => { $('#repExp') && ($('#repExp').onclick = () => toast('Laporan diekspor', 'success')); });
+  <button class="btn" id="repExp"><i class=fi-rr-download></i> Ekspor laporan SDM</button></div></div></div>`;
+}, () => { $('#repExp') && ($('#repExp').onclick = () => toast('Laporan SDM diekspor', 'success')); });
 
 /* ===== Pengaturan ===== */
 let setTab = 'lokasi';
 reg('pengaturan', 'Pengaturan', ['Pengaturan'], () => `
-  <div class="tabs" id="setTabs">${[['lokasi', 'Lokasi & Jaringan'], ['kebijakan', 'Kebijakan Lembur'], ['pkl', 'PKL'], ['role', 'Role & Permission'], ['integrasi', 'Integrasi'], ['audit', 'Audit Log']].map(([k, l]) => `<button class="${k === setTab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('')}</div>
+  <div class="tabs" id="setTabs">${[['lokasi', 'Lokasi & Jaringan'], ['kebijakan', 'Kebijakan Lembur'], ['pkl', 'PKL'], ['role', 'Role & Permission SDM'], ['integrasi', 'Integrasi'], ['audit', 'Audit Log']].map(([k, l]) => `<button class="${k === setTab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('')}</div>
   <div id="setBody"></div>`, () => {
   const s = S.settings, body = $('#setBody');
   const save = (fn) => { fn(); audit('Ubah', 'Pengaturan', setTab); toast('Pengaturan disimpan', 'success'); };
   const P = {
     lokasi: () => `<div class="card card-b"><div class="form-grid"><div class="field"><label class="lbl" for="sSsid">SSID kantor</label><input class="input" id="sSsid" value="${esc(s.ssid)}"></div><div class="field"><label class="lbl" for="sBssid">BSSID (untuk app native)</label><input class="input" id="sBssid" value="${esc(s.bssid)}"></div><div class="field"><label class="lbl" for="sIp">Public IP statis kantor</label><input class="input" id="sIp" value="${esc(s.officeIp)}"></div><div class="field"><label class="lbl" for="sRad">Radius WFH default (m)</label><input class="input" id="sRad" type="number" value="${s.wfhRadius}"></div></div><button class="btn btn-primary" id="sSave">Simpan</button></div>`,
-    kebijakan: () => `<div class="card card-b"><div class="form-grid"><div class="field"><label class="lbl" for="sTh">Ambang jam malam</label><input class="input" id="sTh" type="time" value="${s.nightThreshold}"></div><div class="field"><label class="lbl" for="sComp">Kompensasi default</label><select class="input" id="sComp"><option value="carryover" ${s.compensation === 'carryover' ? 'selected' : ''}>Carryover (masuk lebih siang)</option><option value="insentif" ${s.compensation === 'insentif' ? 'selected' : ''}>Insentif lembur</option></select></div><div class="field"><label class="lbl" for="sApp">Approval klaim</label><select class="input" id="sApp"><option value="approval" ${s.claimMode === 'approval' ? 'selected' : ''}>Manual Manajer</option><option value="auto" ${s.claimMode === 'auto' ? 'selected' : ''}>Auto-approve jika ada commit/task</option></select></div><div class="field"><label class="lbl" for="sRate">Rate insentif / jam (Rp)</label><input class="input" id="sRate" type="number" value="${s.incentiveRate}"></div><div class="field"><label class="lbl" for="sMax">Batas jam insentif / bulan</label><input class="input" id="sMax" type="number" value="${s.incentiveMax}"></div></div><button class="btn btn-primary" id="sSave">Simpan</button></div>`,
+    kebijakan: () => `<div class="card card-b"><div class="form-grid"><div class="field"><label class="lbl" for="sTh">Ambang jam malam</label><input class="input" id="sTh" type="time" value="${s.nightThreshold}"></div><div class="field"><label class="lbl" for="sComp">Kompensasi default</label><select class="input" id="sComp"><option value="carryover" ${s.compensation === 'carryover' ? 'selected' : ''}>Carryover (masuk lebih siang)</option><option value="insentif" ${s.compensation === 'insentif' ? 'selected' : ''}>Insentif jam kerja SDM</option></select></div><div class="field"><label class="lbl" for="sApp">Approval klaim</label><select class="input" id="sApp"><option value="approval" ${s.claimMode === 'approval' ? 'selected' : ''}>Manual Manajer</option><option value="auto" ${s.claimMode === 'auto' ? 'selected' : ''}>Auto-approve jika ada commit/task</option></select></div><div class="field"><label class="lbl" for="sRate">Rate insentif / jam (Rp)</label><input class="input" id="sRate" type="number" value="${s.incentiveRate}"></div><div class="field"><label class="lbl" for="sMax">Batas jam insentif / bulan</label><input class="input" id="sMax" type="number" value="${s.incentiveMax}"></div></div><button class="btn btn-primary" id="sSave">Simpan</button></div>`,
     pkl: () => `<div class="card card-b"><div class="form-grid"><div class="field"><label class="lbl" for="sQ">Kuota maksimal simultan</label><input class="input" id="sQ" type="number" min="1" value="${s.quotaMax}"></div><div class="field"><label class="lbl" for="sScope">Cakupan kuota</label><select class="input" id="sScope"><option value="global" ${s.pkgRule === 'global' ? 'selected' : ''}>Global</option><option value="divisi" ${s.pkgRule === 'divisi' ? 'selected' : ''}>Per divisi</option></select></div><div class="field full"><label class="row"><span class="switch"><input type="checkbox" id="sAuto" ${s.autoReject ? 'checked' : ''}><span></span></span> Auto-reject surat penolakan bila kuota penuh</label></div><div class="field full"><label class="lbl" for="sSign">Penandatangan digital</label><input class="input" id="sSign" value="${esc(s.signer)}"></div></div><button class="btn btn-primary" id="sSave">Simpan</button></div>`,
-    role: () => { const rows = [['Presensi & log progres', 1, 1, 1, 1, 1, 1, 0], ['Approve lembur/Workload Malam', 0, 0, 0, 0, 1, 1, 0], ['Lihat slip gaji sendiri', 1, 1, 0, 1, 1, 1, 1], ['Kelola rekrutmen', 0, 0, 0, 0, 2, 1, 0], ['Kelola PKL', 0, 0, 0, 3, 2, 1, 0], ['Jalankan payroll', 0, 0, 0, 0, 0, 4, 1], ['Konfigurasi sistem', 0, 0, 0, 0, 0, 1, 0]]; const sym = { 0: '<i class=fi-rr-cross-circle></i>', 1: '<i class=fi-rr-check-circle></i>', 2: '<i class=fi-rr-eye></i>', 3: '<i class=fi-rr-check-circle></i> (evaluasi)', 4: '<i class=fi-rr-check-circle></i> (draft)' }; return `<div class="card"><div class="tbl-wrap"><table class="tbl perm"><thead><tr><th>Fitur</th>${['Karyawan', 'Freelancer', 'PKL', 'Pembimbing', 'Manajer', 'HR Admin', 'Finance'].map(r => `<th>${r}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr><td>${r[0]}</td>${r.slice(1).map(v => `<td>${sym[v] || '<i class=fi-rr-check-circle></i> (final)'}</td>`).join('')}</tr>`).join('').replace('<i class=fi-rr-check-circle></i> (draft)</td><td><i class=fi-rr-check-circle></i></td>', '<i class=fi-rr-check-circle></i> (draft)</td><td><i class=fi-rr-check-circle></i> (final)</td>')}</tbody></table></div><div class="pager"><span><i class=fi-rr-eye></i> = hanya lihat · Gunakan pemilih peran di top bar untuk melihat menu dinamis.</span></div></div>`; },
-    integrasi: () => { const L = [['Jira / Trello / ClickUp', 'Tarik ID task untuk Daily Log', 'P1', 1], ['GitHub / GitLab', 'Validasi commit/PR', 'P1', 1], ['Email (SMTP/API)', 'Notifikasi, surat, slip', 'P0', 1], ['Slack / WhatsApp', 'Pengingat presensi', 'P2', 0], ['Google/Microsoft SSO', 'Login', 'P1', 0], ['Google Calendar', 'Jadwal interview', 'P2', 0], ['LinkedIn', 'Butuh akses partner resmi', 'P2', 0]]; return `<div class="grid g2">${L.map(([n, d, p, on], i) => `<div class="card card-b row"><div style="flex:1"><b>${n}</b> ${lz(p, 'neutral')}<div class="caption">${d}</div></div><label class="switch"><input type="checkbox" data-int="${n}" ${on ? 'checked' : ''} aria-label="${n}"><span></span></label></div>`).join('')}</div>`; },
+    role: () => {
+      const rows = [
+        ['Presensi & Log Progres Harian', 1, 1, 1, 1, 1, 1],
+        ['Kompensasi Workload Malam', 0, 0, 0, 0, 1, 1],
+        ['Akses Dokumen SDM / SPK', 1, 1, 0, 1, 1, 1],
+        ['Kelola Rekrutmen & Pelamar', 0, 0, 0, 0, 2, 1],
+        ['Kelola Peserta & Evaluasi PKL', 0, 0, 0, 3, 2, 1],
+        ['Kelola Penugasan & Data SDM', 0, 0, 0, 0, 2, 1],
+        ['Konfigurasi Kebijakan SDM', 0, 0, 0, 0, 0, 1]
+      ];
+      const sym = { 0: '<i class=fi-rr-cross-circle></i>', 1: '<i class=fi-rr-check-circle></i>', 2: '<i class=fi-rr-eye></i>', 3: '<i class=fi-rr-check-circle></i> (evaluasi)' };
+      return `<div class="card"><div class="tbl-wrap"><table class="tbl perm"><thead><tr><th>Fitur SDM</th>${['Karyawan Tetap', 'Freelancer (Per Proyek)', 'Siswa PKL', 'Pembimbing PKL', 'Manajer Tim', 'HR Admin'].map(r => `<th>${r}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr><td>${r[0]}</td>${r.slice(1).map(v => `<td>${sym[v] || '<i class=fi-rr-check-circle></i>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="pager"><span><i class=fi-rr-eye></i> = tinjau/lihat · Gunakan pemilih peran di top bar untuk simulasi hak akses.</span></div></div>`;
+    },
+    integrasi: () => { const L = [['Jira / Trello / ClickUp', 'Tarik ID task untuk Daily Log', 'P1', 1], ['GitHub / GitLab', 'Validasi commit/PR', 'P1', 1], ['Email (SMTP/API)', 'Notifikasi & surat SDM', 'P0', 1], ['Slack / WhatsApp', 'Pengingat presensi', 'P2', 0], ['Google/Microsoft SSO', 'Login', 'P1', 0], ['Google Calendar', 'Jadwal interview', 'P2', 0], ['LinkedIn', 'Butuh akses partner resmi', 'P2', 0]]; return `<div class="grid g2">${L.map(([n, d, p, on], i) => `<div class="card card-b row"><div style="flex:1"><b>${n}</b> ${lz(p, 'neutral')}<div class="caption">${d}</div></div><label class="switch"><input type="checkbox" data-int="${n}" ${on ? 'checked' : ''} aria-label="${n}"><span></span></label></div>`).join('')}</div>`; },
     audit: () => `<div class="card">${table('audit', { rows: () => AUDIT.map((a, i) => ({ id: i + 1, ...a })), size: 10, cols: [{ k: 't', label: 'Waktu', cls: 'tabular' }, { k: 'actor', label: 'Aktor', fmt: r => person(r.actor) }, { k: 'aksi', label: 'Aksi', fmt: r => lz(r.aksi, 'primary') }, { k: 'entitas', label: 'Entitas' }, { k: 'detail', label: 'Detail' }] })}</div>`
   };
   const draw = () => {
@@ -1331,16 +2953,34 @@ reg('pengaturan', 'Pengaturan', ['Pengaturan'], () => `
 
 /* ===== Profil ===== */
 reg('profil', 'Profil Pengguna', ['Profil Pengguna'], () => {
-  const u = { hr: ['Rina Anggraini', 'HR Admin'], manager: ['Bagas Prakoso', 'Manajer / Team Lead'], employee: ['Dewi Lestari', 'Karyawan Tetap'], finance: ['Finance Team', 'Super Admin / Finance'] }[S.role];
+  const u = {
+    hr: ['Asisyah Sarah A.', 'HR Admin', 'hr@astacode.id'],
+    manager: ['Bagas Prakoso', 'Tech Lead / Manager', 'bagas@astacode.id'],
+    employee: ['Dewi Lestari', 'Frontend Developer (Karyawan Tetap)', 'dewi@astacode.id'],
+    freelance: ['Hana Putri', 'Mobile Developer (Freelancer - Per Proyek)', 'hana@gmail.com']
+  }[S.role] || ['Asisyah Sarah A.', 'HR Admin', 'hr@astacode.id'];
+  const empFL = EMP.find(e => e.id === 7);
   return `<div class="grid g2"><div class="card card-b"><div class="person" style="margin-bottom:16px"><span class="av" style="width:56px;height:56px;font-size:18px;background:${colorOf(u[0])}">${initials(u[0])}</span><div><h2>${u[0]}</h2><div class="muted">${u[1]}</div></div></div>
-  <dl class="kv"><dt>Email</dt><dd>${u[0].split(' ')[0].toLowerCase()}@astacode.id</dd><dt>Bahasa</dt><dd>Bahasa Indonesia</dd><dt>2FA</dt><dd>${lz('Opsional', 'neutral')}</dd></dl></div>
+  <dl class="kv"><dt>Email</dt><dd>${u[2]}</dd><dt>Bahasa</dt><dd>Bahasa Indonesia</dd><dt>Status Akun</dt><dd>${lz('Aktif', 'success')}</dd><dt>Skema SDM</dt><dd>${S.role === 'freelance' ? '<span class="badge" style="background:#DCFCE7;color:#15803D;font-weight:600">Freelance (Fee Per Project)</span>' : 'Pegawai Standar'}</dd></dl>
+  ${S.role === 'freelance' ? `
+    <div style="margin-top:16px;padding-top:12px;border-top:1px dashed var(--border)">
+      <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:6px">Penugasan Proyek Aktif:</div>
+      ${(empFL?.projects || []).map(p => `
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:12px">
+          <div class="row" style="justify-content:space-between"><b>${esc(p.nama)}</b><span style="font-weight:700;color:#16A34A">${rp(p.fee)}</span></div>
+          <div class="caption" style="color:#64748B">${esc(p.deliverables)} · Progres: <b>${p.progres}%</b> (${esc(p.status)})</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : ''}
+  </div>
   <div class="card card-b stack"><h3>Privasi & Persetujuan (UU PDP)</h3><label class="row"><span class="switch"><input type="checkbox" id="pConsent" ${S.consent ? 'checked' : ''}><span></span></span> Izinkan pemrosesan koordinat lokasi untuk presensi WFH</label><div class="caption">Anda berhak mengakses, memperbaiki, dan menghapus data pribadi.</div>
   <div class="sep"></div><h3>Lokasi WFH terdaftar</h3><div class="row"><span><i class=fi-rr-home></i> Rumah — radius ${S.settings.wfhRadius} m</span><span class="spacer"></span>${lz('Approved')}</div></div></div>`;
 }, () => { $('#pConsent').onchange = e => { S.consent = e.target.checked; toast(S.consent ? 'Persetujuan lokasi diberikan' : 'Persetujuan dicabut', 'info'); }; });
 
 /* ---------------- Router ---------------- */
 const currentRoute = () => (location.hash || '#beranda').slice(1).split('?')[0];
-const GROUP_OF = { presensi: 'absensi', dailylog: 'absensi', rekap: 'absensi', lowongan: 'rekrutmen', pipeline: 'rekrutmen', pengajuan: 'pkl', kalender: 'pkl', peserta: 'pkl', evaluasi: 'pkl', sertifikat: 'pkl' };
+const GROUP_OF = { presensi: 'absensi', dailylog: 'absensi', workload: 'absensi', rekap: 'absensi', lowongan: 'rekrutmen', pipeline: 'rekrutmen', pengajuan: 'pkl', kalender: 'pkl', peserta: 'pkl', evaluasi: 'pkl', sertifikat: 'pkl' };
 let clockT;
 function render() {
   let id = currentRoute();
@@ -1354,7 +2994,7 @@ function render() {
   $('#pageTitle').textContent = r.title;
   $('#breadcrumb').innerHTML = `<a href="#beranda">Asta HR</a> › ` + r.crumb.map((c, i) => i === r.crumb.length - 1 ? `<b>${c}</b>` : c).join(' › ');
   $('#pageActions').innerHTML = r.actions ? r.actions() : '';
-  Object.keys(TBL).forEach(k => { if (!['rekap', 'emp', 'jobs', 'pkl', 'act', 'pay', 'audit'].includes(k)) delete TBL[k]; });
+  Object.keys(TBL).forEach(k => { if (!['rekap', 'emp', 'jobs', 'pkl', 'act', 'audit', 'workload'].includes(k)) delete TBL[k]; });
   $('#view').innerHTML = r.render(id);
   buildNav();
   $$('#hrSubnav .crm-subnav-item').forEach(el => {
@@ -1368,8 +3008,11 @@ function render() {
 }
 function bindActions(id) {
   const on = (sel, fn) => { const e = $(sel); if (e) e.onclick = fn; };
-  on('#btnAddEmp', () => { openModal('Tambah Karyawan', empForm(), '<button class="btn" id="mCancel">Batal</button><button class="btn btn-primary" id="mSave">Simpan</button>'); $('#mCancel').onclick = closeModal; $('#mSave').onclick = () => { if (saveEmp()) { closeModal(); paintAll(); } }; });
-  on('#btnAddJob', () => openJob()); on('#btnCareer', careerPage); on('#btnPublicForm', publicPklForm);
+  on('#btnAddEmp', () => openEmpModal());
+  on('#btnAddJob', () => openJob());
+  on('#btnCareer', careerPage);
+  on('#btnNewPkl', publicPklForm);
+  on('#btnPublicForm', publicPklForm);
 }
 // Wire rendering to be done after view is injected (r.after is the 4th arg registered as render's callback)
 // reg() stores arguments as (render, actions). The "after" hook is attached below for clarity.
@@ -1378,9 +3021,9 @@ function reg2() {}
 Object.keys(R).forEach(k => { const r = R[k]; if (typeof r.actions === 'function') { /* second fn arg is "after" in our usage */ r.after = r.actions; r.actions = null; } });
 // Pages that pass a 3rd function (actions) are re-registered below
 const ACTIONS = {
-  karyawan: () => `<button class="btn btn-primary" id="btnAddEmp">+ Tambah Karyawan</button>`,
-  lowongan: () => `<button class="btn" id="btnCareer"><i class=fi-rr-globe></i> Pratinjau Career Page</button><button class="btn btn-primary" id="btnAddJob">+ Lowongan</button>`,
-  pengajuan: () => `<button class="btn" id="btnPublicForm"><i class=fi-rr-globe></i> Buka Form Publik</button>`
+  karyawan: () => `<button class="btn btn-primary" id="btnAddEmp"><i class="fi-rr-plus"></i> Tambah Karyawan</button>`,
+  lowongan: () => `<button class="btn btn-outline" id="btnCareer"><i class="fi-rr-globe"></i> Pratinjau Career Page</button><button class="btn btn-primary" id="btnAddJob"><i class="fi-rr-plus"></i> Tambah Lowongan</button>`,
+  pengajuan: () => `<button class="btn btn-primary" id="btnNewPkl"><i class="fi-rr-plus"></i> Form Pengajuan PKL</button><button class="btn btn-outline" id="btnPublicForm"><i class="fi-rr-globe"></i> Portal Publik</button>`
 };
 Object.entries(ACTIONS).forEach(([k, f]) => R[k].actions = f);
 
@@ -1397,13 +3040,27 @@ _evt('#sbNav', 'click', e => { if (e.target.closest('a')) document.body.classLis
 _on('#drawerClose', 'onclick', closeDrawer); _on('#modalClose', 'onclick', closeModal);
 _evt('#modalWrap', 'click', e => { if (e.target.id === 'modalWrap') closeModal(); });
 _evt('#cmdWrap', 'click', e => { if (e.target.id === 'cmdWrap') closeCmd(); });
-_on('#roleSelect', 'onchange', e => { S.role = e.target.value; const n = { hr: 'RA', manager: 'BP', employee: 'DL', finance: 'FN' }[S.role]; const ba = $('#btnAvatar'); if(ba) ba.textContent = n; toast('Peran: ' + e.target.selectedOptions[0].text, 'info'); if (!allowed(currentRoute())) location.hash = 'beranda'; else render(); });
+_on('#roleSelect', 'onchange', e => {
+  S.role = e.target.value;
+  const n = { hr: 'AS', manager: 'BP', employee: 'DL', freelance: 'HP' }[S.role] || 'AS';
+  const u = {
+    hr: ['Asisyah Sarah A.', 'HR Admin'],
+    manager: ['Bagas Prakoso', 'Tech Lead / Manager'],
+    employee: ['Dewi Lestari', 'Frontend Developer (Tetap)'],
+    freelance: ['Hana Putri', 'Freelance Mobile Dev (Per Proyek)']
+  }[S.role];
+  const ba = $('#userAvatar'); if(ba) ba.textContent = n;
+  const un = $('#userName'); if(un && u) un.textContent = u[0];
+  const ur = $('#userRole'); if(ur && u) ur.textContent = u[1];
+  toast('Peran: ' + e.target.selectedOptions[0].text, 'info');
+  if (!allowed(currentRoute())) location.hash = 'beranda'; else render();
+});
 _on('#btnAvatar', 'onclick', () => location.hash = 'profil');
-_on('#btnNotif', 'onclick', () => { const b = badges(); openDrawer('Notifikasi', `<div class="stack">${b.pengajuan ? `<div class="banner info"><i class=fi-rr-graduation-cap></i> ${b.pengajuan} pengajuan PKL baru</div>` : ''}<div class="banner ok"><i class=fi-rr-check-circle></i> Payroll September telah dibayar</div></div>`); });
+_on('#btnNotif', 'onclick', () => { const b = badges(); openDrawer('Notifikasi', `<div class="stack">${b.pengajuan ? `<div class="banner info"><i class=fi-rr-graduation-cap></i> ${b.pengajuan} pengajuan PKL baru</div>` : ''}<div class="banner ok"><i class=fi-rr-check-circle></i> Rekap absensi & evaluasi SDM periode ini telah disinkronkan</div></div>`); });
 _on('#btnHelp', 'onclick', () => openModal('Bantuan', '<p>Gunakan <kbd>Ctrl</kbd>+<kbd>K</kbd> untuk pencarian cepat. Ganti peran di top bar untuk melihat hak akses berbeda.</p><div class="banner warn" style="margin-top:12px"><i class=fi-rr-triangle-warning></i> Browser tidak bisa membaca SSID/BSSID — validasi onsite memakai Public IP statis.</div>'));
 _on('#btnCreate', 'onclick', () => {
   openModal('Buat baru', `<div class="stack">${[['Daily Log', 'dailylog'], ['Karyawan', 'karyawan'], ['Lowongan', 'lowongan'], ['Pengajuan PKL (form publik)', 'pengajuan']].map(([l, h]) => `<button class="btn" data-c="${h}" style="justify-content:flex-start">+ ${l}</button>`).join('')}</div>`);
-  $$('[data-c]').forEach(b => b.onclick = () => { closeModal(); location.hash = b.dataset.c; setTimeout(() => { if (b.dataset.c === 'karyawan') $('#btnAddEmp')?.click(); if (b.dataset.c === 'lowongan') $('#btnAddJob')?.click(); if (b.dataset.c === 'pengajuan') publicPklForm(); }, 50); });
+  $$('[data-c]').forEach(b => b.onclick = () => { closeModal(); location.hash = b.dataset.c; setTimeout(() => { if (b.dataset.c === 'karyawan') openEmpModal(); if (b.dataset.c === 'lowongan') $('#btnAddJob')?.click(); if (b.dataset.c === 'pengajuan') publicPklForm(); }, 50); });
 });
 
 /* Command palette (Ctrl/⌘+K) */
