@@ -1011,36 +1011,54 @@ function initSprintPlanner() {
                         const statusContainer = row.querySelector('.status-indicator');
                         if (statusContainer) {
                             statusContainer.className = 'status-indicator status-ready';
-                            statusContainer.innerHTML = '<i class="fa-solid fa-check"></i> Siap Ditinjau';
+                            statusContainer.textContent = 'Siap Ditinjau';
                         }
 
                         // Update action buttons from 'Eksekusi AI' to 'Pratinjau' + 'Re-Gen'
-                        const actionContainer = row.querySelector('div:last-child');
+                        const actionContainer = row.querySelector('.sprint-action-group, div:last-child');
                         if (actionContainer) {
+                            actionContainer.className = 'sprint-action-group';
                             actionContainer.innerHTML = `
-                                <button class="btn btn-outline btn-preview-day" data-day="${step}" style="font-size:11px; padding:4px 8px; height:auto;" title="Pratinjau Hasil"><i class="fa-solid fa-eye"></i> Pratinjau</button>
-                                <button class="btn btn-primary btn-generate-day" data-day="${step}" style="font-size:11px; padding:4px 10px; height:auto;"><i class="fa-solid fa-rotate"></i> Re-Gen</button>
+                                <button type="button" class="btn-preview-day" id="btnPreviewDay${step}" data-day="${step}" onclick="window.executeDaySprintAction(${step}, 'preview')" title="Pratinjau Hasil"><i class="fa-solid fa-eye"></i> Pratinjau</button>
+                                <button type="button" class="btn-regen-day" id="btnGenerateDay${step}" data-day="${step}" onclick="window.executeDaySprintAction(${step}, 'generate')" title="Generate Ulang via AI"><i class="fa-solid fa-rotate"></i> Re-Gen</button>
                             `;
                         }
 
                         sprintData[step].status = 'ready';
                     }
-                    if (progressText) progressText.textContent = `Progress: ${step} dari 7 Konten Dieksekusi`;
+                    const progBar = document.getElementById('sprintProgressBar');
+                    if (progBar) progBar.style.width = `${(step / 7) * 100}%`;
+                    if (progressText) progressText.textContent = `${step} dari 7 Konten Siap`;
                     step++;
                 } else {
                     clearInterval(interval);
-                    btnExecuteAll.innerHTML = '<i class="fa-solid fa-check-double"></i> 7 Hari Siap';
-                    btnExecuteAll.disabled = false;
 
-                    // Otomatis simpan seluruh 7 konten hasil generate ke Brankas Aset (Asset Library DAM)
+                    // 1. Otomatis simpan seluruh 7 konten hasil generate ke Brankas Aset (Asset Library DAM)
                     if (typeof window.autoSaveGeneratedContentToAssetLibrary === 'function') {
                         for (let s = 1; s <= 7; s++) {
                             if (sprintData[s]) window.autoSaveGeneratedContentToAssetLibrary(sprintData[s], false);
                         }
-                        window.showToast("🚀 Seluruh 7 aset konten & visual mingguan berhasil dibuat oleh AI & otomatis tersimpan ke Brankas Aset DAM!", "success");
-                    } else {
-                        window.showToast("🚀 Seluruh 7 aset konten & visual mingguan berhasil dibuat oleh AI!", "success");
                     }
+
+                    // 2. OTOMATIS EKSPOR KE KANBAN AI BOARD (Tanpa perlu klik tombol ekspor manual lagi!)
+                    if (typeof window.syncSprintToKanbanBoard === 'function') {
+                        window.syncSprintToKanbanBoard(true); // silent = true (tanpa redirect paksa)
+                    }
+
+                    // 3. OTOMATIS SINKRONKAN KE CONTENT CALENDAR
+                    if (typeof renderCalendarGrid === 'function') renderCalendarGrid();
+                    if (typeof renderWeekGrid === 'function' && currentCalView === 'week') renderWeekGrid();
+
+                    // 4. Update visual tombol tunggal menjadi status 'Tersinkron Otomatis'
+                    btnExecuteAll.disabled = false;
+                    btnExecuteAll.innerHTML = '<i class="fa-solid fa-circle-check"></i> 7 Hari Siap di Kanban AI (Buka ↗)';
+                    btnExecuteAll.style.background = '#16a34a';
+                    btnExecuteAll.style.borderColor = '#16a34a';
+                    btnExecuteAll.style.boxShadow = '0 4px 14px rgba(22, 163, 74, 0.3)';
+                    btnExecuteAll.title = 'Seluruh 7 konten berhasil masuk ke Kanban Content AI. Klik untuk membuka papan Kanban.';
+                    btnExecuteAll.onclick = () => window.switchMarketingPage('kanban');
+
+                    window.showToast("🚀 7 Konten mingguan berhasil dieksekusi & OTOMATIS masuk ke Kanban Content AI + Kalender + DAM!", "success");
 
                     renderPreviewForDay(currentPreviewDay);
 
@@ -1054,7 +1072,7 @@ function initSprintPlanner() {
         });
     }
 
-    // Sync to Calendar Handler
+    // Sync to Calendar Handler (Manual Trigger)
     if (btnSyncCalendar) {
         btnSyncCalendar.addEventListener('click', () => {
             renderCalendarGrid();
@@ -1068,7 +1086,7 @@ function initSprintPlanner() {
     }
 
     // Export 7-Day Sprint Directly into Kanban Content AI Board
-    window.syncSprintToKanbanBoard = function() {
+    window.syncSprintToKanbanBoard = function(isAutoSync = false) {
         let count = 0;
         for (let day = 1; day <= 7; day++) {
             const item = sprintData[day];
@@ -1105,12 +1123,34 @@ function initSprintPlanner() {
         }
 
         window.renderKanbanBoard();
-        window.showToast(`📋 Sukses! ${count > 0 ? count + ' konten sprint' : 'Seluruh konten sprint'} berhasil diekspor ke Kanban Content AI dengan akun target masing-masing!`, 'success');
 
-        // Smoothly redirect user to Kanban board
-        setTimeout(() => {
-            window.switchMarketingPage('kanban');
-        }, 700);
+        // Update Global Kanban in localStorage jika ada integrasi portal index
+        try {
+            const globalTasks = JSON.parse(localStorage.getItem('astacode_kanban_ai_tasks') || '[]');
+            sprintData && Object.values(sprintData).forEach((item, idx) => {
+                if (item && item.topic && !globalTasks.find(t => t.title === item.topic)) {
+                    globalTasks.push({
+                        id: 'task-ai-mkt-' + (idx + 1) + '-' + Date.now(),
+                        title: item.topic,
+                        module: 'marketing',
+                        column: 'in-progress',
+                        priority: 'high',
+                        assignee: 'AI Content Bot',
+                        deadline: 'Minggu ini',
+                        desc: `Draft konten format ${item.format} untuk kanal medsos Astacode.`
+                    });
+                }
+            });
+            localStorage.setItem('astacode_kanban_ai_tasks', JSON.stringify(globalTasks));
+        } catch(e) {}
+
+        if (!isAutoSync) {
+            window.showToast(`📋 Sukses! ${count > 0 ? count + ' konten sprint' : 'Seluruh konten sprint'} berhasil diekspor ke Kanban Content AI dengan akun target masing-masing!`, 'success');
+            // Smoothly redirect user to Kanban board jika diklik manual
+            setTimeout(() => {
+                window.switchMarketingPage('kanban');
+            }, 700);
+        }
     };
 
     // Sprint Row Delegate Events
@@ -5439,7 +5479,15 @@ window.executeDaySprintAction = function(day, action) {
                 const indicator = row.querySelector('.status-indicator');
                 if (indicator) {
                     indicator.className = 'status-indicator status-ready';
-                    indicator.innerHTML = '<i class="fa-solid fa-check"></i> Siap Ditinjau';
+                    indicator.textContent = 'Siap Ditinjau';
+                }
+                const actionContainer = row.querySelector('.sprint-action-group, div:last-child');
+                if (actionContainer) {
+                    actionContainer.className = 'sprint-action-group';
+                    actionContainer.innerHTML = `
+                        <button type="button" class="btn-preview-day" id="btnPreviewDay${day}" data-day="${day}" onclick="window.executeDaySprintAction(${day}, 'preview')" title="Pratinjau Hasil"><i class="fa-solid fa-eye"></i> Pratinjau</button>
+                        <button type="button" class="btn-regen-day" id="btnGenerateDay${day}" data-day="${day}" onclick="window.executeDaySprintAction(${day}, 'generate')" title="Generate Ulang via AI"><i class="fa-solid fa-rotate"></i> Re-Gen</button>
+                    `;
                 }
             }
             if (typeof renderPreviewForDay === 'function') renderPreviewForDay(day);
@@ -5637,7 +5685,118 @@ window.openInboxChatModal = function(customerName, platform, lastMsg, aiStatus) 
         setTimeout(() => { listEl.scrollTop = listEl.scrollHeight; }, 50);
     }
 
+    // Configure CRM Lead Intent Banner & Sync Button
+    const leadBar = document.getElementById('inboxCrmLeadBar');
+    const leadTag = document.getElementById('inboxCrmTag');
+    const leadSummary = document.getElementById('inboxCrmLeadSummary');
+    const leadActionCont = document.getElementById('inboxCrmActionContainer');
+    const syncedLeads = JSON.parse(localStorage.getItem('astacode_synced_crm_leads') || '{}');
+
+    if (leadBar) {
+        if (customerName === 'Budi Santoso') {
+            leadBar.style.display = 'flex';
+            if (leadTag) leadTag.textContent = 'AI INTENT: HOT LEAD (92/100)';
+            if (leadSummary) leadSummary.textContent = 'Inquiry: Jasa Pembuatan Website Company Profile (Next.js) • Estimasi: Rp 4.500.000';
+        } else if (customerName === 'Siska Media') {
+            leadBar.style.display = 'flex';
+            if (leadTag) leadTag.textContent = 'AI INTENT: ERP PROSPECT (85/100)';
+            if (leadSummary) leadSummary.textContent = 'Inquiry: Arsitektur ERP Custom Pabrik (Laravel/Node) • Estimasi: Rp 45.000.000';
+        } else {
+            leadBar.style.display = 'none';
+        }
+
+        if (syncedLeads[customerName]) {
+            const info = syncedLeads[customerName];
+            if (leadActionCont) {
+                leadActionCont.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-check"></i> CRM Lead (${info.code})</span>
+                        <a href="../crm/crm.html#leads" class="btn btn-sm btn-outline" style="font-size:10.5px; padding:4px 8px; height:auto; color:var(--brand-primary); text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka CRM</a>
+                    </div>
+                `;
+            }
+        } else {
+            if (leadActionCont) {
+                leadActionCont.innerHTML = `
+                    <button type="button" id="btnSyncToCrm" class="btn btn-sm btn-primary" onclick="window.syncChatToCrmLead()" style="font-size:11px; padding:5px 12px; height:auto; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Konversi ke CRM Lead
+                    </button>
+                `;
+            }
+        }
+    }
+
     modal.style.display = 'flex';
+};
+
+window.syncChatToCrmLead = function() {
+    const customer = activeChatCustomer || 'Budi Santoso';
+    const syncedLeads = JSON.parse(localStorage.getItem('astacode_synced_crm_leads') || '{}');
+    const leadCode = 'LEAD-' + Math.floor(1000 + Math.random() * 9000);
+    const leadId = 'lead-' + Date.now();
+    const isBudi = customer === 'Budi Santoso';
+
+    // Payload Lead CRM
+    const newLead = {
+        id: leadId,
+        code: leadCode,
+        type: 'Company',
+        company: isBudi ? 'Budi Santoso (Inquiry Website)' : `${customer} (Inquiry Medsos)`,
+        title: isBudi ? 'Pembuatan Website Company Profile Next.js 14 SSR' : 'Custom Software & ERP Platform',
+        pic: customer,
+        jobTitle: 'Prospect / Decision Maker',
+        email: `${customer.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
+        phone: '+62 812-8899-2310',
+        industry: 'Technology & Services',
+        source: 'Instagram DM (Marketing Omnichannel)',
+        softwareId: 'prod-custom',
+        priority: 'High',
+        owner: 'Sarah Andini',
+        budget: isBudi ? 4500000 : 45000000,
+        stage: 0,
+        status: 'Open',
+        createdAt: new Date().toISOString(),
+        notes: `Otomatis dikonversi dari percakapan Omnichannel Marketing DM (${customer}). Terdeteksi niat pembelian jasa pembuatan website via AI intent classifier.`
+    };
+
+    // Inject ke database CRM di localStorage (astacode_crm_enterprise_v3)
+    try {
+        const crmKey = 'astacode_crm_enterprise_v3';
+        const rawCrm = localStorage.getItem(crmKey);
+        let crmDb = rawCrm ? JSON.parse(rawCrm) : {};
+        if (!crmDb.leads) crmDb.leads = [];
+        crmDb.leads.unshift(newLead);
+        localStorage.setItem(crmKey, JSON.stringify(crmDb));
+    } catch (e) {
+        console.warn('Gagal inject ke crmDb:', e);
+    }
+
+    // Catat status tersinkronisasi
+    syncedLeads[customer] = { code: leadCode, time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), budget: newLead.budget };
+    localStorage.setItem('astacode_synced_crm_leads', JSON.stringify(syncedLeads));
+
+    // Perbarui UI di modal
+    const leadActionCont = document.getElementById('inboxCrmActionContainer');
+    if (leadActionCont) {
+        leadActionCont.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-check"></i> CRM Lead (${leadCode})</span>
+                <a href="../crm/crm.html#leads" class="btn btn-sm btn-outline" style="font-size:10.5px; padding:4px 8px; height:auto; color:var(--brand-primary); text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka CRM</a>
+            </div>
+        `;
+    }
+
+    // Perbarui badge baris pada tabel Omnichannel Inbox jika ada
+    document.querySelectorAll('.inbox-row').forEach(row => {
+        if (row.textContent.includes(customer)) {
+            const badgeCol = row.querySelector('td:nth-child(5)');
+            if (badgeCol && !badgeCol.querySelector('.crm-lead-badge')) {
+                badgeCol.innerHTML += ` <span class="crm-lead-badge status-badge badge-done" style="font-size:10px; margin-left:4px; background:#dcfce7; color:#15803d;"><i class="fa-solid fa-cloud-check"></i> ${leadCode}</span>`;
+            }
+        }
+    });
+
+    window.showToast(`✓ API CRM Sukses! ${customer} berhasil dikonversi menjadi Lead Baru #${leadCode} (Rp ${(newLead.budget).toLocaleString('id-ID')}).`, 'success');
 };
 
 window.closeInboxChatModal = function() {
@@ -5794,7 +5953,120 @@ window.saveNewContentHistory = function(e) {
     window.showToast(`Konten "${title}" berhasil dicatat ke arsip riwayat!`, 'success');
 };
 
-// 13. Content History Detail Viewer & Filter Sync
+// 13. Content History Detail Viewer & Interactive Carousel Inspector
+const detailSlideContents = {
+    1: {
+        tag: 'Fullstack Web Architecture',
+        title: 'Kenapa Next.js 14 Jadi Standar Baru Frontend Engineer?',
+        desc: 'React Server Components (RSC), Partial Prerendering (PPR), dan mengapa enterprise mulai migrasi dari Single Page App (SPA) jadul.',
+        chips: [
+            { label: 'First Contentful Paint', val: '⚡ 3.2x Lebih Cepat', color: '#4ade80' },
+            { label: 'Client Bundle Size', val: '📦 -65% Lebih Ringan', color: '#38bdf8' }
+        ]
+    },
+    2: {
+        tag: 'React Server Components',
+        title: '0 KB JavaScript Dikirim ke Browser User!',
+        desc: 'Komponen dirender langsung di server. Database query berjalan instan tanpa perlu endpoint API perantara.',
+        chips: [
+            { label: 'DB Latency Overhead', val: '⚡ 0ms Client Trip', color: '#4ade80' },
+            { label: 'Keamanan Kredensial', val: '🔒 100% Server Side', color: '#38bdf8' }
+        ]
+    },
+    3: {
+        tag: 'Hybrid Streaming Engine',
+        title: 'Partial Prerendering: Statis & Dinamis Bersatu',
+        desc: 'Shell halaman dimuat instan dari Edge CDN, sementara komponen personalisasi di-stream paralel di latar belakang.',
+        chips: [
+            { label: 'Edge Cache Hit Rate', val: '📈 99.4% Global CDN', color: '#4ade80' },
+            { label: 'Time to Interactive', val: '⏱️ < 0.8 Detik', color: '#38bdf8' }
+        ]
+    },
+    4: {
+        tag: 'Server Actions & Mutations',
+        title: 'Selamat Tinggal Redux & Boilerplate REST API!',
+        desc: 'Mutasi form langsung memanggil fungsi async di server dengan validasi tipe data TypeScript end-to-end.',
+        chips: [
+            { label: 'Boilerplate Code', val: '📉 Berkurang 70%', color: '#4ade80' },
+            { label: 'Type Safety', val: '🛡️ Full TypeScript', color: '#38bdf8' }
+        ]
+    },
+    5: {
+        tag: 'Rekomendasi Enterprise',
+        title: 'Kapan Waktunya Proyek Anda Wajib Pindah ke Next.js 14?',
+        desc: 'Jika Anda membangun e-commerce, portal SaaS, atau website B2B dengan prioritas SEO dan kecepatan konversi.',
+        chips: [
+            { label: 'Estimasi ROI', val: '💰 +28% Conversion', color: '#4ade80' },
+            { label: 'Audit Konsultasi', val: '🤝 Gratis di Astacode', color: '#38bdf8' }
+        ]
+    }
+};
+
+window.switchDetailSlide = function(slideNum) {
+    // 1. Update Tabs
+    document.querySelectorAll('#detailSlideTabGroup .detail-slide-btn').forEach((btn, idx) => {
+        if (idx + 1 === slideNum) {
+            btn.className = 'btn btn-xs btn-primary detail-slide-btn active';
+        } else {
+            btn.className = 'btn btn-xs btn-outline detail-slide-btn';
+        }
+    });
+
+    // 2. Update Dots
+    const dots = document.querySelectorAll('#detailCarouselDots span');
+    dots.forEach((dot, idx) => {
+        dot.style.background = (idx + 1 === slideNum) ? '#2563eb' : '#cbd5e1';
+    });
+
+    // 3. Update Badge
+    const badge = document.getElementById('detailSlideNumberBadge');
+    if (badge) badge.textContent = `${slideNum} / 5`;
+
+    // 4. Update Dynamic Slide Content
+    const data = detailSlideContents[slideNum] || detailSlideContents[1];
+    const container = document.getElementById('detailSlideDynamicContent');
+    if (container) {
+        container.innerHTML = `
+            <div style="display:inline-block; font-size:11px; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">${data.tag}</div>
+            <h3 style="font-size:20px; line-height:1.3; font-weight:900; margin:0 0 10px; color:#ffffff; letter-spacing:-0.02em;">
+                ${data.title}
+            </h3>
+            <p style="font-size:11.5px; line-height:1.5; color:#cbd5e1; margin:0 0 14px;">
+                ${data.desc}
+            </p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); padding:8px 10px; border-radius:8px;">
+                    <div style="font-size:10px; color:#94a3b8; font-weight:600;">${data.chips[0].label}</div>
+                    <div style="font-size:13px; font-weight:800; color:${data.chips[0].color};">${data.chips[0].val}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); padding:8px 10px; border-radius:8px;">
+                    <div style="font-size:10px; color:#94a3b8; font-weight:600;">${data.chips[1].label}</div>
+                    <div style="font-size:13px; font-weight:800; color:${data.chips[1].color};">${data.chips[1].val}</div>
+                </div>
+            </div>
+        `;
+    }
+};
+
+window.replyToComment = function(author) {
+    const input = document.getElementById('detailCommentReplyInput');
+    if (input) {
+        input.value = `${author} `;
+        input.focus();
+    }
+};
+
+window.sendDetailCommentReply = function() {
+    const input = document.getElementById('detailCommentReplyInput');
+    if (!input || !input.value.trim()) {
+        window.showToast('Harap ketik balasan komentar terlebih dahulu.', 'warning');
+        return;
+    }
+    const text = input.value.trim();
+    input.value = '';
+    window.showToast(`✓ Balasan terkirim ke postingan Instagram: "${text}"`, 'success');
+};
+
 window.openHistoryDetail = function(id, title, platform, views, engagement, status) {
     const list = document.getElementById('history-list-view');
     const detail = document.getElementById('history-detail-view');
@@ -5803,17 +6075,13 @@ window.openHistoryDetail = function(id, title, platform, views, engagement, stat
     list.style.display = 'none';
     detail.style.display = 'block';
 
-    const titleEl = detail.querySelector('h2');
-    const subEl = detail.querySelector('p');
-    if (titleEl) titleEl.textContent = `Detail Performa Konten #${id}`;
-    if (subEl) subEl.textContent = `Analitik mendalam untuk "${title}" (${platform})`;
+    const titleEl = document.getElementById('detailContentTitle');
+    const subEl = document.getElementById('detailContentSubtitle');
+    if (titleEl) titleEl.textContent = `Detail Performa: ${title}`;
+    if (subEl) subEl.innerHTML = `ID: <strong>CNT-${id}</strong> • ${platform} • Dipublikasikan: <strong>24 Okt 2026, 10:00 WIB</strong> • Akun: <strong>@astacode.official</strong>`;
 
-    const previewBox = detail.querySelector('.card-body .aspect-ratio-box, .card-body div[style*="aspect-ratio"]');
-    if (previewBox) {
-        previewBox.textContent = title;
-    }
-
-    window.showToast(`Membuka rincian analitik: "${title}"`, 'info');
+    window.switchDetailSlide(1);
+    window.showToast(`Membuka analitik mendalam: "${title}"`, 'info');
 };
 
 window.filterHistoryTable = function() {

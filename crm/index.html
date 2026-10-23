@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASTACODE CRM — Sales Pipeline & Project Management</title>
+  <meta name="description" content="Sistem CRM terintegrasi untuk manajemen pipeline penjualan, proyek, keuangan, dan legal PT ASTACODE Solusindo Teknologi." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons (Vanilla) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- Shared sidebar styles used by all ERP modules -->
+  <link rel="stylesheet" href="../sidebar.css" />
+  <!-- CRM styles remain in place for the native CRM header and content -->
+  <link rel="stylesheet" href="./css/styles.css" />
+
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  </style>
+
+  <!-- Pre-load Protocol Check & Error Fallback Controller -->
+  <script>
+    (function() {
+      window.__crmAppLoaded = false;
+
+      // Detect if user opened the file directly without a web server
+      var isFileProtocol = window.location.protocol === 'file:';
+      if (isFileProtocol) {
+        console.warn(
+          '%c[ASTACODE CRM — Peringatan Protokol file://]%c\n' +
+          'Aplikasi dibuka menggunakan protokol file://.\n' +
+          'Sebagian besar browser modern (Chrome, Edge, Firefox, Safari) membatasi pemuatan modul JavaScript (ES Modules) via file:// karena kebijakan keamanan CORS.\n\n' +
+          'Silakan gunakan salah satu metode server lokal berikut:\n' +
+          '1. Jalankan `npm run dev` di terminal folder ini.\n' +
+          '2. Gunakan ekstensi Live Server di VS Code (klik kanan index.html -> "Open with Live Server").\n' +
+          '3. Jalankan `npx serve .` atau `python -m http.server 3000`.',
+          'background:#f59e0b;color:#000;font-weight:bold;padding:3px 8px;border-radius:4px;',
+          'color:#e2e8f0;font-size:12px;'
+        );
+      }
+
+      // Safe Error Display on Loading Element
+      window.__showCrmLoadError = function(reason, details) {
+        if (window.__crmAppLoaded) return;
+        var loadingEl = document.getElementById('app-loading');
+        if (!loadingEl) return;
+
+        var isFile = window.location.protocol === 'file:';
+        var isTimeout = reason === 'timeout';
+
+        var title = isFile
+          ? 'Protokol file:// Terdeteksi (CORS Blocked)'
+          : (isTimeout ? 'Waktu Pemuatan Habis (Timeout Fallback)' : 'Gagal Memuat Modul ASTACODE CRM');
+
+        var message = isFile
+          ? 'Browser memblokir pemuatan modul JavaScript (ES Modules) saat berkas dibuka langsung dari filesystem lokal demi kebijakan keamanan (CORS).'
+          : (details || 'Modul JavaScript tidak dapat dimuat atau terjadi gangguan pada berkas sistem.');
+
+        loadingEl.innerHTML = `
+          <div style="max-width:560px;width:92%;background:#1e293b;border:1px solid #334155;border-radius:16px;padding:32px 28px;color:#f8fafc;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);text-align:left;animation:pulseSoft 2s ease-in-out infinite;">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:18px;">
+              <div style="width:44px;height:44px;border-radius:12px;background:${isFile ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'};border:1px solid ${isFile ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'};display:flex;align-items:center;justify-content:center;color:${isFile ? '#ef4444' : '#f59e0b'};font-size:22px;flex-shrink:0;">
+                ${isFile ? '⚠️' : '⚡'}
+              </div>
+              <div style="flex:1;">
+                <h2 style="font-size:17px;font-weight:700;margin:0 0 4px 0;color:#ffffff;line-height:1.3;">${title}</h2>
+                <span style="display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:${isFile ? '#7f1d1d' : '#78350f'};color:${isFile ? '#fecaca' : '#fef3c7'};">
+                  ${isFile ? 'CORS / File Protocol Restriction' : (isTimeout ? 'Network / Script Timeout' : 'Script Exception')}
+                </span>
+              </div>
+            </div>
+
+            <p style="font-size:13px;line-height:1.6;color:#cbd5e1;margin:0 0 18px 0;">
+              ${message}
+            </p>
+
+            <div style="background:#0f172a;border-radius:10px;padding:16px;border:1px solid #334155;margin-bottom:20px;">
+              <p style="font-size:12px;font-weight:700;color:#93c5fd;margin:0 0 10px 0;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px;">
+                <span>🚀</span> Panduan Menjalankan dengan Server Lokal:
+              </p>
+              <ol style="margin:0;padding-left:20px;font-size:12.5px;color:#cbd5e1;line-height:1.8;">
+                <li><strong>Vite Dev Server (Rekomendasi):</strong> Buka terminal di folder ini lalu jalankan <code style="background:#1e293b;color:#38bdf8;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;">npm run dev</code> atau <code style="background:#1e293b;color:#38bdf8;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;">npx vite</code>.</li>
+                <li><strong>VS Code Live Server:</strong> Klik kanan berkas <code style="background:#1e293b;color:#38bdf8;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;">index.html</code> &rarr; pilih <em>"Open with Live Server"</em>.</li>
+                <li><strong>Python HTTP Server:</strong> Ketik <code style="background:#1e293b;color:#38bdf8;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;">python -m http.server 3000</code> di terminal.</li>
+                <li><strong>Node.js Server:</strong> Ketik <code style="background:#1e293b;color:#38bdf8;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;">npx serve .</code> di terminal.</li>
+              </ol>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+              <span style="font-size:11px;color:#64748b;font-family:'JetBrains Mono',monospace;">URL saat ini: ${window.location.protocol}//...</span>
+              <button onclick="window.location.reload()" style="background:#6366f1;color:#ffffff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background 0.2s;" onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                Muat Ulang
+              </button>
+            </div>
+          </div>
+        `;
+      };
+
+      // Handler for module script error event
+      window.__onCrmModuleError = function(e) {
+        console.error('[ASTACODE CRM] Kegagalan pemuatan script module:', e);
+        window.__showCrmLoadError(
+          window.location.protocol === 'file:' ? 'file_protocol' : 'script_error',
+          window.location.protocol === 'file:'
+            ? 'Harap jalankan proyek ini menggunakan Live Server atau HTTP Server lokal agar ES Modules dapat dimuat.'
+            : 'Gagal memuat modul JavaScript utama (./js/main.js). Pastikan path berkas tepat.'
+        );
+      };
+
+      // Global window error listener before app is loaded
+      window.addEventListener('error', function(event) {
+        if (!window.__crmAppLoaded) {
+          if (event.target && event.target.tagName === 'SCRIPT') {
+            window.__onCrmModuleError(event);
+          } else if (event.error) {
+            console.error('[ASTACODE CRM Error]', event.error);
+            window.__showCrmLoadError('runtime_error', event.error.message || String(event.error));
+          }
+        }
+      }, true);
+
+      // Timeout Fallback: 3500ms max waiting time
+      window.__crmLoadTimeout = setTimeout(function() {
+        if (!window.__crmAppLoaded) {
+          window.__showCrmLoadError(
+            window.location.protocol === 'file:' ? 'file_protocol' : 'timeout',
+            window.location.protocol === 'file:'
+              ? 'Harap jalankan proyek ini menggunakan Live Server atau HTTP Server lokal agar ES Modules dapat dimuat.'
+              : 'Waktu tunggu pemuatan sistem habis (timeout 3.5 detik). Silakan muat ulang atau periksa konsol pengembang.'
+          );
+        }
+      }, 3500);
+    })();
+  </script>
+</head>
+<body class="antialiased">
+  <div id="app">
+    <!-- Loading State with animation and fallback -->
+    <div id="app-loading" style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#94a3b8;flex-direction:column;gap:16px;">
+      <div style="width:48px;height:48px;border:3px solid #1e293b;border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:#e2e8f0;font-weight:500;">Memuat ASTACODE CRM...</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748b;">Memverifikasi modul & basis data lokal</span>
+    </div>
+  </div>
+
+  <!-- Global Toast Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Global Modal Overlay -->
+  <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true"></div>
+
+  <!-- Main ES Module Entry Point (Relative Path with Error Handler) -->
+  <script type="module" src="./js/main.js" onerror="window.__onCrmModuleError(event)"></script>
+</body>
+</html>

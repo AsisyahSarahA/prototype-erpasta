@@ -115,77 +115,38 @@
               ${svg('chevron', 'nav-chevron')}
             </button>
             <div class="nav-sub" id="crmSubNav">
-              <!-- Group 1: SALES -->
-              <div class="nav-sub-group-title">Sales & Pipeline</div>
-              <a href="${prefix}crm/crm.html#dashboard" class="nav-sub-btn ${activeModule === 'crm' && (activeSubpage === 'dashboard' || !activeSubpage) ? 'active' : ''}" data-module="crm" data-sub="dashboard" onclick="window.navigateToModuleSubpage('crm', 'dashboard', '${prefix}crm/crm.html#dashboard', event)">
+              <div class="nav-sub-group-title">CRM & Penjualan</div>
+              <a href="${prefix}crm/crm.html#pipeline" class="nav-sub-btn ${activeModule === 'crm' && (activeSubpage === 'pipeline' || !activeSubpage) ? 'active' : ''}" data-module="crm" data-sub="pipeline" onclick="window.navigateToModuleSubpage('crm', 'pipeline', '${prefix}crm/crm.html#pipeline', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Executive Dashboard</span>
+                <span>Sales Pipeline</span>
               </a>
-              <a href="${prefix}crm/crm.html#leads" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'leads' ? 'active' : ''}" data-module="crm" data-sub="leads" onclick="window.navigateToModuleSubpage('crm', 'leads', '${prefix}crm/crm.html#leads', event)">
+              <a href="${prefix}crm/crm.html#customers" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'customers' ? 'active' : ''}" data-module="crm" data-sub="customers" onclick="window.navigateToModuleSubpage('crm', 'customers', '${prefix}crm/crm.html#customers', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Leads & Kualifikasi</span>
+                <span>Master Customer</span>
               </a>
-              <a href="${prefix}crm/crm.html#pipeline" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'pipeline' ? 'active' : ''}" data-module="crm" data-sub="pipeline" onclick="window.navigateToModuleSubpage('crm', 'pipeline', '${prefix}crm/crm.html#pipeline', event)">
+              <div class="nav-sub-group-title">ERP & Delivery</div>
+              <a href="${prefix}crm/crm.html#projects" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'projects' ? 'active' : ''}" data-module="crm" data-sub="projects" onclick="window.navigateToModuleSubpage('crm', 'projects', '${prefix}crm/crm.html#projects', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Lead & Sales Pipeline</span>
+                <span>Proyek & Delivery</span>
               </a>
-              <a href="${prefix}crm/crm.html#activity" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'activity' ? 'active' : ''}" data-module="crm" data-sub="activity" onclick="window.navigateToModuleSubpage('crm', 'activity', '${prefix}crm/crm.html#activity', event)">
+              <div class="nav-sub-group-title">Kontrak & Keuangan</div>
+              <a href="${prefix}crm/crm.html#finance_top" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'finance_top' ? 'active' : ''}" data-module="crm" data-sub="finance_top" onclick="window.navigateToModuleSubpage('crm', 'finance_top', '${prefix}crm/crm.html#finance_top', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Jadwal & Follow-up</span>
+                <span>Invoice & Setting TOP</span>
               </a>
-
-              <!-- Group 2: REQUIREMENTS & CATALOG -->
-              <div class="nav-sub-group-title">Requirements & Catalog</div>
-              <a href="${prefix}crm/crm.html#requirements" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'requirements' ? 'active' : ''}" data-module="crm" data-sub="requirements" onclick="window.navigateToModuleSubpage('crm', 'requirements', '${prefix}crm/crm.html#requirements', event)">
+              <a href="${prefix}crm/crm.html#contracts_legal" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'contracts_legal' ? 'active' : ''}" data-module="crm" data-sub="contracts_legal" onclick="window.navigateToModuleSubpage('crm', 'contracts_legal', '${prefix}crm/crm.html#contracts_legal', event)">
                 <span class="nav-sub-dot"></span>
-                <span>AI Requirement Studio</span>
-                <span class="nav-badge-accent">AI</span>
+                <span>Kontrak & Legalitas</span>
               </a>
-              <a href="${prefix}crm/crm.html#brd-prd" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'brd-prd' ? 'active' : ''}" data-module="crm" data-sub="brd-prd" onclick="window.navigateToModuleSubpage('crm', 'brd-prd', '${prefix}crm/crm.html#brd-prd', event)">
+              <div class="nav-sub-group-title">Client Care & AI</div>
+              <a href="${prefix}crm/crm.html#client_care" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'client_care' ? 'active' : ''}" data-module="crm" data-sub="client_care" onclick="window.navigateToModuleSubpage('crm', 'client_care', '${prefix}crm/crm.html#client_care', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Dokumen BRD & PRD</span>
+                <span>WhatsApp Client Care</span>
               </a>
-              <a href="${prefix}crm/crm.html#master" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'master' ? 'active' : ''}" data-module="crm" data-sub="master" onclick="window.navigateToModuleSubpage('crm', 'master', '${prefix}crm/crm.html#master', event)">
+              <div class="nav-sub-group-title">Eksekutif</div>
+              <a href="${prefix}crm/crm.html#reports" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'reports' ? 'active' : ''}" data-module="crm" data-sub="reports" onclick="window.navigateToModuleSubpage('crm', 'reports', '${prefix}crm/crm.html#reports', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Katalog Software & Harga</span>
-              </a>
-              <a href="${prefix}crm/crm.html#rate-card" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'rate-card' ? 'active' : ''}" data-module="crm" data-sub="rate-card" onclick="window.navigateToModuleSubpage('crm', 'rate-card', '${prefix}crm/crm.html#rate-card', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Rate Card Tim Presales</span>
-              </a>
-
-              <!-- Group 3: COMMERCIAL -->
-              <div class="nav-sub-group-title">Commercial</div>
-              <a href="${prefix}crm/crm.html#offerings" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'offerings' ? 'active' : ''}" data-module="crm" data-sub="offerings" onclick="window.navigateToModuleSubpage('crm', 'offerings', '${prefix}crm/crm.html#offerings', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Commercial Offerings</span>
-              </a>
-              <a href="${prefix}crm/crm.html#quotation" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'quotation' ? 'active' : ''}" data-module="crm" data-sub="quotation" onclick="window.navigateToModuleSubpage('crm', 'quotation', '${prefix}crm/crm.html#quotation', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Quotation & MoU Studio</span>
-              </a>
-
-              <!-- Group 4: CUSTOMER SUCCESS -->
-              <div class="nav-sub-group-title">Customer Success</div>
-              <a href="${prefix}crm/crm.html#customer" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'customer' ? 'active' : ''}" data-module="crm" data-sub="customer" onclick="window.navigateToModuleSubpage('crm', 'customer', '${prefix}crm/crm.html#customer', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Master Customer 360°</span>
-              </a>
-              <a href="${prefix}crm/crm.html#handover" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'handover' ? 'active' : ''}" data-module="crm" data-sub="handover" onclick="window.navigateToModuleSubpage('crm', 'handover', '${prefix}crm/crm.html#handover', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Handover Simulasi PM</span>
-              </a>
-
-              <!-- Group 5: AUTOMATION & SOP -->
-              <div class="nav-sub-group-title">Automation & SOP</div>
-              <a href="${prefix}crm/crm.html#automation" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'automation' ? 'active' : ''}" data-module="crm" data-sub="automation" onclick="window.navigateToModuleSubpage('crm', 'automation', '${prefix}crm/crm.html#automation', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Automation Center</span>
-                <span class="nav-badge-accent">AI</span>
-              </a>
-              <a href="${prefix}crm/crm.html#guide" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'guide' ? 'active' : ''}" data-module="crm" data-sub="guide" onclick="window.navigateToModuleSubpage('crm', 'guide', '${prefix}crm/crm.html#guide', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Panduan SOP CRM</span>
+                <span>Laporan & Analytics</span>
               </a>
             </div>
           </div>
@@ -537,6 +498,9 @@
     else if (targetModule === 'marketing' && (p.includes('marketing.html') || p.includes('/marketing/'))) isCurrentDocument = true;
     else if (targetModule === 'hr' && (p.includes('hr.html') || p.includes('/hr/'))) isCurrentDocument = true;
     else if (targetModule === 'dashboard' && !p.includes('/crm/') && !p.includes('/finance/') && !p.includes('/marketing/') && !p.includes('/project/') && !p.includes('/hr/')) isCurrentDocument = true;
+
+    // Pages may declare their module explicitly (e.g. CRM served by Vite at "/")
+    if (window.ERP_CURRENT_MODULE === targetModule) isCurrentDocument = true;
 
     if (isCurrentDocument) {
       if (e) e.preventDefault();
