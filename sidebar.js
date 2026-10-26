@@ -66,7 +66,7 @@
       activeSubpage = hash || 'marketing-ops';
     } else if (p.includes('hr.html') || p.includes('/hr/')) {
       activeModule = 'hr';
-      activeSubpage = hash || 'dashboard';
+      activeSubpage = hash || 'beranda';
     } else {
       // In Root index.html
       activeModule = (hash && ['aikanban', 'analytics', 'integrations', 'rbac', 'settings'].includes(hash)) ? hash : 'dashboard';
@@ -79,8 +79,9 @@
   // Master Render Function
   window.renderDynamicSidebar = function(config = {}) {
     const context = detectCurrentContext();
+    const hash = (window.location.hash || '').replace('#', '');
     const activeModule = config.activePage || context.activeModule;
-    const activeSubpage = config.activeSubpage || context.activeSubpage;
+    const activeSubpage = (activeModule === context.activeModule && hash) ? hash : (config.activeSubpage || context.activeSubpage);
     const prefix = getPathPrefix();
 
     const sidebarHtml = `
@@ -347,7 +348,10 @@
                 <span class="nav-sub-dot"></span>
                 <span>Daily Log</span>
               </a>
-            
+              <a href="${prefix}HR/hr.html#workload" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'workload' ? 'active' : ''}" data-module="hr" data-sub="workload" onclick="window.navigateToModuleSubpage('hr', 'workload', '${prefix}HR/hr.html#workload', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Workload Malam</span>
+              </a>
               <a href="${prefix}HR/hr.html#rekap" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'rekap' ? 'active' : ''}" data-module="hr" data-sub="rekap" onclick="window.navigateToModuleSubpage('hr', 'rekap', '${prefix}HR/hr.html#rekap', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Rekap Tim</span>
@@ -462,6 +466,21 @@
       app.insertBefore(container, app.firstChild);
     }
     container.innerHTML = sidebarHtml;
+
+    // Two-way sync if active module is Marketing and a view is already active in DOM
+    if (activeModule === 'marketing') {
+      const activeView = document.querySelector('.view-section.active');
+      if (activeView) {
+        const rawId = activeView.id.replace('view-', '');
+        const group = document.getElementById('marketingNavGroup');
+        if (group) {
+          group.querySelectorAll('.nav-sub-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.sub === rawId);
+          });
+        }
+      }
+    }
+
     setupMobileListeners();
   };
 
@@ -558,12 +577,27 @@
       // Close mobile drawer if opened
       const sb = document.getElementById('sidebar');
       if (sb) sb.classList.remove('open');
+      const ov = document.getElementById('sidebarOverlay');
+      if (ov) ov.classList.remove('open');
     }
     // If not in the same document, normal browser navigation occurs to targetHref
   };
 
   // Mobile Menu & In-Page Listeners Setup
   function setupMobileListeners() {
+    let ov = document.getElementById('sidebarOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'sidebarOverlay';
+      ov.className = 'sidebar-overlay';
+      document.body.appendChild(ov);
+    }
+    ov.onclick = function() {
+      const sb = document.getElementById('sidebar');
+      if (sb) sb.classList.remove('open');
+      ov.classList.remove('open');
+    };
+
     const mobileBtn = document.getElementById('mobileMenu') || document.querySelector('.mobile-toggle') || document.querySelector('.sidebar-toggle-btn');
     if (mobileBtn) {
       mobileBtn.onclick = function(e) {
@@ -571,8 +605,7 @@
         const sb = document.getElementById('sidebar');
         if (sb) {
           sb.classList.toggle('open');
-          const ov = document.getElementById('sidebarOverlay');
-          if (ov) ov.classList.toggle('open', sb.classList.contains('open'));
+          ov.classList.toggle('open', sb.classList.contains('open'));
         }
       };
     }
