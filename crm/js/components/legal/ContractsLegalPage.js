@@ -209,7 +209,7 @@ export function renderContractsLegalPage() {
             style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-xl);background:linear-gradient(135deg, var(--indigo-600), var(--indigo-700));color:#fff;font-weight:700;font-size:12px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,.25);transition:all var(--transition);"
           >
             ${ICONS.plus}
-            <span>+ Buat SPK / Kontrak</span>
+            <span> Buat SPK / Kontrak</span>
           </button>
         </div>
       </div>

@@ -135,7 +135,7 @@ export function renderHeader() {
         <!-- + Lead Baru Button -->
         <button id="header-new-lead-btn" class="btn btn-primary" style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px;">
           ${ICONS.plus}
-          <span>+ Lead Baru</span>
+          <span>Lead Baru</span>
         </button>
       </div>
     </header>

@@ -177,7 +177,7 @@ function renderPalette() {
         <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;overflow-x:auto;">
           <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">Aksi Cepat:</span>
           <button id="cmd-action-new-lead" class="btn btn-sm" style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--indigo-500);font-weight:600;padding:3px 10px;">
-            + Buat Lead Baru
+            Buat Lead Baru
           </button>
           <button id="cmd-action-setting-top" class="btn btn-sm btn-secondary" style="font-weight:500;padding:3px 10px;">
             Setting TOP Invoice
