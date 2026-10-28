@@ -27,7 +27,8 @@
     shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
     settings: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
     chevron: '<polyline points="9 18 15 12 9 6"></polyline>',
-    hr: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'
+    hr: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
   };
 
   function svg(name, className = '') {
@@ -46,6 +47,11 @@
 
   // Determine current active module and subpage from URL/DOM
   function detectCurrentContext() {
+    // Only proceed if authenticated
+    if (typeof window.AstaAuth !== 'undefined' && !window.AstaAuth.getUser()) {
+      return; 
+    }
+    
     const p = window.location.pathname.toLowerCase().replace(/\\/g, '/');
     const hash = (window.location.hash || '').replace('#', '');
 
@@ -66,7 +72,7 @@
       activeSubpage = hash || 'marketing-ops';
     } else if (p.includes('hr.html') || p.includes('/hr/')) {
       activeModule = 'hr';
-      activeSubpage = hash || 'dashboard';
+      activeSubpage = hash || 'beranda';
     } else {
       // In Root index.html
       activeModule = (hash && ['aikanban', 'analytics', 'integrations', 'rbac', 'settings'].includes(hash)) ? hash : 'dashboard';
@@ -79,9 +85,27 @@
   // Master Render Function
   window.renderDynamicSidebar = function(config = {}) {
     const context = detectCurrentContext();
+    const hash = (window.location.hash || '').replace('#', '');
     const activeModule = config.activePage || context.activeModule;
-    const activeSubpage = config.activeSubpage || context.activeSubpage;
+    const activeSubpage = (activeModule === context.activeModule && hash) ? hash : (config.activeSubpage || context.activeSubpage);
     const prefix = getPathPrefix();
+
+    // Get current auth session if available
+    let sessionUser = {
+      name: 'Aldyana (Admin)',
+      role: 'Super Admin',
+      avatar: 'AL'
+    };
+    if (window.AstaAuth && typeof window.AstaAuth.getUser === 'function') {
+      const u = window.AstaAuth.getUser();
+      if (u) {
+        sessionUser = {
+          name: u.name || sessionUser.name,
+          role: u.role || sessionUser.role,
+          avatar: u.avatar || sessionUser.avatar
+        };
+      }
+    }
 
     const sidebarHtml = `
       <aside class="sidebar" id="sidebar">
@@ -115,82 +139,43 @@
               ${svg('chevron', 'nav-chevron')}
             </button>
             <div class="nav-sub" id="crmSubNav">
-              <!-- Group 1: SALES -->
-              <div class="nav-sub-group-title">Sales & Pipeline</div>
-              <a href="${prefix}crm/crm.html#dashboard" class="nav-sub-btn ${activeModule === 'crm' && (activeSubpage === 'dashboard' || !activeSubpage) ? 'active' : ''}" data-module="crm" data-sub="dashboard" onclick="window.navigateToModuleSubpage('crm', 'dashboard', '${prefix}crm/crm.html#dashboard', event)">
+              <div class="nav-sub-group-title">CRM & Penjualan</div>
+              <a href="${prefix}crm/crm.html#pipeline" class="nav-sub-btn ${activeModule === 'crm' && (activeSubpage === 'pipeline' || !activeSubpage) ? 'active' : ''}" data-module="crm" data-sub="pipeline" onclick="window.navigateToModuleSubpage('crm', 'pipeline', '${prefix}crm/crm.html#pipeline', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Executive Dashboard</span>
+                <span>Sales Pipeline</span>
               </a>
-              <a href="${prefix}crm/crm.html#leads" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'leads' ? 'active' : ''}" data-module="crm" data-sub="leads" onclick="window.navigateToModuleSubpage('crm', 'leads', '${prefix}crm/crm.html#leads', event)">
+              <a href="${prefix}crm/crm.html#customers" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'customers' ? 'active' : ''}" data-module="crm" data-sub="customers" onclick="window.navigateToModuleSubpage('crm', 'customers', '${prefix}crm/crm.html#customers', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Leads & Kualifikasi</span>
+                <span>Master Customer</span>
               </a>
-              <a href="${prefix}crm/crm.html#pipeline" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'pipeline' ? 'active' : ''}" data-module="crm" data-sub="pipeline" onclick="window.navigateToModuleSubpage('crm', 'pipeline', '${prefix}crm/crm.html#pipeline', event)">
+              <div class="nav-sub-group-title">ERP & Delivery</div>
+              <a href="${prefix}crm/crm.html#projects" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'projects' ? 'active' : ''}" data-module="crm" data-sub="projects" onclick="window.navigateToModuleSubpage('crm', 'projects', '${prefix}crm/crm.html#projects', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Lead & Sales Pipeline</span>
+                <span>Proyek & Delivery</span>
               </a>
-              <a href="${prefix}crm/crm.html#activity" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'activity' ? 'active' : ''}" data-module="crm" data-sub="activity" onclick="window.navigateToModuleSubpage('crm', 'activity', '${prefix}crm/crm.html#activity', event)">
+              <div class="nav-sub-group-title">Kontrak & Keuangan</div>
+              <a href="${prefix}crm/crm.html#finance_top" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'finance_top' ? 'active' : ''}" data-module="crm" data-sub="finance_top" onclick="window.navigateToModuleSubpage('crm', 'finance_top', '${prefix}crm/crm.html#finance_top', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Jadwal & Follow-up</span>
+                <span>Invoice & Setting TOP</span>
               </a>
-
-              <!-- Group 2: REQUIREMENTS & CATALOG -->
-              <div class="nav-sub-group-title">Requirements & Catalog</div>
-              <a href="${prefix}crm/crm.html#requirements" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'requirements' ? 'active' : ''}" data-module="crm" data-sub="requirements" onclick="window.navigateToModuleSubpage('crm', 'requirements', '${prefix}crm/crm.html#requirements', event)">
+              <a href="${prefix}crm/crm.html#contracts_legal" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'contracts_legal' ? 'active' : ''}" data-module="crm" data-sub="contracts_legal" onclick="window.navigateToModuleSubpage('crm', 'contracts_legal', '${prefix}crm/crm.html#contracts_legal', event)">
                 <span class="nav-sub-dot"></span>
-                <span>AI Requirement Studio</span>
-                <span class="nav-badge-accent">AI</span>
+                <span>Kontrak & Legalitas</span>
               </a>
-              <a href="${prefix}crm/crm.html#brd-prd" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'brd-prd' ? 'active' : ''}" data-module="crm" data-sub="brd-prd" onclick="window.navigateToModuleSubpage('crm', 'brd-prd', '${prefix}crm/crm.html#brd-prd', event)">
+              <div class="nav-sub-group-title">Client Care & AI</div>
+              <a href="${prefix}crm/crm.html#client_care" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'client_care' ? 'active' : ''}" data-module="crm" data-sub="client_care" onclick="window.navigateToModuleSubpage('crm', 'client_care', '${prefix}crm/crm.html#client_care', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Dokumen BRD & PRD</span>
+                <span>WhatsApp Client Care</span>
               </a>
-              <a href="${prefix}crm/crm.html#master" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'master' ? 'active' : ''}" data-module="crm" data-sub="master" onclick="window.navigateToModuleSubpage('crm', 'master', '${prefix}crm/crm.html#master', event)">
+              <div class="nav-sub-group-title">Eksekutif</div>
+              <a href="${prefix}crm/crm.html#reports" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'reports' ? 'active' : ''}" data-module="crm" data-sub="reports" onclick="window.navigateToModuleSubpage('crm', 'reports', '${prefix}crm/crm.html#reports', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Katalog Software & Harga</span>
-              </a>
-              <a href="${prefix}crm/crm.html#rate-card" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'rate-card' ? 'active' : ''}" data-module="crm" data-sub="rate-card" onclick="window.navigateToModuleSubpage('crm', 'rate-card', '${prefix}crm/crm.html#rate-card', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Rate Card Tim Presales</span>
-              </a>
-
-              <!-- Group 3: COMMERCIAL -->
-              <div class="nav-sub-group-title">Commercial</div>
-              <a href="${prefix}crm/crm.html#offerings" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'offerings' ? 'active' : ''}" data-module="crm" data-sub="offerings" onclick="window.navigateToModuleSubpage('crm', 'offerings', '${prefix}crm/crm.html#offerings', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Commercial Offerings</span>
-              </a>
-              <a href="${prefix}crm/crm.html#quotation" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'quotation' ? 'active' : ''}" data-module="crm" data-sub="quotation" onclick="window.navigateToModuleSubpage('crm', 'quotation', '${prefix}crm/crm.html#quotation', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Quotation & MoU Studio</span>
-              </a>
-
-              <!-- Group 4: CUSTOMER SUCCESS -->
-              <div class="nav-sub-group-title">Customer Success</div>
-              <a href="${prefix}crm/crm.html#customer" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'customer' ? 'active' : ''}" data-module="crm" data-sub="customer" onclick="window.navigateToModuleSubpage('crm', 'customer', '${prefix}crm/crm.html#customer', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Master Customer 360°</span>
-              </a>
-              <a href="${prefix}crm/crm.html#handover" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'handover' ? 'active' : ''}" data-module="crm" data-sub="handover" onclick="window.navigateToModuleSubpage('crm', 'handover', '${prefix}crm/crm.html#handover', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Handover Simulasi PM</span>
-              </a>
-
-              <!-- Group 5: AUTOMATION & SOP -->
-              <div class="nav-sub-group-title">Automation & SOP</div>
-              <a href="${prefix}crm/crm.html#automation" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'automation' ? 'active' : ''}" data-module="crm" data-sub="automation" onclick="window.navigateToModuleSubpage('crm', 'automation', '${prefix}crm/crm.html#automation', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Automation Center</span>
-                <span class="nav-badge-accent">AI</span>
-              </a>
-              <a href="${prefix}crm/crm.html#guide" class="nav-sub-btn ${activeModule === 'crm' && activeSubpage === 'guide' ? 'active' : ''}" data-module="crm" data-sub="guide" onclick="window.navigateToModuleSubpage('crm', 'guide', '${prefix}crm/crm.html#guide', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Panduan SOP CRM</span>
+                <span>Laporan & Analytics</span>
               </a>
             </div>
           </div>
 
-          <!-- 2. Project Management (Forge PM) (Accordion) -->
+           <!-- 2. Project Management (Forge PM) (Accordion) -->
           <div class="nav-group ${activeModule === 'project' ? 'open' : ''}" id="projectNavGroup" data-module-group="project">
             <button type="button" class="nav-btn nav-parent-btn ${activeModule === 'project' ? 'active' : ''}" id="projectParentToggle" onclick="window.toggleModuleAccordion('projectNavGroup', event)">
               <div class="nav-left">
@@ -206,36 +191,32 @@
               </a>
               <a href="${prefix}project/Forge PM.html#project" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'project' ? 'active' : ''}" data-module="project" data-sub="project" onclick="window.navigateToModuleSubpage('project', 'project', '${prefix}project/Forge PM.html#project', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Projects Portfolio</span>
+                <span>Proyek</span>
               </a>
-              <a href="${prefix}project/Forge PM.html#handover" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'handover' ? 'active' : ''}" data-module="project" data-sub="handover" onclick="window.navigateToModuleSubpage('project', 'handover', '${prefix}project/Forge PM.html#handover', event)">
+              <a href="${prefix}project/Forge PM.html#task" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'task' ? 'active' : ''}" data-module="project" data-sub="task" onclick="window.navigateToModuleSubpage('project', 'task', '${prefix}project/Forge PM.html#task', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Handover CRM</span>
+                <span>Task</span>
               </a>
               <a href="${prefix}project/Forge PM.html#tickets" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'tickets' ? 'active' : ''}" data-module="project" data-sub="tickets" onclick="window.navigateToModuleSubpage('project', 'tickets', '${prefix}project/Forge PM.html#tickets', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Tickets & Backlog</span>
               </a>
-              <a href="${prefix}project/Forge PM.html#mytasks" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'mytasks' ? 'active' : ''}" data-module="project" data-sub="mytasks" onclick="window.navigateToModuleSubpage('project', 'mytasks', '${prefix}project/Forge PM.html#mytasks', event)">
+              <a href="${prefix}project/Forge PM.html#timesheet" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'timesheet' ? 'active' : ''}" data-module="project" data-sub="timesheet" onclick="window.navigateToModuleSubpage('project', 'timesheet', '${prefix}project/Forge PM.html#timesheet', event)">
                 <span class="nav-sub-dot"></span>
-                <span>My Tasks</span>
+                <span>Timesheet Global</span>
               </a>
               <a href="${prefix}project/Forge PM.html#automation" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'automation' ? 'active' : ''}" data-module="project" data-sub="automation" onclick="window.navigateToModuleSubpage('project', 'automation', '${prefix}project/Forge PM.html#automation', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Automation Fix Bug</span>
+                <span>Auto Fix Bug</span>
                 <span class="nav-badge-accent">AI</span>
               </a>
               <a href="${prefix}project/Forge PM.html#events" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'events' ? 'active' : ''}" data-module="project" data-sub="events" onclick="window.navigateToModuleSubpage('project', 'events', '${prefix}project/Forge PM.html#events', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Events & Schedule</span>
               </a>
-              <a href="${prefix}project/Forge PM.html#notes" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'notes' ? 'active' : ''}" data-module="project" data-sub="notes" onclick="window.navigateToModuleSubpage('project', 'notes', '${prefix}project/Forge PM.html#notes', event)">
+              <a href="${prefix}project/Forge PM.html#handover" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'handover' ? 'active' : ''}" data-module="project" data-sub="handover" onclick="window.navigateToModuleSubpage('project', 'handover', '${prefix}project/Forge PM.html#handover', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Knowledge Notes</span>
-              </a>
-              <a href="${prefix}project/Forge PM.html#team" class="nav-sub-btn ${activeModule === 'project' && activeSubpage === 'team' ? 'active' : ''}" data-module="project" data-sub="team" onclick="window.navigateToModuleSubpage('project', 'team', '${prefix}project/Forge PM.html#team', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Team Workload</span>
+                <span>Handover</span>
               </a>
             </div>
           </div>
@@ -390,7 +371,10 @@
                 <span class="nav-sub-dot"></span>
                 <span>Daily Log</span>
               </a>
-            
+              <a href="${prefix}HR/hr.html#workload" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'workload' ? 'active' : ''}" data-module="hr" data-sub="workload" onclick="window.navigateToModuleSubpage('hr', 'workload', '${prefix}HR/hr.html#workload', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Workload Malam</span>
+              </a>
               <a href="${prefix}HR/hr.html#rekap" class="nav-sub-btn ${activeModule === 'hr' && activeSubpage === 'rekap' ? 'active' : ''}" data-module="hr" data-sub="rekap" onclick="window.navigateToModuleSubpage('hr', 'rekap', '${prefix}HR/hr.html#rekap', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Rekap Tim</span>
@@ -480,11 +464,14 @@
         <!-- Sidebar User Profile Footer -->
         <div class="sidebar-bottom">
           <div class="mini-user">
-            <div class="avatar">AS</div>
-            <div class="user-details">
-              <strong>Asisyah Sarah A.</strong>
-              <span>Project Manager</span>
+            <div class="avatar">${sessionUser.avatar}</div>
+            <div class="user-details" title="${sessionUser.name}">
+              <strong>${sessionUser.name}</strong>
+              <span>${sessionUser.role}</span>
             </div>
+            <button type="button" class="btn-logout" title="Keluar / Logout" onclick="window.AstaAuth ? window.AstaAuth.logout() : (localStorage.removeItem('asta_auth_user'), window.location.href='${prefix}login.html')">
+              ${svg('logout')}
+            </button>
           </div>
         </div>
       </aside>
@@ -505,6 +492,21 @@
       app.insertBefore(container, app.firstChild);
     }
     container.innerHTML = sidebarHtml;
+
+    // Two-way sync if active module is Marketing and a view is already active in DOM
+    if (activeModule === 'marketing') {
+      const activeView = document.querySelector('.view-section.active');
+      if (activeView) {
+        const rawId = activeView.id.replace('view-', '');
+        const group = document.getElementById('marketingNavGroup');
+        if (group) {
+          group.querySelectorAll('.nav-sub-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.sub === rawId);
+          });
+        }
+      }
+    }
+
     setupMobileListeners();
   };
 
@@ -541,6 +543,9 @@
     else if (targetModule === 'marketing' && (p.includes('marketing.html') || p.includes('/marketing/'))) isCurrentDocument = true;
     else if (targetModule === 'hr' && (p.includes('hr.html') || p.includes('/hr/'))) isCurrentDocument = true;
     else if (targetModule === 'dashboard' && !p.includes('/crm/') && !p.includes('/finance/') && !p.includes('/marketing/') && !p.includes('/project/') && !p.includes('/hr/')) isCurrentDocument = true;
+
+    // Pages may declare their module explicitly (e.g. CRM served by Vite at "/")
+    if (window.ERP_CURRENT_MODULE === targetModule) isCurrentDocument = true;
 
     if (isCurrentDocument) {
       if (e) e.preventDefault();
@@ -598,12 +603,27 @@
       // Close mobile drawer if opened
       const sb = document.getElementById('sidebar');
       if (sb) sb.classList.remove('open');
+      const ov = document.getElementById('sidebarOverlay');
+      if (ov) ov.classList.remove('open');
     }
     // If not in the same document, normal browser navigation occurs to targetHref
   };
 
   // Mobile Menu & In-Page Listeners Setup
   function setupMobileListeners() {
+    let ov = document.getElementById('sidebarOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'sidebarOverlay';
+      ov.className = 'sidebar-overlay';
+      document.body.appendChild(ov);
+    }
+    ov.onclick = function() {
+      const sb = document.getElementById('sidebar');
+      if (sb) sb.classList.remove('open');
+      ov.classList.remove('open');
+    };
+
     const mobileBtn = document.getElementById('mobileMenu') || document.querySelector('.mobile-toggle') || document.querySelector('.sidebar-toggle-btn');
     if (mobileBtn) {
       mobileBtn.onclick = function(e) {
@@ -611,8 +631,7 @@
         const sb = document.getElementById('sidebar');
         if (sb) {
           sb.classList.toggle('open');
-          const ov = document.getElementById('sidebarOverlay');
-          if (ov) ov.classList.toggle('open', sb.classList.contains('open'));
+          ov.classList.toggle('open', sb.classList.contains('open'));
         }
       };
     }

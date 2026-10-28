@@ -1,0 +1,16 @@
+{
+  "name": "prototype-erpasta",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite crm",
+    "dev:crm": "vite crm",
+    "start": "vite crm --open",
+    "build:crm": "vite build crm",
+    "preview:crm": "vite preview crm"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}
