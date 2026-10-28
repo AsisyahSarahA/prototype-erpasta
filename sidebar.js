@@ -27,7 +27,8 @@
     shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
     settings: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
     chevron: '<polyline points="9 18 15 12 9 6"></polyline>',
-    hr: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'
+    hr: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
   };
 
   function svg(name, className = '') {
@@ -46,6 +47,11 @@
 
   // Determine current active module and subpage from URL/DOM
   function detectCurrentContext() {
+    // Only proceed if authenticated
+    if (typeof window.AstaAuth !== 'undefined' && !window.AstaAuth.getUser()) {
+      return; 
+    }
+    
     const p = window.location.pathname.toLowerCase().replace(/\\/g, '/');
     const hash = (window.location.hash || '').replace('#', '');
 
@@ -83,6 +89,23 @@
     const activeModule = config.activePage || context.activeModule;
     const activeSubpage = (activeModule === context.activeModule && hash) ? hash : (config.activeSubpage || context.activeSubpage);
     const prefix = getPathPrefix();
+
+    // Get current auth session if available
+    let sessionUser = {
+      name: 'Aldyana (Admin)',
+      role: 'Super Admin',
+      avatar: 'AL'
+    };
+    if (window.AstaAuth && typeof window.AstaAuth.getUser === 'function') {
+      const u = window.AstaAuth.getUser();
+      if (u) {
+        sessionUser = {
+          name: u.name || sessionUser.name,
+          role: u.role || sessionUser.role,
+          avatar: u.avatar || sessionUser.avatar
+        };
+      }
+    }
 
     const sidebarHtml = `
       <aside class="sidebar" id="sidebar">
@@ -441,11 +464,14 @@
         <!-- Sidebar User Profile Footer -->
         <div class="sidebar-bottom">
           <div class="mini-user">
-            <div class="avatar">AS</div>
-            <div class="user-details">
-              <strong>Asisyah Sarah A.</strong>
-              <span>Project Manager</span>
+            <div class="avatar">${sessionUser.avatar}</div>
+            <div class="user-details" title="${sessionUser.name}">
+              <strong>${sessionUser.name}</strong>
+              <span>${sessionUser.role}</span>
             </div>
+            <button type="button" class="btn-logout" title="Keluar / Logout" onclick="window.AstaAuth ? window.AstaAuth.logout() : (localStorage.removeItem('asta_auth_user'), window.location.href='${prefix}login.html')">
+              ${svg('logout')}
+            </button>
           </div>
         </div>
       </aside>
