@@ -34,9 +34,9 @@
   function setUser(userData) {
     const session = {
       email: userData.email || 'admin@astacode.com',
-      name: userData.name || 'Aldyana (Administrator)',
+      name: 'admin123',
       role: userData.role || 'Executive / Super Admin',
-      avatar: userData.avatar || 'AL',
+      avatar: 'AD',
       loginAt: new Date().toISOString()
     };
     localStorage.setItem(AUTH_KEY, JSON.stringify(session));
