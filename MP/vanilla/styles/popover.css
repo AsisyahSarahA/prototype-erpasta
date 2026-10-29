@@ -1,15 +1,15 @@
 /* Notification Popover & Guide Modal Styles */
 .notif-popover {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
+  position: fixed;
+  top: 58px;
+  right: 20px;
   width: 380px;
   max-width: 90vw;
   background: white;
   border-radius: 16px;
   border: 1px solid rgba(228, 228, 231, 0.9);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 1050;
   overflow: hidden;
   animation: fadeIn 0.15s ease-out;
 }

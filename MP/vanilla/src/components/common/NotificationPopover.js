@@ -169,7 +169,7 @@ export class NotificationPopover {
     });
 
     document.addEventListener('click', (e) => {
-      if (this.isOpen && !this.element.contains(e.target) && !e.target.closest('#notificationBellBtn')) {
+      if (this.isOpen && !this.element.contains(e.target) && !e.target.closest('#notificationBellBtn') && !e.target.closest('#header-notif-btn')) {
         this.close();
       }
     });

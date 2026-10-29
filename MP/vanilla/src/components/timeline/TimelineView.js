@@ -72,25 +72,14 @@ export class TimelineView {
     const activeProject = store.getActiveProject();
     const { tasks, epics, projects, teamMembers } = state;
 
-    const availableProjects = projects.filter(p =>
-      p.id === 'proj-perpustakaan' ||
-      p.id === 'proj-futsal' ||
-      p.id === 'proj-1' ||
-      p.code === 'LIB-DIG' ||
-      p.code === 'FTSL-PRO' ||
-      p.code === 'POS-KLN'
-    );
+    const availableProjects = projects;
 
     // Filter tasks based on project, status, and search query
     const filteredTasks = tasks.filter(task => {
       if (this.activeProjectFilter !== 'all' && task.projectId !== this.activeProjectFilter) {
         return false;
       }
-      const isAllowedProject =
-        task.projectId === 'proj-perpustakaan' ||
-        task.projectId === 'proj-futsal' ||
-        task.projectId === 'proj-1';
-      if (!isAllowedProject) return false;
+
 
       if (this.statusFilter !== 'all') {
         if (this.statusFilter === 'in_progress' && task.status !== 'In Progress' && task.status !== 'Dianalisis') return false;
@@ -537,6 +526,11 @@ export class TimelineView {
       searchInput.addEventListener('input', (e) => {
         this.searchQuery = e.target.value;
         this.render();
+        const input = this.container.querySelector('#tlSearchInput');
+        if (input) {
+          input.focus();
+          input.setSelectionRange(this.searchQuery.length, this.searchQuery.length);
+        }
       });
     }
 

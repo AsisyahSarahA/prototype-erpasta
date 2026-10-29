@@ -936,6 +936,11 @@ export class AiAutomationHub {
       if (e.target.id === 'aiBugSearchInput') {
         this.searchQuery = e.target.value;
         this.render();
+        const searchInput = this.element.querySelector('#aiBugSearchInput');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.setSelectionRange(this.searchQuery.length, this.searchQuery.length);
+        }
       }
     });
 

@@ -189,17 +189,17 @@ export class BacklogView {
             <div class="backlog-header-actions">
               <button id="createSprintBtn" class="btn btn-secondary" style="font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: var(--radius-lg);">
                 ${Icons.plus('', 13)}
-                <span>+ Buat Sprint Baru</span>
+                <span>Create Sprint</span>
               </button>
 
               <button id="completeSprintBtn" class="btn btn-secondary" style="font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: var(--radius-lg);">
                 ${Icons.checkCircle('', 13)}
-                <span>Selesaikan Sprint</span>
+                <span>Complete Sprint</span>
               </button>
 
               <button id="openCreateTaskBacklogBtn" class="btn btn-primary" style="font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: var(--radius-lg);">
                 ${Icons.plus('', 13)}
-                <span>+ Buat Masalah</span>
+                <span>Create Issue</span>
               </button>
             </div>
           </div>
@@ -267,7 +267,7 @@ export class BacklogView {
                 <button class="backlog-chip-btn ${this.filterType === 'all' && this.filterAssignee === 'all' ? 'active' : ''}" id="filterAllBtn">
                   Semua
                 </button>
-                <button class="backlog-chip-btn ${this.filterAssignee === 'usr-2' ? 'active' : ''}" id="filterMyIssuesBtn">
+                <button class="backlog-chip-btn ${this.filterAssignee === 'user-pm' ? 'active' : ''}" id="filterMyIssuesBtn">
                   ${Icons.user('', 12)} Tugas Saya
                 </button>
                 <button class="backlog-chip-btn ${this.filterType === 'Bug' ? 'active' : ''}" id="filterBugBtn">
@@ -757,7 +757,7 @@ export class BacklogView {
       }
 
       if (e.target.closest('#filterMyIssuesBtn')) {
-        this.filterAssignee = this.filterAssignee === 'usr-2' ? 'all' : 'usr-2'; // Aldyana Frontend
+        this.filterAssignee = this.filterAssignee === 'user-pm' ? 'all' : 'user-pm'; // Asisyah PM / Current Session
         this.render();
         return;
       }

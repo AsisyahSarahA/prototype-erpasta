@@ -10,6 +10,7 @@
  */
 
 import { store } from '../state/store.js';
+import { WorkflowStepper } from './WorkflowStepper.js';
 
 const ICONS = {
   search: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
@@ -34,6 +35,7 @@ export class KanbanBoard {
   constructor() {
     this.container = document.createElement('div');
     this.container.className = 'kanban-page-wrapper';
+    this.stepper = new WorkflowStepper();
     this.unsubscribe = null;
     this.draggedTaskId = null;
     this.init();
@@ -51,7 +53,9 @@ export class KanbanBoard {
     const tasks = store.getProjectTasks();
     const activeProject = store.getActiveProject();
     const teamMembers = state.teamMembers || [];
-    const epics = state.epics || [];
+    const epics = (state.epics || []).filter(
+      (e) => !activeProject || !e.projectId || e.projectId === activeProject.id
+    );
 
     // Filter tasks
     const q = (state.searchQuery || '').toLowerCase().trim();
@@ -106,20 +110,20 @@ export class KanbanBoard {
             let typeLabel = task.type || 'Task';
             if (task.type === 'Bug') {
               typeBadgeClass = 'badge-red';
-              typeLabel = '🐞 Bug';
+              typeLabel = 'Bug';
             } else if (task.type === 'Story') {
               typeBadgeClass = 'badge-emerald';
-              typeLabel = '📖 Story';
+              typeLabel = 'Story';
             } else if (task.type === 'Epic') {
               typeBadgeClass = 'badge-purple';
-              typeLabel = '⚡ Epic';
+              typeLabel = 'Epic';
             }
 
             let priorityBadgeClass = 'badge-slate';
             let priorityLabel = task.priority || 'Sedang';
             if (task.priority === 'Hotfix' || task.priority === 'Tertinggi') {
               priorityBadgeClass = 'badge-hot';
-              priorityLabel = '🔥 Hotfix';
+              priorityLabel = 'Hotfix';
             } else if (task.priority === 'Tinggi') {
               priorityBadgeClass = 'badge-high';
               priorityLabel = 'Tinggi';
@@ -334,10 +338,10 @@ export class KanbanBoard {
               <span style="color:var(--text-muted);font-size:11px;">Tipe:</span>
               <select id="kanban-filter-type" class="form-select" style="font-size:11px;padding:4px 8px;width:auto;">
                 <option value="all" ${state.filterType === 'all' ? 'selected' : ''}>Semua Tipe</option>
-                <option value="Story" ${state.filterType === 'Story' ? 'selected' : ''}>📖 Story</option>
-                <option value="Task" ${state.filterType === 'Task' ? 'selected' : ''}>⚡ Task</option>
-                <option value="Bug" ${state.filterType === 'Bug' ? 'selected' : ''}>🐞 Bug</option>
-                <option value="Epic" ${state.filterType === 'Epic' ? 'selected' : ''}>⚡ Epic</option>
+                <option value="Story" ${state.filterType === 'Story' ? 'selected' : ''}>Story</option>
+                <option value="Task" ${state.filterType === 'Task' ? 'selected' : ''}>Task</option>
+                <option value="Bug" ${state.filterType === 'Bug' ? 'selected' : ''}>Bug</option>
+                <option value="Epic" ${state.filterType === 'Epic' ? 'selected' : ''}>Epic</option>
               </select>
             </div>
 
@@ -345,7 +349,7 @@ export class KanbanBoard {
               <span style="color:var(--text-muted);font-size:11px;">Prioritas:</span>
               <select id="kanban-filter-priority" class="form-select" style="font-size:11px;padding:4px 8px;width:auto;">
                 <option value="all" ${state.filterPriority === 'all' ? 'selected' : ''}>Semua Prioritas</option>
-                <option value="Hotfix" ${state.filterPriority === 'Hotfix' ? 'selected' : ''}>🔥 Hotfix</option>
+                <option value="Hotfix" ${state.filterPriority === 'Hotfix' ? 'selected' : ''}>Hotfix</option>
                 <option value="Tinggi" ${state.filterPriority === 'Tinggi' ? 'selected' : ''}>Tinggi</option>
                 <option value="Sedang" ${state.filterPriority === 'Sedang' ? 'selected' : ''}>Sedang</option>
                 <option value="Rendah" ${state.filterPriority === 'Rendah' ? 'selected' : ''}>Rendah</option>
@@ -369,11 +373,19 @@ export class KanbanBoard {
         </div>
       </div>
 
+      <!-- SOP Workflow Stepper Banner Slot -->
+      <div id="kanbanStepperSlot"></div>
+
       <!-- Kanban Columns Board Area -->
       <div class="kanban-board-scroll">
         ${columnsHtml}
       </div>
     `;
+
+    const stepperSlot = this.container.querySelector('#kanbanStepperSlot');
+    if (stepperSlot && this.stepper) {
+      stepperSlot.appendChild(this.stepper.getElement());
+    }
 
     this.attachEvents();
   }
@@ -521,6 +533,9 @@ export class KanbanBoard {
   }
 
   destroy() {
+    if (this.stepper && typeof this.stepper.destroy === 'function') {
+      this.stepper.destroy();
+    }
     if (typeof this.unsubscribe === 'function') {
       this.unsubscribe();
     }

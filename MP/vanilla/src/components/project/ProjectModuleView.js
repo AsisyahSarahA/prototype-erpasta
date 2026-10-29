@@ -13,6 +13,10 @@
  */
 
 import { store } from '../../state/store.js';
+import { KanbanBoard } from '../KanbanBoard.js';
+import { BacklogView } from '../backlog/BacklogView.js';
+import { TimelineView } from '../timeline/TimelineView.js';
+import { TaskListView } from '../list/TaskListView.js';
 
 export class ProjectModuleView {
   constructor(options = {}) {
@@ -21,6 +25,25 @@ export class ProjectModuleView {
 
     this.onSelectTask = options.onSelectTask || ((task) => store.openTaskDetail(task));
     this.onOpenCreateTask = options.onOpenCreateTask || (() => store.openCreateTaskModal());
+
+    this.currentViewMode = 'portfolio'; // 'portfolio' | 'workspace'
+    this.portfolioViewMode = 'grid'; // 'grid' | 'table'
+    this.portfolioSearch = '';
+    this.portfolioStatus = 'all';
+    this.portfolioClient = 'all';
+    this.portfolioContract = 'all';
+    this.isCreateProjectOpen = false;
+
+    this.activeWorkspaceTab = 'ringkasan'; // 'ringkasan' | 'kanban' | 'backlog' | 'timeline' | 'list'
+
+    // Sub-components for workspace tabs
+    this.kanbanBoard = new KanbanBoard();
+    this.backlogView = new BacklogView({
+      onSelectTask: this.onSelectTask,
+      onOpenCreateTask: this.onOpenCreateTask
+    });
+    this.timelineView = new TimelineView();
+    this.taskListView = new TaskListView();
 
     this.activeSubTab = 'overview';
     this.kanbanSearch = '';
@@ -164,6 +187,59 @@ export class ProjectModuleView {
     }
   }
 
+  switchWorkspaceTab(tab) {
+    if (!tab) return;
+    this.activeWorkspaceTab = tab;
+    this.currentViewMode = 'workspace';
+    try {
+      if (typeof window !== 'undefined' && window.location && window.history) {
+        if (window.location.hash.slice(1) !== tab) {
+          window.history.replaceState(null, '', '#' + tab);
+        }
+      }
+    } catch (e) {}
+    if (store.getState().activeTab !== tab) {
+      store.setActiveTab(tab);
+    } else {
+      this.render();
+    }
+    if (this.container) {
+      this.container.scrollTop = 0;
+    }
+  }
+
+  openWorkspace(projectId, tab = 'ringkasan') {
+    if (projectId) {
+      store.setSelectedProjectId(projectId);
+    }
+    this.switchWorkspaceTab(tab);
+  }
+
+  openWorkspaceWithTab(tab = 'ringkasan') {
+    this.currentViewMode = 'workspace';
+    this.activeWorkspaceTab = tab;
+    this.render();
+    if (this.container) {
+      this.container.scrollTop = 0;
+    }
+  }
+
+  backToPortfolio() {
+    this.currentViewMode = 'portfolio';
+    try {
+      if (typeof window !== 'undefined' && window.location && window.history) {
+        if (window.location.hash.slice(1) !== 'project') {
+          window.history.replaceState(null, '', '#project');
+        }
+      }
+    } catch (e) {}
+    if (store.getState().activeTab !== 'project') {
+      store.setActiveTab('project');
+    } else {
+      this.render();
+    }
+  }
+
   getProjectStats(tasks) {
     const total = tasks.length || 1;
     const done = tasks.filter((t) => t.status === 'Selesai').length;
@@ -178,180 +254,610 @@ export class ProjectModuleView {
 
   render() {
     const state = store.getState();
+    if (this.currentViewMode === 'portfolio') {
+      this.renderPortfolio(state);
+    } else {
+      this.renderWorkspace(state);
+    }
+  }
+
+  // =========================================================================
+  // SHARED MASTER TABS BAR (FIXED / STICKY AT TOP IN ALL MODES)
+  // =========================================================================
+  renderTabsBar(stats) {
+    const taskStats = stats || this.getProjectStats(store.getProjectTasks());
+    return `
+      <nav class="pm-ws-tabs-bar" aria-label="Sub-Modul Workspace Proyek">
+        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'ringkasan' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="ringkasan">
+          <i class="fi fi-rr-apps"></i>
+          <span>Ringkasan Proyek</span>
+        </button>
+        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'kanban' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="kanban">
+          <i class="fi fi-rr-chart-kanban"></i>
+          <span>Board Kanban</span>
+          <span class="pm-ws-tab-badge">${taskStats.total}</span>
+        </button>
+        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'backlog' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="backlog">
+          <i class="fi fi-rr-list-check"></i>
+          <span>Backlog &amp; Sprint</span>
+        </button>
+        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'timeline' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="timeline">
+          <i class="fi fi-rr-chart-timeline"></i>
+          <span>Roadmap &amp; Gantt</span>
+        </button>
+        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'list' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="list">
+          <i class="fi fi-rr-list"></i>
+          <span>Daftar Pekerjaan (JQL)</span>
+          <span class="pm-ws-tab-badge">${taskStats.total}</span>
+        </button>
+        
+        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'time' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="time">
+          <i class="fi fi-rr-clock"></i>
+          <span>Time Tracking</span>
+        </button>
+        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'finance_budget' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="finance_budget">
+          <i class="fi fi-rr-dollar"></i>
+          <span>Finance &amp; Budget</span>
+        </button>
+      </nav>
+    `;
+  }
+
+  // =========================================================================
+  // 1. PORTFOLIO SOFTWARE HOUSE VIEW (CRM INTAKE & MASTER SUMMARY)
+  // =========================================================================
+  renderPortfolio(state) {
+    const projects = state.projects || [];
+    const totalProjects = projects.length;
+    const activeProjectsCount = projects.filter(p => p.status === 'Active').length;
+    const onTrackCount = projects.filter(p => (p.health || 'On Track') === 'On Track').length;
+    const onTrackRatio = `${onTrackCount} / ${totalProjects}`;
+    const onTrackPct = totalProjects ? Math.round((onTrackCount / totalProjects) * 100) : 100;
+
+    const totalContractVal = projects.reduce((sum, p) => sum + (Number(p.contractValue) || 0), 0);
+    const totalContractJt = Math.round(totalContractVal / 1e6);
+
+    const uniqueClientsSet = new Set(projects.map(p => p.clientName));
+    const uniqueClientsCount = uniqueClientsSet.size;
+
+    // Filter projects
+    let filtered = projects;
+    if (this.portfolioSearch) {
+      const q = this.portfolioSearch.toLowerCase();
+      filtered = filtered.filter(p =>
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.code && p.code.toLowerCase().includes(q)) ||
+        (p.clientName && p.clientName.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q))
+      );
+    }
+    if (this.portfolioStatus !== 'all') {
+      filtered = filtered.filter(p => (p.health === this.portfolioStatus || p.status === this.portfolioStatus));
+    }
+    if (this.portfolioClient !== 'all') {
+      filtered = filtered.filter(p => p.clientName === this.portfolioClient);
+    }
+    if (this.portfolioContract !== 'all') {
+      filtered = filtered.filter(p => (p.contractType || '').toLowerCase().includes(this.portfolioContract.toLowerCase()));
+    }
+
+    this.container.innerHTML = `
+      <div class="pm-portfolio-wrap">
+        <!-- 1. Header -->
+        <div class="pm-portfolio-header">
+          <div>
+            <div class="pm-portfolio-tag">
+              <i class="fi fi-rr-folder"></i>
+              <span>PORTOFOLIO SOFTWARE HOUSE</span>
+            </div>
+            <h1 class="pm-portfolio-title">Manajemen Proyek</h1>
+            <p class="pm-portfolio-subtitle">Kelola seluruh proyek digital agency, konfigurasi sprint, alokasi anggaran, dan akses tab workspace tim.</p>
+          </div>
+          <button id="pmCreateNewProjectBtn" class="pm-portfolio-create-btn">
+            <i class="fi fi-rr-plus"></i>
+            <span>Buat Proyek Baru</span>
+          </button>
+        </div>
+
+        <!-- 2. 4 Top KPI Summary Cards -->
+        <div class="pm-portfolio-kpi-grid">
+          <!-- Card 1: Total Proyek -->
+          <div class="pm-portfolio-kpi-card">
+            <div class="pm-pk-top">
+              <span class="pm-pk-label">Total Proyek</span>
+              <span class="pm-pk-icon-box pm-pk-icon-box--indigo"><i class="fi fi-rr-folder"></i></span>
+            </div>
+            <div class="pm-pk-value">${totalProjects}</div>
+            <div class="pm-pk-subtext">${activeProjectsCount} proyek sprint aktif</div>
+          </div>
+
+          <!-- Card 2: Kesehatan On-Track -->
+          <div class="pm-portfolio-kpi-card">
+            <div class="pm-pk-top">
+              <span class="pm-pk-label">Kesehatan On-Track</span>
+              <span class="pm-pk-icon-box pm-pk-icon-box--emerald"><i class="fi fi-rr-check-circle"></i></span>
+            </div>
+            <div class="pm-pk-value">${onTrackRatio}</div>
+            <div class="pm-pk-subtext">${onTrackPct}% delivery lancar</div>
+          </div>
+
+          <!-- Card 3: Total Nilai Kontrak -->
+          <div class="pm-portfolio-kpi-card">
+            <div class="pm-pk-top">
+              <span class="pm-pk-label">Total Nilai Kontrak</span>
+              <span class="pm-pk-icon-box pm-pk-icon-box--violet"><i class="fi fi-rr-dollar"></i></span>
+            </div>
+            <div class="pm-pk-value">Rp ${new Intl.NumberFormat('id-ID').format(totalContractJt)} Jt</div>
+            <div class="pm-pk-subtext">Portofolio gabungan agensi</div>
+          </div>
+
+          <!-- Card 4: Klien Korporat -->
+          <div class="pm-portfolio-kpi-card">
+            <div class="pm-pk-top">
+              <span class="pm-pk-label">Klien Korporat</span>
+              <span class="pm-pk-icon-box pm-pk-icon-box--amber"><i class="fi fi-rr-users"></i></span>
+            </div>
+            <div class="pm-pk-value">${uniqueClientsCount}</div>
+            <div class="pm-pk-subtext">100% Retensi Klien Aktif</div>
+          </div>
+        </div>
+
+        <!-- 3. Filter Toolbar & View Toggle -->
+        <div class="pm-portfolio-toolbar">
+          <div class="pm-portfolio-search">
+            <i class="fi fi-rr-search"></i>
+            <input type="text" id="pmPortfolioSearchInput" placeholder="Cari proyek, key, klien, deskripsi..." value="${this.portfolioSearch}">
+          </div>
+
+          <select id="pmPortfolioStatusSelect" class="pm-portfolio-select">
+            <option value="all" ${this.portfolioStatus === 'all' ? 'selected' : ''}>Semua Status</option>
+            <option value="On Track" ${this.portfolioStatus === 'On Track' ? 'selected' : ''}>On Track</option>
+            <option value="At Risk" ${this.portfolioStatus === 'At Risk' ? 'selected' : ''}>At Risk</option>
+            <option value="Active" ${this.portfolioStatus === 'Active' ? 'selected' : ''}>Active</option>
+          </select>
+
+          <select id="pmPortfolioClientSelect" class="pm-portfolio-select">
+            <option value="all" ${this.portfolioClient === 'all' ? 'selected' : ''}>Semua Klien</option>
+            ${Array.from(uniqueClientsSet).map(c => `
+              <option value="${c}" ${this.portfolioClient === c ? 'selected' : ''}>${c}</option>
+            `).join('')}
+          </select>
+
+          <select id="pmPortfolioContractSelect" class="pm-portfolio-select">
+            <option value="all" ${this.portfolioContract === 'all' ? 'selected' : ''}>Semua Model Kontrak</option>
+            <option value="Fixed Price" ${this.portfolioContract === 'Fixed Price' ? 'selected' : ''}>Fixed Price</option>
+            <option value="Time Material" ${this.portfolioContract === 'Time Material' ? 'selected' : ''}>Time &amp; Material</option>
+          </select>
+
+          <div class="pm-portfolio-view-switch">
+            <button class="pm-view-btn ${this.portfolioViewMode === 'grid' ? 'pm-view-btn--active' : ''}" data-view="grid" title="Tampilan Card Grid">
+              <i class="fi fi-rr-apps"></i>
+            </button>
+            <button class="pm-view-btn ${this.portfolioViewMode === 'table' ? 'pm-view-btn--active' : ''}" data-view="table" title="Tampilan Tabel">
+              <i class="fi fi-rr-menu-burger"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. Content (Cards Grid OR Table) -->
+        ${this.portfolioViewMode === 'grid' ? this.renderPortfolioGrid(filtered) : this.renderPortfolioTable(filtered)}
+      </div>
+
+      <!-- Modal Buat Proyek Baru -->
+      ${this.isCreateProjectOpen ? this.renderCreateProjectModal() : ''}
+    `;
+
+    this.attachPortfolioEvents();
+  }
+
+  renderPortfolioGrid(projects) {
+    if (projects.length === 0) {
+      return `
+        <div style="text-align: center; padding: 60px 20px; background: #fff; border: 1px dashed #cbd5e1; border-radius: 12px; margin-top: 20px;">
+          <i class="fi fi-rr-search" style="font-size: 36px; color: #94a3b8; display: block; margin-bottom: 12px;"></i>
+          <h3 style="margin: 0 0 6px 0; color: #1e293b; font-size: 16px;">Tidak ada proyek ditemukan</h3>
+          <p style="margin: 0; color: #64748b; font-size: 13px;">Coba ubah kata kunci pencarian atau reset filter.</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="pm-portfolio-grid">
+        ${projects.map(p => {
+          const contractJt = Math.round((p.contractValue || 185e6) / 1e6);
+          const budgetUsedJt = Math.round((p.budgetUsed || 65e6) / 1e6);
+          const totalIssues = p.totalIssues || 9;
+          const doneIssues = p.doneIssues || 2;
+          const progPct = totalIssues ? Math.round((doneIssues / totalIssues) * 100) : 22;
+          const health = p.health || 'On Track';
+          const isAtRisk = health === 'At Risk';
+
+          return `
+            <div class="pm-proj-card">
+              <div>
+                <!-- Top Badges Row -->
+                <div class="pm-card-top-row">
+                  <div class="pm-card-badges-left">
+                    <span class="pm-card-code-badge">
+                      <span class="pm-card-color-dot" style="background: ${p.color || '#4f46e5'};"></span>
+                      ${p.code}
+                    </span>
+                    <span class="pm-card-health-pill ${isAtRisk ? 'pm-card-health-pill--at-risk' : 'pm-card-health-pill--on-track'}">
+                      • ${health}
+                    </span>
+                  </div>
+                  <button class="pm-card-edit-btn" data-edit-project="${p.id}" title="Edit Detail Proyek">
+                    <i class="fi fi-rr-pencil"></i>
+                  </button>
+                </div>
+
+                <!-- Title & Client -->
+                <h3 class="pm-card-title" title="${p.name}">${p.name}</h3>
+                <div class="pm-card-client">Klien: ${p.clientName}</div>
+                <p class="pm-card-desc">${p.description || 'Transformasi arsitektur microservices dan integrasi sistem digital agensi.'}</p>
+
+                <!-- Meta Badges -->
+                <div class="pm-card-meta-row">
+                  <span class="pm-card-meta-pill">${p.contractType || 'Fixed Price'}</span>
+                  <span class="pm-card-meta-pill pm-card-meta-pill--active">Status: ${p.status || 'Active'}</span>
+                  <span class="pm-card-target-text">Target: ${p.targetDeadline || '2026-11-30'}</span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="pm-card-prog-wrap">
+                  <div class="pm-card-prog-header">
+                    <span>Progres Penyelesaian Issue</span>
+                    <span>${progPct}% (${doneIssues}/${totalIssues})</span>
+                  </div>
+                  <div class="pm-card-prog-bar">
+                    <div class="pm-card-prog-fill" style="width: ${progPct}%;"></div>
+                  </div>
+                </div>
+
+                <!-- Dual Box (Anggaran & Jam Kerja) -->
+                <div class="pm-card-stats-box">
+                  <div>
+                    <span class="pm-cs-label">Penggunaan Anggaran</span>
+                    <span class="pm-cs-val">Rp ${budgetUsedJt}Jt / ${contractJt}Jt</span>
+                  </div>
+                  <div>
+                    <span class="pm-cs-label">Jam Kerja Terpakai</span>
+                    <span class="pm-cs-val">${p.usedHours || 480} / ${p.totalHours || 1200} Jam</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Button Open Workspace -->
+              <button class="pm-btn-open-workspace" data-open-workspace="${p.id}">
+                <span>Open Workspace</span>
+                <i class="fi fi-rr-arrow-right"></i>
+              </button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  renderPortfolioTable(projects) {
+    if (projects.length === 0) {
+      return `
+        <div style="text-align: center; padding: 60px 20px; background: #fff; border: 1px dashed #cbd5e1; border-radius: 12px; margin-top: 20px;">
+          <i class="fi fi-rr-search" style="font-size: 36px; color: #94a3b8; display: block; margin-bottom: 12px;"></i>
+          <h3 style="margin: 0 0 6px 0; color: #1e293b; font-size: 16px;">Tidak ada proyek ditemukan</h3>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="pm-portfolio-table-wrap">
+        <table class="pm-portfolio-table">
+          <thead>
+            <tr>
+              <th>Proyek</th>
+              <th>Klien &amp; Kontrak</th>
+              <th>Kesehatan</th>
+              <th>Progres Issue</th>
+              <th>Penggunaan Anggaran</th>
+              <th>Jam Kerja</th>
+              <th>Target Deadline</th>
+              <th style="text-align: right;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${projects.map(p => {
+              const contractJt = Math.round((p.contractValue || 185e6) / 1e6);
+              const budgetUsedJt = Math.round((p.budgetUsed || 65e6) / 1e6);
+              const totalIssues = p.totalIssues || 9;
+              const doneIssues = p.doneIssues || 2;
+              const progPct = totalIssues ? Math.round((doneIssues / totalIssues) * 100) : 22;
+              const health = p.health || 'On Track';
+              const isAtRisk = health === 'At Risk';
+
+              return `
+                <tr>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span class="pm-card-color-dot" style="background: ${p.color || '#4f46e5'};"></span>
+                      <div>
+                        <strong style="color: #0f172a; font-size: 13px;">${p.code} · ${p.name}</strong>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="font-weight: 600; color: #4338ca;">${p.clientName}</div>
+                    <div style="font-size: 11px; color: #64748b;">${p.contractType || 'Fixed Price'}</div>
+                  </td>
+                  <td>
+                    <span class="pm-card-health-pill ${isAtRisk ? 'pm-card-health-pill--at-risk' : 'pm-card-health-pill--on-track'}">
+                      • ${health}
+                    </span>
+                  </td>
+                  <td style="min-width: 140px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px;">
+                      <span>${progPct}%</span>
+                      <span style="color: #64748b;">${doneIssues}/${totalIssues}</span>
+                    </div>
+                    <div class="pm-card-prog-bar">
+                      <div class="pm-card-prog-fill" style="width: ${progPct}%;"></div>
+                    </div>
+                  </td>
+                  <td>
+                    <strong>Rp ${budgetUsedJt}Jt</strong> <span style="color: #64748b;">/ Rp ${contractJt}Jt</span>
+                  </td>
+                  <td>
+                    <strong>${p.usedHours || 480}h</strong> <span style="color: #64748b;">/ ${p.totalHours || 1200}h</span>
+                  </td>
+                  <td>
+                    <span style="color: #475569; font-weight: 500;">${p.targetDeadline || '2026-11-30'}</span>
+                  </td>
+                  <td style="text-align: right;">
+                    <button class="pm-btn pm-btn--primary pm-btn--sm" data-open-workspace="${p.id}" style="padding: 5px 12px; font-size: 11.5px; border-radius: 6px;">
+                      <span>Open Workspace →</span>
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  renderCreateProjectModal() {
+    return `
+      <div class="pm-modal-backdrop" id="pmCreateProjectBackdrop">
+        <div class="pm-modal-card" style="max-width: 520px;">
+          <div class="pm-modal-header">
+            <div>
+              <h3 class="pm-modal-title">Buat Proyek Baru (CRM Intake)</h3>
+              <p class="pm-modal-subtitle">Tambahkan proyek baru hasil closing deal atau inisiasi software house</p>
+            </div>
+            <button id="pmCloseCreateProjectBtn" class="pm-modal-close-btn">&times;</button>
+          </div>
+          <div class="pm-modal-body">
+            <div class="pm-form-group">
+              <label class="pm-form-label">Nama Proyek *</label>
+              <input type="text" id="pmNewProjName" class="pm-form-input" placeholder="Contoh: Digital Core Banking v2..." required />
+            </div>
+            <div class="pm-form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="pm-form-group">
+                <label class="pm-form-label">Kode Proyek *</label>
+                <input type="text" id="pmNewProjCode" class="pm-form-input" placeholder="Contoh: DCB-01" required />
+              </div>
+              <div class="pm-form-group">
+                <label class="pm-form-label">Model Kontrak</label>
+                <select id="pmNewProjContract" class="pm-form-input">
+                  <option value="Fixed Price">Fixed Price</option>
+                  <option value="Time Material">Time &amp; Material</option>
+                </select>
+              </div>
+            </div>
+            <div class="pm-form-group">
+              <label class="pm-form-label">Nama Klien / Institusi *</label>
+              <input type="text" id="pmNewProjClient" class="pm-form-input" placeholder="Contoh: PT Bank Mandiri Digital" required />
+            </div>
+            <div class="pm-form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="pm-form-group">
+                <label class="pm-form-label">Nilai Kontrak (Rp)</label>
+                <input type="number" id="pmNewProjValue" class="pm-form-input" placeholder="Contoh: 850000000" />
+              </div>
+              <div class="pm-form-group">
+                <label class="pm-form-label">Target Rilis</label>
+                <input type="date" id="pmNewProjTarget" class="pm-form-input" value="2026-12-31" />
+              </div>
+            </div>
+            <div class="pm-form-group">
+              <label class="pm-form-label">Deskripsi &amp; Ringkasan Proyek</label>
+              <textarea id="pmNewProjDesc" class="pm-form-input" rows="3" placeholder="Jelaskan kebutuhan teknis, arsitektur, dan deliverable proyek..."></textarea>
+            </div>
+          </div>
+          <div class="pm-modal-footer">
+            <button id="pmCancelCreateProjectBtn" class="pm-btn pm-btn--outline">Batal</button>
+            <button id="pmSaveNewProjectBtn" class="pm-btn pm-btn--primary">Simpan Proyek</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  attachPortfolioEvents() {
+    // Shared Master Tabs Bar navigation
+    this.container.querySelectorAll('.pm-ws-tab-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const tab = e.currentTarget.dataset.wsTab;
+        if (tab) {
+          this.switchWorkspaceTab(tab);
+        }
+      });
+    });
+
+    // Search input
+    const searchInput = this.container.querySelector('#pmPortfolioSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.portfolioSearch = e.target.value;
+        this.render();
+      });
+    }
+
+    // Status filter
+    const statusSelect = this.container.querySelector('#pmPortfolioStatusSelect');
+    if (statusSelect) {
+      statusSelect.addEventListener('change', (e) => {
+        this.portfolioStatus = e.target.value;
+        this.render();
+      });
+    }
+
+    // Client filter
+    const clientSelect = this.container.querySelector('#pmPortfolioClientSelect');
+    if (clientSelect) {
+      clientSelect.addEventListener('change', (e) => {
+        this.portfolioClient = e.target.value;
+        this.render();
+      });
+    }
+
+    // Contract model filter
+    const contractSelect = this.container.querySelector('#pmPortfolioContractSelect');
+    if (contractSelect) {
+      contractSelect.addEventListener('change', (e) => {
+        this.portfolioContract = e.target.value;
+        this.render();
+      });
+    }
+
+    // View switcher (Grid vs Table)
+    this.container.querySelectorAll('.pm-view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.portfolioViewMode = btn.dataset.view;
+        this.render();
+      });
+    });
+
+    // Open Workspace triggers
+    this.container.querySelectorAll('[data-open-workspace]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const pId = btn.dataset.openWorkspace;
+        this.openWorkspace(pId, 'ringkasan');
+      });
+    });
+
+    // Create Project Modal triggers
+    const createBtn = this.container.querySelector('#pmCreateNewProjectBtn');
+    if (createBtn) {
+      createBtn.addEventListener('click', () => {
+        this.isCreateProjectOpen = true;
+        this.render();
+      });
+    }
+
+    const closeBtn = this.container.querySelector('#pmCloseCreateProjectBtn');
+    if (closeBtn) closeBtn.addEventListener('click', () => { this.isCreateProjectOpen = false; this.render(); });
+    const cancelBtn = this.container.querySelector('#pmCancelCreateProjectBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => { this.isCreateProjectOpen = false; this.render(); });
+
+    const saveBtn = this.container.querySelector('#pmSaveNewProjectBtn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        const name = this.container.querySelector('#pmNewProjName').value;
+        const code = this.container.querySelector('#pmNewProjCode').value;
+        const client = this.container.querySelector('#pmNewProjClient').value;
+        const contractType = this.container.querySelector('#pmNewProjContract').value;
+        const contractVal = Number(this.container.querySelector('#pmNewProjValue').value) || 100e6;
+        const target = this.container.querySelector('#pmNewProjTarget').value || '2026-12-31';
+        const desc = this.container.querySelector('#pmNewProjDesc').value;
+
+        if (name && code && client) {
+          const newProj = {
+            id: `proj-${Date.now()}`,
+            code: code.toUpperCase(),
+            name,
+            clientName: client,
+            clientEmail: 'client@partner.corp',
+            description: desc,
+            status: 'Active',
+            health: 'On Track',
+            contractType,
+            contractValue: contractVal,
+            budgetUsed: 0,
+            totalHours: 1000,
+            usedHours: 0,
+            totalIssues: 5,
+            doneIssues: 0,
+            targetDeadline: target,
+            color: '#4f46e5',
+            createdAt: new Date().toISOString().split('T')[0]
+          };
+          store.getState().projects.push(newProj);
+          store.addToast('success', 'Proyek Dibuat', `Proyek ${name} berhasil ditambahkan.`);
+          this.isCreateProjectOpen = false;
+          this.render();
+        } else {
+          alert('Mohon isi nama proyek, kode, dan nama klien.');
+        }
+      });
+    }
+  }
+
+  // =========================================================================
+  // 2. RESUME DETAIL PENGERJAAN PROYEK (WORKSPACE WITH 5 SUBMODULE TABS)
+  // =========================================================================
+  renderWorkspace(state) {
     const activeProject = store.getActiveProject() || state.projects[0];
     const projectTasks = store.getProjectTasks();
     const members = state.teamMembers || [];
     const stats = this.getProjectStats(projectTasks);
 
-    const startDate = activeProject.startDate || activeProject.createdAt || '2026-10-18';
-    const deadline = activeProject.deadline || activeProject.warrantyUntil || '2027-10-31';
-    const clientName = activeProject.clientName || 'Universitas Nusantara Cendekia (Perpustakaan Pusat)';
-    const totalHours = Math.max(stats.totalLoggedHours, activeProject.totalHoursWorked || 38);
-    const progress = stats.progressPct;
+    const startDate = activeProject.startDate || activeProject.createdAt || '2026-08-01';
+    const deadline = activeProject.targetDeadline || activeProject.deadline || activeProject.warrantyUntil || '2026-11-30';
+    const clientName = activeProject.clientName || 'PT Bank Mandiri Digital';
+    const totalHours = activeProject.totalHours || 1200;
+    const usedHours = activeProject.usedHours || 680;
+    const progress = stats.progressPct || 22;
 
-    // Active user info
-    const currentMember = members.find((m) => m.role.toLowerCase().includes((state.role || '').toLowerCase())) || members[0];
-    const currentUserName = currentMember ? `${currentMember.name} (${currentMember.role})` : 'Asisyah (Project Manajer)';
-    const contractValueJt = Math.round((activeProject.contractValue || 185e6) / 1e6);
+    const health = activeProject.health || 'On Track';
+    const isAtRisk = health === 'At Risk';
 
     this.container.innerHTML = `
-      <!-- ========================================================
-           1. TOP ERP BREADCRUMB & CONTEXT STRIP
-           ======================================================== -->
-      <div class="pm-header-breadcrumb">
-        <div class="pm-breadcrumb-left">
-          <span class="pm-breadcrumb-item">ASTACODE ERP</span>
-          <span class="pm-breadcrumb-sep">/</span>
-          <span class="pm-breadcrumb-item">Management Proyek</span>
-          <span class="pm-breadcrumb-sep">/</span>
-          <span class="pm-breadcrumb-item">Perencanaan</span>
-          <span class="pm-breadcrumb-sep">/</span>
-          <span class="pm-breadcrumb-current">Modul Proyek (Executive Master Dashboard)</span>
-        </div>
-        <div class="pm-breadcrumb-right">
-          <span class="pm-header-user-tag" title="Pengguna Aktif: ${currentUserName}">
-            <i class="fi fi-rr-user"></i>
-            <span>${currentUserName}</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- ========================================================
-           2. PROJECT TITLE & ACTIONS BAR
-           ======================================================== -->
-      <div class="pm-project-header-bar">
-        <div class="pm-project-header-bar__left">
-          <div class="pm-proj-icon-box" title="Modul Proyek Aktif">
-            <i class="fi fi-rr-apps"></i>
-          </div>
-
-          <div class="pm-project-title-wrap">
-            <div class="pm-proj-title-row">
-              <h1 class="pm-proj-title" title="${activeProject.name}">
-                ${activeProject.name}
-              </h1>
-              <button id="pmStarBtn" class="pm-star-btn ${activeProject.isStarred ? 'pm-star-btn--active' : ''}" title="${activeProject.isStarred ? 'Hapus dari favorit' : 'Tandai bintang favorit'}">
-                <i class="${activeProject.isStarred ? 'fi fi-sr-star' : 'fi fi-rr-star'}"></i>
-              </button>
-            </div>
-
-            <div class="pm-proj-meta-badges">
-              <div class="pm-proj-select-wrap">
-                <select id="pmProjectSwitcher" class="pm-proj-select" title="Ganti Proyek Aktif">
-                  ${state.projects.map((p) => `
-                    <option value="${p.id}" ${p.id === activeProject.id ? 'selected' : ''}>
-                      ${p.code} · ${p.name}
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-
-              <span class="pm-header-pill pm-header-pill--live">
-                <i class="fi fi-rr-check-circle"></i> Active &amp; Healthy
-              </span>
-              <span class="pm-header-pill pm-header-pill--fixed">
-                <i class="fi fi-rr-receipt"></i> Fixed Price · Rp ${contractValueJt} Jt
-              </span>
-              <span class="pm-header-pill pm-header-pill--sla">
-                <i class="fi fi-rr-shield-check"></i> Termin DP 30% Lunas
-              </span>
-              <span class="pm-header-pill pm-header-pill--sla">
-                <i class="fi fi-rr-clock"></i> 28 Hari Menuju Staging
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="pm-project-header-bar__right">
-          <!-- Live Timer Button -->
-          <button id="pmHeaderTimerBtn" class="pm-action-pill pm-action-pill--timer ${this.isTimerRunning ? 'pm-action-pill--timer-running' : ''}" title="Mulai / Hentikan pencatat waktu kerja">
-            <i class="fi fi-rr-clock"></i>
-            <span>${this.isTimerRunning ? `Stop timer (${this.formatTimerTime(this.timerSeconds)})` : 'Start timer'}</span>
-          </button>
-
-          <!-- Reminders Button -->
-          <button id="pmRemindersBtn" class="pm-action-pill" title="Lihat pengingat proyek">
-            <i class="fi fi-rr-bell"></i>
-            <span>Reminders</span>
-            <span class="pm-badge-count">${this.reminders.length}</span>
-          </button>
-
-          <!-- Settings Button -->
-          <button id="pmSettingsBtn" class="pm-action-pill" title="Pengaturan proyek">
-            <i class="fi fi-rr-settings"></i>
-            <span>Settings</span>
-          </button>
-
-          <!-- Actions Dropdown -->
-          <div class="pm-actions-dropdown-wrap">
-            <button id="pmActionsToggleBtn" class="pm-action-pill" title="Menu tindakan proyek">
-              <i class="fi fi-rr-menu-dots-vertical"></i>
-              <span>Actions</span>
-              <i class="fi fi-rr-angle-small-down"></i>
+      <div class="pm-ws-wrap">
+        <!-- 1. TOP STRIP -->
+        <div class="pm-ws-top-strip">
+          <div class="pm-ws-top-breadcrumb">
+            <button id="pmBackToPortfolioBtn" class="pm-ws-back-link">
+              <i class="fi fi-rr-arrow-left"></i>
+              <span>Kembali ke Daftar Proyek</span>
             </button>
-            ${this.isActionsOpen ? `
-              <div class="pm-dropdown-menu">
-                <button class="pm-dropdown-item" data-action="export_pdf">
-                  <i class="fi fi-rr-download"></i> Unduh Ringkasan PDF
-                </button>
-                <button class="pm-dropdown-item" data-action="new_task">
-                  <i class="fi fi-rr-plus"></i> Tambah Tugas Baru
-                </button>
-                <button class="pm-dropdown-item" data-action="view_gantt">
-                  <i class="fi fi-rr-calendar"></i> Buka Tampilan Gantt
-                </button>
-                <button class="pm-dropdown-item" data-action="crm_sync">
-                  <i class="fi fi-rr-briefcase"></i> Sinkronisasi Deal CRM
-                </button>
-                <div class="pm-dropdown-divider"></div>
-                <button class="pm-dropdown-item pm-dropdown-item--danger" data-action="mark_finished">
-                  <i class="fi fi-rr-check-circle"></i> Tandai Proyek Selesai
-                </button>
-              </div>
-            ` : ''}
           </div>
-
-          <!-- Primary + Buat Tiket Button -->
-          <button id="pmHeaderCreateTaskBtn" class="pm-action-pill pm-action-pill--primary" title="Tambah tiket baru ke proyek">
-            <i class="fi fi-rr-plus"></i>
-            <span>Buat Tiket</span>
-          </button>
+          <div class="pm-ws-badges-right">
+            <span class="pm-ws-pill ${isAtRisk ? 'pm-ws-pill--at-risk' : 'pm-ws-pill--on-track'}">
+              • ${health}
+            </span>
+            <span class="pm-ws-pill pm-ws-pill--fixed">
+              ${activeProject.contractType || 'Fixed Price'}
+            </span>
+          </div>
         </div>
+
+        <!-- 2. TABS BAR (STICKY DI ATAS WORKSPACE) -->
+        ${this.renderTabsBar(stats)}
+
+        <!-- 3. MAIN WORKSPACE CONTENT CONTAINER -->
+        <main class="pm-content" id="pmWorkspaceContentArea"></main>
+
+        <!-- Modals -->
+        ${this.isSettingsOpen ? this.renderSettingsModal(activeProject) : ''}
       </div>
+    `;
 
-      <!-- ========================================================
-           3. SINGLE-LINE SUB-MODULE NAVIGATION TABS (ALL 14 TABS)
-           ======================================================== -->
-      <nav class="pm-submodules-nav">
-        ${[
-          { id: 'overview', label: 'Executive Overview', icon: 'fi-rr-dashboard', badge: 'Live' },
-          { id: 'tasks_kanban', label: 'Papan Kanban', icon: 'fi-rr-apps', badge: stats.total },
-          { id: 'tasks_list', label: 'Tasks List', icon: 'fi-rr-list-check', badge: stats.total },
-          { id: 'milestones', label: 'Milestones', icon: 'fi-rr-flag', badge: '4' },
-          { id: 'gantt', label: 'Gantt & Roadmap', icon: 'fi-rr-chart-timeline' },
-          { id: 'notes', label: 'Catatan & Specs', icon: 'fi-rr-document', badge: this.projectNotes.length },
-          { id: 'files', label: 'Berkas & Dokumen', icon: 'fi-rr-folder' },
-          { id: 'comments', label: 'Diskusi Tim', icon: 'fi-rr-comments', badge: this.projectComments.length },
-          { id: 'customer_feedback', label: 'Customer Portal', icon: 'fi-rr-headset' },
-          { id: 'timesheets', label: 'Timesheets & HR', icon: 'fi-rr-clock', badge: `${totalHours}h` },
-          { id: 'invoices', label: 'Finance & Invoices', icon: 'fi-rr-receipt', badge: `Rp ${contractValueJt}Jt` },
-          { id: 'payments', label: 'Payments', icon: 'fi-rr-credit-card' },
-          { id: 'expenses', label: 'Expenses', icon: 'fi-rr-wallet' },
-          { id: 'contracts', label: 'Kontrak & SPK', icon: 'fi-rr-diploma' }
-        ].map((tab) => `
-          <button class="pm-subtab-btn ${this.activeSubTab === tab.id ? 'pm-subtab-btn--active' : ''}" data-subtab="${tab.id}">
-            <i class="fi ${tab.icon}"></i>
-            <span>${tab.label}</span>
-            ${tab.badge ? `<span class="pm-tab-badge">${tab.badge}</span>` : ''}
-          </button>
-        `).join('')}
-      </nav>
-
-      <!-- ========================================================
-           4. MAIN CONTENT AREA (DYNAMIC SUB-TAB CONTENT)
-           ======================================================== -->
-      <main class="pm-content">
-        ${this.renderSubTabContent({
+    // Mount selected tab content into workspace content area
+    const contentArea = this.container.querySelector('#pmWorkspaceContentArea');
+    if (contentArea) {
+      if (this.activeWorkspaceTab === 'ringkasan') {
+        contentArea.innerHTML = this.renderOverviewTab({
           project: activeProject,
           tasks: projectTasks,
           members,
@@ -360,774 +866,246 @@ export class ProjectModuleView {
           deadline,
           clientName,
           totalHours,
+          usedHours,
           progress
-        })}
-      </main>
-
-      <!-- Reminders Modal Popover -->
-      ${this.isRemindersOpen ? this.renderRemindersModal(activeProject) : ''}
-
-      <!-- Settings Modal Popover -->
-      ${this.isSettingsOpen ? this.renderSettingsModal(activeProject) : ''}
-
-      <!-- Add Note Modal Popover -->
-      ${this.isAddNoteOpen ? this.renderAddNoteModal(activeProject) : ''}
-    `;
+        });
+      } else if (this.activeWorkspaceTab === 'kanban') {
+        contentArea.innerHTML = '';
+        contentArea.appendChild(this.kanbanBoard.getElement());
+        this.kanbanBoard.render();
+      } else if (this.activeWorkspaceTab === 'backlog') {
+        contentArea.innerHTML = '';
+        contentArea.appendChild(this.backlogView.getElement());
+        this.backlogView.render();
+      } else if (this.activeWorkspaceTab === 'timeline') {
+        contentArea.innerHTML = '';
+        if (activeProject && activeProject.id) {
+          this.timelineView.activeProjectFilter = activeProject.id;
+        }
+        contentArea.appendChild(this.timelineView.getElement());
+        this.timelineView.render();
+      } else if (this.activeWorkspaceTab === 'list') {
+        contentArea.innerHTML = '';
+        contentArea.appendChild(this.taskListView.getElement());
+        this.taskListView.render();
+      } else if (this.activeWorkspaceTab === 'qa') {
+        contentArea.innerHTML = this.renderQaTab(activeProject, projectTasks);
+      } else if (this.activeWorkspaceTab === 'docs') {
+        contentArea.innerHTML = this.renderNotesTab({ project: activeProject });
+      } else if (this.activeWorkspaceTab === 'time') {
+        contentArea.innerHTML = this.renderTimesheetsTab({ project: activeProject, members, tasks: projectTasks });
+      } else if (this.activeWorkspaceTab === 'finance_budget') {
+        contentArea.innerHTML = this.renderInvoicesTab({ project: activeProject });
+      }
+    }
 
     this.attachEvents();
   }
 
-  // --- SUB-MODULE ROUTING DISPATCHER ---
-  renderSubTabContent(ctx) {
-    switch (this.activeSubTab) {
-      case 'overview':
-        return this.renderOverviewTab(ctx);
-      case 'tasks_list':
-        return this.renderTasksListTab(ctx);
-      case 'tasks_kanban':
-        return this.renderTasksKanbanTab(ctx);
-      case 'milestones':
-        return this.renderMilestonesTab(ctx);
-      case 'gantt':
-        return this.renderGanttTab(ctx);
-      case 'notes':
-        return this.renderNotesTab(ctx);
-      case 'files':
-        return this.renderFilesTab(ctx);
-      case 'comments':
-        return this.renderCommentsTab(ctx);
-      case 'customer_feedback':
-        return this.renderCustomerFeedbackTab(ctx);
-      case 'timesheets':
-        return this.renderTimesheetsTab(ctx);
-      case 'invoices':
-        return this.renderInvoicesTab(ctx);
-      case 'payments':
-        return this.renderPaymentsTab(ctx);
-      case 'expenses':
-        return this.renderExpensesTab(ctx);
-      case 'contracts':
-        return this.renderContractsTab(ctx);
-      default:
-        return this.renderOverviewTab(ctx);
-    }
+  renderQaTab(project, tasks) {
+    return `
+      <div style="padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin: 20px 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">Matrix Pengujian QA &amp; Testing</h3>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Pengujian integrasi otomatis, stress test K6, dan verifikasi CI/CD staging</p>
+          </div>
+          <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">
+            ✓ 6/6 CI Pipeline Passing
+          </span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <span style="font-size: 11.5px; color: #64748b; font-weight: 600;">Unit &amp; Feature Tests</span>
+            <div style="font-size: 22px; font-weight: 800; color: #059669; margin: 6px 0 2px 0;">100% Passed</div>
+            <span style="font-size: 11px; color: #64748b;">48 test assertions lolos</span>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <span style="font-size: 11.5px; color: #64748b; font-weight: 600;">K6 Stress Load Test</span>
+            <div style="font-size: 22px; font-weight: 800; color: #4f46e5; margin: 6px 0 2px 0;">2.000 RPS</div>
+            <span style="font-size: 11px; color: #64748b;">P95 Latency &lt; 85ms</span>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <span style="font-size: 11.5px; color: #64748b; font-weight: 600;">Staging Health</span>
+            <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 6px 0 2px 0;">Healthy</div>
+            <span style="font-size: 11px; color: #64748b;">Traefik Gateway SSL Active</span>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
-  // =========================================================================
-  // 1. SUB-MODULE: EXECUTIVE MASTER PROJECT DASHBOARD (INFORMATIVE ALL-IN-ONE)
-  // =========================================================================
-  renderOverviewTab({ project, startDate, deadline, clientName, totalHours, progress, tasks, members }) {
-    const state = store.getState();
-    const epics = store.getProjectEpics();
-    const sprints = state.sprints.filter(s => s.projectId === project.id);
-    const activeSprint = sprints.find(s => s.status === 'active') || sprints[0] || {
-      id: 'sprint-lib-1',
-      name: 'Sprint 1: Fondasi Microservices Laravel, React UI & Sirkulasi Buku',
-      startDate: '2026-10-18',
-      endDate: '2026-11-01'
-    };
-    const invoices = state.invoices.filter(i => i.projectId === project.id);
-    const crmDeal = state.crmDeals.find(d => d.clientName === project.clientName) || state.crmDeals[0] || {};
-    const branches = project.branches || [];
+  renderOverviewTab({ project, tasks, members, stats, startDate, deadline, clientName, totalHours, usedHours, progress }) {
+    const activeProject = project || store.getActiveProject();
+    const contractVal = activeProject.contractValue || 950000000;
+    const budgetUsed = activeProject.budgetUsed || 512000000;
+    const burnRatePct = Math.round((budgetUsed / contractVal) * 100) || 54;
+    const projectUsedHours = usedHours || activeProject.usedHours || 680;
+    const hoursAllocated = totalHours || activeProject.totalHours || 1200;
+    const remainingHours = Math.max(0, hoursAllocated - projectUsedHours);
 
-    // 6 Software House Workflow Stages
-    const STAGES = [
-      { id: 'backlog', name: 'Backlog & Spec', matchStatuses: ['Backlog', 'Baru'], color: '#94a3b8' },
-      { id: 'todo', name: 'Scope & Arsitektur', matchStatuses: ['To Do', 'Dianalisis'], color: '#3b82f6' },
-      { id: 'in_progress', name: 'Coding Sprint', matchStatuses: ['In Progress', 'Diperbaiki Agen', 'Perlu Manual'], color: '#6366f1' },
-      { id: 'code_review', name: 'Code Review PR', matchStatuses: ['In Review', 'Menunggu Persetujuan'], color: '#f59e0b' },
-      { id: 'qa_staging', name: 'QA & Staging UAT', matchStatuses: ['QA/Testing', 'Deploy Staging', 'Disetujui'], color: '#8b5cf6' },
-      { id: 'done', name: 'Production Live', matchStatuses: ['Selesai', 'Deploy Production', 'Dipantau'], color: '#10b981' }
+    const doneCount = tasks.filter(t => t.status === 'Selesai').length;
+    const totalIssues = tasks.length || 9;
+    const overallProgPct = totalIssues ? Math.round((doneCount / totalIssues) * 100) : 22;
+
+    const health = activeProject.health || 'On Track';
+    const isAtRisk = health === 'At Risk';
+
+    // Active sprint tasks preview
+    const activeTasks = tasks.slice(0, 5);
+
+    // Milestones and payment terms
+    const milestones = [
+      { id: 'm1', name: 'M1: Arsitektur & Database Schema', pct: 100, date: '18 Okt 2026', done: true, termin: 'Termin DP 30% Lunas' },
+      { id: 'm2', name: 'M2: Core Features & API Microservices', pct: 65, date: '01 Nov 2026', done: false, termin: 'Termin 2 (40%) On-Track' },
+      { id: 'm3', name: 'M3: Staging Load Testing K6 & UAT', pct: 15, date: '16 Nov 2026', done: false, termin: 'Termin 3 (30%) Pelunasan' },
+      { id: 'm4', name: 'M4: Production Deployment & Handover', pct: 0, date: '15 Des 2026', done: false, termin: 'Garansi SLA 12 Bulan' }
     ];
 
-    const stageBreakdown = STAGES.map((s, idx) => {
-      const stageTasks = tasks.filter(t => s.matchStatuses.includes(t.status));
-      return {
-        ...s,
-        idx: idx + 1,
-        tasks: stageTasks,
-        count: stageTasks.length
-      };
-    });
-
-    // Sprints Burn
-    const sprintTasks = tasks.filter(t => t.sprintId === activeSprint.id);
-    const sprintTotalHours = sprintTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0) || 296;
-    const sprintDoneHours = sprintTasks.filter(t => t.status === 'Selesai').reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0) || 48;
-    const sprintProgressHours = sprintTasks.filter(t => ['In Progress', 'Sedang Dikerjakan'].includes(t.status)).reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0) || 92;
-    const sprintTodoHours = Math.max(0, sprintTotalHours - sprintDoneHours - sprintProgressHours);
-
-    const donePct = Math.round((sprintDoneHours / sprintTotalHours) * 100) || 16;
-    const progPct = Math.round((sprintProgressHours / sprintTotalHours) * 100) || 31;
-    const todoPct = Math.max(0, 100 - donePct - progPct);
-
-    // Active Preview Tasks (3-4 tasks)
-    const previewTasks = tasks.filter(t => ['In Progress', 'In Review', 'QA/Testing'].includes(t.status)).slice(0, 4);
-
-    // Epics Summary
-    const epicsSummary = epics.slice(0, 6).map(e => {
-      const eTasks = tasks.filter(t => t.epicId === e.id);
-      const doneCount = eTasks.filter(t => t.status === 'Selesai').length;
-      const hours = eTasks.reduce((sum, t) => sum + (Number(t.estimateHours) || 0), 0);
-      return {
-        ...e,
-        taskCount: eTasks.length,
-        doneCount,
-        hours
-      };
-    });
-
-    // Team Workload (5 Developers)
-    const workloadData = members.map(m => {
-      const mTasks = tasks.filter(t => t.assigneeId === m.id);
-      const hours = mTasks.reduce((sum, t) => sum + (Number(t.estimateHours) || Number(t.timeLoggedHours) || 0), 0);
-      const pct = Math.round((hours / 40) * 100);
-      return {
-        ...m,
-        taskCount: mTasks.length,
-        hours,
-        pct,
-        isOver: hours > 40
-      };
-    });
-
-    // Finance Data
-    const contractVal = project.contractValue || 185000000;
-    const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
-
-    // Activity Stream
-    const activityItems = this.getProjectActivities(project.id, tasks, members);
-
-    // Bugs
-    const bugs = tasks.filter(t => (t.type || '').toLowerCase() === 'bug');
-    const hotfixBugs = bugs.filter(b => b.priority === 'Hotfix' || b.priority === 'Tinggi' || b.severity === 'Kritis');
-
     return `
-      <div class="pm-executive-dashboard">
-        <!-- ========================================================
-             ROW 1: EXECUTIVE KPI SCORECARDS (6 CARDS)
-             ======================================================== -->
-        <div class="pm-kpi-grid">
-          <!-- Card 1: Health & Overall Progress -->
-          <div class="pm-kpi-card">
-            <div class="pm-kpi-card__top">
-              <span class="pm-kpi-label">Progress &amp; Health</span>
-              <span class="pm-kpi-icon-badge pm-kpi-icon-badge--indigo"><i class="fi fi-rr-dashboard"></i></span>
-            </div>
-            <div class="pm-kpi-main">
-              <span class="pm-kpi-value">${progress}%</span>
-              <span class="pm-kpi-subtext">Selesai</span>
-            </div>
-            <div class="pm-kpi-footer">
-              <span class="pm-kpi-status-tag pm-kpi-status-tag--success">🟢 On-Track (Fase 3)</span>
-              <button class="pm-kpi-action-link" data-nav-module="timeline">Roadmap →</button>
-            </div>
+      <div class="pm-ws-overview-container">
+        <!-- 1. HERO BANNER CARD -->
+        <div class="pm-ws-hero-card">
+          <div class="pm-ws-hero-pill-row">
+            <span class="pm-ws-hero-dot" style="background: ${activeProject.color || '#4f46e5'};"></span>
+            <span>${activeProject.code} • ${clientName}</span>
+            <span class="pm-ws-hero-badge">${health.toUpperCase()}</span>
           </div>
-
-          <!-- Card 2: Papan Kanban (6 Stages) -->
-          <div class="pm-kpi-card">
-            <div class="pm-kpi-card__top">
-              <span class="pm-kpi-label">Papan Kanban</span>
-              <span class="pm-kpi-icon-badge pm-kpi-icon-badge--blue"><i class="fi fi-rr-apps"></i></span>
+          <h2 class="pm-ws-hero-title">${activeProject.name}</h2>
+          <p class="pm-ws-hero-desc">
+            ${activeProject.description || 'Transformasi arsitektur mobile banking native dengan fitur Biometric Login, QRIS Cross-Border, dan High-Concurrency Transaction Engine.'}
+          </p>
+          <div class="pm-ws-hero-btns">
+            <div class="pm-ws-hero-btns-left">
+              <button class="pm-ws-hero-btn-primary" data-switch-ws-tab="kanban">Buka Board Kanban</button>
+              <button class="pm-ws-hero-btn-secondary" data-nav-to-client="true">Lihat Client Portal</button>
             </div>
-            <div class="pm-kpi-main">
-              <span class="pm-kpi-value">${tasks.length}</span>
-              <span class="pm-kpi-subtext">Total Tiket</span>
-            </div>
-            <div class="pm-kpi-footer">
-              <span class="pm-kpi-status-tag">${stageBreakdown[2].count} Coding · ${stageBreakdown[3].count} Review</span>
-              <button class="pm-kpi-action-link" data-nav-module="kanban">Kanban →</button>
-            </div>
-          </div>
-
-          <!-- Card 3: Active Sprint & Backlog -->
-          <div class="pm-kpi-card">
-            <div class="pm-kpi-card__top">
-              <span class="pm-kpi-label">Sprint 1 Aktif</span>
-              <span class="pm-kpi-icon-badge pm-kpi-icon-badge--emerald"><i class="fi fi-rr-rocket-lunch"></i></span>
-            </div>
-            <div class="pm-kpi-main">
-              <span class="pm-kpi-value">${sprintTasks.length}</span>
-              <span class="pm-kpi-subtext">Tiket (${sprintTotalHours} Jam)</span>
-            </div>
-            <div class="pm-kpi-footer">
-              <span class="pm-kpi-status-tag pm-kpi-status-tag--warning">${sprintDoneHours}h Selesai (${donePct}%)</span>
-              <button class="pm-kpi-action-link" data-nav-module="backlog">Backlog →</button>
-            </div>
-          </div>
-
-          <!-- Card 4: Tim HR & Workload -->
-          <div class="pm-kpi-card">
-            <div class="pm-kpi-card__top">
-              <span class="pm-kpi-label">Beban Tim Dev</span>
-              <span class="pm-kpi-icon-badge pm-kpi-icon-badge--violet"><i class="fi fi-rr-users-alt"></i></span>
-            </div>
-            <div class="pm-kpi-main">
-              <span class="pm-kpi-value">395h</span>
-              <span class="pm-kpi-subtext">/ 200h kuota</span>
-            </div>
-            <div class="pm-kpi-footer">
-              <span class="pm-kpi-status-tag pm-kpi-status-tag--danger">2 Dev Overload</span>
-              <button class="pm-kpi-action-link" data-nav-module="team">Tim HR →</button>
-            </div>
-          </div>
-
-          <!-- Card 5: AI Bug & GitHub DevOps -->
-          <div class="pm-kpi-card">
-            <div class="pm-kpi-card__top">
-              <span class="pm-kpi-label">AI Hub &amp; GitHub</span>
-              <span class="pm-kpi-icon-badge pm-kpi-icon-badge--rose"><i class="fi fi-rr-magic-wand"></i></span>
-            </div>
-            <div class="pm-kpi-main">
-              <span class="pm-kpi-value">94%</span>
-              <span class="pm-kpi-subtext">AI Fix Conf.</span>
-            </div>
-            <div class="pm-kpi-footer">
-              <span class="pm-kpi-status-tag pm-kpi-status-tag--success">✓ 6/6 CI Passing</span>
-              <button class="pm-kpi-action-link" data-nav-module="ai_hub">AI Hub →</button>
-            </div>
-          </div>
-
-          <!-- Card 6: Finance & Contract Value -->
-          <div class="pm-kpi-card">
-            <div class="pm-kpi-card__top">
-              <span class="pm-kpi-label">Finance &amp; Nilai</span>
-              <span class="pm-kpi-icon-badge pm-kpi-icon-badge--amber"><i class="fi fi-rr-receipt"></i></span>
-            </div>
-            <div class="pm-kpi-main">
-              <span class="pm-kpi-value">Rp ${Math.round(contractVal / 1e6)}Jt</span>
-              <span class="pm-kpi-subtext">Fixed Price</span>
-            </div>
-            <div class="pm-kpi-footer">
-              <span class="pm-kpi-status-tag pm-kpi-status-tag--success">DP 30% Lunas</span>
-              <button class="pm-kpi-action-link" data-nav-module="finance">Invoices →</button>
+            <div class="pm-ws-hero-btns-right">
+              <button id="pmWsEditProjBtn" class="pm-ws-btn pm-ws-btn--outline" title="Edit konfigurasi proyek">
+                <i class="fi fi-rr-pencil"></i>
+                <span>Edit Proyek</span>
+              </button>
+              <button id="pmWsAiCopilotBtn" class="pm-ws-btn pm-ws-btn--outline pm-ws-btn--copilot" title="Buka AI Copilot Proyek">
+                <i class="fi fi-rr-magic-wand"></i>
+                <span>AI Copilot</span>
+              </button>
+              <button id="pmWsCreateIssueBtn" class="pm-ws-btn pm-ws-btn--primary" title="Tambah issue / task baru">
+                <i class="fi fi-rr-plus"></i>
+                <span>Buat Issue</span>
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- ========================================================
-             ROW 2: TWO-COLUMN DEEP-DIVE GRID (62% LEFT / 38% RIGHT)
-             ======================================================== -->
-        <div class="pm-dashboard-layout">
-          <!-- LEFT COLUMN (62% WIDTH): PLANNING & ENGINEERING -->
-          <div class="pm-dash-col">
-            <!-- WIDGET 1: PAPAN KANBAN (ALUR SIKLUS 6 FASE SOFTWARE HOUSE) -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-apps" style="color: #4f46e5; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Alur Siklus 6 Fase Standar Software House</h3>
-                    <p class="pm-widget-subtitle">Distribusi tiket aktif di sepanjang alur produksi software house</p>
-                  </div>
-                </div>
-                <span class="pm-widget-badge pm-widget-badge--indigo">6 Tahapan</span>
-              </div>
-
-              <!-- 6-Stage Stepper Pipeline -->
-              <div class="pm-pipeline-stepper">
-                ${stageBreakdown.map((s) => `
-                  <div class="pm-pipe-step ${s.count > 0 ? 'pm-pipe-step--active' : ''}" data-nav-module="kanban" title="Klik untuk membuka kolom ${s.name}">
-                    <span class="pm-pipe-step-num">Fase ${s.idx}</span>
-                    <strong class="pm-pipe-step-title">${s.name}</strong>
-                    <div class="pm-pipe-step-count">
-                      <span class="pm-pipe-step-dot" style="background-color: ${s.color};"></span>
-                      <span>${s.count} Tiket</span>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-
-              <!-- Active Tasks Preview -->
-              <div class="pm-tasks-preview-wrap">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <span style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">Tiket Sedang Dikerjakan (In Progress &amp; Review)</span>
-                  <span style="font-size: 11px; color: #94a3b8;">Menampilkan ${previewTasks.length} tiket</span>
-                </div>
-
-                <div class="pm-tasks-preview-list">
-                  ${previewTasks.map((t) => {
-                    const assignee = members.find(m => m.id === t.assigneeId) || { name: 'Dev', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100' };
-                    return `
-                      <div class="pm-task-preview-row" data-task-id="${t.id}" title="Klik untuk membuka detail tiket ${t.key}">
-                        <div class="pm-tpr-left">
-                          <span class="pm-tpr-key">${t.key}</span>
-                          <span class="pm-tpr-title">${t.title}</span>
-                        </div>
-                        <div class="pm-tpr-right">
-                          <span class="pm-header-pill pm-header-pill--live">${t.status}</span>
-                          <span class="pm-tpr-hours">${t.estimateHours || 16}h</span>
-                          <img src="${assignee.avatar}" alt="${assignee.name}" class="pm-tpr-avatar" title="${assignee.name} (${assignee.role})" />
-                        </div>
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              </div>
-
-              <div style="text-align: right; padding-top: 4px;">
-                <button class="pm-btn pm-btn--outline" data-nav-module="kanban">
-                  <i class="fi fi-rr-apps"></i>
-                  <span>Lihat Seluruh Papan Kanban (6 Kolom) →</span>
-                </button>
-              </div>
+        <!-- 2. 4 TOP KPI CARDS -->
+        <div class="pm-ws-kpi-grid">
+          <!-- Card 1: Overall Progress -->
+          <div class="pm-ws-kpi-card">
+            <div class="pm-ws-kpi-top">
+              <span>Overall Progress</span>
+              <i class="fi fi-rr-check-circle" style="color: #059669; font-size: 16px;"></i>
             </div>
-
-            <!-- WIDGET 2: BACKLOG & SPRINTS (ACTIVE SPRINT & EPICS COMPLETION) -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-rocket-lunch" style="color: #059669; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Backlog &amp; Perencanaan Sprint</h3>
-                    <p class="pm-widget-subtitle">Kemajuan burn-down sprint aktif dan progres 7 epics arsitektur</p>
-                  </div>
-                </div>
-                <span class="pm-widget-badge pm-widget-badge--emerald">Sprint 1 Aktif</span>
-              </div>
-
-              <!-- Sprint 1 Burn Box -->
-              <div class="pm-sprint-burn-box">
-                <div class="pm-sprint-header">
-                  <div>
-                    <strong class="pm-sprint-title">${activeSprint.name}</strong>
-                    <div class="pm-sprint-dates">Periode: ${activeSprint.startDate} s/d ${activeSprint.endDate} · 4 Hari Tersisa</div>
-                  </div>
-                  <span class="pm-header-pill pm-header-pill--live">${sprintTasks.length} Tiket Aktif</span>
-                </div>
-
-                <!-- Multi-segment Progress Bar -->
-                <div class="pm-burn-progress-track">
-                  <div class="pm-burn-fill pm-burn-fill--done" style="width: ${donePct}%;" title="Selesai: ${sprintDoneHours} Jam (${donePct}%)"></div>
-                  <div class="pm-burn-fill pm-burn-fill--progress" style="width: ${progPct}%;" title="In Progress: ${sprintProgressHours} Jam (${progPct}%)"></div>
-                  <div class="pm-burn-fill pm-burn-fill--todo" style="width: ${todoPct}%;" title="To Do: ${sprintTodoHours} Jam (${todoPct}%)"></div>
-                </div>
-
-                <div class="pm-burn-legend">
-                  <span><span class="pm-burn-dot" style="background-color: #10b981;"></span> Selesai: <strong>${sprintDoneHours}h</strong> (${donePct}%)</span>
-                  <span><span class="pm-burn-dot" style="background-color: #3b82f6;"></span> In Progress: <strong>${sprintProgressHours}h</strong> (${progPct}%)</span>
-                  <span><span class="pm-burn-dot" style="background-color: #cbd5e1;"></span> To Do: <strong>${sprintTodoHours}h</strong> (${todoPct}%)</span>
-                  <span style="margin-left: auto; color: #64748b;">Total: <strong>${sprintTotalHours}h</strong></span>
-                </div>
-              </div>
-
-              <!-- Epics Summary Grid -->
-              <div>
-                <span style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; display: block; margin-bottom: 8px;">Epics Arsitektur &amp; Beban Modul</span>
-                <div class="pm-epics-summary-grid">
-                  ${epicsSummary.map((e) => `
-                    <div class="pm-epic-summary-card">
-                      <div class="pm-epic-left">
-                        <span class="pm-epic-color-bar" style="background-color: ${e.color || '#3b82f6'};"></span>
-                        <span class="pm-epic-title" title="${e.title}">${e.title}</span>
-                      </div>
-                      <span class="pm-epic-stats">${e.doneCount}/${e.taskCount} (${e.hours}h)</span>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <div style="text-align: right; padding-top: 4px;">
-                <button class="pm-btn pm-btn--outline" data-nav-module="backlog">
-                  <i class="fi fi-rr-rocket-lunch"></i>
-                  <span>Buka Backlog &amp; Sprints Matrix →</span>
-                </button>
-              </div>
+            <div class="pm-ws-kpi-val">${overallProgPct}%</div>
+            <div class="pm-ws-kpi-bar">
+              <div class="pm-ws-kpi-bar-fill" style="width: ${overallProgPct}%; background: #059669;"></div>
             </div>
+            <div class="pm-ws-kpi-sub">${doneCount} dari ${totalIssues} issues selesai</div>
+          </div>
 
-            <!-- WIDGET 3: DEVOPS GITHUB & AI BUG HUB (2-COLUMN SPLIT) -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-code-compare" style="color: #7c3aed; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Pengembangan &amp; Otomasi AI Hub</h3>
-                    <p class="pm-widget-subtitle">Integrasi pipeline Git CI/CD dan sistem auto-fixing bug sentry</p>
-                  </div>
-                </div>
-                <span class="pm-widget-badge pm-widget-badge--indigo">DevOps &amp; AI</span>
-              </div>
-
-              <div class="pm-devops-grid">
-                <!-- Subcard 1: GitHub & CI/CD -->
-                <div class="pm-devops-subcard">
-                  <div class="pm-devops-subcard-header">
-                    <span class="pm-devops-title"><i class="fi fi-brands-github"></i> GitHub &amp; Cabang</span>
-                    <span class="pm-header-pill pm-header-pill--live">Connected</span>
-                  </div>
-
-                  <div class="pm-devops-meta-list">
-                    <div class="pm-devops-meta-row">
-                      <span class="pm-devops-meta-label">Branch Utama:</span>
-                      <span class="pm-devops-meta-val pm-devops-meta-val--code">main (9a10bf3)</span>
-                    </div>
-                    <div class="pm-devops-meta-row">
-                      <span class="pm-devops-meta-label">Active Feature:</span>
-                      <span class="pm-devops-meta-val pm-devops-meta-val--code">feature/katalog</span>
-                    </div>
-                    <div class="pm-devops-meta-row">
-                      <span class="pm-devops-meta-label">CI/CD Pipeline:</span>
-                      <span class="pm-devops-meta-val" style="color: #059669;">✓ 6/6 Passing</span>
-                    </div>
-                    <div class="pm-devops-meta-row">
-                      <span class="pm-devops-meta-label">Staging Cluster:</span>
-                      <a href="${project.stagingUrl || '#'}" target="_blank" class="pm-csr-val--link" style="font-size: 11px;">staging-perpus ↗</a>
-                    </div>
-                  </div>
-
-                  <button class="pm-btn pm-btn--outline pm-btn--sm" data-nav-module="github">
-                    <i class="fi fi-brands-github"></i>
-                    <span>Kelola Git &amp; Cabang</span>
-                  </button>
-                </div>
-
-                <!-- Subcard 2: AI Bug Automation -->
-                <div class="pm-devops-subcard">
-                  <div class="pm-devops-subcard-header">
-                    <span class="pm-devops-title"><i class="fi fi-rr-magic-wand"></i> Otomasi Fix Bug AI</span>
-                    <span class="pm-header-pill pm-header-pill--fixed">DeepSeek Agent</span>
-                  </div>
-
-                  <div class="pm-devops-meta-list">
-                    <div class="pm-devops-meta-row">
-                      <span class="pm-devops-meta-label">Resolusi Otomatis:</span>
-                      <span class="pm-devops-meta-val" style="color: #059669;">3 Bug Fixed (94%)</span>
-                    </div>
-                    <div class="pm-devops-meta-row">
-                      <span class="pm-devops-meta-label">Terakhir Diperbaiki:</span>
-                      <span class="pm-devops-meta-val pm-devops-meta-val--code">LIB-101 Connection</span>
-                    </div>
-                    <div class="pm-devops-meta-row">
-                      <span class="pm-devops-meta-label">Sentry Hotfix Alert:</span>
-                      <span class="pm-devops-meta-val" style="color: #e11d48; font-weight: 700;">${hotfixBugs.length} Tiket Hotfix</span>
-                    </div>
-                    <div class="pm-devops-meta-row">
-                      <span class="pm-devops-meta-label">Rata-Rata Latensi:</span>
-                      <span class="pm-devops-meta-val">4.2 Detik</span>
-                    </div>
-                  </div>
-
-                  <button class="pm-btn pm-btn--primary pm-btn--sm" data-nav-module="ai_hub">
-                    <i class="fi fi-rr-magic-wand"></i>
-                    <span>Buka Otomasi AI Hub</span>
-                  </button>
-                </div>
-              </div>
+          <!-- Card 2: Budget Burn Rate -->
+          <div class="pm-ws-kpi-card">
+            <div class="pm-ws-kpi-top">
+              <span>Budget Burn Rate (Super Admin) $</span>
+              <i class="fi fi-rr-dollar" style="color: #4f46e5; font-size: 16px;"></i>
             </div>
+            <div class="pm-ws-kpi-val" style="color: #4f46e5;">${burnRatePct}%</div>
+            <div class="pm-ws-kpi-bar">
+              <div class="pm-ws-kpi-bar-fill" style="width: ${burnRatePct}%; background: #4f46e5;"></div>
+            </div>
+            <div class="pm-ws-kpi-sub">Rp ${new Intl.NumberFormat('id-ID').format(budgetUsed)} / Rp ${new Intl.NumberFormat('id-ID').format(contractVal)}</div>
+          </div>
 
-            <!-- WIDGET 4: FINANCE & TERMIN INVOICES -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-receipt" style="color: #059669; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Finance &amp; Jadwal Termin Pembayaran</h3>
-                    <p class="pm-widget-subtitle">Skema Fixed Price: Termin DP 30%, UAT Staging 40%, Pelunasan 30%</p>
+          <!-- Card 3: Jam Alokasi Tim -->
+          <div class="pm-ws-kpi-card">
+            <div class="pm-ws-kpi-top">
+              <span>Jam Alokasi Tim</span>
+              <i class="fi fi-rr-clock" style="color: #0284c7; font-size: 16px;"></i>
+            </div>
+            <div class="pm-ws-kpi-val">${projectUsedHours} <span style="font-size: 15px; font-weight: 500; color: #64748b;">/ ${hoursAllocated} Jam</span></div>
+            <div class="pm-ws-kpi-bar">
+              <div class="pm-ws-kpi-bar-fill" style="width: ${Math.min(100, Math.round((projectUsedHours / hoursAllocated) * 100))}%; background: #0284c7;"></div>
+            </div>
+            <div class="pm-ws-kpi-sub">${remainingHours} jam tersisa dalam alokasi</div>
+          </div>
+
+          <!-- Card 4: Target Deadline -->
+          <div class="pm-ws-kpi-card">
+            <div class="pm-ws-kpi-top">
+              <span>Target Deadline</span>
+              <i class="fi fi-rr-calendar" style="color: #d97706; font-size: 16px;"></i>
+            </div>
+            <div class="pm-ws-kpi-val">${deadline}</div>
+            <div class="pm-ws-kpi-sub" style="color: #059669; font-weight: 700; margin-bottom: 2px;">
+              Sisa 56 hari menuju Go-Live
+            </div>
+            <div class="pm-ws-kpi-sub" style="font-size: 11px;">Mulai: ${startDate}</div>
+          </div>
+        </div>
+
+        <!-- 3. SPLIT TWO-COLUMN ROW -->
+        <div class="pm-ws-split-row">
+          <!-- Column Left: Sprint Berjalan Saat Ini -->
+          <div class="pm-ws-card">
+            <div class="pm-ws-card-header">
+              <h3 class="pm-ws-card-title">Sprint Berjalan Saat Ini</h3>
+              <button class="pm-ws-card-link" data-switch-ws-tab="backlog">
+                <span>Lihat Detail Backlog</span>
+                <i class="fi fi-rr-arrow-up-right"></i>
+              </button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              ${activeTasks.map(t => `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px;">
+                  <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                    <span style="font-size: 11px; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">${t.key}</span>
+                    <span style="font-size: 13px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.title}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: ${t.status === 'Selesai' ? '#ecfdf5' : '#eff6ff'}; color: ${t.status === 'Selesai' ? '#059669' : '#2563eb'};">
+                      ${t.status}
+                    </span>
+                    <span style="font-size: 11px; color: #64748b; font-weight: 600;">${t.estimateHours || 8}h</span>
                   </div>
                 </div>
-                <span class="pm-widget-badge pm-widget-badge--emerald">Nilai: ${formatRp(contractVal)}</span>
-              </div>
-
-              <div class="pm-finance-termin-list">
-                <!-- Termin 1: DP 30% -->
-                <div class="pm-finance-termin-item">
-                  <div class="pm-fti-left">
-                    <span class="pm-fti-num pm-fti-num--lunas">1</span>
-                    <div class="pm-fti-info">
-                      <span class="pm-fti-name">Termin 1: Down Payment (DP 30%) Kick-off</span>
-                      <span class="pm-fti-desc">No. Faktur: INV/2026/10/LIB-001 · Diterima 18 Okt 2026</span>
-                    </div>
-                  </div>
-                  <div class="pm-fti-right">
-                    <span class="pm-fti-amount">${formatRp(55500000)}</span>
-                    <span class="pm-fti-badge pm-fti-badge--lunas">LUNAS</span>
-                  </div>
-                </div>
-
-                <!-- Termin 2: UAT Staging 40% -->
-                <div class="pm-finance-termin-item">
-                  <div class="pm-fti-left">
-                    <span class="pm-fti-num">2</span>
-                    <div class="pm-fti-info">
-                      <span class="pm-fti-name">Termin 2: Sign-Off UAT Staging &amp; Load Test (40%)</span>
-                      <span class="pm-fti-desc">Syarat: Lulus uji beban K6 2.000 RPS &amp; persetujuan Kepala Perpustakaan</span>
-                    </div>
-                  </div>
-                  <div class="pm-fti-right">
-                    <span class="pm-fti-amount">${formatRp(74000000)}</span>
-                    <span class="pm-fti-badge pm-fti-badge--pending">MENUNGGU UAT</span>
-                  </div>
-                </div>
-
-                <!-- Termin 3: Final Live 30% -->
-                <div class="pm-finance-termin-item">
-                  <div class="pm-fti-left">
-                    <span class="pm-fti-num">3</span>
-                    <div class="pm-fti-info">
-                      <span class="pm-fti-name">Termin 3: Handover Production Live &amp; Pelatihan (30%)</span>
-                      <span class="pm-fti-desc">Syarat: Go-Live kampus, integrasi barcode kartu, dan penyerahan SPK</span>
-                    </div>
-                  </div>
-                  <div class="pm-fti-right">
-                    <span class="pm-fti-amount">${formatRp(55500000)}</span>
-                    <span class="pm-fti-badge pm-fti-badge--scheduled">TERJADWAL DES 2026</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style="text-align: right; padding-top: 4px;">
-                <button class="pm-btn pm-btn--outline" data-nav-module="finance">
-                  <i class="fi fi-rr-receipt"></i>
-                  <span>Kelola Faktur &amp; Invoices →</span>
-                </button>
-              </div>
+              `).join('')}
             </div>
           </div>
 
-          <!-- RIGHT COLUMN (38% WIDTH): CLIENT, TEAM, ROADMAP & QUICK TILES -->
-          <div class="pm-dash-col">
-            <!-- WIDGET 5: PROFIL KLIEN REKANAN & CRM DEALS WON -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-building" style="color: #2563eb; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Klien &amp; Asal Deal CRM</h3>
-                    <p class="pm-widget-subtitle">Informasi stakeholder dan track record closing CRM</p>
-                  </div>
-                </div>
-                <span class="pm-widget-badge pm-widget-badge--indigo">SLA: 99.4%</span>
-              </div>
-
-              <div class="pm-client-spec-box">
-                <div class="pm-client-spec-row">
-                  <span class="pm-csr-label">Institusi:</span>
-                  <span class="pm-csr-val">${clientName}</span>
-                </div>
-                <div class="pm-client-spec-row">
-                  <span class="pm-csr-label">PIC Rektorat:</span>
-                  <span class="pm-csr-val">${crmDeal.clientPic || 'Dra. Hj. Ratna Wulandari, M.Hum'}</span>
-                </div>
-                <div class="pm-client-spec-row">
-                  <span class="pm-csr-label">Email PIC:</span>
-                  <span class="pm-csr-val">${crmDeal.clientEmail || 'perpustakaan@nusantara.ac.id'}</span>
-                </div>
-                <div class="pm-client-spec-row">
-                  <span class="pm-csr-label">Asal CRM Deal:</span>
-                  <span class="pm-csr-val" style="color: #059669; font-weight: 700;">${crmDeal.dealCode || 'DEAL-PERPUS-01'} (Closing/Won)</span>
-                </div>
-                <div class="pm-client-spec-row">
-                  <span class="pm-csr-label">Garansi Bug:</span>
-                  <span class="pm-csr-val">12 Bulan (Hingga 31 Okt 2027)</span>
-                </div>
-                <div class="pm-client-spec-row">
-                  <span class="pm-csr-label">SLA Respons S1:</span>
-                  <span class="pm-csr-val" style="color: #4f46e5;">&lt; 2 Jam (Hotfix &lt; 6 Jam)</span>
-                </div>
-              </div>
-
-              <div style="display: flex; gap: 8px;">
-                <button class="pm-btn pm-btn--outline pm-btn--sm" style="flex: 1;" data-nav-module="client">
-                  <i class="fi fi-rr-headset"></i> Portal Klien
-                </button>
-                <button class="pm-btn pm-btn--outline pm-btn--sm" style="flex: 1;" data-nav-module="crm">
-                  <i class="fi fi-rr-briefcase"></i> Deal CRM
-                </button>
-              </div>
+          <!-- Column Right: Milestones & Termin Pembayaran -->
+          <div class="pm-ws-card">
+            <div class="pm-ws-card-header">
+              <h3 class="pm-ws-card-title">Milestones &amp; Termin Pembayaran</h3>
+              <button class="pm-ws-card-link" data-switch-ws-tab="timeline">
+                <span>Gantt Roadmap</span>
+                <i class="fi fi-rr-arrow-up-right"></i>
+              </button>
             </div>
-
-            <!-- WIDGET 6: TIM HR & WORKLOAD (5 DEVELOPER ROLES) -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-users-alt" style="color: #7c3aed; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Tim HR &amp; Beban Kerja (5 Roles)</h3>
-                    <p class="pm-widget-subtitle">Alokasi beban kerja mingguan vs kapasitas 40h/role</p>
-                  </div>
-                </div>
-                <button class="pm-kpi-action-link" data-nav-module="team">Detail →</button>
-              </div>
-
-              <div class="pm-team-mini-grid">
-                ${workloadData.map((m) => {
-                  const barColor = m.hours > 80 ? '#ef4444' : m.hours > 40 ? '#f59e0b' : '#10b981';
-                  return `
-                    <div class="pm-team-mini-row" data-nav-module="team" title="Klik untuk membuka profil ${m.name}">
-                      <div class="pm-tm-left">
-                        <img src="${m.avatar}" alt="${m.name}" class="pm-tm-avatar" />
-                        <div class="pm-tm-info">
-                          <span class="pm-tm-name">${m.name}</span>
-                          <span class="pm-tm-role">${m.role} · ${m.taskCount} Tiket</span>
-                        </div>
-                      </div>
-                      <div class="pm-tm-right">
-                        <div class="pm-tm-meter">
-                          <span class="pm-tm-hours-text">${m.hours}h</span>
-                          <div class="pm-tm-meter-bar">
-                            <div class="pm-tm-meter-fill" style="width: ${Math.min(100, m.pct)}%; background-color: ${barColor};"></div>
-                          </div>
-                        </div>
-                        ${m.isOver ? `<span class="pm-tm-over-badge">${m.pct}%</span>` : ''}
-                      </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              ${milestones.map(m => `
+                <div style="padding: 10px 12px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <i class="fi ${m.done ? 'fi-rr-check-circle' : 'fi-rr-flag'}" style="color: ${m.done ? '#059669' : '#4f46e5'}; font-size: 14px;"></i>
+                      <strong style="font-size: 12.5px; color: #0f172a;">${m.name}</strong>
                     </div>
-                  `;
-                }).join('')}
-              </div>
-
-              <div style="text-align: right; padding-top: 4px;">
-                <button class="pm-btn pm-btn--outline pm-btn--sm" style="width: 100%;" data-nav-module="team">
-                  <i class="fi fi-rr-users-alt"></i>
-                  <span>Kelola Alokasi Tim &amp; Workload →</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- WIDGET 7: ROADMAP MILESTONES -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-flag" style="color: #f59e0b; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Timeline &amp; Milestone Gates</h3>
-                    <p class="pm-widget-subtitle">Target rilis rute pengiriman software house</p>
+                    <span style="font-size: 12px; font-weight: 700; color: ${m.done ? '#059669' : '#4f46e5'};">${m.pct}%</span>
+                  </div>
+                  <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #64748b;">
+                    <span>Target: ${m.date}</span>
+                    <span style="font-weight: 600; color: #334155;">${m.termin}</span>
                   </div>
                 </div>
-                <button class="pm-kpi-action-link" data-nav-module="timeline">Gantt →</button>
-              </div>
-
-              <div class="pm-milestone-gate-list">
-                <div class="pm-milestone-gate-item">
-                  <div class="pm-mgi-left">
-                    <span class="pm-mgi-icon pm-mgi-icon--done"><i class="fi fi-rr-check"></i></span>
-                    <div>
-                      <strong class="pm-mgi-title">M1: Arsitektur &amp; Database Schema</strong>
-                      <div class="pm-mgi-target">Selesai 18 Okt 2026 · Microservices ADR</div>
-                    </div>
-                  </div>
-                  <span class="pm-mgi-pct" style="color: #059669;">100%</span>
-                </div>
-
-                <div class="pm-milestone-gate-item">
-                  <div class="pm-mgi-left">
-                    <span class="pm-mgi-icon pm-mgi-icon--active"><i class="fi fi-rr-play"></i></span>
-                    <div>
-                      <strong class="pm-mgi-title">M2: Sprint 1 Core Microservices</strong>
-                      <div class="pm-mgi-target">Target 01 Nov 2026 · Katalog, OPAC, Redis Lock</div>
-                    </div>
-                  </div>
-                  <span class="pm-mgi-pct" style="color: #4f46e5;">65%</span>
-                </div>
-
-                <div class="pm-milestone-gate-item">
-                  <div class="pm-mgi-left">
-                    <span class="pm-mgi-icon"><i class="fi fi-rr-clock"></i></span>
-                    <div>
-                      <strong class="pm-mgi-title">M3: Staging Load Testing K6 &amp; UAT</strong>
-                      <div class="pm-mgi-target">Target 16 Nov 2026 · Target 2.000 RPS</div>
-                    </div>
-                  </div>
-                  <span class="pm-mgi-pct" style="color: #64748b;">15%</span>
-                </div>
-
-                <div class="pm-milestone-gate-item">
-                  <div class="pm-mgi-left">
-                    <span class="pm-mgi-icon"><i class="fi fi-rr-globe"></i></span>
-                    <div>
-                      <strong class="pm-mgi-title">M4: Go-Live Production &amp; Pelatihan</strong>
-                      <div class="pm-mgi-target">Target 15 Des 2026 · Serah Terima SPK</div>
-                    </div>
-                  </div>
-                  <span class="pm-mgi-pct" style="color: #64748b;">0%</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- WIDGET 8: AKTIVITAS & AUDIT LOG REAL-TIME -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-time-past" style="color: #3b82f6; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Aktivitas &amp; Log Real-Time</h3>
-                    <p class="pm-widget-subtitle">Riwayat status tiket dan perubahan terbaru tim</p>
-                  </div>
-                </div>
-                <span class="pm-widget-badge">Live</span>
-              </div>
-
-              <div class="pm-activity-stream">
-                ${activityItems.map((item) => `
-                  <div class="pm-stream-item">
-                    <img src="${item.avatar}" alt="${item.userName}" class="pm-stream-avatar" />
-                    <div class="pm-stream-body">
-                      <p class="pm-stream-line">
-                        <strong class="pm-stream-user">${item.userName}</strong>
-                        <span class="pm-stream-action">${item.action}</span>
-                        <strong class="pm-stream-target" data-task-id="${item.target}">${item.target}</strong>
-                      </p>
-                      <span class="pm-stream-time">${item.time}</span>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-
-            <!-- WIDGET 9: PINTASAN CEPAT ANTAR SUB-MODUL (QUICK NAVIGATION HUB) -->
-            <div class="pm-widget-card">
-              <div class="pm-widget-header">
-                <div class="pm-widget-title-group">
-                  <i class="fi fi-rr-navigation" style="color: #4f46e5; font-size: 16px;"></i>
-                  <div>
-                    <h3 class="pm-widget-title">Pintasan Antar Modul Proyek</h3>
-                    <p class="pm-widget-subtitle">Akses instan ke semua sub-modul Management Proyek</p>
-                  </div>
-                </div>
-                <span class="pm-widget-badge pm-widget-badge--indigo">10 Modul</span>
-              </div>
-
-              <div class="pm-quick-nav-grid">
-                <button class="pm-quick-tile" data-nav-module="kanban">
-                  <i class="fi fi-rr-apps"></i>
-                  <span>Papan Kanban</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="backlog">
-                  <i class="fi fi-rr-rocket-lunch"></i>
-                  <span>Backlog &amp; Sprints</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="timeline">
-                  <i class="fi fi-rr-chart-timeline"></i>
-                  <span>Timeline Roadmap</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="list">
-                  <i class="fi fi-rr-list-check"></i>
-                  <span>Daftar Pekerjaan (JQL)</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="ai_hub">
-                  <i class="fi fi-rr-magic-wand"></i>
-                  <span>Otomasi Fix Bug AI</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="github">
-                  <i class="fi fi-brands-github"></i>
-                  <span>GitHub &amp; Cabang</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="client">
-                  <i class="fi fi-rr-headset"></i>
-                  <span>Service Desk / Klien</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="team">
-                  <i class="fi fi-rr-users-alt"></i>
-                  <span>Tim HR &amp; Workload</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="finance">
-                  <i class="fi fi-rr-receipt"></i>
-                  <span>Finance &amp; Invoices</span>
-                </button>
-                <button class="pm-quick-tile" data-nav-module="crm">
-                  <i class="fi fi-rr-briefcase"></i>
-                  <span>CRM Deals Won</span>
-                </button>
-              </div>
+              `).join('')}
             </div>
           </div>
         </div>
@@ -2122,6 +2100,68 @@ export class ProjectModuleView {
   // EVENT ATTACHMENTS & EVENT LISTENERS
   // =========================================================================
   attachEvents() {
+    // Back to Portfolio Button
+    const backBtn = this.container.querySelector('#pmBackToPortfolioBtn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        this.backToPortfolio();
+      });
+    }
+
+    // Workspace Tabs Switching
+    this.container.querySelectorAll('.pm-ws-tab-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const tab = e.currentTarget.dataset.wsTab;
+        if (tab) {
+          this.switchWorkspaceTab(tab);
+        }
+      });
+    });
+
+    // In-overview quick switches
+    this.container.querySelectorAll('[data-switch-ws-tab]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = e.currentTarget.dataset.switchWsTab;
+        if (tab) {
+          this.switchWorkspaceTab(tab);
+        }
+      });
+    });
+
+    // Navigate to Client Portal
+    this.container.querySelectorAll('[data-nav-to-client]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        store.setActiveTab('client');
+      });
+    });
+
+    // Edit Project Button
+    const editProjBtn = this.container.querySelector('#pmWsEditProjBtn');
+    if (editProjBtn) {
+      editProjBtn.addEventListener('click', () => {
+        this.isSettingsOpen = true;
+        this.render();
+      });
+    }
+
+    // AI Copilot Button
+    const aiCopilotBtn = this.container.querySelector('#pmWsAiCopilotBtn');
+    if (aiCopilotBtn) {
+      aiCopilotBtn.addEventListener('click', () => {
+        store.addToast('info', 'AI Copilot Aktif', 'AI Copilot menganalisis status delivery, velocity sprint, dan risiko blocker proyek.');
+      });
+    }
+
+    // Create Issue Button
+    const createIssueBtn = this.container.querySelector('#pmWsCreateIssueBtn');
+    if (createIssueBtn) {
+      createIssueBtn.addEventListener('click', () => {
+        store.openCreateTaskModal();
+      });
+    }
+
     // Project Quick Switcher
     const switcher = this.container.querySelector('#pmProjectSwitcher');
     if (switcher) {
@@ -2251,9 +2291,9 @@ export class ProjectModuleView {
     // Sub-Module Navigation Tabs Switching
     this.container.querySelectorAll('.pm-subtab-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        const subtab = e.currentTarget.dataset.subtab;
+        const subtab = e.currentTarget.dataset.workspaceTab || e.currentTarget.dataset.subtab;
         if (subtab) {
-          this.activeSubTab = subtab;
+          this.activeWorkspaceTab = subtab;
           this.render();
         }
       });

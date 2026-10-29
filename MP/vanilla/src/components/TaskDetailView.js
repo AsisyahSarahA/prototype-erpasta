@@ -38,6 +38,47 @@ const SOFTWARE_HOUSE_STAGES = [
   { id: 'Selesai', label: '6. Production Live', shortName: 'Production', pct: 100, gateRule: 'Merge ke branch main, deploy ke Production, dan monitoring real-time aktif.' }
 ];
 
+function getRoleBadgeStyle(role) {
+  const r = (role || '').toLowerCase();
+  if (r.includes('pm') || r.includes('manajer') || r.includes('manager')) {
+    return { bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706', border: 'rgba(245, 158, 11, 0.3)' };
+  }
+  if (r.includes('backend')) {
+    return { bg: 'rgba(99, 102, 241, 0.12)', color: 'var(--indigo-600, #4f46e5)', border: 'rgba(99, 102, 241, 0.3)' };
+  }
+  if (r.includes('full') || r.includes('stack')) {
+    return { bg: 'rgba(14, 165, 233, 0.12)', color: '#0284c7', border: 'rgba(14, 165, 233, 0.3)' };
+  }
+  if (r.includes('frontend')) {
+    return { bg: 'rgba(168, 85, 247, 0.12)', color: '#9333ea', border: 'rgba(168, 85, 247, 0.3)' };
+  }
+  if (r.includes('qa') || r.includes('test')) {
+    return { bg: 'rgba(16, 185, 129, 0.12)', color: '#059669', border: 'rgba(16, 185, 129, 0.3)' };
+  }
+  if (r.includes('ai') || r.includes('bot') || r.includes('agent')) {
+    return { bg: 'rgba(236, 72, 153, 0.12)', color: '#db2777', border: 'rgba(236, 72, 153, 0.3)' };
+  }
+  return { bg: 'rgba(100, 116, 139, 0.12)', color: '#64748b', border: 'rgba(100, 116, 139, 0.3)' };
+}
+
+function formatCommentTime(isoString) {
+  if (!isoString) return 'Baru saja';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const timeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+    if (isToday) {
+      return `Hari ini, ${timeStr}`;
+    }
+    const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${dateStr}, ${timeStr}`;
+  } catch (e) {
+    return isoString;
+  }
+}
+
 export class TaskDetailView {
   constructor() {
     this.container = document.createElement('div');
@@ -47,6 +88,7 @@ export class TaskDetailView {
     this.activeTab = 'overview'; // 'overview' | 'subtasks' | 'ai' | 'git' | 'comments' | 'history'
     this.copiedKey = false;
     this.isAiProcessing = false;
+    this.selectedCommentAuthorId = 'user-pm';
     this.unsubscribe = null;
     this.init();
   }
@@ -75,7 +117,7 @@ export class TaskDetailView {
       this.container.innerHTML = `
         <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:48px;color:var(--text-muted);text-align:center;">
           <div style="width:54px;height:54px;border-radius:var(--radius-xl);background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;color:var(--indigo-600);font-size:24px;">
-            📑
+            <i class="fi fi-rr-document"></i>
           </div>
           <div>
             <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin:0 0 6px 0;">Tidak Ada Tiket Terpilih</h3>
@@ -309,31 +351,60 @@ export class TaskDetailView {
               </form>
             </div>
 
-            <!-- Card: DISKUSI & KOMENTAR TIM -->
+            <!-- Card: DISKUSI & KOMENTAR TIM (ROLE MODEL ASTACODE) -->
             <div class="card" style="padding:20px 22px;display:flex;flex-direction:column;gap:14px;">
-              <div style="display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);padding-bottom:12px;">
-                <span style="color:var(--indigo-600);">${ICONS.messageSquare}</span>
-                <h3 style="font-size:13px;font-weight:800;color:var(--text-primary);margin:0;">
-                  Komentar & Diskusi Tim (${commentsList.length})
-                </h3>
+              <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:12px;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="color:var(--indigo-600);display:inline-flex;">${ICONS.messageSquare}</span>
+                  <h3 style="font-size:13px;font-weight:800;color:var(--text-primary);margin:0;">
+                    Komentar & Diskusi Tim (${commentsList.length})
+                  </h3>
+                </div>
+                <span style="font-size:11px;color:var(--text-muted);font-weight:600;">
+                  Role Model ASTACODE ERP
+                </span>
               </div>
 
-              <!-- New Comment Textarea Form -->
+              <!-- New Comment Form with Role Model Selector -->
               <form id="form-quick-comment" style="display:flex;flex-direction:column;gap:10px;">
+                <!-- Role Model Selector Bar -->
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;">
+                      Komentari Sebagai:
+                    </span>
+                    <select id="select-comment-author" class="form-select" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);font-size:12px;font-weight:700;color:var(--text-primary);outline:none;cursor:pointer;">
+                      ${state.teamMembers.map(m => `
+                        <option value="${m.id}" ${(this.selectedCommentAuthorId || 'user-pm') === m.id ? 'selected' : ''}>
+                          ${m.name} (${m.role})
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;"></span>
+                    <span style="font-size:11px;color:var(--text-secondary);font-weight:600;">
+                      ${state.teamMembers.find(m => m.id === (this.selectedCommentAuthorId || 'user-pm'))?.role || 'Team Member'}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Textarea -->
                 <textarea
                   id="input-quick-comment"
                   rows="3"
                   class="form-textarea"
                   placeholder="Tulis tanggapan atau instruksi teknis untuk tiket ini..."
-                  style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;color:var(--text-primary);"
+                  style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;color:var(--text-primary);resize:vertical;"
                   required
                 ></textarea>
+
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                   <label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);cursor:pointer;">
                     <input type="checkbox" id="chk-comment-internal" checked style="accent-color:var(--indigo-600);" />
                     <span>${ICONS.lock} Hanya Terlihat Tim Internal</span>
                   </label>
-                  <button type="submit" class="btn btn-primary btn-sm" style="font-weight:700;">
+                  <button type="submit" class="btn btn-primary btn-sm" style="font-weight:700;padding:8px 16px;">
                     Kirim Komentar
                   </button>
                 </div>
@@ -343,15 +414,67 @@ export class TaskDetailView {
               <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
                 ${commentsList.length === 0 ? `
                   <p style="font-size:12px;color:var(--text-muted);font-style:italic;margin:0;">Belum ada diskusi pada tiket ini.</p>
-                ` : commentsList.map(c => `
-                  <div style="padding:12px 14px;border-radius:var(--radius-md);background:var(--bg-secondary);border:1px solid var(--border);">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                      <strong style="font-size:12px;color:var(--text-primary);">${c.authorName || 'Dev Team'}</strong>
-                      <span style="font-size:10px;font-family:var(--font-mono);color:var(--text-muted);">${new Date(c.createdAt || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</span>
+                ` : commentsList.map(c => {
+                  const rStyle = getRoleBadgeStyle(c.authorRole);
+                  const formattedTime = formatCommentTime(c.createdAt);
+                  const memberMatch = (state.teamMembers || []).find(m => m.id === c.authorId || m.name === c.authorName || m.name === c.author);
+                  const avatarUrl = c.authorAvatar || memberMatch?.avatar || '';
+                  const initials = (c.authorName || c.author || 'TM').substring(0, 2).toUpperCase();
+
+                  return `
+                    <div style="padding:12px 14px;border-radius:var(--radius-md);background:var(--bg-secondary);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
+                      <!-- Top row: Avatar, Author, Role Badge, Visibility, Timestamp, Delete -->
+                      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                          <!-- Avatar -->
+                          <div style="width:26px;height:26px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--indigo-600);display:grid;place-items:center;">
+                            ${avatarUrl ? `
+                              <img src="${avatarUrl}" alt="${c.authorName || c.author}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;font-weight:800;color:#fff;\\'>${initials}</span>';" />
+                            ` : `
+                              <span style="font-size:10px;font-weight:800;color:#fff;">${initials}</span>
+                            `}
+                          </div>
+                          
+                          <!-- Author Name -->
+                          <strong style="font-size:12.5px;color:var(--text-primary);font-weight:700;">
+                            ${c.authorName || c.author || 'Dev Team'}
+                          </strong>
+
+                          <!-- Role Badge -->
+                          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:${rStyle.bg};color:${rStyle.color};border:1px solid ${rStyle.border};">
+                            ${c.authorRole || memberMatch?.role || 'Team'}
+                          </span>
+
+                          <!-- Visibility Tag -->
+                          ${c.isInternal ? `
+                            <span style="font-size:9.5px;color:var(--text-muted);display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:4px;background:rgba(100,116,139,0.08);">
+                              ${ICONS.lock} Internal
+                            </span>
+                          ` : `
+                            <span style="font-size:9.5px;color:#059669;display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:4px;background:rgba(16,185,129,0.1);">
+                              <i class="fi fi-rr-globe"></i> Publik
+                            </span>
+                          `}
+                        </div>
+
+                        <!-- Right: Timestamp & Delete Button -->
+                        <div style="display:flex;align-items:center;gap:6px;">
+                          <span style="font-size:10.5px;font-family:var(--font-mono);color:var(--text-muted);">
+                            ${formattedTime}
+                          </span>
+                          <button class="btn-delete-comment" data-comment-id="${c.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:3px;border-radius:4px;display:inline-flex;align-items:center;line-height:1;" title="Hapus komentar">
+                            ${ICONS.trash}
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Comment Body -->
+                      <p style="font-size:12.5px;color:var(--text-secondary);margin:0;line-height:1.55;padding-left:34px;word-break:break-word;">
+                        ${c.text || c.body || ''}
+                      </p>
                     </div>
-                    <p style="font-size:12.5px;color:var(--text-secondary);margin:0;line-height:1.5;">${c.text}</p>
-                  </div>
-                `).join('')}
+                  `;
+                }).join('')}
               </div>
             </div>
 
@@ -374,7 +497,7 @@ export class TaskDetailView {
                   PRIORITAS
                 </label>
                 <select id="meta-task-priority" class="form-select" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-weight:700;color:var(--text-primary);outline:none;">
-                  <option value="Hotfix" ${currentTask.priority === 'Hotfix' ? 'selected' : ''}>🔥 Hotfix</option>
+                  <option value="Hotfix" ${currentTask.priority === 'Hotfix' ? 'selected' : ''}>Hotfix</option>
                   <option value="Tertinggi" ${currentTask.priority === 'Tertinggi' ? 'selected' : ''}>Tertinggi</option>
                   <option value="Tinggi" ${currentTask.priority === 'Tinggi' ? 'selected' : ''}>Tinggi</option>
                   <option value="Sedang" ${currentTask.priority === 'Sedang' ? 'selected' : ''}>Sedang</option>
@@ -575,17 +698,102 @@ export class TaskDetailView {
     } else if (this.activeTab === 'comments') {
       tabContentHtml = `
         <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
-          <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">Seluruh Riwayat Diskusi Tim</h3>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            ${commentsList.length === 0 ? '<p style="color:var(--text-muted);font-size:12px;">Belum ada komentar.</p>' : commentsList.map(c => `
-              <div style="padding:12px 16px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);">
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                  <strong style="font-size:12.5px;color:var(--text-primary);">${c.authorName || 'Dev Team'}</strong>
-                  <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">${new Date(c.createdAt || Date.now()).toLocaleDateString('id-ID')}</span>
-                </div>
-                <p style="font-size:13px;color:var(--text-secondary);margin:0;">${c.text}</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">
+                Seluruh Riwayat Diskusi Tim (${commentsList.length})
+              </h3>
+              <p style="font-size:12px;color:var(--text-muted);margin:4px 0 0 0;">
+                Kolaborasi lintas role developer, QA, dan Project Manajer sesuai SOP
+              </p>
+            </div>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600;">
+              Role Model ASTACODE ERP
+            </span>
+          </div>
+
+          <!-- Comment Form inside Tab -->
+          <form id="form-tab-comment" style="display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:var(--radius-lg);background:var(--bg-secondary);border:1px solid var(--border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;">
+                  Komentari Sebagai:
+                </span>
+                <select id="select-tab-comment-author" class="form-select" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);font-size:12px;font-weight:700;color:var(--text-primary);outline:none;cursor:pointer;">
+                  ${state.teamMembers.map(m => `
+                    <option value="${m.id}" ${(this.selectedCommentAuthorId || 'user-pm') === m.id ? 'selected' : ''}>
+                      ${m.name} (${m.role})
+                    </option>
+                  `).join('')}
+                </select>
               </div>
-            `).join('')}
+            </div>
+            <textarea
+              id="input-tab-comment"
+              rows="3"
+              class="form-textarea"
+              placeholder="Tulis tanggapan atau instruksi teknis untuk tiket ini..."
+              style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);font-size:12.5px;color:var(--text-primary);resize:vertical;"
+              required
+            ></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);cursor:pointer;">
+                <input type="checkbox" id="chk-tab-comment-internal" checked style="accent-color:var(--indigo-600);" />
+                <span>${ICONS.lock} Hanya Terlihat Tim Internal</span>
+              </label>
+              <button type="submit" class="btn btn-primary btn-sm" style="font-weight:700;padding:8px 16px;">
+                Kirim Komentar
+              </button>
+            </div>
+          </form>
+
+          <!-- Feed of Comments -->
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            ${commentsList.length === 0 ? '<p style="color:var(--text-muted);font-size:12px;font-style:italic;">Belum ada komentar.</p>' : commentsList.map(c => {
+              const rStyle = getRoleBadgeStyle(c.authorRole);
+              const formattedTime = formatCommentTime(c.createdAt);
+              const memberMatch = (state.teamMembers || []).find(m => m.id === c.authorId || m.name === c.authorName || m.name === c.author);
+              const avatarUrl = c.authorAvatar || memberMatch?.avatar || '';
+              const initials = (c.authorName || c.author || 'TM').substring(0, 2).toUpperCase();
+
+              return `
+                <div style="padding:14px 16px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                      <div style="width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--indigo-600);display:grid;place-items:center;">
+                        ${avatarUrl ? `
+                          <img src="${avatarUrl}" alt="${c.authorName || c.author}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;font-weight:800;color:#fff;\\'>${initials}</span>';" />
+                        ` : `
+                          <span style="font-size:10px;font-weight:800;color:#fff;">${initials}</span>
+                        `}
+                      </div>
+                      <strong style="font-size:13px;color:var(--text-primary);">${c.authorName || c.author || 'Dev Team'}</strong>
+                      <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:${rStyle.bg};color:${rStyle.color};border:1px solid ${rStyle.border};">
+                        ${c.authorRole || memberMatch?.role || 'Team'}
+                      </span>
+                      ${c.isInternal ? `
+                        <span style="font-size:9.5px;color:var(--text-muted);display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:4px;background:rgba(100,116,139,0.08);">
+                          ${ICONS.lock} Internal
+                        </span>
+                      ` : `
+                        <span style="font-size:9.5px;color:#059669;display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:4px;background:rgba(16,185,129,0.1);">
+                          <i class="fi fi-rr-globe"></i> Publik
+                        </span>
+                      `}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">${formattedTime}</span>
+                      <button class="btn-delete-comment" data-comment-id="${c.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:3px;border-radius:4px;" title="Hapus komentar">
+                        ${ICONS.trash}
+                      </button>
+                    </div>
+                  </div>
+                  <p style="font-size:13px;color:var(--text-secondary);margin:0;line-height:1.6;padding-left:36px;word-break:break-word;">
+                    ${c.text || c.body || ''}
+                  </p>
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
       `;
@@ -687,12 +895,12 @@ export class TaskDetailView {
         <!-- Baris 3: Metadata Info Horisontal Satu Baris Rapi -->
         <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;">
           <span style="font-weight:700;color:var(--text-primary);display:inline-flex;align-items:center;gap:5px;">
-            <span>📚</span>
+            <i class="fi fi-rr-book-alt" style="font-size:13px;color:var(--indigo-600);"></i>
             <span>${project.name}</span>
           </span>
           <span>•</span>
           <span style="color:var(--indigo-600);font-weight:600;display:inline-flex;align-items:center;gap:4px;">
-            <span>⚡</span>
+            <i class="fi fi-rr-layers" style="font-size:13px;"></i>
             <span>${epic.title}</span>
           </span>
           <span>•</span>
@@ -918,29 +1126,83 @@ export class TaskDetailView {
       });
     }
 
-    // Add comment form
+    // Comment Author Selectors (Role Model Synchronization)
+    const authorSelect = this.container.querySelector('#select-comment-author');
+    if (authorSelect) {
+      authorSelect.addEventListener('change', (e) => {
+        this.selectedCommentAuthorId = e.target.value;
+      });
+    }
+
+    const tabAuthorSelect = this.container.querySelector('#select-tab-comment-author');
+    if (tabAuthorSelect) {
+      tabAuthorSelect.addEventListener('change', (e) => {
+        this.selectedCommentAuthorId = e.target.value;
+      });
+    }
+
+    // Add comment handler helper
+    const handleCommentSubmit = (inputId, chkId, selectId) => {
+      const input = this.container.querySelector(inputId);
+      const chkInternal = this.container.querySelector(chkId);
+      const selAuthor = this.container.querySelector(selectId);
+      
+      if (input && input.value.trim()) {
+        const authorId = (selAuthor ? selAuthor.value : this.selectedCommentAuthorId) || 'user-pm';
+        const member = (state.teamMembers || []).find(m => m.id === authorId) || (state.teamMembers || [])[0] || {
+          id: 'user-pm',
+          name: 'Asisyah',
+          role: 'Project Manajer',
+          avatar: ''
+        };
+
+        const newComment = {
+          id: `comm-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          taskId: task.id,
+          authorId: member.id,
+          author: member.name,
+          authorName: member.name,
+          authorRole: member.role,
+          authorAvatar: member.avatar || '',
+          text: input.value.trim(),
+          body: input.value.trim(),
+          createdAt: new Date().toISOString(),
+          isInternal: chkInternal ? chkInternal.checked : true
+        };
+
+        store.addComment(newComment);
+        input.value = '';
+      }
+    };
+
+    // Quick Comment Form in Overview
     const commentForm = this.container.querySelector('#form-quick-comment');
     if (commentForm) {
       commentForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const input = this.container.querySelector('#input-quick-comment');
-        const chkInternal = this.container.querySelector('#chk-comment-internal');
-        if (input && input.value.trim()) {
-          const newComment = {
-            id: `c-${Date.now()}`,
-            taskId: task.id,
-            authorName: 'Asisyah Sarah Azzahra (PM)',
-            authorAvatar: 'AS',
-            text: input.value.trim(),
-            createdAt: new Date().toISOString(),
-            isInternal: chkInternal ? chkInternal.checked : true
-          };
-          store.addComment(newComment);
-          input.value = '';
-          store.addToast('success', 'Komentar Terkirim', 'Komentar berhasil ditambahkan ke tiket.');
-        }
+        handleCommentSubmit('#input-quick-comment', '#chk-comment-internal', '#select-comment-author');
       });
     }
+
+    // Tab Comment Form in Comments Tab
+    const tabCommentForm = this.container.querySelector('#form-tab-comment');
+    if (tabCommentForm) {
+      tabCommentForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleCommentSubmit('#input-tab-comment', '#chk-tab-comment-internal', '#select-tab-comment-author');
+      });
+    }
+
+    // Delete comment buttons (Interactive per comment)
+    this.container.querySelectorAll('.btn-delete-comment[data-comment-id]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const commentId = btn.dataset.commentId;
+        if (commentId && confirm('Apakah Anda yakin ingin menghapus komentar ini?')) {
+          store.deleteComment(commentId);
+        }
+      });
+    });
 
     // Metadata inputs: Priority
     const prioritySelect = this.container.querySelector('#meta-task-priority');

@@ -673,6 +673,8 @@ Atau ketik langsung kendala Anda untuk auto-triage AI.`,
           }
         } else if (action === 'openGit') {
           store.setActiveTab('github');
+        } else if (action === 'openFinance') {
+          store.setActiveTab('finance');
         } else if (action === 'switchChannel' && channel) {
           this.activeChannel = channel;
           this.render();

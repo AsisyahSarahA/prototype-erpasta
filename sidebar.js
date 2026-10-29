@@ -171,7 +171,7 @@
             <button type="button" class="nav-btn nav-parent-btn ${activeModule === "project" ? "active" : ""}" id="projectParentToggle" onclick="window.toggleModuleAccordion('projectNavGroup', event)">
               <div class="nav-left">
                 ${svg("project")}
-                <span>Management Proyek</span>
+                <span>Management Project</span>
               </div>
               ${svg("chevron", "nav-chevron")}
             </button>
@@ -179,23 +179,7 @@
               <div class="nav-sub-group-title">Perencanaan</div>
               <a href="${prefix}MP/vanilla/index.html#project" class="nav-sub-btn ${activeModule === "project" && (activeSubpage === "project" || activeSubpage === "dashboard" || !activeSubpage) ? "active" : ""}" data-module="project" data-sub="project" onclick="window.navigateToModuleSubpage('project', 'project', '${prefix}MP/vanilla/index.html#project', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Dashboard PM</span>
-              </a>
-              <a href="${prefix}MP/vanilla/index.html#kanban" class="nav-sub-btn ${activeModule === "project" && (activeSubpage === "kanban" || activeSubpage === "task") ? "active" : ""}" data-module="project" data-sub="kanban" onclick="window.navigateToModuleSubpage('project', 'kanban', '${prefix}MP/vanilla/index.html#kanban', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Kanban Board</span>
-              </a>
-              <a href="${prefix}MP/vanilla/index.html#backlog" class="nav-sub-btn ${activeModule === "project" && (activeSubpage === "backlog" || activeSubpage === "tickets") ? "active" : ""}" data-module="project" data-sub="backlog" onclick="window.navigateToModuleSubpage('project', 'backlog', '${prefix}MP/vanilla/index.html#backlog', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Backlog & Sprints</span>
-              </a>
-              <a href="${prefix}MP/vanilla/index.html#timeline" class="nav-sub-btn ${activeModule === "project" && (activeSubpage === "timeline" || activeSubpage === "events") ? "active" : ""}" data-module="project" data-sub="timeline" onclick="window.navigateToModuleSubpage('project', 'timeline', '${prefix}MP/vanilla/index.html#timeline', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Timeline & Roadmap</span>
-              </a>
-              <a href="${prefix}MP/vanilla/index.html#list" class="nav-sub-btn ${activeModule === "project" && activeSubpage === "list" ? "active" : ""}" data-module="project" data-sub="list" onclick="window.navigateToModuleSubpage('project', 'list', '${prefix}MP/vanilla/index.html#list', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Daftar Pekerjaan (JQL)</span>
+                <span>Project</span>
               </a>
               <div class="nav-sub-group-title">Pengembangan & AI</div>
               <a href="${prefix}MP/vanilla/index.html#ai_hub" class="nav-sub-btn ${activeModule === "project" && (activeSubpage === "ai_hub" || activeSubpage === "automation") ? "active" : ""}" data-module="project" data-sub="ai_hub" onclick="window.navigateToModuleSubpage('project', 'ai_hub', '${prefix}MP/vanilla/index.html#ai_hub', event)">

@@ -1412,7 +1412,7 @@ ${currentTask.prDiff.split('\n').map(line => {
     const assignToMeBtn = this.container.querySelector('#assignToMeBtn');
     if (assignToMeBtn) {
       assignToMeBtn.addEventListener('click', () => {
-        store.updateTask(currentTask.id, { assigneeId: 'usr-2' }); // Aldyana
+        store.updateTask(currentTask.id, { assigneeId: 'user-pm' }); // Asisyah PM / Current Session
         store.addToast('info', 'Assignee Diperbarui', 'Tiket berhasil ditugaskan kepada Anda.');
       });
     }

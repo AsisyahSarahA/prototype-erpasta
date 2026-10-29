@@ -14,10 +14,15 @@ import { store } from '../state/store.js';
 
 const MP_VIEWS = [
   'project',
+  'ringkasan',
   'kanban',
   'backlog',
   'timeline',
   'list',
+  'qa',
+  'docs',
+  'time',
+  'finance_budget',
   'ai_hub',
   'github',
   'client',

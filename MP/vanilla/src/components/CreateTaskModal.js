@@ -85,21 +85,45 @@ export class CreateTaskModal {
     const activeProject = state.projects.find((p) => p.id === this.projectId) || state.projects[0] || {};
     const projectEpics = state.epics.filter((e) => e.projectId === this.projectId);
     const teamMembers = state.teamMembers || [];
+    const projectSprints = (state.sprints || []).filter((s) => s.projectId === this.projectId);
+    const activeSprint = projectSprints.find((s) => s.status === 'active') || projectSprints[0];
 
     const issueTypes = [
-      { id: 'Task', label: 'Task Standar', icon: '⚡' },
-      { id: 'Feature', label: 'Feature Baru', icon: '✨' },
-      { id: 'Bug', label: 'Bug / Kerusakan', icon: '🐛' },
-      { id: 'Revisi', label: 'Revisi (CR)', icon: '🔧' },
-      { id: 'Maintenance', label: 'Maintenance', icon: '🛠️' }
+      {
+        id: 'Task',
+        label: 'Task Teknis',
+        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`
+      },
+      {
+        id: 'Feature',
+        label: 'Fitur Baru',
+        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`
+      },
+      {
+        id: 'Bug',
+        label: 'Bug / Error',
+        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>`
+      },
+      {
+        id: 'Revisi',
+        label: 'Revisi (CR)',
+        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>`
+      },
+      {
+        id: 'Maintenance',
+        label: 'Maintenance',
+        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`
+      }
     ];
 
     const priorityCards = [
       { id: 'Hotfix', label: 'Hotfix', sub: 'Kritis / Segera', dotClass: 'p-dot-hotfix', activeClass: 'p-hotfix' },
-      { id: 'Tinggi', label: 'Tinggi', sub: 'Fitur Utama', dotClass: 'p-dot-tinggi', activeClass: 'p-tinggi' },
+      { id: 'Tinggi', label: 'Tinggi', sub: 'Prioritas Utama', dotClass: 'p-dot-tinggi', activeClass: 'p-tinggi' },
       { id: 'Sedang', label: 'Sedang', sub: 'Standar Sprint', dotClass: 'p-dot-sedang', activeClass: 'p-sedang' },
       { id: 'Rendah', label: 'Rendah', sub: 'Backlog Minor', dotClass: 'p-dot-rendah', activeClass: 'p-rendah' }
     ];
+
+    const projectCodePrefix = activeProject.code ? activeProject.code.split('-')[0] : 'PRJ';
 
     this.container.innerHTML = `
       <div class="modal-dialog modal-dialog--create">
@@ -108,124 +132,122 @@ export class CreateTaskModal {
         <div class="create-issue-header">
           <div class="create-issue-title-group">
             <div class="create-issue-icon-box">
-              <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 800;">
-                ${activeProject.code ? activeProject.code.split('-')[0] : 'AST'}
-              </span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
             </div>
             <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.01em;">
-                  Buat Masalah (Create Issue)
-                </h2>
-                <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 9999px;">
-                  ${activeProject.code || 'PROJ'}
+              <div class="create-issue-header-top">
+                <h2 class="create-issue-title">Buat Issue Baru</h2>
+                <span class="create-issue-project-badge">
+                  ${projectCodePrefix} · ${this.escapeHtml(activeProject.name || 'Proyek Aktif')}
                 </span>
               </div>
-              <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">
-                Tambahkan task, fitur, bug, atau perbaikan teknis ke backlog dan sprint aktif tim.
+              <p class="create-issue-subtitle">
+                Distribusikan spesifikasi task, fitur, atau laporan bug ke sprint kerja dan backlog engineering.
               </p>
             </div>
           </div>
 
-          <button id="createModalCloseBtn" class="modal-header__close-btn" title="Batal (Esc)">
+          <button type="button" id="createModalCloseBtn" class="modal-header__close-btn" title="Tutup (Esc)">
             ${Icons.x('', 18)}
           </button>
         </div>
 
-        <!-- Form Body (Proportional 2-Column Split) -->
-        <form id="createTaskForm" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+        <!-- Form Body (Proportional 2-Column Software House Layout) -->
+        <form id="createTaskForm" class="create-issue-form" novalidate>
           
+          <!-- Top Full-Width Classification Bar -->
+          <div class="create-issue-type-bar">
+            <div class="create-field-label" style="margin-bottom: 8px;">
+              <span>KLASIFIKASI TIPE ISSUE <span class="req-star">*</span></span>
+              <span class="create-label-hint">Pilih kategori tiket untuk menyesuaikan workflow &amp; SLA</span>
+            </div>
+            <div class="create-type-chips">
+              ${issueTypes.map((t) => `
+                <button
+                  type="button"
+                  class="create-type-chip ${this.type === t.id ? `active type-${t.id.toLowerCase()}` : ''}"
+                  data-type="${t.id}"
+                >
+                  <span class="chip-icon">${t.icon}</span>
+                  <span>${t.label}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
           <div class="create-issue-body">
             
-            <!-- Left Column: Primary Content & Technical Specs (60%) -->
+            <!-- Left Column: Primary Specification & Technical Context -->
             <div class="create-issue-left">
               
-              <!-- 1. Tipe Masalah (Pills) -->
+              <!-- 1. Ringkasan / Judul Pekerjaan -->
               <div class="create-field-group">
-                <label class="create-field-label">
-                  <span>Tipe Masalah (Issue Type) *</span>
-                  <span style="font-size: 10px; font-weight: 600; color: #64748b; text-transform: none;">Pilih klasifikasi tiket</span>
-                </label>
-                <div class="create-type-chips">
-                  ${issueTypes.map((t) => `
-                    <button
-                      type="button"
-                      class="create-type-chip ${this.type === t.id ? `active type-${t.id.toLowerCase()}` : ''}"
-                      data-type="${t.id}"
-                    >
-                      <span>${t.icon}</span>
-                      <span>${t.label}</span>
-                    </button>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- 2. Ringkasan / Judul Pekerjaan -->
-              <div class="create-field-group">
-                <label class="create-field-label">
-                  <span>Ringkasan / Judul Pekerjaan *</span>
+                <label class="create-field-label" for="taskTitleInput">
+                  <span>RINGKASAN / JUDUL ISSUE <span class="req-star">*</span></span>
+                  <span class="create-label-hint">Format: <code>[Modul] Judul pekerjaan</code></span>
                 </label>
                 <input
                   type="text"
                   id="taskTitleInput"
                   required
-                  placeholder="Contoh: Sinkronisasi data stok barang multi-warehouse..."
+                  placeholder="Contoh: [Backend] Sinkronisasi stok multi-warehouse dengan Redis lock..."
                   value="${this.escapeHtml(this.title)}"
                   class="create-input create-input-title"
                 />
-                <span style="font-size: 11px; color: #64748b;">
-                  Gunakan format ringkas, contoh: <code>[Backend] Integrasi Redis atomic lock</code> atau <code>[UI] Redesign modal</code>
-                </span>
               </div>
 
-              <!-- 3. Deskripsi & Spesifikasi Teknis -->
+              <!-- 2. Deskripsi & Spesifikasi Teknis (Unified Editor Box) -->
               <div class="create-field-group">
-                <div class="create-field-label">
-                  <span>Deskripsi &amp; Konteks Teknis</span>
-                  <div style="display: flex; gap: 4px;">
-                    <button type="button" class="md-helper-btn git-view-btn" data-tag="bold" style="padding: 2px 6px; font-size: 11px; font-weight: bold;">B</button>
-                    <button type="button" class="md-helper-btn git-view-btn" data-tag="italic" style="padding: 2px 6px; font-size: 11px; font-style: italic;">I</button>
-                    <button type="button" class="md-helper-btn git-view-btn" data-tag="code" style="padding: 2px 6px; font-size: 11px; font-family: monospace;">&lt;/&gt;</button>
-                    <button type="button" class="md-helper-btn git-view-btn" data-tag="list" style="padding: 2px 6px; font-size: 11px;">• List</button>
+                <label class="create-field-label" for="taskDescTextarea">
+                  <span>DESKRIPSI &amp; ACCEPTANCE CRITERIA</span>
+                  <span class="create-label-hint">Mendukung Markdown</span>
+                </label>
+                <div class="create-editor-box">
+                  <div class="create-editor-toolbar">
+                    <div class="editor-toolbar-left">
+                      <button type="button" class="md-helper-btn" data-tag="bold" title="Tebal (Bold)"><strong>B</strong></button>
+                      <button type="button" class="md-helper-btn" data-tag="italic" title="Miring (Italic)"><em>I</em></button>
+                      <button type="button" class="md-helper-btn" data-tag="code" title="Potongan Kode">&lt;/&gt;</button>
+                      <button type="button" class="md-helper-btn" data-tag="list" title="Daftar Poin">• List</button>
+                    </div>
+                    <span class="editor-toolbar-tag">Spesifikasi Teknis &amp; DoD</span>
                   </div>
+                  <textarea
+                    id="taskDescTextarea"
+                    rows="5"
+                    placeholder="Jelaskan kebutuhan fungsional, arsitektur data, endpoint API, serta kriteria penerimaan (Acceptance Criteria)..."
+                    class="create-editor-textarea"
+                  >${this.escapeHtml(this.description)}</textarea>
                 </div>
-                <textarea
-                  id="taskDescTextarea"
-                  rows="4"
-                  placeholder="Jelaskan kebutuhan fungsional, arsitektur data, endpoint API, kriteria penerimaan (Acceptance Criteria)..."
-                  class="create-textarea"
-                >${this.escapeHtml(this.description)}</textarea>
               </div>
 
-              <!-- 4. Standar Tiket Bug Software House (Tampil Otomatis saat Tipe = Bug) -->
+              <!-- 3. Standar Tiket Bug Software House (Tampil Otomatis saat Tipe = Bug) -->
               ${this.type === 'Bug' ? `
-                <div style="padding: 16px; border-radius: 12px; border: 1.5px solid #fca5a5; background-color: #fff1f2; display: flex; flex-direction: column; gap: 14px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #fecdd3; padding-bottom: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; color: #b91c1c; font-weight: 700; font-size: 13px;">
-                      <span>🐛</span>
+                <div class="create-bug-triage-box">
+                  <div class="create-bug-triage-header">
+                    <div class="create-bug-triage-title">
+                      <i class="fi fi-rr-bug"></i>
                       <span>Standar Triage Bug Software House (SOP QA &amp; Dev)</span>
                     </div>
-                    <span style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: white; color: #b91c1c; border: 1px solid #fca5a5;">
-                      ISO QA Ready
-                    </span>
+                    <span class="create-bug-iso-badge">ISO QA Ready</span>
                   </div>
 
                   <!-- Severity, Env, Warranty in 3 Columns -->
-                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                  <div class="create-grid-3">
                     <div class="create-field-group">
-                      <label style="font-size: 10px; font-weight: 700; color: #991b1b; text-transform: uppercase;">Keparahan (Severity) *</label>
-                      <select id="bugSeveritySelect" class="create-input" style="font-size: 11px; padding: 6px 8px; font-weight: 700;">
-                        <option value="S1 - Critical (Blocker)" ${this.severity === 'S1 - Critical (Blocker)' ? 'selected' : ''}>S1 - Critical (Blocker, SLA &lt; 4 Jam)</option>
-                        <option value="S2 - Major" ${this.severity === 'S2 - Major' ? 'selected' : ''}>S2 - Major (Fitur Utama, SLA 24 Jam)</option>
-                        <option value="S3 - Minor" ${this.severity === 'S3 - Minor' ? 'selected' : ''}>S3 - Minor (Workaround Ada, SLA 3 Hari)</option>
-                        <option value="S4 - Trivial" ${this.severity === 'S4 - Trivial' ? 'selected' : ''}>S4 - Trivial (Kosmetik/Typo)</option>
+                      <label class="create-sub-label">Keparahan (Severity) *</label>
+                      <select id="bugSeveritySelect" class="create-input create-input--sm">
+                        <option value="S1 - Critical (Blocker)" ${this.severity === 'S1 - Critical (Blocker)' ? 'selected' : ''}>S1 - Critical (SLA &lt; 4J)</option>
+                        <option value="S2 - Major" ${this.severity === 'S2 - Major' ? 'selected' : ''}>S2 - Major (SLA 24J)</option>
+                        <option value="S3 - Minor" ${this.severity === 'S3 - Minor' ? 'selected' : ''}>S3 - Minor (SLA 3H)</option>
+                        <option value="S4 - Trivial" ${this.severity === 'S4 - Trivial' ? 'selected' : ''}>S4 - Trivial (UI/Typo)</option>
                       </select>
                     </div>
 
                     <div class="create-field-group">
-                      <label style="font-size: 10px; font-weight: 700; color: #991b1b; text-transform: uppercase;">Lingkungan Terdampak *</label>
-                      <select id="bugEnvSelect" class="create-input" style="font-size: 11px; padding: 6px 8px;">
-                        <option value="Production" ${this.environment === 'Production' ? 'selected' : ''}>Production (Live Server)</option>
+                      <label class="create-sub-label">Environment *</label>
+                      <select id="bugEnvSelect" class="create-input create-input--sm">
+                        <option value="Production" ${this.environment === 'Production' ? 'selected' : ''}>Production (Live)</option>
                         <option value="Staging" ${this.environment === 'Staging' ? 'selected' : ''}>Staging (Pre-Release)</option>
                         <option value="QA / Testing" ${this.environment === 'QA / Testing' ? 'selected' : ''}>QA / Testing Lab</option>
                         <option value="Development" ${this.environment === 'Development' ? 'selected' : ''}>Development Local</option>
@@ -233,83 +255,82 @@ export class CreateTaskModal {
                     </div>
 
                     <div class="create-field-group">
-                      <label style="font-size: 10px; font-weight: 700; color: #991b1b; text-transform: uppercase;">Kategori Biaya / Garansi *</label>
-                      <select id="bugWarrantySelect" class="create-input" style="font-size: 11px; padding: 6px 8px;">
-                        <option value="Garansi Proyek (Gratis)" ${this.warrantyStatus === 'Garansi Proyek (Gratis)' ? 'selected' : ''}>Garansi Proyek (Rp 0 - Bebas Biaya)</option>
+                      <label class="create-sub-label">Status Garansi *</label>
+                      <select id="bugWarrantySelect" class="create-input create-input--sm">
+                        <option value="Garansi Proyek (Gratis)" ${this.warrantyStatus === 'Garansi Proyek (Gratis)' ? 'selected' : ''}>Garansi Proyek (Gratis)</option>
                         <option value="Kuota Maintenance" ${this.warrantyStatus === 'Kuota Maintenance' ? 'selected' : ''}>Potong Kuota Retainer</option>
-                        <option value="Non-Garansi (Billable)" ${this.warrantyStatus === 'Non-Garansi (Billable)' ? 'selected' : ''}>Non-Garansi (Ditagihkan)</option>
+                        <option value="Non-Garansi (Billable)" ${this.warrantyStatus === 'Non-Garansi (Billable)' ? 'selected' : ''}>Non-Garansi (Billable)</option>
                       </select>
                     </div>
                   </div>
 
                   <!-- Reproduction Steps -->
                   <div class="create-field-group">
-                    <label style="font-size: 10px; font-weight: 700; color: #0f172a; text-transform: uppercase;">
-                      Langkah Reproduksi Masalah (Steps to Reproduce)
-                    </label>
+                    <label class="create-sub-label">Langkah Reproduksi (Steps to Reproduce)</label>
                     <textarea
                       id="bugReproStepsTextarea"
                       rows="2"
-                      placeholder="1. Buka halaman katalog buku&#10;2. Masukkan kata kunci pencarian > 50 karakter&#10;3. Klik cari dan amati pesan exception..."
+                      placeholder="1. Buka halaman katalog&#10;2. Input parameter pencarian&#10;3. Amati response HTTP 500..."
                       class="create-textarea"
-                      style="font-family: var(--font-mono); font-size: 11px; min-height: 60px;"
+                      style="font-family: var(--font-mono); font-size: 11.5px; min-height: 54px;"
                     >${this.escapeHtml(this.reproStepsText)}</textarea>
                   </div>
 
                   <!-- Expected vs Actual -->
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <div class="create-grid-2">
                     <div class="create-field-group">
-                      <label style="font-size: 10px; font-weight: 700; color: #0f172a; text-transform: uppercase;">Hasil Diharapkan (Expected)</label>
+                      <label class="create-sub-label">Hasil Diharapkan (Expected)</label>
                       <input
                         type="text"
                         id="bugExpectedInput"
-                        placeholder="Contoh: Menampilkan hasil atau notifikasi kosong"
+                        placeholder="Menampilkan daftar atau state kosong"
                         value="${this.escapeHtml(this.expectedBehavior)}"
-                        class="create-input"
-                        style="font-size: 11px;"
+                        class="create-input create-input--sm"
                       />
                     </div>
                     <div class="create-field-group">
-                      <label style="font-size: 10px; font-weight: 700; color: #0f172a; text-transform: uppercase;">Hasil Aktual (Actual Error)</label>
+                      <label class="create-sub-label">Hasil Aktual (Actual Error)</label>
                       <input
                         type="text"
                         id="bugActualInput"
-                        placeholder="Contoh: HTTP 500 Uncaught QueryException"
+                        placeholder="Contoh: HTTP 500 QueryException"
                         value="${this.escapeHtml(this.actualBehavior)}"
-                        class="create-input"
-                        style="font-size: 11px;"
+                        class="create-input create-input--sm"
                       />
                     </div>
                   </div>
                 </div>
               ` : ''}
 
-              <!-- 5. Checklist Subtasks Awal -->
+              <!-- 4. Checklist Subtasks Awal -->
               <div class="create-field-group">
                 <div class="create-field-label">
-                  <span>Checklist Subtask Awal (${this.initialSubtasks.length})</span>
-                  <span style="font-size: 10px; color: #64748b; text-transform: none;">Opsional</span>
+                  <span>CHECKLIST SUBTASK AWAL (${this.initialSubtasks.length})</span>
+                  <span class="create-label-hint">Opsional · Breakdown langkah kerja</span>
                 </div>
                 
-                <div style="display: flex; gap: 8px;">
+                <div class="create-subtask-input-row">
                   <input
                     type="text"
                     id="newSubtaskTitleInput"
-                    placeholder="Tambah subtask: contoh 'Tulis unit test regression'..."
+                    placeholder="Ketik rincian subtask (misal: Buat unit test & dokumentasi Swagger)..."
                     class="create-input"
-                    style="font-size: 12px; padding: 7px 10px;"
                   />
-                  <button type="button" id="addInitialSubtaskBtn" class="finance-btn-secondary" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;">
-                    + Tambah
+                  <button type="button" id="addInitialSubtaskBtn" class="create-subtask-add-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>Tambah</span>
                   </button>
                 </div>
 
                 ${this.initialSubtasks.length > 0 ? `
-                  <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                  <div class="create-subtask-list">
                     ${this.initialSubtasks.map((st, idx) => `
-                      <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 11px;">
-                        <span style="color: #334155;"><strong>${idx + 1}.</strong> ${this.escapeHtml(st)}</span>
-                        <button type="button" class="remove-subtask-item-btn" data-index="${idx}" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 2px;">
+                      <div class="create-subtask-item">
+                        <span class="create-subtask-item-text">
+                          <span class="subtask-num">${idx + 1}.</span>
+                          ${this.escapeHtml(st)}
+                        </span>
+                        <button type="button" class="remove-subtask-item-btn" data-index="${idx}" title="Hapus subtask">
                           ${Icons.x('', 12)}
                         </button>
                       </div>
@@ -320,147 +341,166 @@ export class CreateTaskModal {
 
             </div>
 
-            <!-- Right Column: Metadata, Categorization & People (40%) -->
+            <!-- Right Column: Metadata, Categorization & People -->
             <div class="create-issue-right">
-              
-              <!-- Target Proyek -->
-              <div class="create-field-group">
-                <label class="create-field-label">Proyek Target *</label>
-                <select id="taskTargetProjectSelect" class="create-input" style="font-weight: 600;">
-                  ${state.projects.map((p) => `
-                    <option value="${p.id}" ${p.id === this.projectId ? 'selected' : ''}>
-                      ${p.code} · ${p.name.length > 28 ? p.name.substring(0, 28) + '...' : p.name}
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-
-              <!-- Prioritas Kartu -->
-              <div class="create-field-group">
-                <label class="create-field-label">Tingkat Prioritas</label>
-                <div class="create-priority-grid">
-                  ${priorityCards.map((p) => `
-                    <div
-                      class="create-priority-card ${this.priority === p.id ? `active ${p.activeClass}` : ''}"
-                      data-priority="${p.id}"
-                    >
-                      <span class="p-dot ${p.dotClass}"></span>
-                      <div>
-                        <div style="font-size: 12px; font-weight: 700;">${p.label}</div>
-                        <div style="font-size: 9.5px; opacity: 0.8;">${p.sub}</div>
-                      </div>
-                    </div>
-                  `).join('')}
+              <div class="create-meta-panel">
+                <div class="create-meta-panel-header">
+                  <span>ATRIBUT &amp; PENJADWALAN</span>
+                  <span class="meta-badge">Routing</span>
                 </div>
-              </div>
 
-              <!-- Tautkan ke Epik -->
-              <div class="create-field-group">
-                <label class="create-field-label">Tautkan ke Epik Modul</label>
-                <select id="taskEpicSelect" class="create-input">
-                  <option value="">-- (Tanpa Epik Khusus) --</option>
-                  ${projectEpics.map((ep) => `
-                    <option value="${ep.id}" ${ep.id === this.epicId ? 'selected' : ''}>
-                      ${ep.title || ep.name}
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-
-              <!-- Assignee (PIC Developer) -->
-              <div class="create-field-group">
-                <label class="create-field-label">Penanggung Jawab (Assignee PIC)</label>
-                <select id="taskAssigneeSelect" class="create-input">
-                  ${teamMembers.map((m) => `
-                    <option value="${m.id}" ${m.id === this.assigneeId ? 'selected' : ''}>
-                      ${m.name} (${m.role})
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-
-              <!-- Estimasi (Jam) & Jatuh Tempo (Due Date) Grid -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <!-- Target Proyek & Epik -->
                 <div class="create-field-group">
-                  <label class="create-field-label">Estimasi Waktu</label>
-                  <div style="position: relative;">
-                    <input
-                      type="number"
-                      id="taskHoursInput"
-                      min="1"
-                      max="160"
-                      value="${this.estimateHours}"
-                      class="create-input"
-                      style="font-family: var(--font-mono); font-weight: 700; padding-right: 32px;"
-                    />
-                    <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: #64748b;">
-                      Jam
-                    </span>
+                  <label class="create-field-label" for="taskTargetProjectSelect">
+                    <span>PROYEK TARGET <span class="req-star">*</span></span>
+                  </label>
+                  <select id="taskTargetProjectSelect" class="create-input create-select-bold">
+                    ${state.projects.map((p) => `
+                      <option value="${p.id}" ${p.id === this.projectId ? 'selected' : ''}>
+                        ${p.code} — ${p.name}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+
+                <!-- Prioritas Kartu -->
+                <div class="create-field-group">
+                  <label class="create-field-label">
+                    <span>TINGKAT PRIORITAS</span>
+                  </label>
+                  <div class="create-priority-grid">
+                    ${priorityCards.map((p) => `
+                      <div
+                        class="create-priority-card ${this.priority === p.id ? `active ${p.activeClass}` : ''}"
+                        data-priority="${p.id}"
+                      >
+                        <span class="p-dot ${p.dotClass}"></span>
+                        <div class="p-card-text">
+                          <div class="p-card-title">${p.label}</div>
+                          <div class="p-card-sub">${p.sub}</div>
+                        </div>
+                      </div>
+                    `).join('')}
                   </div>
                 </div>
 
+                <!-- Assignee (PIC Developer) -->
                 <div class="create-field-group">
-                  <label class="create-field-label">Jatuh Tempo (Due)</label>
-                  <input
-                    type="date"
-                    id="taskDueDateInput"
-                    value="${this.dueDate}"
-                    class="create-input"
-                    style="font-family: var(--font-mono); font-size: 11.5px;"
-                  />
+                  <div class="create-field-label">
+                    <span>PENANGGUNG JAWAB (PIC)</span>
+                    <button type="button" id="assignToMeCreateBtn" class="create-inline-link">Assign ke Saya</button>
+                  </div>
+                  <select id="taskAssigneeSelect" class="create-input">
+                    ${teamMembers.map((m) => `
+                      <option value="${m.id}" ${m.id === this.assigneeId ? 'selected' : ''}>
+                        ${m.name} — ${m.role}
+                      </option>
+                    `).join('')}
+                  </select>
                 </div>
-              </div>
 
-              <!-- Visibilitas Tiket -->
-              <div class="create-field-group">
-                <label class="create-field-label">Visibilitas Akses</label>
-                <select id="taskVisibilitySelect" class="create-input">
-                  <option value="client_public" ${this.visibility === 'client_public' ? 'selected' : ''}>
-                    🌐 Publik (Klien &amp; Service Desk)
-                  </option>
-                  <option value="internal" ${this.visibility === 'internal' ? 'selected' : ''}>
-                    🔒 Internal Tim Saja (Confidential)
-                  </option>
-                </select>
-              </div>
+                <!-- Tautkan ke Epik -->
+                <div class="create-field-group">
+                  <label class="create-field-label" for="taskEpicSelect">
+                    <span>TAUTKAN KE EPIK MODUL</span>
+                  </label>
+                  <select id="taskEpicSelect" class="create-input">
+                    <option value="">— Tanpa Epik Khusus —</option>
+                    ${projectEpics.map((ep) => `
+                      <option value="${ep.id}" ${ep.id === this.epicId ? 'selected' : ''}>
+                        ${ep.title || ep.name}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
 
-              <!-- Target Alur / Penempatan -->
-              <div class="create-field-group">
-                <label class="create-field-label">Penempatan Awal</label>
-                <select id="taskSprintSelect" class="create-input">
-                  <option value="sprint-1">Sprint 1: Fondasi Aktif (Papan Kanban)</option>
-                  <option value="backlog">Backlog Pool (Perencanaan Nanti)</option>
-                </select>
-              </div>
+                <!-- Estimasi (Jam) & Jatuh Tempo (Due Date) Grid -->
+                <div class="create-grid-2">
+                  <div class="create-field-group">
+                    <label class="create-field-label" for="taskHoursInput">
+                      <span>ESTIMASI BEBAN</span>
+                    </label>
+                    <div class="create-input-suffix-wrap">
+                      <input
+                        type="number"
+                        id="taskHoursInput"
+                        min="1"
+                        max="160"
+                        value="${this.estimateHours}"
+                        class="create-input create-input-mono"
+                      />
+                      <span class="create-input-suffix">Jam</span>
+                    </div>
+                  </div>
 
+                  <div class="create-field-group">
+                    <label class="create-field-label" for="taskDueDateInput">
+                      <span>TENGGAT (DUE)</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="taskDueDateInput"
+                      value="${this.dueDate}"
+                      class="create-input create-input-mono"
+                    />
+                  </div>
+                </div>
+
+                <!-- Penempatan & Visibilitas Grid -->
+                <div class="create-grid-2">
+                  <div class="create-field-group">
+                    <label class="create-field-label" for="taskSprintSelect">
+                      <span>PENEMPATAN</span>
+                    </label>
+                    <select id="taskSprintSelect" class="create-input">
+                      <option value="${activeSprint ? activeSprint.id : 'sprint-1'}">${activeSprint ? activeSprint.name : 'Sprint Aktif'} (Kanban)</option>
+                      <option value="backlog">Backlog Pool</option>
+                    </select>
+                  </div>
+
+                  <div class="create-field-group">
+                    <label class="create-field-label" for="taskVisibilitySelect">
+                      <span>VISIBILITAS</span>
+                    </label>
+                    <select id="taskVisibilitySelect" class="create-input">
+                      <option value="client_public" ${this.visibility === 'client_public' ? 'selected' : ''}>
+                        Publik &amp; Klien
+                      </option>
+                      <option value="internal" ${this.visibility === 'internal' ? 'selected' : ''}>
+                        Internal Tim
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+              </div>
             </div>
 
           </div>
 
           <!-- Modal Footer -->
           <div class="create-issue-footer">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
-              <input type="checkbox" id="createAnotherCheck" ${this.createAnother ? 'checked' : ''} style="accent-color: #4338ca; width: 15px; height: 15px;" />
-              <span>Buat tiket lain setelah ini</span>
+            <label class="create-another-toggle">
+              <input type="checkbox" id="createAnotherCheck" ${this.createAnother ? 'checked' : ''} />
+              <span>Buat issue lain setelah ini</span>
+              <span class="create-another-hint">Mode input beruntun</span>
             </label>
 
-            <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="create-footer-actions">
               <button
                 type="button"
                 id="createModalCancelBtn"
-                class="finance-btn-secondary"
-                style="padding: 7px 16px; font-size: 12px;"
+                class="create-btn-cancel"
               >
                 Batal
               </button>
 
               <button
                 type="submit"
-                class="finance-btn-primary"
-                style="padding: 7px 20px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;"
+                class="create-btn-submit"
               >
-                ${Icons.check('', 14)}
-                <span>Buat Masalah</span>
+                ${Icons.check('', 15)}
+                <span>Buat Issue</span>
               </button>
             </div>
           </div>
@@ -513,6 +553,18 @@ export class CreateTaskModal {
         this.epicId = '';
         this.saveFormDraft();
         this.render();
+      });
+    }
+
+    // Assign to me button
+    const assignToMeBtn = this.container.querySelector('#assignToMeCreateBtn');
+    if (assignToMeBtn) {
+      assignToMeBtn.addEventListener('click', () => {
+        const assigneeSelect = this.container.querySelector('#taskAssigneeSelect');
+        if (assigneeSelect) {
+          assigneeSelect.value = 'user-pm';
+          this.assigneeId = 'user-pm';
+        }
       });
     }
 
@@ -586,7 +638,17 @@ export class CreateTaskModal {
         const createAnotherCheck = this.container.querySelector('#createAnotherCheck');
 
         const title = titleInput ? titleInput.value.trim() : '';
-        if (!title) return;
+        if (!title) {
+          if (titleInput) {
+            titleInput.style.borderColor = '#ef4444';
+            titleInput.focus();
+          }
+          store.addToast('warning', 'Judul Wajib Diisi', 'Silakan masukkan ringkasan atau judul tiket pekerjaan.');
+          return;
+        }
+        if (titleInput) {
+          titleInput.style.borderColor = '';
+        }
 
         const description = descInput ? descInput.value.trim() : '';
         const estimateHours = hoursInput ? Number(hoursInput.value) || 4 : 4;

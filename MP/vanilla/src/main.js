@@ -9,6 +9,7 @@ import { store } from './state/store.js';
 import { Sidebar } from './components/Sidebar.js';
 import { TopBar } from './components/TopBar.js';
 import { ToastContainer } from './components/common/ToastContainer.js';
+import { NotificationPopover } from './components/common/NotificationPopover.js';
 
 // Views
 import { KanbanBoard } from './components/KanbanBoard.js';
@@ -46,7 +47,12 @@ class App {
   bootstrap() {
     // 1. Instantiate layout components
     const sidebar = new Sidebar();
-    const topBar = new TopBar();
+    const notificationPopover = new NotificationPopover({
+      onNavigateTab: (tab) => store.setActiveTab(tab)
+    });
+    const topBar = new TopBar({
+      onToggleNotif: () => notificationPopover.toggle()
+    });
     const toastContainer = new ToastContainer();
 
     // 2. Instantiate all view components
@@ -150,7 +156,15 @@ class App {
     document.body.appendChild(createTaskModal.getElement());
     document.body.appendChild(intakeSimulatorModal.getElement());
     document.body.appendChild(sopGuideModal.getElement());
+    document.body.appendChild(notificationPopover.getElement());
     document.body.appendChild(toastContainer.getElement());
+
+    // Close notification popover when clicking outside
+    document.addEventListener('click', (e) => {
+      if (notificationPopover.isOpen && !e.target.closest('.notif-popover') && !e.target.closest('#header-notif-btn')) {
+        notificationPopover.close();
+      }
+    });
 
     // 9. Initial View Render & Reactive Subscription
     this.handleRoute(store.getState());
@@ -203,22 +217,47 @@ class App {
 
     switch (activeTab) {
       case 'project':
+        this.components.projectModuleView.backToPortfolio();
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
+        break;
+      case 'ringkasan':
+        this.components.projectModuleView.openWorkspaceWithTab('ringkasan');
         this.viewportContent.appendChild(this.components.projectModuleView.getElement());
         break;
       case 'kanban':
-        this.viewportContent.appendChild(this.components.kanbanBoard.getElement());
+        this.components.projectModuleView.openWorkspaceWithTab('kanban');
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
         break;
       case 'task_detail':
         this.viewportContent.appendChild(this.components.taskDetailView.getElement());
         break;
       case 'backlog':
-        this.viewportContent.appendChild(this.components.backlogView.getElement());
+        this.components.projectModuleView.openWorkspaceWithTab('backlog');
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
         break;
       case 'timeline':
-        this.viewportContent.appendChild(this.components.timelineView.getElement());
+        this.components.projectModuleView.openWorkspaceWithTab('timeline');
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
         break;
       case 'list':
-        this.viewportContent.appendChild(this.components.taskListView.getElement());
+        this.components.projectModuleView.openWorkspaceWithTab('list');
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
+        break;
+      case 'qa':
+        this.components.projectModuleView.openWorkspaceWithTab('qa');
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
+        break;
+      case 'docs':
+        this.components.projectModuleView.openWorkspaceWithTab('docs');
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
+        break;
+      case 'time':
+        this.components.projectModuleView.openWorkspaceWithTab('time');
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
+        break;
+      case 'finance_budget':
+        this.components.projectModuleView.openWorkspaceWithTab('finance_budget');
+        this.viewportContent.appendChild(this.components.projectModuleView.getElement());
         break;
       case 'ai_hub':
         this.viewportContent.appendChild(this.components.aiAutomationHub.getElement());

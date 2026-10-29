@@ -488,6 +488,25 @@ export class FinanceInvoicesView {
     this.element.addEventListener('click', (e) => {
       if (e.target.closest('#openMilestoneBtn')) {
         this.milestoneModal.open(store.getState().selectedProjectId);
+        return;
+      }
+
+      if (e.target.closest('#openCreateCompletedTasksBtn')) {
+        const state = store.getState();
+        const unbilledTasks = state.tasks.filter(
+          (t) => t.projectId === state.selectedProjectId && t.status === 'Selesai' && !t.billedInvoiceId
+        );
+        if (unbilledTasks.length === 0) {
+          store.addToast('info', 'Tidak Ada Task Baru', 'Semua pekerjaan yang selesai pada proyek ini telah diterbitkan fakturnya.');
+          return;
+        }
+        const taskIds = unbilledTasks.map((t) => t.id);
+        const newInv = store.createInvoiceFromCompletedTasks(state.selectedProjectId, taskIds, 'Pekerjaan Selesai');
+        if (newInv) {
+          this.selectedInvoice = newInv;
+          this.render();
+        }
+        return;
       }
 
       const issueBtn = e.target.closest('.issue-milestone-btn');
