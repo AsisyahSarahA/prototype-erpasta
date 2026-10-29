@@ -1,0 +1,310 @@
+/* ==========================================================================
+   TASK CARD COMPONENT STYLING - ATLASSIAN JIRA ISSUE CARDS
+   Spacious, readable Jira card layout with generous padding, wider text room,
+   clear epic titles, prominent tags, subtask progress, and assignee avatars.
+   ========================================================================== */
+
+.task-card {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border, #dfe1e6);
+  border-radius: 6px;
+  padding: 11px 13px;
+  box-shadow: 0 1px 3px rgba(9, 30, 66, 0.08), 0 0 0 1px rgba(9, 30, 66, 0.04);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: box-shadow var(--transition-fast, 120ms ease), border-color var(--transition-fast, 120ms ease), transform var(--transition-fast, 120ms ease);
+  user-select: none;
+  position: relative;
+  width: 100%;
+}
+
+.task-card:hover {
+  box-shadow: 0 4px 12px rgba(9, 30, 66, 0.12), 0 0 0 1px #c1c7d0;
+  border-color: #c1c7d0;
+  transform: translateY(-1.5px);
+}
+
+.task-card:active {
+  cursor: grabbing;
+}
+
+/* Modifiers for Special Statuses */
+.task-card--hotfix {
+  border-left: 3.5px solid #ff5630 !important;
+}
+
+.task-card--review {
+  border-left: 3.5px solid #ffab00 !important;
+}
+
+.task-card--qa {
+  border-left: 3.5px solid #6554c0 !important;
+}
+
+/* Epic Row */
+.task-card__epic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.task-card__epic-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  white-space: normal;
+  max-width: 100%;
+  display: inline-block;
+  word-break: break-word;
+}
+
+.task-card__hotfix-pill {
+  font-size: 10px;
+  font-weight: 700;
+  background-color: #ffebe6;
+  color: #bf2600;
+  border: 1px solid #ffbdad;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+/* Title - Generous 3-line clamp with room to breathe */
+.task-card__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-heading, #0f172a);
+  line-height: 1.48;
+  margin: 1px 0 3px 0;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Tags Row (Severity, Env, QA, PR, Warranty) */
+.task-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 2px 0;
+}
+
+.task-card__tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 6.5px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 15px;
+}
+
+.task-card__tag--s1 {
+  background-color: #ffebe6;
+  color: #bf2600;
+  border: 1px solid #ffbdad;
+}
+
+.task-card__tag--s2 {
+  background-color: #fff0b3;
+  color: #172b4d;
+  border: 1px solid #ffe380;
+}
+
+.task-card__tag--s3 {
+  background-color: #dfe1e6;
+  color: #42526e;
+}
+
+.task-card__tag--env {
+  background-color: rgba(9, 30, 66, 0.04);
+  color: var(--color-text-subtle, #5e6c84);
+  border: 1px solid var(--color-border, #dfe1e6);
+  font-family: var(--font-mono);
+}
+
+.task-card__tag--qa-pass {
+  background-color: #e3fcef;
+  color: #006644;
+  border: 1px solid #abf5d1;
+}
+
+.task-card__tag--pr {
+  background-color: #deebff;
+  color: #0052cc;
+  border: 1px solid #b3d4ff;
+  font-family: var(--font-mono);
+}
+
+.task-card__tag--warranty {
+  background-color: #e3fcef;
+  color: #006644;
+}
+
+.task-card__tag--sla {
+  background-color: #ebf5fb;
+  color: #0052cc;
+  border: 1px solid #bce2f7;
+  font-family: var(--font-mono);
+}
+
+.task-card__tag--telegram {
+  background-color: #ebf5fb;
+  color: #24a1de;
+  border: 1px solid #bce2f7;
+}
+
+.task-card__tag--sentry {
+  background-color: #ffebe6;
+  color: #bf2600;
+  border: 1px solid #ffbdad;
+}
+
+/* Footer Row */
+.task-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 7px;
+  margin-top: 2px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.task-card__footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+/* Issue Type Icons (Jira Standard) */
+.task-card__type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.task-card__type-badge--bug {
+  background-color: #e5493a;
+  color: #ffffff;
+}
+
+.task-card__type-badge--feature {
+  background-color: #36b37e;
+  color: #ffffff;
+}
+
+.task-card__type-badge--task {
+  background-color: #4bade8;
+  color: #ffffff;
+}
+
+.task-card__type-badge--revisi {
+  background-color: #ffab00;
+  color: #172b4d;
+}
+
+.task-card__type-badge--maint {
+  background-color: #00b8d9;
+  color: #ffffff;
+}
+
+/* Issue Key Link */
+.task-card__key {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-text-subtle, #64748b);
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.task-card:hover .task-card__key {
+  color: var(--jira-blue, #0052cc);
+  text-decoration: underline;
+}
+
+/* Subtask Checklist Counter */
+.task-card__subtask-count {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-text-subtle, #64748b);
+  background-color: rgba(9, 30, 66, 0.05);
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.task-card__footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Estimate Badge */
+.task-card__estimate-badge {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-text-subtle, #64748b);
+  background-color: rgba(9, 30, 66, 0.06);
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Priority Icon */
+.task-card__priority {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Assignee Avatar */
+.task-card__avatar {
+  width: 25px;
+  height: 25px;
+  border-radius: var(--radius-full, 9999px);
+  object-fit: cover;
+  border: 1px solid var(--color-border, #dfe1e6);
+}
+
+.task-card__avatar--placeholder {
+  width: 25px;
+  height: 25px;
+  border-radius: var(--radius-full, 9999px);
+  background-color: rgba(9, 30, 66, 0.08);
+  color: var(--color-text-subtle, #64748b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 700;
+}

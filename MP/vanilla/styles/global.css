@@ -1,0 +1,444 @@
+/* ==========================================================================
+   PROJECT MANJER ENTERPRISE DESIGN SYSTEM - GLOBAL TOKENS & STYLES
+   Atlassian Jira Software Equivalent Clean Enterprise UI/UX
+   Pure CSS3 Native, Zero External Frameworks
+   ========================================================================== */
+
+:root {
+  /* 1. Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Medium', 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+
+  /* 2. Primary Brand Colors (Enterprise Jira Blue) */
+  --color-primary: #0052cc;
+  --color-primary-hover: #0065ff;
+  --color-primary-active: #0747a6;
+  --color-primary-subtle: #deebff;
+  --color-primary-subtle-hover: #b3d4ff;
+  --color-primary-text: #0052cc;
+  
+  --jira-blue: #0052cc;
+  --jira-blue-hover: #0065ff;
+  --jira-blue-active: #0747a6;
+  --jira-blue-subtle: #deebff;
+  --jira-blue-subtle-hover: #b3d4ff;
+  --jira-blue-text: #0052cc;
+
+  /* 3. Surface & Background Colors */
+  --color-page-bg: #f4f5f7;
+  --color-card-bg: #ffffff;
+  --color-surface-hover: #ebecf0;
+  --color-surface-active: #e4e7eb;
+  
+  --jira-bg-page: #f4f5f7;
+  --jira-bg-card: #ffffff;
+  --jira-bg-hover: #ebecf0;
+
+  /* 4. Text & Typography Colors */
+  --color-text-heading: #172b4d;
+  --color-text-body: #172b4d;
+  --color-text-subtle: #5e6c84;
+  --color-text-disabled: #a5b2c6;
+  --color-text-link: #0052cc;
+  
+  --jira-text: #172b4d;
+  --jira-text-primary: #172b4d;
+  --jira-text-subtle: #5e6c84;
+
+  /* 5. Borders & Dividers */
+  --color-border: #dfe1e6;
+  --color-border-subtle: #ebecf0;
+  --color-border-focus: #4c9aff;
+  --jira-border: #dfe1e6;
+  --jira-border-subtle: #ebecf0;
+
+  /* 6. Slate / Zinc Neutral Scale */
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+
+  /* 7. Status & Stage Lozenges */
+  --status-todo-bg: #dfe1e6;
+  --status-todo-text: #42526e;
+  --status-todo-border: #c1c7d0;
+
+  --status-progress-bg: #deebff;
+  --status-progress-text: #0052cc;
+  --status-progress-border: #b3d4ff;
+
+  --status-review-bg: #fff0b3;
+  --status-review-text: #172b4d;
+  --status-review-border: #ffe380;
+
+  --status-qa-bg: #eae6ff;
+  --status-qa-text: #403294;
+  --status-qa-border: #c0b6f2;
+
+  --status-done-bg: #e3fcef;
+  --status-done-text: #006644;
+  --status-done-border: #abf5d1;
+
+  --status-hotfix-bg: #ffebe6;
+  --status-hotfix-text: #bf2600;
+  --status-hotfix-border: #ffbdad;
+
+  /* Aliases for Jira Status */
+  --jira-status-todo-bg: var(--status-todo-bg);
+  --jira-status-todo-text: var(--status-todo-text);
+  --jira-status-todo-border: var(--status-todo-border);
+  --jira-status-progress-bg: var(--status-progress-bg);
+  --jira-status-progress-text: var(--status-progress-text);
+  --jira-status-progress-border: var(--status-progress-border);
+  --jira-status-review-bg: var(--status-review-bg);
+  --jira-status-review-text: var(--status-review-text);
+  --jira-status-review-border: var(--status-review-border);
+  --jira-status-qa-bg: var(--status-qa-bg);
+  --jira-status-qa-text: var(--status-qa-text);
+  --jira-status-qa-border: var(--status-qa-border);
+  --jira-status-done-bg: var(--status-done-bg);
+  --jira-status-done-text: var(--status-done-text);
+  --jira-status-done-border: var(--status-done-border);
+  --jira-status-hotfix-bg: var(--status-hotfix-bg);
+  --jira-status-hotfix-text: var(--status-hotfix-text);
+  --jira-status-hotfix-border: var(--status-hotfix-border);
+
+  /* 8. Jira Issue Types */
+  --jira-type-bug: #e5493a;
+  --jira-type-task: #4bade8;
+  --jira-type-story: #36b37e;
+  --jira-type-epic: #6554c0;
+  --jira-type-subtask: #00a3bf;
+
+  /* 9. Jira Priorities */
+  --jira-priority-highest: #ff5630;
+  --jira-priority-high: #ff7452;
+  --jira-priority-medium: #ffab00;
+  --jira-priority-low: #36b37e;
+  --jira-priority-lowest: #2684ff;
+
+  /* 10. Layout Dimensions & Spacing Tokens */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --topbar-height: 48px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* 11. Shadows */
+  --shadow-xs: 0 1px 1px rgba(9, 30, 66, 0.25);
+  --shadow-sm: 0 1px 2px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  --shadow-md: 0 4px 8px -2px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  --shadow-lg: 0 8px 16px -4px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  --shadow-dialog: 0 12px 24px -6px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  --shadow-card: 0 1px 2px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.16);
+  --shadow-card-hover: 0 4px 12px -1px rgba(9, 30, 66, 0.15), 0 0 1px rgba(9, 30, 66, 0.25);
+
+  /* 12. Border Radii */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* 13. Transitions */
+  --transition-fast: 120ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-normal: 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-size: 14px;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text-body);
+  background-color: var(--color-page-bg);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  color: var(--color-text-link);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* App Root Structure */
+.app-root {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-page-bg);
+}
+
+.app-viewport {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-width: 0;
+  background-color: var(--color-page-bg);
+  overflow: hidden;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+  background-color: var(--color-page-bg);
+}
+
+/* Standard Reusable Status Badges / Lozenges */
+.jira-badge {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.jira-badge--todo {
+  background-color: var(--status-todo-bg);
+  color: var(--status-todo-text);
+  border: 1px solid var(--status-todo-border);
+}
+
+.jira-badge--progress {
+  background-color: var(--status-progress-bg);
+  color: var(--status-progress-text);
+  border: 1px solid var(--status-progress-border);
+}
+
+.jira-badge--review {
+  background-color: var(--status-review-bg);
+  color: var(--status-review-text);
+  border: 1px solid var(--status-review-border);
+}
+
+.jira-badge--qa {
+  background-color: var(--status-qa-bg);
+  color: var(--status-qa-text);
+  border: 1px solid var(--status-qa-border);
+}
+
+.jira-badge--done {
+  background-color: var(--status-done-bg);
+  color: var(--status-done-text);
+  border: 1px solid var(--status-done-border);
+}
+
+.jira-badge--hotfix {
+  background-color: var(--status-hotfix-bg);
+  color: var(--status-hotfix-text);
+  border: 1px solid var(--status-hotfix-border);
+}
+
+/* Standard Reusable Buttons */
+.jira-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  white-space: nowrap;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+.jira-btn--primary {
+  background-color: var(--jira-blue);
+  color: #ffffff;
+  border-color: var(--jira-blue);
+  box-shadow: 0 1px 2px rgba(0, 82, 204, 0.2);
+}
+.jira-btn--primary:hover {
+  background-color: var(--jira-blue-hover);
+  border-color: var(--jira-blue-hover);
+}
+.jira-btn--primary:active {
+  background-color: var(--jira-blue-active);
+  border-color: var(--jira-blue-active);
+}
+
+.jira-btn--subtle {
+  background-color: transparent;
+  color: var(--color-text-subtle);
+  border-color: transparent;
+}
+.jira-btn--subtle:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-heading);
+}
+
+.jira-btn--default {
+  background-color: #ffffff;
+  color: var(--color-text-heading);
+  border: 1px solid var(--color-border);
+}
+.jira-btn--default:hover {
+  background-color: var(--color-surface-hover);
+  border-color: #c1c7d0;
+}
+
+.jira-btn--danger {
+  background-color: #de350b;
+  color: #ffffff;
+  border-color: #de350b;
+}
+.jira-btn--danger:hover {
+  background-color: #bf2600;
+}
+
+/* Standard Reusable Form Controls */
+.jira-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--color-text-heading);
+  background-color: #fafbfc;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+.jira-input:focus {
+  background-color: #ffffff;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+.jira-select {
+  height: 32px;
+  padding: 0 24px 0 10px;
+  font-size: 13px;
+  color: var(--color-text-heading);
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+.jira-select:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+/* Standard Data Table */
+.jira-table-container {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.jira-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.jira-table th {
+  background-color: #fafbfc;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--color-text-subtle);
+  border-bottom: 1px solid var(--color-border);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.jira-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-body);
+  vertical-align: middle;
+}
+
+.jira-table tr:hover td {
+  background-color: #fafbfc;
+}
+
+/* Custom Scrollbar for Jira Look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c7d0;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a5b2c6;
+}
+
+/* Flaticon UIcons Global Alignment & Crisp Rendering */
+i.fi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+}

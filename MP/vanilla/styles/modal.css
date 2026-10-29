@@ -1,0 +1,864 @@
+/* ==========================================================================
+   ATLASSIAN JIRA CLOUD MODAL STYLING (Task Detail, Create Task, Sub-modals)
+   ========================================================================== */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgba(9, 30, 66, 0.54);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.modal-backdrop--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-dialog {
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid var(--jira-border, #dfe1e6);
+  box-shadow: 0 20px 32px -8px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(8px) scale(0.99);
+  transition: transform 0.15s ease;
+}
+
+.modal-dialog--detail {
+  max-width: 1180px;
+  width: 96%;
+  height: 90vh;
+  max-height: 94vh;
+}
+
+.modal-backdrop--open .modal-dialog {
+  transform: translateY(0) scale(1);
+}
+
+/* Modal Header Bar (Jira Breadcrumb + Actions) */
+.modal-header {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--jira-border, #dfe1e6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+.modal-header__title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.modal-header__badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background-color: #f4f5f7;
+  color: #172b4d;
+  border: 1px solid #dfe1e6;
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.modal-header__badge:hover {
+  background-color: #ebecf0;
+  color: #0052cc;
+}
+
+.modal-header__close-btn {
+  background: none;
+  border: none;
+  color: #5e6c84;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.modal-header__close-btn:hover {
+  background-color: #ebecf0;
+  color: #172b4d;
+}
+
+.modal-detail-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .modal-detail-layout {
+    grid-template-columns: 7fr 3fr;
+  }
+}
+
+.modal-detail-left {
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  min-height: 0;
+  background-color: #ffffff;
+}
+
+.modal-detail-right {
+  padding: 24px 20px;
+  background-color: #fafbfc;
+  border-top: 1px solid var(--jira-border, #dfe1e6);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+@media (min-width: 1024px) {
+  .modal-detail-right {
+    border-top: none;
+    border-left: 1px solid var(--jira-border, #dfe1e6);
+  }
+}
+
+/* Jira Action Bar (Buttons: Attach, Subtask, Link Issue) */
+.jira-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jira-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid var(--jira-border, #dfe1e6);
+  background-color: #f4f5f7;
+  color: #172b4d;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.jira-action-btn:hover {
+  background-color: #ebecf0;
+}
+
+/* Jira Subtasks Section - Modern Jira/Linear Style */
+.jira-subtasks-card {
+  border: 1px solid var(--jira-border, #dfe1e6);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(9, 30, 66, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.jira-subtasks-header {
+  padding: 12px 16px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.jira-subtasks-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jira-subtasks-progress-bar {
+  width: 120px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #e2e8f0;
+  overflow: hidden;
+}
+
+.jira-subtasks-progress-fill {
+  height: 100%;
+  background-color: #0052cc;
+  border-radius: 9999px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.jira-subtasks-progress-fill--complete {
+  background-color: #059669;
+}
+
+.subtask-celebration-banner {
+  padding: 8px 14px;
+  background-color: #ecfdf5;
+  border-bottom: 1px solid #a7f3d0;
+  font-size: 11.5px;
+  color: #065f46;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subtasks-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.subtasks-empty-state {
+  padding: 20px 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+  background-color: #ffffff;
+}
+
+.subtask-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: background-color var(--transition-fast, 120ms ease);
+  user-select: none;
+}
+
+.subtask-row:hover {
+  background-color: #f8fafc;
+}
+
+.subtask-row--done {
+  background-color: #fafbfc;
+}
+
+.subtask-checkbox-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  color: #ffffff;
+  transition: all var(--transition-fast, 120ms ease);
+}
+
+.subtask-checkbox-btn:hover {
+  border-color: #0052cc;
+  background-color: #deebff;
+}
+
+.subtask-checkbox-btn.checked {
+  background-color: #0052cc;
+  border-color: #0052cc;
+}
+
+.subtask-index {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: #8993a4;
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.subtask-title {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #172b4d;
+  line-height: 1.4;
+  transition: color var(--transition-fast, 120ms ease);
+}
+
+.subtask-title--done {
+  color: #6b778c;
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+.subtask-status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.subtask-status-pill--done {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.subtask-status-pill--todo {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.subtask-delete-btn {
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast, 120ms ease);
+}
+
+.subtask-delete-btn:hover {
+  color: #dc2626;
+  background-color: #fee2e2;
+}
+
+.subtask-add-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.subtask-add-icon {
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.subtask-add-input {
+  flex: 1;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color var(--transition-fast, 120ms ease);
+}
+
+.subtask-add-input:focus {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+.subtask-add-input:focus {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+/* 6-Phase Software House Lifecycle Stepper */
+.lifecycle-card {
+  background-color: #fafbfc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--jira-border, #dfe1e6);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lifecycle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding-top: 4px;
+}
+
+@media (min-width: 640px) {
+  .lifecycle-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .lifecycle-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.phase-card-btn {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #dfe1e6;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 72px;
+  cursor: pointer;
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.phase-card-btn.active {
+  background-color: #0052cc;
+  color: white;
+  border-color: #0747a6;
+  box-shadow: 0 4px 6px -1px rgba(0, 82, 204, 0.2);
+}
+
+.phase-card-btn.done {
+  background-color: #e3fcef;
+  color: #006644;
+  border-color: #abf5d1;
+}
+
+.phase-card-btn:hover:not(.active) {
+  border-color: #4c9aff;
+  background-color: #deebff;
+}
+
+/* Diff Viewer */
+.diff-card {
+  background-color: #172b4d;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #253858;
+  box-shadow: 0 4px 6px -1px rgba(9, 30, 66, 0.15);
+}
+
+.diff-header {
+  padding: 8px 14px;
+  background-color: #091e42;
+  border-bottom: 1px solid #253858;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #c1c7d0;
+}
+
+.diff-content {
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  max-height: 220px;
+}
+
+.diff-line-add {
+  color: #79f2c0;
+  background-color: rgba(54, 179, 126, 0.2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  display: block;
+}
+
+.diff-line-del {
+  color: #ffbdad;
+  background-color: rgba(255, 86, 48, 0.2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  display: block;
+}
+
+.diff-line-header {
+  color: #4c9aff;
+  font-weight: 700;
+  padding: 2px 6px;
+  display: block;
+}
+
+.diff-line-normal {
+  color: #a5b2c6;
+  padding: 2px 6px;
+  display: block;
+}
+
+/* Sub-modals Overlay (Triage, QA, RCA, PR, Reject, Revision) */
+.submodal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background-color: rgba(9, 30, 66, 0.54);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.submodal-box {
+  background: white;
+  border-radius: 8px;
+  max-width: 520px;
+  width: 100%;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 32px -8px rgba(9, 30, 66, 0.25);
+  border: 1px solid var(--jira-border, #dfe1e6);
+}
+
+/* Jira Right Sidebar Metadata Rows */
+.jira-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jira-meta-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5e6c84;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.jira-meta-value {
+  font-size: 12px;
+  color: #172b4d;
+}
+
+/* Jira Time Tracking Bar */
+.jira-timetrack-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background-color: #ebecf0;
+  overflow: hidden;
+  display: flex;
+}
+
+.jira-timetrack-logged {
+  height: 100%;
+  background-color: #0052cc;
+  border-radius: 4px 0 0 4px;
+}
+
+.jira-timetrack-remaining {
+  height: 100%;
+  background-color: #ebecf0;
+}
+
+
+
+/* ==========================================================================
+   Create Issue Modal (Proportional 2-Column SaaS Dialog)
+   ========================================================================== */
+
+.modal-dialog--create {
+  max-width: 960px !important;
+  width: 94% !important;
+  max-height: 90vh !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.08) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #ffffff !important;
+}
+
+.create-issue-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  flex-shrink: 0;
+}
+
+.create-issue-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.create-issue-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4338ca 0%, #312e81 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 6px rgba(67, 56, 202, 0.25);
+  flex-shrink: 0;
+}
+
+.create-issue-body {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 24px;
+  padding: 24px 28px;
+  overflow-y: auto;
+  max-height: calc(88vh - 130px);
+  background: white;
+}
+
+@media (max-width: 860px) {
+  .create-issue-body {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 18px;
+  }
+}
+
+.create-issue-left {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.create-issue-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-left: 20px;
+  border-left: 1px solid #f1f5f9;
+}
+
+@media (max-width: 860px) {
+  .create-issue-right {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 16px;
+  }
+}
+
+.create-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.create-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Type Selector Chips */
+.create-type-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.create-type-chip {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.create-type-chip:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.create-type-chip.active {
+  background: #e0e7ff;
+  border-color: #4338ca;
+  color: #4338ca;
+  font-weight: 700;
+}
+
+.create-type-chip.active.type-bug {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #b91c1c;
+}
+
+.create-type-chip.active.type-feature {
+  background: #f3e8ff;
+  border-color: #8b5cf6;
+  color: #6d28d9;
+}
+
+.create-type-chip.active.type-revisi {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+/* Input Styles */
+.create-input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.create-input:focus {
+  border-color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.12);
+}
+
+.create-input-title {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+.create-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 90px;
+  transition: all 0.15s ease;
+}
+
+.create-textarea:focus {
+  border-color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.12);
+}
+
+/* Priority Card Selector */
+.create-priority-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.create-priority-card {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.create-priority-card:hover {
+  background: #f8fafc;
+}
+
+.create-priority-card.active {
+  border-width: 1.5px;
+}
+
+.create-priority-card.active.p-hotfix {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.create-priority-card.active.p-tinggi {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.create-priority-card.active.p-sedang {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.create-priority-card.active.p-rendah {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.p-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.p-dot-hotfix { background: #ef4444; }
+.p-dot-tinggi { background: #f59e0b; }
+.p-dot-sedang { background: #3b82f6; }
+.p-dot-rendah { background: #94a3b8; }
+
+/* Modal Footer */
+.create-issue-footer {
+  padding: 14px 28px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  border-radius: 0 0 16px 16px;
+}

@@ -1,0 +1,740 @@
+/* ==========================================================================
+   ATLASSIAN JIRA CLOUD ROADMAP & TIMELINE GANTT STYLING
+   Clean, modern, ergonomic layout following 8-pt grid system & modern design tokens.
+   ========================================================================== */
+
+.timeline-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--jira-bg-page, #f4f5f7);
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+
+.timeline-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* ==========================================================================
+   1. Header & Project Switcher Block
+   ========================================================================== */
+.timeline-header-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.timeline-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.timeline-breadcrumb__item--active {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.timeline-breadcrumb__item--current {
+  color: #0052cc;
+  font-weight: 700;
+}
+
+.timeline-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.timeline-project-pills {
+  display: flex;
+  background-color: #f1f5f9;
+  padding: 3px;
+  border-radius: 6px;
+  gap: 4px;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+}
+
+.tl-proj-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all var(--transition-fast, 120ms ease);
+  white-space: nowrap;
+}
+.tl-proj-pill:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+.tl-proj-pill--active {
+  background-color: #ffffff;
+  color: #0052cc;
+  font-weight: 700;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.08);
+}
+
+/* ==========================================================================
+   2. Filter & Controls Section (Two-tier, clean separation)
+   ========================================================================== */
+.timeline-controls-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Tier 1: Search and Status Filter */
+.timeline-controls-row--primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.timeline-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.timeline-search-box {
+  position: relative;
+  min-width: 260px;
+  flex: 1;
+  max-width: 360px;
+}
+
+.timeline-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.timeline-search-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 12px 0 32px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #0f172a;
+  outline: none;
+  transition: all var(--transition-fast, 120ms ease);
+}
+.timeline-search-input:focus {
+  background-color: #ffffff;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+.timeline-status-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.timeline-filter-label {
+  color: #64748b;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.timeline-status-select {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast, 120ms ease);
+}
+.timeline-status-select:focus {
+  border-color: #0052cc;
+}
+
+/* Tier 2: Category Grouping & Status Indicators Legend */
+.timeline-controls-row--secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.timeline-grouping-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timeline-group-segmented {
+  display: flex;
+  background-color: #f1f5f9;
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  gap: 2px;
+}
+
+.tl-group-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+/* Status Color Legend (Aligned cleanly on right) */
+.timeline-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.timeline-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+
+.timeline-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.timeline-legend-dot--done { background-color: #059669; }
+.timeline-legend-dot--progress { background-color: #0052cc; }
+.timeline-legend-dot--qa { background-color: #6d28d9; }
+.timeline-legend-dot--hotfix { background-color: #dc2626; }
+
+.timeline-legend-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #0052cc;
+  background-color: #deebff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #b3d4ff;
+  font-size: 10px;
+}
+
+.timeline-legend-today-indicator {
+  width: 2px;
+  height: 10px;
+  background-color: #0052cc;
+  border-radius: 1px;
+}
+
+/* ==========================================================================
+   3. Metric / Summary Cards (Uniform min-height, padding & typography)
+   ========================================================================== */
+.timeline-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.timeline-metric-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 112px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
+  transition: transform var(--transition-fast, 120ms ease), box-shadow var(--transition-fast, 120ms ease);
+}
+.timeline-metric-card:hover {
+  box-shadow: 0 4px 8px rgba(9, 30, 66, 0.08);
+}
+
+.timeline-metric-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.timeline-metric-card__label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.timeline-metric-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeline-metric-card__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.timeline-metric-card__value {
+  font-size: 26px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.timeline-metric-card__value--primary {
+  color: #0052cc;
+}
+
+.timeline-metric-card__value--purple {
+  color: #6d28d9;
+}
+
+.timeline-metric-card__subvalue {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.timeline-metric-card__badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
+
+/* Proportional Visual Progress Bar */
+.timeline-metric-card__progress-track {
+  width: 100%;
+  background-color: #e2e8f0;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.timeline-metric-card__progress-bar {
+  background: linear-gradient(90deg, #36b37e 0%, #059669 100%);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.timeline-metric-card__desc {
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ==========================================================================
+   4. Gantt Chart Canvas & Task Table (Fixed Width Column & Sticky Header)
+   ========================================================================== */
+.timeline-canvas {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(9, 30, 66, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-canvas__inner {
+  overflow-x: auto;
+  position: relative;
+  width: 100%;
+}
+
+/* Sticky Calendar Header */
+.timeline-header-row {
+  display: flex;
+  background-color: #fafbfc;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 25;
+}
+
+/* Fixed-width Left Column (320px) with Text Truncation */
+.timeline-col-ticket {
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 10px 16px;
+  border-right: 1px solid #e2e8f0;
+  background-color: #fafbfc;
+  position: sticky;
+  left: 0;
+  z-index: 26;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.timeline-col-ticket__header-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline-col-ticket__header-sub {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #64748b;
+}
+
+/* Calendar Days Grid Header */
+.timeline-days-track {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(30, minmax(28px, 1fr));
+  min-width: 840px;
+  text-align: center;
+}
+
+.timeline-day-cell {
+  padding: 6px 2px;
+  border-right: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  text-transform: uppercase;
+  color: #64748b;
+  user-select: none;
+}
+
+.timeline-day-cell__num {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.timeline-day-cell--weekend {
+  background-color: #f8fafc;
+}
+
+.timeline-day-cell--today {
+  background-color: #ebf3fc;
+  color: #0052cc;
+  font-weight: 700;
+  border-bottom: 2px solid #0052cc;
+}
+
+/* ==========================================================================
+   5. Gantt Body: Group Headers & Task Rows
+   ========================================================================== */
+.timeline-group-block {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tl-group-header {
+  display: flex;
+  align-items: center;
+  background-color: #fafbfc;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  user-select: none;
+  transition: background-color var(--transition-fast, 120ms ease);
+}
+.tl-group-header:hover {
+  background-color: #f1f5f9;
+}
+
+.tl-group-header .timeline-col-ticket {
+  background-color: inherit;
+  z-index: 15;
+}
+
+.tl-group-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tl-group-title {
+  font-weight: 700;
+  font-size: 12px;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-group-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  background-color: #ffffff;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.tl-group-subtext {
+  flex: 1;
+  padding: 8px 16px;
+  font-size: 11px;
+  color: #64748b;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Task Rows */
+.tl-task-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+  background-color: #ffffff;
+  transition: background-color var(--transition-fast, 120ms ease);
+}
+.tl-task-row:hover {
+  background-color: #f8fafc;
+}
+.tl-task-row:hover .timeline-col-ticket {
+  background-color: #f8fafc;
+}
+
+.tl-task-cell {
+  background-color: #ffffff;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.tl-task-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tl-task-key {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #0052cc;
+  background-color: #deebff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.tl-task-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.tl-task-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.tl-task-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #cbd5e1;
+}
+
+.tl-task-date {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #64748b;
+}
+
+/* Timeline Track & Grid */
+.timeline-track {
+  flex: 1;
+  position: relative;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  min-width: 840px;
+}
+
+.timeline-grid-bg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(30, minmax(28px, 1fr));
+  pointer-events: none;
+}
+
+.timeline-grid-cell {
+  height: 100%;
+  border-right: 1px solid #f1f5f9;
+}
+.timeline-grid-cell--weekend {
+  background-color: rgba(248, 250, 252, 0.7);
+}
+
+/* Today Indicator Marker */
+.timeline-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #0052cc;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 0 4px rgba(0, 82, 204, 0.3);
+}
+
+/* Gantt Bar with Accessible High Contrast */
+.timeline-bar {
+  position: absolute;
+  top: 5px;
+  height: 26px;
+  border-radius: 4px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.15);
+  transition: transform var(--transition-fast, 120ms ease), filter var(--transition-fast, 120ms ease);
+}
+.timeline-bar:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.timeline-bar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-bar__hours {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  opacity: 0.95;
+  margin-left: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1px 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   6. Footer Explanatory Card
+   ========================================================================== */
+.timeline-footer-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 12px 18px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
+}
+
+.timeline-footer-card__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timeline-footer-card__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
+  .timeline-view {
+    padding: 16px;
+  }
+}

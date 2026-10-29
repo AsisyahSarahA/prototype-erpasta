@@ -1,0 +1,412 @@
+/* ==========================================================================
+   TOPBAR COMPONENT STYLING - MODERN JIRA / LINEAR INSPIRED GLOBAL NAV
+   Single-row Flexbox layout: Left (Brand & Project), Center (Search), Right (Actions)
+   Adheres to 8-pt spacing, Slate/Zinc neutral palette, zero overlap guaranteed.
+   ========================================================================== */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--color-border, #dfe1e6);
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.05);
+  height: var(--topbar-height, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 16px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* ==========================================================================
+   1. Left Zone: Brand Logo, App Launcher & Project Breadcrumb
+   ========================================================================== */
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.topbar__app-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm, 4px);
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast, 120ms ease), color var(--transition-fast, 120ms ease);
+}
+.topbar__app-switcher:hover {
+  background-color: #f1f5f9;
+  color: var(--jira-blue, #0052cc);
+}
+
+.topbar__brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar__jira-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #0052cc 0%, #2684ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 1px 2px rgba(0, 82, 204, 0.3);
+  letter-spacing: -0.02em;
+}
+
+.topbar__brand-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.topbar__brand-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background-color: #deebff;
+  color: #0052cc;
+  letter-spacing: 0.02em;
+}
+
+.topbar__divider {
+  font-size: 14px;
+  font-weight: 400;
+  color: #cbd5e1;
+  user-select: none;
+}
+
+.topbar__project-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 220px;
+}
+
+.topbar__project-select {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 24px 4px 8px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  transition: all var(--transition-fast, 120ms ease);
+}
+.topbar__project-select:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.topbar__project-select:focus {
+  background-color: #ffffff;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+.topbar__project-chevron {
+  position: absolute;
+  right: 6px;
+  color: #64748b;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.topbar__context-page {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0052cc;
+  background-color: #f0f7ff;
+  border: 1px solid #deebff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   2. Center Zone: Responsive Centered Global Search Bar
+   ========================================================================== */
+.topbar__center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  max-width: 420px;
+  min-width: 180px;
+  margin: 0 8px;
+}
+
+.topbar__search-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.topbar__search-icon {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.topbar__search-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 32px 0 32px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #0f172a;
+  outline: none;
+  transition: all var(--transition-fast, 120ms ease);
+}
+.topbar__search-input::placeholder {
+  color: #94a3b8;
+  font-size: 12px;
+}
+.topbar__search-input:hover {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+}
+.topbar__search-input:focus {
+  background-color: #ffffff;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+.topbar__search-shortcut {
+  position: absolute;
+  right: 8px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background-color: #ffffff;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  pointer-events: none;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+/* ==========================================================================
+   3. Right Zone: Action Buttons, Role Switcher, Notifications, Avatar
+   ========================================================================== */
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Jira Iconic Primary "+ Buat" Button */
+.topbar__create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  background-color: #0052cc;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 82, 204, 0.2);
+  cursor: pointer;
+  transition: background-color var(--transition-fast, 120ms ease), transform var(--transition-fast, 120ms ease);
+}
+.topbar__create-btn:hover {
+  background-color: #0065ff;
+}
+.topbar__create-btn:active {
+  background-color: #0747a6;
+  transform: translateY(1px);
+}
+
+.topbar__create-plus {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.topbar__create-key {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 1px 5px;
+  border-radius: 2px;
+  line-height: 1.2;
+}
+
+/* Role Selector Badge (RBAC Simulation) */
+.topbar__role-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0 8px;
+  height: 32px;
+  transition: border-color var(--transition-fast, 120ms ease);
+}
+.topbar__role-badge:hover {
+  border-color: #cbd5e1;
+  background-color: #ffffff;
+}
+
+.topbar__role-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.topbar__role-select {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  padding-right: 4px;
+}
+
+/* Icon Buttons (Notification Bell, Reset Demo) */
+.topbar__notif-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.topbar__icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+  position: relative;
+  cursor: pointer;
+  transition: all var(--transition-fast, 120ms ease);
+}
+.topbar__icon-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+.topbar__notif-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  border: 2px solid #ffffff;
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  70% { transform: scale(1); box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* User Profile Avatar */
+.topbar__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #cbd5e1;
+  cursor: pointer;
+  transition: transform var(--transition-fast, 120ms ease), border-color var(--transition-fast, 120ms ease);
+}
+.topbar__avatar:hover {
+  transform: scale(1.05);
+  border-color: #0052cc;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .topbar__context-sep,
+  .topbar__context-page {
+    display: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .topbar__brand-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar__brand-title {
+    display: none;
+  }
+  .topbar__divider {
+    display: none;
+  }
+  .topbar__center {
+    min-width: 120px;
+  }
+  .topbar__role-label {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar__project-wrapper {
+    display: none;
+  }
+  .topbar__role-badge {
+    display: none;
+  }
+}

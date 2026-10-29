@@ -1,0 +1,6 @@
+{
+  "name": "Project Manjer",
+  "description": "Sistem manajemen proyek terpadu (CRM, HR, Finance) dengan otomasi perbaikan bug berbasis AI dan kontrol persetujuan manusia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,17 @@
+/* ==========================================================================
+   SIDEBAR ADAPTER STYLES — UNIFIED ASTACODE ERP SIDEBAR
+   All sidebar styles are inherited from ../../sidebar.css
+   ========================================================================== */
+
+#sidebar-container {
+  flex-shrink: 0;
+  width: 270px;
+  height: 100vh;
+}
+
+@media (max-width: 820px) {
+  #sidebar-container {
+    width: 0 !important;
+    min-width: 0 !important;
+  }
+}

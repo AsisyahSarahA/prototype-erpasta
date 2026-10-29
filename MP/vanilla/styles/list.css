@@ -1,0 +1,567 @@
+/* ==========================================================================
+   ASTACODE ERP — DAFTAR PEKERJAAN & JQL ISSUE NAVIGATOR
+   Proportional modern data table, JQL console & CRM design tokens.
+   ========================================================================== */
+
+.list-view-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background-color: var(--bg-primary, #f8fafc);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.list-view-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+.list-view-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-primary, #f8fafc);
+}
+.list-view-wrapper::-webkit-scrollbar-thumb {
+  background: var(--slate-300, #cbd5e1);
+  border-radius: 9999px;
+  border: 2px solid var(--bg-primary, #f8fafc);
+}
+.list-view-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400, #94a3b8);
+}
+
+.list-root-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  padding: 20px 24px 36px 24px;
+  box-sizing: border-box;
+}
+
+/* ── 1. Top Header & KPI Bar ─────────────────────────────────────────────── */
+.list-top-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-header-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.list-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.list-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.list-breadcrumbs a,
+.list-breadcrumbs span {
+  white-space: nowrap;
+}
+
+.list-breadcrumbs .crumb-current {
+  color: var(--indigo-600, #4f46e5);
+  font-weight: 700;
+}
+
+.list-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.list-page-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.list-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: var(--radius-full, 9999px);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--indigo-600, #4f46e5);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.list-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* KPI Summary Bar */
+.list-kpi-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light, #f1f5f9);
+  font-size: 11.5px;
+}
+
+.list-kpi-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.list-kpi-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.list-kpi-label {
+  color: var(--text-muted, #94a3b8);
+  font-weight: 500;
+}
+
+.list-kpi-val {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+}
+
+.list-kpi-divider {
+  width: 1px;
+  height: 12px;
+  background-color: var(--border, #e2e8f0);
+}
+
+/* ── 2. JQL Query Console Card ───────────────────────────────────────────── */
+.jql-console-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jql-console-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.jql-console-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.jql-console-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md, 8px);
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: var(--indigo-600, #4f46e5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.jql-console-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  margin: 0;
+}
+
+.jql-console-sub {
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+  margin: 2px 0 0 0;
+}
+
+.jql-console-sub code {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--indigo-600, #4f46e5);
+  background: var(--bg-secondary, #f1f5f9);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* JQL Search Input Box */
+.jql-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.jql-input-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted, #94a3b8);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.jql-search-input {
+  width: 100%;
+  padding: 9px 90px 9px 38px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12.5px;
+  color: var(--text-primary, #1e293b);
+  background-color: var(--bg-secondary, #f1f5f9);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  outline: none;
+  transition: all var(--transition, 150ms ease);
+}
+
+.jql-search-input:focus {
+  background-color: #ffffff;
+  border-color: var(--indigo-500, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.jql-input-actions {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.jql-clear-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.jql-clear-btn:hover {
+  color: var(--text-primary, #1e293b);
+}
+
+.jql-submit-btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-md, 8px);
+  background: var(--indigo-600, #4f46e5);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition, 150ms ease);
+}
+
+.jql-submit-btn:hover {
+  background: var(--indigo-700, #4338ca);
+}
+
+/* JQL Presets Bar */
+.jql-presets-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.jql-preset-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.jql-preset-chip {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-secondary, #64748b);
+  cursor: pointer;
+  transition: all var(--transition, 150ms ease);
+  user-select: none;
+}
+
+.jql-preset-chip:hover {
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--text-primary, #1e293b);
+}
+
+.jql-preset-chip.active {
+  background: var(--indigo-600, #4f46e5);
+  color: #ffffff;
+  border-color: var(--indigo-600, #4f46e5);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
+}
+
+/* ── 3. Bulk Action Toolbar ──────────────────────────────────────────────── */
+.list-bulk-bar {
+  background: var(--slate-900, #0f172a);
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  animation: slideInDown 0.2s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.list-bulk-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.list-bulk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--emerald-400, #34d399);
+}
+
+.list-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── 4. High-Density Proportional Data Table ─────────────────────────────── */
+.list-table-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-table-header-bar {
+  padding: 12px 18px;
+  background: var(--bg-card, #ffffff);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.list-table-scroll-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.list-table-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+.list-table-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--slate-300, #cbd5e1);
+  border-radius: 9999px;
+}
+
+.jql-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.jql-data-table th {
+  background: var(--bg-secondary, #f1f5f9);
+  padding: 11px 14px;
+  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  white-space: nowrap;
+  user-select: none;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.jql-data-table th.sortable {
+  cursor: pointer;
+  transition: color var(--transition, 150ms ease);
+}
+
+.jql-data-table th.sortable:hover {
+  color: var(--indigo-600, #4f46e5);
+}
+
+.jql-data-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border-light, #f1f5f9);
+  color: var(--text-primary, #1e293b);
+  vertical-align: middle;
+  transition: background-color var(--transition, 150ms ease);
+}
+
+.jql-data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.jql-data-table tr:hover td {
+  background-color: var(--slate-50, #f8fafc);
+}
+
+.jql-data-table tr.selected td {
+  background-color: rgba(99, 102, 241, 0.08);
+}
+
+/* Key Link Badge */
+.table-key-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--indigo-600, #4f46e5);
+  border: 1px solid var(--border, #e2e8f0);
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+  transition: all var(--transition, 150ms ease);
+}
+
+.table-key-badge:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Task Title Link */
+.table-task-title {
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 340px;
+  display: block;
+  transition: color var(--transition, 150ms ease);
+}
+
+.table-task-title:hover {
+  color: var(--indigo-600, #4f46e5);
+}
+
+/* Priority Badges */
+.table-priority-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* Assignee Pill */
+.table-assignee-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.table-assignee-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.table-hours-cell {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── 5. Responsive Styles ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .list-root-container {
+    padding: 12px 14px 28px 14px;
+    gap: 14px;
+  }
+  .list-top-card,
+  .jql-console-card {
+    padding: 12px 14px;
+  }
+}

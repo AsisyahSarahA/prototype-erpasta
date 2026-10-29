@@ -1,0 +1,835 @@
+/* ==========================================================================
+   ASTACODE ERP - Service Desk / Klien (Telegram Bot & Client Portal)
+   Proportional SaaS Layout, Conforming to crm-theme.css & global.css
+   ========================================================================== */
+
+.client-view {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background-color: var(--crm-bg, #f8fafc);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Master Full-Width Container */
+.sd-master-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-sizing: border-box;
+  min-height: 100%;
+}
+
+@media (max-width: 768px) {
+  .sd-master-container {
+    padding: 14px;
+    gap: 14px;
+  }
+}
+
+/* Breadcrumb & Navigation Bar */
+.sd-breadcrumb-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sd-breadcrumb-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--crm-text-secondary, #64748b);
+}
+
+.sd-breadcrumb-path a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.sd-breadcrumb-path a:hover {
+  color: var(--crm-primary, #4338ca);
+}
+
+.sd-breadcrumb-separator {
+  color: #cbd5e1;
+}
+
+.sd-breadcrumb-current {
+  font-weight: 700;
+  color: var(--crm-text-primary, #0f172a);
+}
+
+.sd-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sd-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ebf5fb;
+  color: #0284c7;
+  border: 1px solid #bce2f7;
+}
+
+.sd-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #24a1de;
+  animation: sdPulse 2s infinite;
+}
+
+@keyframes sdPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* 4 Executive Scorecards (KPIs) */
+.sd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 1100px) {
+  .sd-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .sd-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sd-kpi-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.sd-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
+}
+
+.sd-kpi-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sd-kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.sd-kpi-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.sd-kpi-icon-tg { background: #e0f2fe; color: #0284c7; }
+.sd-kpi-icon-emerald { background: #ecfdf5; color: #047857; }
+.sd-kpi-icon-indigo { background: #e0e7ff; color: #4338ca; }
+.sd-kpi-icon-amber { background: #fef3c7; color: #b45309; }
+
+.sd-kpi-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.sd-kpi-subtext {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ==========================================================================
+   Main Proportional Telegram Workspace (3-Column Layout)
+   ========================================================================== */
+
+.sd-workspace-grid {
+  display: grid;
+  grid-template-columns: 310px 1fr 310px;
+  gap: 18px;
+  align-items: stretch;
+  min-height: 640px;
+}
+
+@media (max-width: 1280px) {
+  .sd-workspace-grid {
+    grid-template-columns: 280px 1fr;
+  }
+  .sd-transparency-drawer {
+    display: none;
+  }
+  .sd-transparency-drawer.mobile-show {
+    display: flex;
+  }
+}
+
+@media (max-width: 860px) {
+  .sd-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+  .tg-channel-sidebar {
+    height: 280px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Left Column: Telegram Channel & Sessions Sidebar
+   -------------------------------------------------------------------------- */
+.tg-channel-sidebar {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.tg-sidebar-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #ffffff;
+}
+
+.tg-sidebar-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tg-sidebar-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tg-search-box {
+  position: relative;
+  width: 100%;
+}
+
+.tg-search-box input {
+  width: 100%;
+  padding: 7px 10px 7px 30px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 11px;
+  background: #f8fafc;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.tg-search-box input:focus {
+  background: white;
+  border-color: #24a1de;
+  box-shadow: 0 0 0 2px rgba(36, 161, 222, 0.15);
+}
+
+.tg-search-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+}
+
+.tg-channel-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.tg-channel-item {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.tg-channel-item:hover {
+  background: #f8fafc;
+}
+
+.tg-channel-item.active {
+  background: #eef8ff;
+  border-left: 3px solid #24a1de;
+}
+
+.tg-avatar-wrap {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.tg-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.tg-avatar-bot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #24a1de 0%, #0088cc 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(36, 161, 222, 0.3);
+}
+
+.tg-online-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid white;
+}
+
+.tg-channel-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tg-channel-top-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tg-channel-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tg-channel-time {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.tg-channel-snippet {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tg-channel-item.active .tg-channel-snippet {
+  color: #0369a1;
+  font-weight: 500;
+}
+
+/* Linked Tickets Quick Drawer in Left Sidebar */
+.tg-sidebar-linked-tickets {
+  padding: 12px 14px;
+  background: #fafbfc;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tg-sidebar-subheading {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tg-ticket-pills-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tg-ticket-mini-pill {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  font-size: 11px;
+  color: #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tg-ticket-mini-pill:hover {
+  border-color: #24a1de;
+  color: #0284c7;
+}
+
+/* --------------------------------------------------------------------------
+   Center Column: Authentic Telegram Web Chat Interface
+   -------------------------------------------------------------------------- */
+.tg-chat-arena {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  height: 100%;
+  position: relative;
+}
+
+/* Telegram Header */
+.tg-chat-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.tg-chat-header-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tg-chat-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tg-chat-header-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tg-verified-icon {
+  color: #24a1de;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tg-chat-header-status {
+  font-size: 11px;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tg-chat-header-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Chat Wallpaper & Message Stream */
+.tg-chat-stream {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #e6ebf0;
+  background-image: 
+    radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+  position: relative;
+}
+
+/* Day Divider */
+.tg-day-divider {
+  align-self: center;
+  background: rgba(0, 0, 0, 0.2);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 9999px;
+  margin: 6px 0;
+  backdrop-filter: blur(2px);
+}
+
+/* Message Bubbles */
+.tg-message-wrap {
+  display: flex;
+  flex-direction: column;
+  max-width: 82%;
+  position: relative;
+  animation: tgFadeIn 0.15s ease-out;
+}
+
+@keyframes tgFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tg-message-wrap.in {
+  align-self: flex-start;
+}
+
+.tg-message-wrap.out {
+  align-self: flex-end;
+}
+
+.tg-bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  position: relative;
+  word-break: break-word;
+}
+
+/* Bot / Incoming Bubble */
+.tg-bubble.in {
+  background: white;
+  color: #0f172a;
+  border-bottom-left-radius: 3px;
+  border: 1px solid #e2e8f0;
+}
+
+/* User / Outgoing Bubble (Telegram green tint) */
+.tg-bubble.out {
+  background: #effdde;
+  color: #0f172a;
+  border-bottom-right-radius: 3px;
+  border: 1px solid #dcf8c6;
+}
+
+.tg-bubble-sender-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0284c7;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tg-bubble-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 4px;
+  user-select: none;
+}
+
+.tg-bubble.out .tg-bubble-footer {
+  color: #5bb35b;
+}
+
+.tg-ticks-read {
+  color: #24a1de;
+  font-weight: bold;
+}
+
+/* Telegram Inline Keyboard Buttons */
+.tg-inline-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.tg-inline-btn {
+  background: rgba(36, 161, 222, 0.08);
+  border: 1px solid rgba(36, 161, 222, 0.3);
+  color: #0284c7;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.tg-inline-btn:hover {
+  background: #24a1de;
+  color: white;
+  border-color: #24a1de;
+}
+
+/* Typing Indicator */
+.tg-typing-indicator {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  color: #64748b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tg-typing-indicator.active {
+  display: inline-flex;
+}
+
+.tg-typing-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #24a1de;
+  animation: tgTypingAnim 1.4s infinite ease-in-out;
+}
+
+.tg-typing-dot:nth-child(1) { animation-delay: 0s; }
+.tg-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.tg-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes tgTypingAnim {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Quick Commands Bar */
+.tg-quick-commands {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tg-quick-commands::-webkit-scrollbar {
+  display: none;
+}
+
+.tg-command-pill {
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  color: #0284c7;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.tg-command-pill:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0369a1;
+}
+
+/* Telegram Input Bar */
+.tg-input-bar {
+  padding: 10px 14px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tg-input-field {
+  flex: 1;
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
+  background: #f8fafc;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.tg-input-field:focus {
+  background: white;
+  border-color: #24a1de;
+  box-shadow: 0 0 0 2px rgba(36, 161, 222, 0.15);
+}
+
+.tg-icon-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.tg-icon-btn:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.tg-send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #24a1de;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(36, 161, 222, 0.35);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.tg-send-btn:hover {
+  background: #0088cc;
+  transform: scale(1.05);
+}
+
+/* --------------------------------------------------------------------------
+   Right Column: Transparency Drawer & Client Profile
+   -------------------------------------------------------------------------- */
+.sd-transparency-drawer {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  overflow-y: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.sd-drawer-section-card {
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sd-drawer-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sd-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.sd-info-label {
+  color: #64748b;
+}
+
+.sd-info-val {
+  font-weight: 600;
+  color: #0f172a;
+}

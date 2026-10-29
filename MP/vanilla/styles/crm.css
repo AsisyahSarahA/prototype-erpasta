@@ -1,0 +1,582 @@
+/* ==========================================================================
+   CRM DEALS & INTAKE VIEW STYLING (ATLASSIAN JIRA / LINEAR STYLE)
+   High-contrast, ergonomic, 8-pt grid compliant, robust button styling.
+   ========================================================================== */
+
+.crm-view {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--jira-bg-page, #f4f5f7);
+  padding: 24px 32px;
+  font-family: var(--font-sans);
+  color: #0f172a;
+}
+
+.crm-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* ==========================================================================
+   1. Top Header Banner
+   ========================================================================== */
+.crm-banner {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.crm-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.crm-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #0052cc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.crm-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.crm-banner-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.crm-badge-blue {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: #eff6ff;
+  color: #0052cc;
+  border: 1px solid #bfdbfe;
+}
+
+.crm-badge-green {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.crm-banner-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+.crm-banner-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   2. Pipeline Summary Metrics Strip (Uniform 112px min-height)
+   ========================================================================== */
+.crm-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.crm-metric-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
+  transition: transform var(--transition-fast, 120ms ease), box-shadow var(--transition-fast, 120ms ease);
+}
+.crm-metric-card:hover {
+  box-shadow: 0 4px 8px rgba(9, 30, 66, 0.08);
+}
+
+.crm-metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.crm-metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.crm-metric-value--green {
+  color: #059669;
+}
+
+.crm-metric-value--blue {
+  color: #0052cc;
+}
+
+.crm-metric-subtext {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   3. Deals Grid & Cards (Modern Jira-grade cards)
+   ========================================================================== */
+.crm-deals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+}
+
+.crm-deal-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
+  transition: all var(--transition-normal, 200ms ease);
+}
+.crm-deal-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 16px -2px rgba(9, 30, 66, 0.08);
+  transform: translateY(-2px);
+}
+
+.crm-deal-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.crm-deal-code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #f1f5f9;
+  color: #0052cc;
+  border: 1px solid #e2e8f0;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.crm-deal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.crm-deal-client {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Stage Badges */
+.crm-stage-pill {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.crm-stage-pill.won {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.crm-stage-pill.negotiation {
+  background-color: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.crm-stage-pill.proposal {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.crm-deal-desc {
+  font-size: 12px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Commercial Specifications Box */
+.crm-deal-specs {
+  padding: 12px 14px;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.crm-spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-spec-label {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.crm-spec-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.crm-spec-arch {
+  font-weight: 600;
+  color: #0052cc;
+  background-color: #eff6ff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #bfdbfe;
+  font-size: 11px;
+}
+
+/* Action Buttons Container on Cards */
+.crm-deal-actions {
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Primary High-Contrast Action Buttons */
+.crm-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff !important;
+  background-color: #0052cc !important;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 82, 204, 0.25);
+  transition: all var(--transition-fast, 120ms ease);
+  user-select: none;
+}
+.crm-btn-primary:hover {
+  background-color: #0065ff !important;
+  box-shadow: 0 2px 4px rgba(0, 82, 204, 0.35);
+  transform: translateY(-1px);
+}
+.crm-btn-primary:active {
+  background-color: #0747a6 !important;
+  transform: translateY(0);
+}
+
+.crm-btn-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff !important;
+  background-color: #059669 !important;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.25);
+  transition: all var(--transition-fast, 120ms ease);
+}
+.crm-btn-success:hover {
+  background-color: #047857 !important;
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.35);
+  transform: translateY(-1px);
+}
+
+.crm-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast, 120ms ease);
+}
+.crm-btn-secondary:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+.crm-btn-blueprint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0052cc !important;
+  background-color: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast, 120ms ease);
+}
+.crm-btn-blueprint:hover {
+  background-color: #dbeafe !important;
+  border-color: #93c5fd !important;
+}
+
+/* ==========================================================================
+   4. Conversion Wizard Modal Box (Fixed contrast & button visibility)
+   ========================================================================== */
+.crm-wizard-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(9, 30, 66, 0.54);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.crm-wizard-box {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  max-width: 760px;
+  width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px -10px rgba(9, 30, 66, 0.25);
+  overflow: hidden;
+  padding: 24px;
+  gap: 18px;
+}
+
+.crm-wizard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.crm-wizard-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.crm-wizard-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+}
+
+.crm-wizard-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast, 120ms ease);
+}
+.crm-wizard-close:hover {
+  color: #0f172a;
+}
+
+/* Stepper Tabs */
+.crm-wizard-stepper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.crm-wizard-step {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  transition: all var(--transition-fast, 120ms ease);
+}
+.crm-wizard-step.active {
+  border-color: #0052cc;
+  background-color: #eff6ff;
+  color: #0052cc;
+  font-weight: 700;
+}
+
+/* Form Groups inside Wizard */
+.crm-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crm-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.crm-form-input,
+.crm-form-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-family: inherit;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color var(--transition-fast, 120ms ease);
+}
+.crm-form-input:focus,
+.crm-form-select:focus {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+.crm-form-input:disabled {
+  background-color: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+/* Wizard Module Items */
+.crm-mod-item {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Wizard Footer Navigation Controls */
+.crm-wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.crm-wizard-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .crm-view {
+    padding: 16px;
+  }
+  .crm-deals-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,542 @@
+/* ==========================================================================
+   ASTACODE ERP — TIM HR & WORKLOAD MANAGEMENT VIEW STYLING
+   Proportional layout, zero text-stacking, clean card architecture & CRM tokens.
+   ========================================================================== */
+
+.hr-view-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background-color: var(--bg-primary, #f8fafc);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hr-view-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+.hr-view-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-primary, #f8fafc);
+}
+.hr-view-wrapper::-webkit-scrollbar-thumb {
+  background: var(--slate-300, #cbd5e1);
+  border-radius: 9999px;
+  border: 2px solid var(--bg-primary, #f8fafc);
+}
+.hr-view-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400, #94a3b8);
+}
+
+.hr-root-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  padding: 20px 24px 36px 24px;
+  box-sizing: border-box;
+}
+
+/* ── 1. Top Header Banner Card ───────────────────────────────────────────── */
+.hr-top-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hr-header-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hr-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hr-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.hr-breadcrumbs a,
+.hr-breadcrumbs span {
+  white-space: nowrap;
+}
+
+.hr-breadcrumbs .crumb-current {
+  color: var(--indigo-600, #4f46e5);
+  font-weight: 700;
+}
+
+.hr-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hr-page-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.hr-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: var(--radius-full, 9999px);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--emerald-600, #059669);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.hr-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── 2. KPI Summary Metrics Strip ────────────────────────────────────────── */
+.hr-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.hr-kpi-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  padding: 14px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hr-kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #94a3b8);
+}
+
+.hr-kpi-value {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-primary, #1e293b);
+}
+
+.hr-kpi-sub {
+  font-size: 11.5px;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.4;
+}
+
+/* ── 3. Filter & Search Toolbar Card ─────────────────────────────────────── */
+.hr-filter-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  padding: 12px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hr-filter-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.hr-search-wrap {
+  position: relative;
+  min-width: 240px;
+  max-width: 320px;
+  flex: 1;
+}
+
+.hr-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted, #94a3b8);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.hr-search-input {
+  width: 100%;
+  padding: 7px 12px 7px 32px;
+  font-size: 12px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  background-color: var(--bg-secondary, #f1f5f9);
+  color: var(--text-primary, #1e293b);
+  outline: none;
+  transition: all var(--transition, 150ms ease);
+}
+
+.hr-search-input:focus {
+  background-color: #ffffff;
+  border-color: var(--indigo-500, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.hr-role-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hr-chip-btn {
+  padding: 5px 10px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-secondary, #64748b);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--transition, 150ms ease);
+  user-select: none;
+}
+
+.hr-chip-btn:hover {
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--text-primary, #1e293b);
+}
+
+.hr-chip-btn.active {
+  background: var(--indigo-600, #4f46e5);
+  color: #ffffff;
+  border-color: var(--indigo-600, #4f46e5);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
+}
+
+.hr-filter-right {
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── 4. Member Cards List Container ──────────────────────────────────────── */
+.hr-members-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hr-member-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all var(--transition, 150ms ease);
+}
+
+.hr-member-card:hover {
+  border-color: var(--indigo-400, #818cf8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Member Header Row: Profile, Badges, Status */
+.hr-member-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hr-member-profile-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.hr-member-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border, #e2e8f0);
+  flex-shrink: 0;
+}
+
+.hr-member-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hr-member-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hr-member-name {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.hr-member-contact-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+  flex-wrap: wrap;
+}
+
+.hr-github-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  background: var(--bg-secondary, #f1f5f9);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.hr-member-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Member Card Body: 2-Column Responsive Layout */
+.hr-member-body {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light, #f1f5f9);
+}
+
+.hr-member-body-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Skills Row */
+.hr-skills-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hr-skills-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.hr-skill-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--bg-secondary, #f1f5f9);
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--text-secondary, #64748b);
+  white-space: nowrap;
+}
+
+/* Active Modules Section */
+.hr-modules-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hr-modules-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.hr-module-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm, 6px);
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hr-module-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Member Body Right: Dedicated Workload & Capacity Box */
+.hr-member-body-right {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--bg-secondary, #f1f5f9);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hr-workload-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.hr-workload-title {
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+  font-size: 11.5px;
+}
+
+.hr-workload-numbers {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.hr-progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: var(--slate-200, #e2e8f0);
+  overflow: hidden;
+}
+
+.hr-progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.hr-overload-banner {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--red-500, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.hr-workload-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary, #64748b);
+  padding-top: 2px;
+}
+
+/* ── 5. Responsive Adjustments ───────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .hr-member-body {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .hr-member-body-right {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hr-root-container {
+    padding: 12px 14px 28px 14px;
+    gap: 14px;
+  }
+  .hr-top-card,
+  .hr-filter-card {
+    padding: 12px 14px;
+  }
+  .hr-member-card {
+    padding: 14px 16px;
+  }
+}

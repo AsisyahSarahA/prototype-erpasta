@@ -1,0 +1,953 @@
+/* ==========================================================================
+   ASTACODE ERP — BACKLOG & SPRINT PLANNING (CRM & PROPORTIONAL DESIGN)
+   Harmonized with crm-theme.css tokens, responsive grid & polished typography.
+   ========================================================================== */
+
+.backlog-view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background-color: var(--bg-primary, #f8fafc);
+  overflow: hidden;
+  position: relative;
+}
+
+.backlog-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── 1. Top Sticky Unified Header (Compact & Structured) ──────────────────── */
+.backlog-top-header {
+  background: var(--bg-card, #ffffff);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 20px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  z-index: 10;
+}
+
+/* Row 1: Breadcrumb, Title & Primary Action Controls */
+.backlog-header-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.backlog-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.backlog-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.backlog-breadcrumbs a,
+.backlog-breadcrumbs span {
+  white-space: nowrap;
+}
+
+.backlog-breadcrumbs .crumb-current {
+  color: var(--indigo-600, #4f46e5);
+  font-weight: 700;
+}
+
+.backlog-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.backlog-page-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.backlog-active-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: var(--radius-full, 9999px);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--emerald-600, #059669);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.backlog-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Row 2: KPI Metrics & Capacity Bar */
+.backlog-kpi-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light, #f1f5f9);
+  font-size: 11.5px;
+}
+
+.backlog-kpi-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.backlog-kpi-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.backlog-kpi-label {
+  color: var(--text-muted, #94a3b8);
+  font-weight: 500;
+}
+
+.backlog-kpi-val {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+}
+
+.backlog-kpi-divider {
+  width: 1px;
+  height: 12px;
+  background-color: var(--border, #e2e8f0);
+}
+
+/* Row 3: Modern Search, Filter Chips & Epics Panel Toggle */
+.backlog-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.backlog-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.backlog-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 240px;
+  max-width: 340px;
+  flex: 1;
+}
+
+.backlog-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted, #94a3b8);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.backlog-search-input {
+  width: 100%;
+  padding: 6px 12px 6px 32px;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border, #e2e8f0);
+  background-color: var(--bg-secondary, #f1f5f9);
+  font-size: 12px;
+  color: var(--text-primary, #1e293b);
+  outline: none;
+  transition: all var(--transition, 150ms ease);
+}
+
+.backlog-search-input:focus {
+  background-color: #ffffff;
+  border-color: var(--indigo-500, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.backlog-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.backlog-chip-btn {
+  padding: 5px 10px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-secondary, #64748b);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--transition, 150ms ease);
+  user-select: none;
+}
+
+.backlog-chip-btn:hover {
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--text-primary, #1e293b);
+}
+
+.backlog-chip-btn.active {
+  background: var(--indigo-600, #4f46e5);
+  color: #ffffff;
+  border-color: var(--indigo-600, #4f46e5);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
+}
+
+.backlog-active-filter-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-md, 8px);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--indigo-600, #4f46e5);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.backlog-active-filter-tag button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  font-weight: 800;
+}
+
+.backlog-controls-right {
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── 2. Workspace Body (Epics Rail + Scrollable Content) ─────────────────── */
+.backlog-workspace-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left Epics Rail (Collapsible) */
+.backlog-epics-drawer {
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+  height: 100%;
+  background: var(--bg-card, #ffffff);
+  border-right: 1px solid var(--border, #e2e8f0);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  z-index: 5;
+}
+
+.backlog-epics-drawer.collapsed {
+  width: 0;
+  min-width: 0;
+  margin-left: -260px;
+  border-right: none;
+}
+
+.epics-drawer-header {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  flex-shrink: 0;
+}
+
+.epics-drawer-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.epics-drawer-list {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.epic-nav-item {
+  padding: 8px 10px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: all var(--transition, 150ms ease);
+}
+
+.epic-nav-item:hover {
+  background: var(--bg-secondary, #f1f5f9);
+  border-color: var(--border, #e2e8f0);
+}
+
+.epic-nav-item.active {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.epic-nav-item.active .epic-nav-title {
+  color: var(--indigo-600, #4f46e5);
+  font-weight: 700;
+}
+
+.epic-nav-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.epic-nav-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.epic-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.epic-nav-ratio {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-muted, #94a3b8);
+  white-space: nowrap;
+}
+
+.epic-progress-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 9999px;
+  background-color: var(--border-light, #f1f5f9);
+  overflow: hidden;
+}
+
+.epic-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background-color: var(--emerald-500, #10b981);
+  transition: width 0.3s ease;
+}
+
+.epics-drawer-footer {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  flex-shrink: 0;
+}
+
+/* ── 3. Main Scrollable Workspace ────────────────────────────────────────── */
+.backlog-scroll-area {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 22px 32px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.backlog-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+.backlog-scroll-area::-webkit-scrollbar-track {
+  background: var(--bg-primary, #f8fafc);
+}
+.backlog-scroll-area::-webkit-scrollbar-thumb {
+  background: var(--slate-300, #cbd5e1);
+  border-radius: 9999px;
+  border: 2px solid var(--bg-primary, #f8fafc);
+}
+.backlog-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400, #94a3b8);
+}
+
+/* Matriks Kapasitas 5 Role Developer (Software House Resource Allocation) */
+.workload-matrix-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  flex-shrink: 0;
+}
+
+.workload-matrix-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workload-matrix-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.workload-matrix-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.workload-matrix-sub {
+  font-size: 11px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.workload-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.workload-dev-card {
+  padding: 10px 12px;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all var(--transition, 150ms ease);
+  min-width: 0;
+}
+
+.workload-dev-card:hover {
+  border-color: var(--indigo-400, #818cf8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.workload-dev-card.active {
+  background: rgba(99, 102, 241, 0.06);
+  border-color: var(--indigo-600, #4f46e5);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.workload-dev-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.workload-dev-card__user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workload-dev-card__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.workload-dev-card__name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workload-dev-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+}
+
+.workload-dev-card__tasks {
+  color: var(--text-secondary, #64748b);
+  font-weight: 600;
+}
+
+.workload-dev-card__hours {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+}
+
+.workload-dev-card__bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 9999px;
+  background-color: var(--border-light, #f1f5f9);
+  overflow: hidden;
+}
+
+.workload-dev-card__bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* ── 4. Sprint & Backlog Panel Cards ─────────────────────────────────────── */
+.sprint-panel-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sprint-card-header {
+  padding: 12px 18px;
+  background: var(--bg-card, #ffffff);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition, 150ms ease);
+}
+
+.sprint-card-header:hover {
+  background-color: var(--slate-50, #f8fafc);
+}
+
+.sprint-card-header__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.sprint-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 8px);
+  transition: all var(--transition, 150ms ease);
+}
+
+.sprint-toggle-btn:hover {
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--text-primary, #1e293b);
+}
+
+.sprint-card-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.sprint-dates-text {
+  font-size: 11px;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sprint-card-header__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+/* Tri-color Story Points / Hours Lozenge */
+.points-tri-color {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full, 9999px);
+  overflow: hidden;
+  border: 1px solid var(--border, #e2e8f0);
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.points-tri-color__item {
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.points-tri-color__todo {
+  background-color: var(--bg-secondary, #f1f5f9);
+  color: var(--text-secondary, #64748b);
+}
+
+.points-tri-color__inprogress {
+  background-color: rgba(99, 102, 241, 0.12);
+  color: var(--indigo-600, #4f46e5);
+}
+
+.points-tri-color__done {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: var(--emerald-600, #059669);
+}
+
+/* ── 5. Issue Rows & Tables with Clean Internal Scroll ───────────────────── */
+.issue-rows-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 480px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.issue-rows-list::-webkit-scrollbar {
+  width: 6px;
+}
+.issue-rows-list::-webkit-scrollbar-track {
+  background: var(--bg-card, #ffffff);
+}
+.issue-rows-list::-webkit-scrollbar-thumb {
+  background: var(--slate-300, #cbd5e1);
+  border-radius: 9999px;
+}
+.issue-rows-list::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400, #94a3b8);
+}
+
+.issue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 16px;
+  background: var(--bg-card, #ffffff);
+  border-bottom: 1px solid var(--border-light, #f1f5f9);
+  transition: background-color var(--transition, 150ms ease);
+  gap: 12px;
+}
+
+.issue-row:last-child {
+  border-bottom: none;
+}
+
+.issue-row:hover {
+  background-color: var(--slate-50, #f8fafc);
+}
+
+.issue-row-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+}
+
+.issue-grip-handle {
+  color: var(--text-muted, #94a3b8);
+  opacity: 0.4;
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity var(--transition, 150ms ease);
+}
+
+.issue-row:hover .issue-grip-handle {
+  opacity: 0.9;
+}
+
+.issue-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.issue-key-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--indigo-600, #4f46e5);
+  border: 1px solid var(--border, #e2e8f0);
+  text-decoration: none;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--transition, 150ms ease);
+}
+
+.issue-key-badge:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.issue-title-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  cursor: pointer;
+  transition: color var(--transition, 150ms ease);
+}
+
+.issue-title-text:hover {
+  color: var(--indigo-600, #4f46e5);
+}
+
+.issue-epic-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm, 6px);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.issue-role-pill {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm, 6px);
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.issue-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.issue-status-lozenge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm, 6px);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.issue-assignee-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.issue-assignee-fallback {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-secondary, #f1f5f9);
+  border: 1px solid var(--border, #e2e8f0);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #94a3b8);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.issue-hours-badge {
+  font-size: 10.5px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+  background-color: var(--bg-secondary, #f1f5f9);
+  padding: 2px 7px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border, #e2e8f0);
+  width: 42px;
+  text-align: center;
+}
+
+/* Quick Create Issue Inline Trigger */
+.quick-create-inline {
+  padding: 10px 16px;
+  background-color: var(--bg-card, #ffffff);
+  border-top: 1px dashed var(--border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: var(--text-secondary, #64748b);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition, 150ms ease);
+}
+
+.quick-create-inline:hover {
+  background-color: var(--bg-secondary, #f1f5f9);
+  color: var(--indigo-600, #4f46e5);
+}
+
+/* ── 6. Responsive Adjustments ───────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .workload-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .workload-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .backlog-top-header {
+    padding: 10px 14px;
+  }
+  .backlog-search-box {
+    min-width: 100%;
+    max-width: 100%;
+  }
+  .backlog-epics-drawer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    box-shadow: var(--shadow-lg);
+  }
+  .workload-grid {
+    grid-template-columns: 1fr;
+  }
+  .issue-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .issue-row-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
