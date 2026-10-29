@@ -83,9 +83,9 @@
 
     // Get current auth session if available
     let sessionUser = {
-      name: "Aldyana (Admin)",
-      role: "Super Admin",
-      avatar: "AL",
+      name: 'Aldyana (Admin)',
+      role: 'Super Admin',
+      avatar: 'AL'
     };
     if (window.AstaAuth && typeof window.AstaAuth.getUser === "function") {
       const u = window.AstaAuth.getUser();
@@ -472,18 +472,92 @@
 
         <!-- Sidebar User Profile Footer -->
         <div class="sidebar-bottom">
-          <div class="mini-user">
-            <div class="avatar">${sessionUser.avatar}</div>
+          <div class="mini-user" style="cursor: pointer;" onclick="window.openProfileModal()" title="Klik untuk mengedit profil">
+            <div class="avatar" id="sidebarUserAvatar">${sessionUser.avatar}</div>
             <div class="user-details" title="${sessionUser.name}">
-              <strong>${sessionUser.name}</strong>
-              <span>${sessionUser.role}</span>
+              <strong id="sidebarUserName">${sessionUser.name}</strong>
+              <span id="sidebarUserRole">${sessionUser.role}</span>
             </div>
             <button type="button" class="btn-logout" title="Keluar / Logout" onclick="window.AstaAuth ? window.AstaAuth.logout() : (localStorage.removeItem('asta_auth_user'), window.location.href='${prefix}login.html')">
-              ${svg("logout")}
+              ${svg('logout')}
             </button>
           </div>
         </div>
       </aside>
+
+      <!-- Profile Edit Modal -->
+      <div id="profileModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; width: 100%; max-width: 420px; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); font-family: inherit;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0F172A;">Edit Profil Pengguna</h3>
+            <button type="button" onclick="window.closeProfileModal()" style="background: none; border: none; font-size: 18px; color: #64748B; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <form id="profileEditForm" onsubmit="window.saveProfileEdit(event)">
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px;">Nama Pengguna / Username</label>
+              <input type="text" id="editProfileName" required style="width: 100%; height: 38px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 12px; font-size: 13px; color: #1E293B;" />
+            </div>
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px;">Email</label>
+              <input type="email" id="editProfileEmail" required style="width: 100%; height: 38px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 12px; font-size: 13px; color: #1E293B;" />
+            </div>
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px;">Peran / Jabatan</label>
+              <input type="text" id="editProfileRole" required style="width: 100%; height: 38px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 12px; font-size: 13px; color: #1E293B;" />
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" onclick="window.closeProfileModal()" style="background: #F1F5F9; border: 1px solid #CBD5E1; color: #334155; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer;">Batal</button>
+              <button type="submit" style="background: #305BA3; border: none; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer;">Simpan Perubahan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+      <script>
+        window.openProfileModal = function() {
+          const user = (window.AstaAuth && window.AstaAuth.getUser()) || { name: '${sessionUser.name}', email: '${sessionUser.email || 'admin@astacode.com'}', role: '${sessionUser.role}' };
+          document.getElementById('editProfileName').value = user.name || 'admin123';
+          document.getElementById('editProfileEmail').value = user.email || 'admin@astacode.com';
+          document.getElementById('editProfileRole').value = user.role || 'Administrator';
+          document.getElementById('profileModal').style.display = 'flex';
+        };
+
+        window.closeProfileModal = function() {
+          document.getElementById('profileModal').style.display = 'none';
+        };
+
+        window.saveProfileEdit = function(e) {
+          e.preventDefault();
+          const newName = document.getElementById('editProfileName').value.trim();
+          const newEmail = document.getElementById('editProfileEmail').value.trim();
+          const newRole = document.getElementById('editProfileRole').value.trim();
+          const initials = newName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'AD';
+
+          const updated = {
+            name: newName,
+            email: newEmail,
+            role: newRole,
+            avatar: initials
+          };
+
+          if (window.AstaAuth && typeof window.AstaAuth.setUser === 'function') {
+            window.AstaAuth.setUser(updated);
+          } else {
+            localStorage.setItem('asta_auth_user', JSON.stringify(updated));
+          }
+
+          const nameEl = document.getElementById('sidebarUserName');
+          const roleEl = document.getElementById('sidebarUserRole');
+          const avatarEl = document.getElementById('sidebarUserAvatar');
+          if (nameEl) nameEl.textContent = newName;
+          if (roleEl) roleEl.textContent = newRole;
+          if (avatarEl) avatarEl.textContent = initials;
+
+          window.closeProfileModal();
+          alert('Profil berhasil diperbarui!');
+        };
+      </script>
     `;
 
     // Target mount container
@@ -517,6 +591,15 @@
     }
 
     setupMobileListeners();
+
+    // Execute scripts included in sidebar.html
+    const scripts = container.querySelectorAll('script');
+    scripts.forEach(oldScript => {
+      const newScript = document.createElement('script');
+      Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+      newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+      oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
   };
 
   // Toggle Accordion Submenu

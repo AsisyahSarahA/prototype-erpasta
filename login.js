@@ -55,19 +55,9 @@ function handleLoginSubmit(e) {
   submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Memverifikasi...</span>';
 
   setTimeout(() => {
-    let displayName = 'Administrator';
-    const rawName = email.split('@')[0];
-    const parts = rawName.split(/[._-]/);
-    if (parts.length > 0) {
-      displayName = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-    }
-    const initials = displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'AD';
-
     window.AstaAuth.setUser({
       email: email,
-      name: displayName,
-      role: 'Administrator',
-      avatar: initials
+      role: 'Administrator'
     });
 
     showAlert('Autentikasi berhasil! Mengalihkan ke Dashboard...', 'success');
