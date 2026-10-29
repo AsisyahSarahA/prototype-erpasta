@@ -7,7 +7,7 @@
   <a href="index.html#dashboard" class="brand" data-nav="dashboard" data-module="dashboard">
     <div class="brand-mark">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 3l2.2 6.8H21l-5.5 4 2.1 6.7L12 16.4 6.4 20.5 8.5 13 3 9.8h6.8L12 3z"/>
+        <path d="M12 3l2.2 6.8H21l-5.5 4 2.1 6.7L12 16.4 6.4 20.5 8.5 13 3 9.8h6.8L12 3z" />
       </svg>
     </div>
     <div class="brand-info">
@@ -22,7 +22,7 @@
     <!-- 0. Executive Dashboard -->
     <a href="index.html#dashboard" class="nav-btn" data-nav="dashboard" data-module="dashboard">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 13h6V4H4v9zm10 7h6v-9h-6v9zM4 20h6v-3H4v3zm10-10h6V4h-6v6z"/>
+        <path d="M4 13h6V4H4v9zm10 7h6v-9h-6v9zM4 20h6v-3H4v3zm10-10h6V4h-6v6z" />
       </svg>
       <span>Executive Dashboard</span>
     </a>
@@ -32,7 +32,7 @@
       <button type="button" class="nav-btn nav-parent-btn" id="crmParentToggle" onclick="window.toggleModuleAccordion('crmNavGroup', event)">
         <div class="nav-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm12 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm12 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
           <span>CRM Module</span>
         </div>
@@ -75,50 +75,65 @@
       </div>
     </div>
 
-    <!-- 2. Project Management (Forge PM) (Accordion) -->
+    <!-- 2. Management Proyek (Accordion) -->
     <div class="nav-group" id="projectNavGroup" data-module-group="project">
       <button type="button" class="nav-btn nav-parent-btn" id="projectParentToggle" onclick="window.toggleModuleAccordion('projectNavGroup', event)">
         <div class="nav-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 7h16v13H4zM8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 12h16M10 12v2h4v-2"/>
+            <path d="M4 7h16v13H4zM8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 12h16M10 12v2h4v-2" />
           </svg>
-          <span>Project Management</span>
+          <span>Management Proyek</span>
         </div>
         <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
       <div class="nav-sub" id="projectSubNav">
-        <a href="project/Forge PM.html#dashboard" class="nav-sub-btn" data-module="project" data-sub="dashboard" onclick="window.navigateToModuleSubpage('project', 'dashboard', 'project/Forge PM.html#dashboard', event)">
+        <div class="nav-sub-group-title">Perencanaan</div>
+        <a href="MP/vanilla/index.html#project" class="nav-sub-btn" data-module="project" data-sub="project" onclick="window.navigateToModuleSubpage('project', 'project', 'MP/vanilla/index.html#project', event)">
           <span class="nav-sub-dot"></span>
-          <span>PM Dashboard</span>
+          <span>Modul Proyek</span>
         </a>
-        <a href="project/Forge PM.html#project" class="nav-sub-btn" data-module="project" data-sub="project" onclick="window.navigateToModuleSubpage('project', 'project', 'project/Forge PM.html#project', event)">
+        <a href="MP/vanilla/index.html#kanban" class="nav-sub-btn" data-module="project" data-sub="kanban" onclick="window.navigateToModuleSubpage('project', 'kanban', 'MP/vanilla/index.html#kanban', event)">
           <span class="nav-sub-dot"></span>
-          <span>Proyek</span>
+          <span>Papan Kanban</span>
         </a>
-        <a href="project/Forge PM.html#task" class="nav-sub-btn" data-module="project" data-sub="task" onclick="window.navigateToModuleSubpage('project', 'task', 'project/Forge PM.html#task', event)">
+        <a href="MP/vanilla/index.html#backlog" class="nav-sub-btn" data-module="project" data-sub="backlog" onclick="window.navigateToModuleSubpage('project', 'backlog', 'MP/vanilla/index.html#backlog', event)">
           <span class="nav-sub-dot"></span>
-          <span>Task</span>
+          <span>Backlog & Sprints</span>
         </a>
-        <a href="project/Forge PM.html#tickets" class="nav-sub-btn" data-module="project" data-sub="tickets" onclick="window.navigateToModuleSubpage('project', 'tickets', 'project/Forge PM.html#tickets', event)">
+        <a href="MP/vanilla/index.html#timeline" class="nav-sub-btn" data-module="project" data-sub="timeline" onclick="window.navigateToModuleSubpage('project', 'timeline', 'MP/vanilla/index.html#timeline', event)">
           <span class="nav-sub-dot"></span>
-          <span>Tickets & Backlog</span>
+          <span>Timeline & Roadmap</span>
         </a>
-        <a href="project/Forge PM.html#timesheet" class="nav-sub-btn" data-module="project" data-sub="timesheet" onclick="window.navigateToModuleSubpage('project', 'timesheet', 'project/Forge PM.html#timesheet', event)">
+        <a href="MP/vanilla/index.html#list" class="nav-sub-btn" data-module="project" data-sub="list" onclick="window.navigateToModuleSubpage('project', 'list', 'MP/vanilla/index.html#list', event)">
           <span class="nav-sub-dot"></span>
-          <span>Timesheet Global</span>
+          <span>Daftar Pekerjaan (JQL)</span>
         </a>
-        <a href="project/Forge PM.html#automation" class="nav-sub-btn" data-module="project" data-sub="automation" onclick="window.navigateToModuleSubpage('project', 'automation', 'project/Forge PM.html#automation', event)">
+        <div class="nav-sub-group-title">Pengembangan & AI</div>
+        <a href="MP/vanilla/index.html#ai_hub" class="nav-sub-btn" data-module="project" data-sub="ai_hub" onclick="window.navigateToModuleSubpage('project', 'ai_hub', 'MP/vanilla/index.html#ai_hub', event)">
           <span class="nav-sub-dot"></span>
-          <span>Auto Fix Bug</span>
+          <span>Otomasi Fix Bug AI</span>
           <span class="nav-badge-accent">AI</span>
         </a>
-        <a href="project/Forge PM.html#events" class="nav-sub-btn" data-module="project" data-sub="events" onclick="window.navigateToModuleSubpage('project', 'events', 'project/Forge PM.html#events', event)">
+        <a href="MP/vanilla/index.html#github" class="nav-sub-btn" data-module="project" data-sub="github" onclick="window.navigateToModuleSubpage('project', 'github', 'MP/vanilla/index.html#github', event)">
           <span class="nav-sub-dot"></span>
-          <span>Events & Schedule</span>
+          <span>GitHub & Cabang</span>
         </a>
-        <a href="project/Forge PM.html#handover" class="nav-sub-btn" data-module="project" data-sub="handover" onclick="window.navigateToModuleSubpage('project', 'handover', 'project/Forge PM.html#handover', event)">
+        <div class="nav-sub-group-title">Operasional & Bisnis</div>
+        <a href="MP/vanilla/index.html#client" class="nav-sub-btn" data-module="project" data-sub="client" onclick="window.navigateToModuleSubpage('project', 'client', 'MP/vanilla/index.html#client', event)">
           <span class="nav-sub-dot"></span>
-          <span>Handover</span>
+          <span>Service Desk / Klien</span>
+        </a>
+        <a href="MP/vanilla/index.html#team" class="nav-sub-btn" data-module="project" data-sub="team" onclick="window.navigateToModuleSubpage('project', 'team', 'MP/vanilla/index.html#team', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Tim HR & Workload</span>
+        </a>
+        <a href="MP/vanilla/index.html#finance" class="nav-sub-btn" data-module="project" data-sub="finance" onclick="window.navigateToModuleSubpage('project', 'finance', 'MP/vanilla/index.html#finance', event)">
+          <span class="nav-sub-dot"></span>
+          <span>Finance & Invoices</span>
+        </a>
+        <a href="MP/vanilla/index.html#crm" class="nav-sub-btn" data-module="project" data-sub="crm" onclick="window.navigateToModuleSubpage('project', 'crm', 'MP/vanilla/index.html#crm', event)">
+          <span class="nav-sub-dot"></span>
+          <span>CRM Deals Won</span>
         </a>
       </div>
     </div>
@@ -128,7 +143,7 @@
       <button type="button" class="nav-btn nav-parent-btn" id="financeParentToggle" onclick="window.toggleModuleAccordion('financeNavGroup', event)">
         <div class="nav-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M16 14h.01 M20 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"/>
+            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M16 14h.01 M20 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2" />
           </svg>
           <span>Finance & AR/AP</span>
         </div>
@@ -203,7 +218,7 @@
       <button type="button" class="nav-btn nav-parent-btn" id="marketingParentToggle" onclick="window.toggleModuleAccordion('marketingNavGroup', event)">
         <div class="nav-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 11v2a2 2 0 0 0 2 2h2l4 6h2l-2.5-6H19a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H10L5 6v5z"/>
+            <path d="M3 11v2a2 2 0 0 0 2 2h2l4 6h2l-2.5-6H19a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H10L5 6v5z" />
           </svg>
           <span>Marketing & AI</span>
         </div>
@@ -259,7 +274,7 @@
       <button type="button" class="nav-btn nav-parent-btn" id="hrParentToggle" onclick="window.toggleModuleAccordion('hrNavGroup', event)">
         <div class="nav-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
           <span>Human Resources (SDM)</span>
         </div>
@@ -270,7 +285,7 @@
           <span class="nav-sub-dot"></span>
           <span>Beranda HR</span>
         </a>
-        <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">ABSENSI</div>
+        <div class="nav-label" style="padding-left: 48px; opacity: 0.6; margin-top: 8px; font-size: 10px">ABSENSI</div>
         <a href="HR/hr.html#presensi" class="nav-sub-btn" data-module="hr" data-sub="presensi" onclick="window.navigateToModuleSubpage('hr', 'presensi', 'HR/hr.html#presensi', event)">
           <span class="nav-sub-dot"></span>
           <span>Presensi Saya</span>
@@ -288,7 +303,7 @@
           <span>Rekap Tim</span>
         </a>
 
-        <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">MANAJEMEN</div>
+        <div class="nav-label" style="padding-left: 48px; opacity: 0.6; margin-top: 8px; font-size: 10px">MANAJEMEN</div>
         <a href="HR/hr.html#karyawan" class="nav-sub-btn" data-module="hr" data-sub="karyawan" onclick="window.navigateToModuleSubpage('hr', 'karyawan', 'HR/hr.html#karyawan', event)">
           <span class="nav-sub-dot"></span>
           <span>Data Karyawan</span>
@@ -302,7 +317,7 @@
           <span>Pipeline Pelamar</span>
         </a>
 
-        <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">PKL / MAGANG</div>
+        <div class="nav-label" style="padding-left: 48px; opacity: 0.6; margin-top: 8px; font-size: 10px">PKL / MAGANG</div>
         <a href="HR/hr.html#pengajuan" class="nav-sub-btn" data-module="hr" data-sub="pengajuan" onclick="window.navigateToModuleSubpage('hr', 'pengajuan', 'HR/hr.html#pengajuan', event)">
           <span class="nav-sub-dot"></span>
           <span>Pengajuan PKL</span>
@@ -324,7 +339,7 @@
           <span>Sertifikat PKL</span>
         </a>
 
-        <div class="nav-label" style="padding-left:48px; opacity:0.6; margin-top:8px; font-size:10px;">Laporan</div>
+        <div class="nav-label" style="padding-left: 48px; opacity: 0.6; margin-top: 8px; font-size: 10px">Laporan</div>
         <a href="HR/hr.html#dokumen" class="nav-sub-btn" data-module="hr" data-sub="dokumen" onclick="window.navigateToModuleSubpage('hr', 'dokumen', 'HR/hr.html#dokumen', event)">
           <span class="nav-sub-dot"></span>
           <span>Dokumen & Template</span>
@@ -343,7 +358,7 @@
     <!-- 6. Kanban AI Global -->
     <a href="index.html#aikanban" class="nav-btn" data-nav="aikanban" data-module="aikanban">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM9 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM9 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
       </svg>
       <span>Kanban AI (Global)</span>
     </a>
@@ -354,25 +369,25 @@
   <nav class="nav" id="sidebar-nav-config">
     <a href="index.html#analytics" class="nav-btn" data-nav="analytics" data-module="analytics">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 20V10M12 20V4M6 20v-6"/>
+        <path d="M18 20V10M12 20V4M6 20v-6" />
       </svg>
       <span>Executive Reporting</span>
     </a>
     <a href="index.html#integrations" class="nav-btn" data-nav="integrations" data-module="integrations">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 12l4-4m-6 8 4-4m6-8v4m0 0h4m-4 0a5 5 0 0 1-5 5H9a5 5 0 0 0 0 10h4"/>
+        <path d="M8 12l4-4m-6 8 4-4m6-8v4m0 0h4m-4 0a5 5 0 0 1-5 5H9a5 5 0 0 0 0 10h4" />
       </svg>
       <span>Integrations Hub</span>
     </a>
     <a href="index.html#rbac" class="nav-btn" data-nav="rbac" data-module="rbac">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
       <span>Access & Audit (RBAC)</span>
     </a>
     <a href="index.html#settings" class="nav-btn" data-nav="settings" data-module="settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
       <span>Settings</span>
     </a>

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite crm",
+    "dev:erp": "vite",
     "dev:crm": "vite crm",
+    "dev:mp": "vite MP/vanilla",
     "start": "vite crm --open",
     "build:crm": "vite build crm",
     "preview:crm": "vite preview crm"

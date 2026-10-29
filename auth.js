@@ -13,7 +13,10 @@
   // Helper to determine path prefix to root based on current URL
   function getRootPrefix() {
     const p = window.location.pathname.toLowerCase().replace(/\\/g, '/');
-    if (p.includes('/crm/') || p.includes('/finance/') || p.includes('/marketing/') || p.includes('/project/') || p.includes('/hr/')) {
+    if (p.includes('/mp/vanilla/')) {
+      return '../../';
+    }
+    if (p.includes('/crm/') || p.includes('/finance/') || p.includes('/marketing/') || p.includes('/project/') || p.includes('/hr/') || p.includes('/mp/')) {
       return '../';
     }
     return './';

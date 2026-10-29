@@ -3,23 +3,23 @@
  * ASTACODE CRM (PT ASTACODE Solusindo Teknologi)
  */
 
-import { mountHeader } from './components/layout/Header.js';
-import { initCommandPalette } from './components/common/CommandPalette.js';
-import { initNewLeadModal } from './components/crm/NewLeadModal.js';
-import { mountSidebar } from './components/layout/Sidebar.js';
-import store from './store/store.js';
+import { mountHeader } from "./components/layout/Header.js";
+import { initCommandPalette } from "./components/common/CommandPalette.js";
+import { initNewLeadModal } from "./components/crm/NewLeadModal.js";
+import { mountSidebar } from "./components/layout/Sidebar.js";
+import store from "./store/store.js";
 
 // Direct Static View Modules for Robust Bundling & Local Server Execution
-import * as PipelineKanban from './components/crm/PipelineKanban.js';
-import * as PipelineTable from './components/crm/PipelineTable.js';
-import * as PipelineWorkflowTracker from './components/crm/PipelineWorkflowTracker.js';
-import * as LeadDetailPage from './components/crm/LeadDetailPage.js';
-import * as CustomersList from './components/customers/CustomersList.js';
-import * as ProjectsList from './components/projects/ProjectsList.js';
-import * as SettingTopInvoicePage from './components/finance/SettingTopInvoicePage.js';
-import * as ContractsLegalPage from './components/legal/ContractsLegalPage.js';
-import * as WhatsAppInbox from './components/clientcare/WhatsAppInbox.js';
-import * as ReportsDashboard from './components/reports/ReportsDashboard.js';
+import * as PipelineKanban from "./components/crm/PipelineKanban.js";
+import * as PipelineTable from "./components/crm/PipelineTable.js";
+import * as PipelineWorkflowTracker from "./components/crm/PipelineWorkflowTracker.js";
+import * as LeadDetailPage from "./components/crm/LeadDetailPage.js";
+import * as CustomersList from "./components/customers/CustomersList.js";
+import * as ProjectsList from "./components/projects/ProjectsList.js";
+import * as SettingTopInvoicePage from "./components/finance/SettingTopInvoicePage.js";
+import * as ContractsLegalPage from "./components/legal/ContractsLegalPage.js";
+import * as WhatsAppInbox from "./components/clientcare/WhatsAppInbox.js";
+import * as ReportsDashboard from "./components/reports/ReportsDashboard.js";
 
 const VIEW_MODULES = {
   pipeline_kanban: PipelineKanban,
@@ -48,11 +48,11 @@ const TOAST_ICONS = {
  * @param {'success'|'error'|'warning'|'info'} [type='info'] - Style type
  * @param {number} [duration=3500] - Duration in ms
  */
-export function showToast(message, type = 'info', duration = 3500) {
-  const container = document.getElementById('toast-container');
+export function showToast(message, type = "info", duration = 3500) {
+  const container = document.getElementById("toast-container");
   if (!container) return;
 
-  const toast = document.createElement('div');
+  const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
   toast.innerHTML = `
     <span style="display:flex;align-items:center;flex-shrink:0;">
@@ -64,9 +64,9 @@ export function showToast(message, type = 'info', duration = 3500) {
   container.appendChild(toast);
 
   setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(20px)';
-    toast.style.transition = 'all 0.25s ease';
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(20px)";
+    toast.style.transition = "all 0.25s ease";
     setTimeout(() => {
       if (toast.parentNode === container) {
         container.removeChild(toast);
@@ -76,9 +76,9 @@ export function showToast(message, type = 'info', duration = 3500) {
 }
 
 // Listen to custom 'show-toast' events anywhere in the app
-window.addEventListener('show-toast', (e) => {
+window.addEventListener("show-toast", (e) => {
   if (e.detail) {
-    showToast(e.detail.message, e.detail.type || 'info', e.detail.duration || 3500);
+    showToast(e.detail.message, e.detail.type || "info", e.detail.duration || 3500);
   }
 });
 
@@ -88,9 +88,9 @@ window.addEventListener('show-toast', (e) => {
  */
 function syncDarkMode(isDarkMode) {
   if (isDarkMode) {
-    document.documentElement.classList.add('dark');
+    document.documentElement.classList.add("dark");
   } else {
-    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.remove("dark");
   }
 }
 
@@ -108,21 +108,17 @@ let currentRenderedViewMode = null;
 let currentRenderedLeadId = null;
 
 function routeCurrentView() {
-  const viewContainer = document.getElementById('view-container');
+  const viewContainer = document.getElementById("view-container");
   if (!viewContainer) return;
 
   const state = store.getState();
   const { activeView, viewMode, selectedLeadId } = state;
 
   // Avoid unnecessary re-render of unchanged view container if same
-  const viewRouteKey = activeView === 'pipeline' ? `pipeline_${viewMode}` : activeView;
-  const isLeadDetailSame = activeView === 'lead_detail' && selectedLeadId === currentRenderedLeadId;
+  const viewRouteKey = activeView === "pipeline" ? `pipeline_${viewMode}` : activeView;
+  const isLeadDetailSame = activeView === "lead_detail" && selectedLeadId === currentRenderedLeadId;
 
-  if (
-    currentRenderedView === viewRouteKey &&
-    currentRenderedViewMode === viewMode &&
-    (activeView !== 'lead_detail' || isLeadDetailSame)
-  ) {
+  if (currentRenderedView === viewRouteKey && currentRenderedViewMode === viewMode && (activeView !== "lead_detail" || isLeadDetailSame)) {
     return;
   }
 
@@ -131,10 +127,10 @@ function routeCurrentView() {
   currentRenderedLeadId = selectedLeadId;
 
   // Clear previous content
-  viewContainer.innerHTML = '';
+  viewContainer.innerHTML = "";
 
   // 1. Check if view handler is registered in custom registry
-  if (typeof viewRegistry[viewRouteKey] === 'function') {
+  if (typeof viewRegistry[viewRouteKey] === "function") {
     try {
       viewRegistry[viewRouteKey](viewContainer);
       return;
@@ -145,7 +141,7 @@ function routeCurrentView() {
 
   // 2. Check mapped static view module
   const module = VIEW_MODULES[viewRouteKey];
-  if (module && typeof module.mount === 'function') {
+  if (module && typeof module.mount === "function") {
     try {
       module.mount(viewContainer);
       return;
@@ -178,7 +174,7 @@ function routeCurrentView() {
       </div>
       <div>
         <h2 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px;">
-          Workspace View: ${activeView.toUpperCase()} ${activeView === 'pipeline' ? `(${viewMode.toUpperCase()})` : ''}
+          Workspace View: ${activeView.toUpperCase()} ${activeView === "pipeline" ? `(${viewMode.toUpperCase()})` : ""}
         </h2>
         <p style="font-size:13px;color:var(--text-muted);max-width:440px;">
           Modul siap dihubungkan. State store reactive, filter, dan data seed telah aktif.
@@ -192,9 +188,9 @@ function routeCurrentView() {
  * Initializes the entire application
  */
 function initApp() {
-  const appContainer = document.getElementById('app');
+  const appContainer = document.getElementById("app");
   if (!appContainer) {
-    console.error('Fatal: #app root element not found in DOM.');
+    console.error("Fatal: #app root element not found in DOM.");
     return;
   }
 
@@ -219,12 +215,12 @@ function initApp() {
   `;
 
   // Shared ERP sidebar (same one used by Finance, Marketing, HR & Project)
-  const sidebarContainer = document.getElementById('sidebar-container');
+  const sidebarContainer = document.getElementById("sidebar-container");
   if (sidebarContainer) {
     mountSidebar(sidebarContainer);
   }
 
-  const headerContainer = document.getElementById('header-container');
+  const headerContainer = document.getElementById("header-container");
   if (headerContainer) {
     mountHeader(headerContainer);
   }
@@ -249,12 +245,12 @@ function initApp() {
   });
 
   // Re-trigger routing if lead changes
-  window.addEventListener('route-change', () => {
+  window.addEventListener("route-change", () => {
     currentRenderedView = null; // force re-route
     routeCurrentView();
   });
 
-  console.log('✅ ASTACODE CRM (Vanilla JS) initialized successfully.');
+  console.log("✅ ASTACODE CRM (Vanilla JS) initialized successfully.");
 }
 
 /**
@@ -264,16 +260,16 @@ function bootstrapApp() {
   try {
     initApp();
   } catch (err) {
-    console.error('[ASTACODE CRM Fatal Init Error]', err);
-    if (typeof window.__showCrmLoadError === 'function') {
-      window.__showCrmLoadError('init_error', err.message || String(err));
+    console.error("[ASTACODE CRM Fatal Init Error]", err);
+    if (typeof window.__showCrmLoadError === "function") {
+      window.__showCrmLoadError("init_error", err.message || String(err));
     }
   }
 }
 
 // Run bootstrap when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bootstrapApp);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootstrapApp);
 } else {
   bootstrapApp();
 }
