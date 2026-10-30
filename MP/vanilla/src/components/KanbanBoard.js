@@ -1,16 +1,14 @@
 /**
  * KanbanBoard.js — Papan Kanban Proyek
  * Modeled 100% after ASTACODE CRM Pipeline Kanban (crm/js/components/crm/PipelineKanban.js):
- * - Top KPI Summary Bar: Total Tiket, In Progress, Selesai (%), Bug Kritis (S1/S2), Sprint Aktif
- * - Multi-Filter Row: Quick Search, PIC/Assignee, Tipe Tiket, Prioritas, Epic/Modul
- * - 6 Workflow Columns: Backlog, To Do, In Progress, Code Review, QA Staging, Selesai
- * - CRM-Style Cards: Drag Handle, Key Badge, Type Badge, Priority Pill, SLA Badge, Subtask Progress,
- *                    Assignee Avatar, Prev/Next Shift Buttons, and Detail Click Trigger
+ * - Top KPI Summary & Filter Card: Structured KPI Metrics Strip (Total Tiket, Pengerjaan, Selesai %, Sprint Aktif, Bug Kritis S1/S2)
+ * - Multi-Filter Row: Quick Search, PIC/Assignee, Tipe Tiket, Prioritas, Epic/Modul (proportional widths)
+ * - 6 Workflow Columns: Backlog, To Do, In Progress, Review PR, QA Staging, Selesai
+ * - Structured Cards: Header Badges, 2-Line Title, Project + Epic Pill, Hours + Subtask Progress Box, Footer Actions
  * - Native Drag & Drop with interactive status updates
  */
 
 import { store } from '../state/store.js';
-import { WorkflowStepper } from './WorkflowStepper.js';
 
 const ICONS = {
   search: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
@@ -19,7 +17,8 @@ const ICONS = {
   chevronLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
   chevronRight: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
   arrowRight: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`,
-  alertTriangle: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`
+  alertTriangle: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`,
+  checkCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
 };
 
 const STAGES = [
@@ -35,7 +34,7 @@ export class KanbanBoard {
   constructor() {
     this.container = document.createElement('div');
     this.container.className = 'kanban-page-wrapper';
-    this.stepper = new WorkflowStepper();
+    this.stepper = null;
     this.unsubscribe = null;
     this.draggedTaskId = null;
     this.init();
@@ -87,6 +86,8 @@ export class KanbanBoard {
     const doneCount = filteredTasks.filter((t) => ['Selesai', 'Deploy Production', 'Dipantau'].includes(t.status)).length;
     const completionPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
     const criticalBugs = filteredTasks.filter((t) => t.type === 'Bug' && (t.severity?.startsWith('S1') || t.severity?.startsWith('S2') || t.priority === 'Hotfix'));
+    const activeSprintObj = (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id) || (state.sprints && state.sprints[0]);
+    const activeSprintName = activeSprintObj ? activeSprintObj.name : 'Sprint 1 - MVP';
 
     // Columns HTML
     const columnsHtml = STAGES.map((stage, stageIdx) => {
@@ -95,7 +96,7 @@ export class KanbanBoard {
 
       const cardsHtml = stageTasks.length === 0
         ? `
-          <div style="height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border);border-radius:var(--radius-lg);text-align:center;padding:12px;color:var(--text-muted);font-size:11px;">
+          <div class="kanban-empty-col">
             Belum ada tiket
           </div>
         `
@@ -104,16 +105,16 @@ export class KanbanBoard {
             const epic = epics.find((e) => e.id === task.epicId);
             const totalSubtasks = (task.subtasks || []).length;
             const completedSubtasks = (task.subtasks || []).filter((s) => s.completed).length;
-            const subtaskPct = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
+            const subtaskPct = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : (stage.id === 'done' ? 100 : 0);
 
             let typeBadgeClass = 'badge-blue';
             let typeLabel = task.type || 'Task';
             if (task.type === 'Bug') {
               typeBadgeClass = 'badge-red';
               typeLabel = 'Bug';
-            } else if (task.type === 'Story') {
+            } else if (task.type === 'Story' || task.type === 'Feature') {
               typeBadgeClass = 'badge-emerald';
-              typeLabel = 'Story';
+              typeLabel = task.type;
             } else if (task.type === 'Epic') {
               typeBadgeClass = 'badge-purple';
               typeLabel = 'Epic';
@@ -147,20 +148,20 @@ export class KanbanBoard {
                 data-stage-idx="${stageIdx}"
                 title="Klik untuk melihat detail tiket atau drag ke kolom lain"
               >
-                <!-- Card Header: Grip, Key, Type, Priority, SLA -->
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                  <div style="display:flex;align-items:center;gap:5px;">
-                    <span class="drag-handle" style="display:inline-flex;align-items:center;color:var(--text-muted);opacity:0.6;cursor:grab;">
+                <!-- 1. Card Header: Grip, Key, Type on Left | Priority & SLA on Right -->
+                <div class="kanban-card-top">
+                  <div class="kanban-card-top-left">
+                    <span class="drag-handle" title="Geser kartu">
                       ${ICONS.grip}
                     </span>
-                    <span class="badge badge-slate" style="font-family:var(--font-mono);font-size:10px;font-weight:700;">
+                    <span class="badge badge-slate kanban-card-key">
                       ${task.key}
                     </span>
                     <span class="badge ${typeBadgeClass}" style="font-size:10px;">
                       ${typeLabel}
                     </span>
                   </div>
-                  <div style="display:flex;align-items:center;gap:4px;">
+                  <div class="kanban-card-top-right">
                     <span class="badge ${priorityBadgeClass}" style="font-size:10px;">
                       ${priorityLabel}
                     </span>
@@ -168,74 +169,71 @@ export class KanbanBoard {
                   </div>
                 </div>
 
-                <!-- Title & Epic/Modul Tag -->
-                <h4 class="kanban-card-title">
+                <!-- 2. Title -->
+                <h4 class="kanban-card-title" title="${(task.title || '').replace(/"/g, '&quot;')}">
                   ${task.title}
                 </h4>
+
+                <!-- 3. Project Code & Module/Epic Pill -->
                 <div class="kanban-card-meta">
-                  <span style="color:var(--indigo-600);font-weight:600;">${activeProject ? activeProject.code : 'PROJ'}</span>
-                  ${epic ? `<span style="opacity:0.5;"> · </span><span style="color:var(--text-secondary);">${epic.title}</span>` : ''}
-                </div>
-
-                <!-- Hours Estimate & Subtasks Gauge -->
-                <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:6px;">
-                  <span style="font-family:var(--font-mono);font-weight:700;color:var(--text-primary);">
-                    ${task.estimateHours || 4} Jam
-                    <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(${task.timeLoggedHours || 0}h log)</span>
+                  <span class="kanban-card-proj-code">${activeProject ? activeProject.code : 'PROJ'}</span>
+                  <span class="kanban-card-epic-name" title="${epic ? epic.title : 'Modul Umum'}">
+                    ${epic ? epic.title : 'Modul Umum'}
                   </span>
-                  ${totalSubtasks > 0 ? `
-                    <span style="font-size:10.5px;color:var(--text-secondary);font-weight:600;">
-                      ${completedSubtasks}/${totalSubtasks} subtask
-                    </span>
-                  ` : ''}
                 </div>
 
-                ${totalSubtasks > 0 ? `
+                <!-- 4. Structured Hours & Subtasks Progress Block -->
+                <div class="kanban-card-stats-box">
+                  <div class="kanban-card-stats-row">
+                    <span class="kanban-card-hours">
+                      <strong>${task.estimateHours || 4} Jam</strong>
+                      <span class="kanban-card-logged">(${task.timeLoggedHours || 0}h log)</span>
+                    </span>
+                    <span class="kanban-card-subtask-label">
+                      ${totalSubtasks > 0 ? `${completedSubtasks}/${totalSubtasks} subtask` : '0/0 subtask'}
+                    </span>
+                  </div>
                   <div class="kanban-card-progress">
                     <div class="kanban-card-progress-bar" style="width: ${subtaskPct}%;"></div>
                   </div>
-                ` : ''}
+                </div>
 
-                <!-- Assignee & Action Buttons Row -->
-                <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border-light);margin-top:4px;">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <div style="width:22px;height:22px;border-radius:var(--radius-full);background:linear-gradient(135deg,var(--indigo-600),#3b82f6);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:800;">
+                <!-- 5. Assignee & Action Buttons Footer -->
+                <div class="kanban-card-footer">
+                  <div class="kanban-card-assignee" title="PIC: ${assignee.name}">
+                    <div class="kanban-card-avatar">
                       ${assignee.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
                     </div>
-                    <span style="font-size:11px;color:var(--text-secondary);font-weight:500;">
+                    <span class="kanban-card-assignee-name">
                       ${assignee.name.split(' ')[0]}
                     </span>
                   </div>
 
-                  <!-- Quick shift & Detail link -->
-                  <div style="display:flex;align-items:center;gap:6px;">
+                  <div class="kanban-card-actions">
                     <button
-                      class="btn-shift-prev"
+                      class="btn-shift-prev kanban-shift-btn"
                       data-task-id="${task.id}"
                       data-stage-idx="${stageIdx}"
-                      ${stageIdx === 0 ? 'disabled style="opacity:0.2;cursor:not-allowed;"' : ''}
-                      title="Kembalikan ke status sebelumnya"
-                      style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:2px;display:flex;"
+                      ${stageIdx === 0 ? 'disabled' : ''}
+                      title="Kembalikan ke tahap sebelumnya"
                     >
                       ${ICONS.chevronLeft}
                     </button>
 
                     <button
-                      class="btn-open-detail"
+                      class="btn-open-detail kanban-detail-btn"
                       data-task-id="${task.id}"
-                      style="border:none;background:transparent;color:var(--indigo-600);font-size:11px;font-weight:700;display:flex;align-items:center;gap:2px;cursor:pointer;padding:0;"
                     >
                       <span>Detail</span>
                       ${ICONS.arrowRight}
                     </button>
 
                     <button
-                      class="btn-shift-next"
+                      class="btn-shift-next kanban-shift-btn"
                       data-task-id="${task.id}"
                       data-stage-idx="${stageIdx}"
-                      ${stageIdx === STAGES.length - 1 ? 'disabled style="opacity:0.2;cursor:not-allowed;"' : ''}
-                      title="Pindahkan ke status berikutnya"
-                      style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:2px;display:flex;"
+                      ${stageIdx === STAGES.length - 1 ? 'disabled' : ''}
+                      title="Pindahkan ke tahap berikutnya"
                     >
                       ${ICONS.chevronRight}
                     </button>
@@ -276,78 +274,91 @@ export class KanbanBoard {
     }).join('');
 
     this.container.innerHTML = `
-      <!-- Top KPI Summary & Filter Bar (Matching CRM Pipeline Kanban) -->
-      <div style="padding:12px 20px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
-        <!-- KPI Metrics Row -->
-        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="color:var(--text-muted);font-weight:500;">Total Tiket:</span>
-              <strong style="font-size:14px;font-family:var(--font-mono);color:var(--text-primary);">${totalCount} Tiket</strong>
+      <!-- Top KPI Summary & Filter Card -->
+      <div class="kanban-summary-card">
+        <!-- Row 1: Structured KPI Metrics Strip -->
+        <div class="kanban-kpi-strip">
+          <div class="kanban-kpi-metrics">
+            <div class="kanban-kpi-stat">
+              <span class="kanban-kpi-label">Total Tiket</span>
+              <strong class="kanban-kpi-val">${totalCount} Tiket</strong>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;border-left:1px solid var(--border);padding-left:16px;">
-              <span style="color:var(--text-muted);font-weight:500;">Pengerjaan:</span>
-              <strong style="font-size:14px;font-family:var(--font-mono);color:var(--indigo-600);">${inProgressCount} Tiket</strong>
+
+            <div class="kanban-kpi-divider"></div>
+
+            <div class="kanban-kpi-stat">
+              <span class="kanban-kpi-label">Pengerjaan</span>
+              <strong class="kanban-kpi-val kanban-kpi-val--indigo">${inProgressCount} Tiket</strong>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;border-left:1px solid var(--border);padding-left:16px;">
-              <span style="color:var(--text-muted);font-weight:500;">Selesai:</span>
-              <strong style="font-size:14px;font-family:var(--font-mono);color:var(--emerald-600);">${doneCount} (${completionPct}%)</strong>
+
+            <div class="kanban-kpi-divider"></div>
+
+            <div class="kanban-kpi-stat">
+              <span class="kanban-kpi-label">Selesai</span>
+              <strong class="kanban-kpi-val kanban-kpi-val--emerald">${doneCount} (${completionPct}%)</strong>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;border-left:1px solid var(--border);padding-left:16px;">
-              <span style="color:var(--text-muted);font-weight:500;">Sprint Aktif:</span>
-              <strong style="color:var(--text-primary);">${(state.sprints && state.sprints[0]) ? state.sprints[0].name : 'Sprint 1 - MVP'}</strong>
+
+            <div class="kanban-kpi-divider"></div>
+
+            <div class="kanban-kpi-stat kanban-kpi-stat--sprint" title="${activeSprintName.replace(/"/g, '&quot;')}">
+              <span class="kanban-kpi-label">Sprint Aktif</span>
+              <strong class="kanban-kpi-sprint-text">${activeSprintName}</strong>
             </div>
           </div>
 
           ${criticalBugs.length > 0 ? `
-            <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--radius-md);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--red-500);font-size:11px;font-weight:700;">
+            <div class="kanban-kpi-alert kanban-kpi-alert--danger" title="${criticalBugs.length} tiket Bug S1/S2 atau Hotfix membutuhkan penanganan segera">
               ${ICONS.alertTriangle}
               <span>${criticalBugs.length} Bug Kritis S1/S2 Menunggu Penanganan</span>
             </div>
-          ` : ''}
+          ` : `
+            <div class="kanban-kpi-alert kanban-kpi-alert--safe">
+              ${ICONS.checkCircle}
+              <span>0 Bug Kritis S1/S2</span>
+            </div>
+          `}
         </div>
 
-        <!-- Filter Controls Row -->
-        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding-top:6px;border-top:1px solid var(--border-light);">
+        <!-- Row 2: Filter Controls Row -->
+        <div class="kanban-filter-row">
           <!-- Search input -->
-          <div style="position:relative;flex:1;max-width:340px;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);display:flex;align-items:center;">
+          <div class="kanban-search-wrap">
+            <span class="kanban-search-icon">
               ${ICONS.search}
             </span>
             <input
               id="kanban-search-box"
               type="text"
-              class="form-input"
-              style="padding-left:32px;font-size:12px;padding-top:6px;padding-bottom:6px;width:100%;"
+              class="form-input kanban-search-input"
               placeholder="Filter cepat judul, key tiket, deskripsi..."
               value="${state.searchQuery || ''}"
             />
           </div>
 
           <!-- Select dropdowns -->
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:4px;">
-              <span style="color:var(--text-muted);font-size:11px;">PIC:</span>
-              <select id="kanban-filter-pic" class="form-select" style="font-size:11px;padding:4px 8px;width:auto;">
+          <div class="kanban-filters-group">
+            <div class="kanban-filter-item">
+              <span class="kanban-filter-label">PIC:</span>
+              <select id="kanban-filter-pic" class="form-select kanban-filter-select">
                 <option value="all" ${state.filterAssignee === 'all' ? 'selected' : ''}>Semua PIC</option>
                 ${teamMembers.map((m) => `<option value="${m.id}" ${state.filterAssignee === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
               </select>
             </div>
 
-            <div style="display:flex;align-items:center;gap:4px;">
-              <span style="color:var(--text-muted);font-size:11px;">Tipe:</span>
-              <select id="kanban-filter-type" class="form-select" style="font-size:11px;padding:4px 8px;width:auto;">
+            <div class="kanban-filter-item">
+              <span class="kanban-filter-label">Tipe:</span>
+              <select id="kanban-filter-type" class="form-select kanban-filter-select">
                 <option value="all" ${state.filterType === 'all' ? 'selected' : ''}>Semua Tipe</option>
+                <option value="Feature" ${state.filterType === 'Feature' ? 'selected' : ''}>Feature</option>
                 <option value="Story" ${state.filterType === 'Story' ? 'selected' : ''}>Story</option>
                 <option value="Task" ${state.filterType === 'Task' ? 'selected' : ''}>Task</option>
                 <option value="Bug" ${state.filterType === 'Bug' ? 'selected' : ''}>Bug</option>
-                <option value="Epic" ${state.filterType === 'Epic' ? 'selected' : ''}>Epic</option>
               </select>
             </div>
 
-            <div style="display:flex;align-items:center;gap:4px;">
-              <span style="color:var(--text-muted);font-size:11px;">Prioritas:</span>
-              <select id="kanban-filter-priority" class="form-select" style="font-size:11px;padding:4px 8px;width:auto;">
+            <div class="kanban-filter-item">
+              <span class="kanban-filter-label">Prioritas:</span>
+              <select id="kanban-filter-priority" class="form-select kanban-filter-select">
                 <option value="all" ${state.filterPriority === 'all' ? 'selected' : ''}>Semua Prioritas</option>
                 <option value="Hotfix" ${state.filterPriority === 'Hotfix' ? 'selected' : ''}>Hotfix</option>
                 <option value="Tinggi" ${state.filterPriority === 'Tinggi' ? 'selected' : ''}>Tinggi</option>
@@ -356,16 +367,16 @@ export class KanbanBoard {
               </select>
             </div>
 
-            <div style="display:flex;align-items:center;gap:4px;">
-              <span style="color:var(--text-muted);font-size:11px;">Modul:</span>
-              <select id="kanban-filter-epic" class="form-select" style="font-size:11px;padding:4px 8px;width:auto;">
+            <div class="kanban-filter-item">
+              <span class="kanban-filter-label">Modul:</span>
+              <select id="kanban-filter-epic" class="form-select kanban-filter-select kanban-filter-select--epic">
                 <option value="all" ${state.filterEpic === 'all' ? 'selected' : ''}>Semua Modul</option>
                 ${epics.map((e) => `<option value="${e.id}" ${state.filterEpic === e.id ? 'selected' : ''}>${e.title}</option>`).join('')}
               </select>
             </div>
 
             ${(state.searchQuery || state.filterAssignee !== 'all' || state.filterType !== 'all' || state.filterPriority !== 'all' || state.filterEpic !== 'all') ? `
-              <button id="kanban-reset-filters" class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px;">
+              <button id="kanban-reset-filters" class="btn btn-secondary btn-sm kanban-reset-btn">
                 Reset Filter
               </button>
             ` : ''}
@@ -373,19 +384,11 @@ export class KanbanBoard {
         </div>
       </div>
 
-      <!-- SOP Workflow Stepper Banner Slot -->
-      <div id="kanbanStepperSlot"></div>
-
       <!-- Kanban Columns Board Area -->
       <div class="kanban-board-scroll">
         ${columnsHtml}
       </div>
     `;
-
-    const stepperSlot = this.container.querySelector('#kanbanStepperSlot');
-    if (stepperSlot && this.stepper) {
-      stepperSlot.appendChild(this.stepper.getElement());
-    }
 
     this.attachEvents();
   }

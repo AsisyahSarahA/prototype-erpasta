@@ -2,11 +2,8 @@
  * TaskDetailView.js — Detail View Papan Kanban Proporsional Berstandar ASTACODE CRM & Software House
  * 
  * Layout Proporsional UI/UX:
- * - 70% Kolom Kiri: AI Dev Assistant Banner, Deskripsi & Spesifikasi, Checklist Subtask, Diskusi Tim
- * - 30% Kolom Kanan: Sticky Metadata Rail (Prioritas, Assignee, Pelapor, Due Date, Time Tracking, Git Branch)
- * - Header Workspace Bar: Navigasi Breadcrumbs, Copyable Code, Sub-bar info lengkap, Action Buttons
- * - 6-Phase Lifecycle Track Record: Lingkaran persentase milestone interaktif, gate standar mutu, tombol navigasi fase
- * - Responsive: Otomatis adaptif di layar laptop, desktop, maupun tablet.
+ * - Tab 1 (Overview): 70% Kolom Kiri (AI Dev Assistant, Deskripsi, Checklist Subtask, Diskusi Tim) & 30% Kolom Kanan (Sticky Detail Tiket)
+ * - Tab 2 (Subtask & Spesifikasi, AI Asisten & Jejak Audit): Menggabungkan 3 fitur utama (1. Subtask & Sertifikasi, 2. AI Asisten & Fix Bug, 3. Jejak Audit Aktivitas) dalam satu halaman terpadu yang proporsional.
  */
 
 import { store } from '../state/store.js';
@@ -25,10 +22,11 @@ const ICONS = {
   trash: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
   lock: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
   plus: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`,
-  messageSquare: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`
+  messageSquare: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  activity: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`
 };
 
-// 6 Fase Siklus Standar Software House (Sama Persis Gambar 1)
+// 6 Fase Siklus Standar Software House
 const SOFTWARE_HOUSE_STAGES = [
   { id: 'Backlog', label: '1. Backlog & Spec', shortName: 'Backlog', pct: 16, gateRule: 'Verifikasi kelengkapan KAK, user stories, dan kriteria penerimaan (DoD).' },
   { id: 'To Do', label: '2. Scope & Arsitektur', shortName: 'Arsitektur', pct: 33, gateRule: 'Penyusunan arsitektur DB/API, pembagian subtasks, dan estimasi jam selesai.' },
@@ -85,7 +83,7 @@ export class TaskDetailView {
     this.container.className = 'detail-page-wrapper';
     this.container.style.cssText = 'flex:1;display:flex;flex-direction:column;height:100%;overflow-y:auto;background:var(--bg-primary);';
 
-    this.activeTab = 'overview'; // 'overview' | 'subtasks' | 'ai' | 'git' | 'comments' | 'history'
+    this.activeTab = 'overview'; // 'overview' | 'subtask_ai_audit'
     this.copiedKey = false;
     this.isAiProcessing = false;
     this.selectedCommentAuthorId = 'user-pm';
@@ -132,6 +130,11 @@ export class TaskDetailView {
       return;
     }
 
+    // Ensure valid activeTab
+    if (this.activeTab !== 'overview' && this.activeTab !== 'subtask_ai_audit') {
+      this.activeTab = 'overview';
+    }
+
     // Refresh state data
     const currentTask = state.tasks.find(t => t.id === task.id) || task;
     const reporter = state.teamMembers.find(m => m.id === currentTask.reporterId) || { name: 'Asisyah (Manual)', role: 'Project Manager' };
@@ -152,17 +155,17 @@ export class TaskDetailView {
       priorityBadgeBg = 'rgba(100,116,139,0.1); color:#64748b; border:1px solid rgba(100,116,139,0.25);';
     }
 
-    // Tabs List
+    // Tabs List: Overview + Unified Tab (Subtask & Sertifikasi, AI Asisten & Fix Bug, Jejak Audit Aktivitas)
     const commentsList = (state.comments || []).filter(c => c.taskId === currentTask.id);
     const eventsList = (state.events || []).filter(e => e.taskId === currentTask.id);
 
     const TABS = [
       { id: 'overview', label: 'Overview' },
-      { id: 'subtasks', label: `Subtasks & Spesifikasi`, badge: `${completedSubtasks}/${subtasks.length}` },
-      { id: 'ai', label: '✨ AI Dev Assistant & Fix Bug', isSpark: true },
-      { id: 'git', label: 'Pengembangan Git & CI/CD' },
-      { id: 'comments', label: 'Komentar & Diskusi', badge: commentsList.length },
-      { id: 'history', label: 'Jejak Audit Aktivitas', badge: eventsList.length }
+      {
+        id: 'subtask_ai_audit',
+        label: 'Subtask & AI & LOG',
+        badge: `${completedSubtasks}/${subtasks.length}`
+      }
     ];
 
     const tabsHtml = TABS.map(t => {
@@ -193,7 +196,7 @@ export class TaskDetailView {
           <!-- Sisi Kiri (70%): Area Pekerjaan Utama -->
           <div class="overview-main">
             
-            <!-- AI Dev Assistant: Next Best Action Banner (Persis Gambar 2) -->
+            <!-- AI Dev Assistant: Next Best Action Banner -->
             <div style="padding:18px 20px;border-radius:var(--radius-xl);background:linear-gradient(135deg, rgba(99,102,241,.07), rgba(139,92,246,.07));border:1px solid rgba(99,102,241,.2);box-shadow:var(--shadow-xs);">
               <div style="display:flex;align-items:flex-start;gap:14px;">
                 <div style="width:38px;height:38px;border-radius:var(--radius-lg);background:var(--indigo-600);color:#ffffff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 10px rgba(99,102,241,0.25);">
@@ -226,7 +229,7 @@ export class TaskDetailView {
               </div>
             </div>
 
-            <!-- Card: DESKRIPSI TIKET (Persis Teks Gambar 1) -->
+            <!-- Card: DESKRIPSI TIKET -->
             <div class="card" style="padding:20px 22px;display:flex;flex-direction:column;gap:12px;">
               <div style="display:flex;align-items:center;justify-content:space-between;">
                 <h3 style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin:0;">
@@ -436,7 +439,7 @@ export class TaskDetailView {
 
           </div>
 
-          <!-- Sisi Kanan (30%): Sticky Metadata Rail (Persis Semua Fitur Gambar 1) -->
+          <!-- Sisi Kanan (30%): Sticky Metadata Rail -->
           <div class="overview-sidebar">
             
             <div class="card" style="padding:20px 22px;display:flex;flex-direction:column;gap:16px;">
@@ -596,198 +599,276 @@ export class TaskDetailView {
           </div>
         </div>
       `;
-    } else if (this.activeTab === 'subtasks') {
-      tabContentHtml = `
-        <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
-          <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">
-            Daftar Lengkap Subtask & Kriteria Spesifikasi
-          </h3>
-          <p style="font-size:12.5px;color:var(--text-muted);margin:0;">
-            Subtasks memecah deliverable tiket ini menjadi item pekerjaan mikro yang dapat diverifikasi mandiri.
-          </p>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            ${subtasks.map((s, idx) => `
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:var(--radius-md);background:var(--bg-secondary);border:1px solid var(--border);">
-                <label style="display:flex;align-items:center;gap:12px;cursor:pointer;flex:1;">
-                  <input type="checkbox" class="chk-toggle-subtask" data-subtask-id="${s.id}" ${s.completed ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--indigo-600);" />
-                  <span style="font-size:13px;font-weight:${s.completed ? '400' : '600'};color:${s.completed ? 'var(--text-muted)' : 'var(--text-primary)'};text-decoration:${s.completed ? 'line-through' : 'none'};">
-                    ${idx + 1}. ${s.title}
-                  </span>
-                </label>
-                <button class="btn-delete-subtask" data-subtask-id="${s.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;" title="Hapus subtask">
-                  ${ICONS.trash}
-                </button>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    } else if (this.activeTab === 'ai') {
-      tabContentHtml = `
-        <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
-          <div style="display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);padding-bottom:12px;">
-            <span style="color:var(--indigo-600);">${ICONS.bot}</span>
-            <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">
-              AI Dev Assistant & Automated Bug Fixing Hub
-            </h3>
-          </div>
-          <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin:0;">
-            Mesin AI menganalisis stack Laravel Sanctum, route middleware, dan policy otorisasi untuk menghasilkan patch kode siap review.
-          </p>
-          <div style="padding:16px;border-radius:var(--radius-lg);background:#0f172a;color:#f8fafc;font-family:var(--font-mono);font-size:12px;line-height:1.6;">
-            <div><span style="color:#60a5fa;">$</span> git checkout -b ${currentTask.branchName || 'feature/sanctum-rbac-auth'}</div>
-            <div><span style="color:#34d399;">✓</span> Branch verified on GitHub Remote</div>
-            <div><span style="color:#fbbf24;">●</span> Generating middleware AuthJwtSanctumMiddleware.php...</div>
-            <div><span style="color:#34d399;">✓</span> Unit test AuthTokenTest::test_valid_sanctum_token PASS (0.12s)</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <button id="btn-trigger-ai-full" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;">
-              ${ICONS.sparkles}
-              <span>${this.isAiProcessing ? 'Sedang Memproses Patch AI...' : 'Terapkan Patch AI ke Staging'}</span>
-            </button>
-          </div>
-        </div>
-      `;
-    } else if (this.activeTab === 'git') {
-      tabContentHtml = `
-        <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
-          <div style="display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);padding-bottom:12px;">
-            <span style="color:var(--indigo-600);">${ICONS.gitBranch}</span>
-            <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">
-              Integrasi Repositori Git & CI/CD Pipeline
-            </h3>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:14px;">
-            <div style="padding:14px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);">
-              <span style="font-size:11px;color:var(--text-muted);display:block;">Cabang Git Aktif:</span>
-              <strong style="font-family:var(--font-mono);color:var(--indigo-600);font-size:13px;">${currentTask.branchName || 'feature/sanctum-rbac-auth'}</strong>
-            </div>
-            <div style="padding:14px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);">
-              <span style="font-size:11px;color:var(--text-muted);display:block;">Status Build CI/CD:</span>
-              <strong style="color:#10b981;font-size:13px;">✓ 6/6 Tests Passing</strong>
-            </div>
-          </div>
-        </div>
-      `;
-    } else if (this.activeTab === 'comments') {
-      tabContentHtml = `
-        <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <div>
-              <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">
-                Seluruh Riwayat Diskusi Tim (${commentsList.length})
-              </h3>
-              <p style="font-size:12px;color:var(--text-muted);margin:4px 0 0 0;">
-                Kolaborasi lintas role developer, QA, dan Project Manajer sesuai SOP
-              </p>
-            </div>
-            <span style="font-size:11px;color:var(--text-muted);font-weight:600;">
-              Role Model ASTACODE ERP
-            </span>
-          </div>
+    } else if (this.activeTab === 'subtask_ai_audit') {
+      // TAB TERPADU: 1. Subtask & Sertifikasi + 2. AI Asisten & Fix Bug + 3. Jejak Audit Aktivitas
+      const assigneeMember = state.teamMembers.find(m => m.id === currentTask.assigneeId) || { name: 'Developer', role: 'Engineering' };
+      const certStatusText = subtaskPct === 100 && subtasks.length > 0 ? 'Tersertifikasi QA (100%)' : 'Dalam Verifikasi QA';
+      const certBadgeStyle = subtaskPct === 100 && subtasks.length > 0
+        ? 'background:rgba(16,185,129,0.12);color:#059669;border:1px solid rgba(16,185,129,0.3);'
+        : 'background:rgba(99,102,241,0.1);color:var(--indigo-600);border:1px solid rgba(99,102,241,0.25);';
 
-          <!-- Comment Form inside Tab -->
-          <form id="form-tab-comment" style="display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:var(--radius-lg);background:var(--bg-secondary);border:1px solid var(--border);">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;">
-                  Komentari Sebagai:
+      tabContentHtml = `
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          
+          <!-- Baris Ringkasan 3 Pilar (Proporsional 3 Kolom) -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;">
+            <!-- Metrik 1: Subtask & Sertifikasi -->
+            <div class="card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
+                <span style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">
+                  1. SUBTASK & SERTIFIKASI QA
                 </span>
-                <select id="select-tab-comment-author" class="form-select" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);font-size:12px;font-weight:700;color:var(--text-primary);outline:none;cursor:pointer;">
-                  ${state.teamMembers.map(m => `
-                    <option value="${m.id}" ${(this.selectedCommentAuthorId || 'user-pm') === m.id ? 'selected' : ''}>
-                      ${m.name} (${m.role})
-                    </option>
-                  `).join('')}
-                </select>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <strong style="font-size:20px;font-weight:800;font-family:var(--font-mono);color:var(--text-primary);">
+                    ${completedSubtasks}/${subtasks.length}
+                  </strong>
+                  <span style="font-size:12px;font-weight:700;color:var(--indigo-600);">${subtaskPct}% Selesai</span>
+                </div>
+                <span style="font-size:11px;color:var(--text-secondary);font-weight:600;">${certStatusText}</span>
+              </div>
+              <div style="width:42px;height:42px;border-radius:12px;background:rgba(99,102,241,0.1);color:var(--indigo-600);display:grid;place-items:center;flex-shrink:0;">
+                ${ICONS.checkSquare}
               </div>
             </div>
-            <textarea
-              id="input-tab-comment"
-              rows="3"
-              class="form-textarea"
-              placeholder="Tulis tanggapan atau instruksi teknis untuk tiket ini..."
-              style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);font-size:12.5px;color:var(--text-primary);resize:vertical;"
-              required
-            ></textarea>
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-              <label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);cursor:pointer;">
-                <input type="checkbox" id="chk-tab-comment-internal" checked style="accent-color:var(--indigo-600);" />
-                <span>${ICONS.lock} Hanya Terlihat Tim Internal</span>
-              </label>
-              <button type="submit" class="btn btn-primary btn-sm" style="font-weight:700;padding:8px 16px;">
-                Kirim Komentar
-              </button>
+
+            <!-- Metrik 2: AI Asisten & Fix Bug -->
+            <div class="card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
+                <span style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">
+                  2. AI ASISTEN & FIX BUG
+                </span>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <strong style="font-size:20px;font-weight:800;font-family:var(--font-mono);color:var(--indigo-600);">
+                    98%
+                  </strong>
+                  <span style="font-size:12px;font-weight:700;color:#059669;">✓ 6/6 Tests Pass</span>
+                </div>
+                <span style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  ${currentTask.branchName || 'feature/sanctum-rbac-auth'}
+                </span>
+              </div>
+              <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#ffffff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 10px rgba(79,70,229,0.22);">
+                ${ICONS.sparkles}
+              </div>
             </div>
-          </form>
 
-          <!-- Feed of Comments -->
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            ${commentsList.length === 0 ? '<p style="color:var(--text-muted);font-size:12px;font-style:italic;">Belum ada komentar.</p>' : commentsList.map(c => {
-              const rStyle = getRoleBadgeStyle(c.authorRole);
-              const formattedTime = formatCommentTime(c.createdAt);
-              const memberMatch = (state.teamMembers || []).find(m => m.id === c.authorId || m.name === c.authorName || m.name === c.author);
-              const avatarUrl = c.authorAvatar || memberMatch?.avatar || '';
-              const initials = (c.authorName || c.author || 'TM').substring(0, 2).toUpperCase();
+            <!-- Metrik 3: Jejak Audit Aktivitas -->
+            <div class="card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
+                <span style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">
+                  3. JEJAK AUDIT AKTIVITAS
+                </span>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <strong style="font-size:20px;font-weight:800;font-family:var(--font-mono);color:var(--text-primary);">
+                    ${eventsList.length} Log
+                  </strong>
+                  <span style="font-size:12px;font-weight:700;color:var(--text-secondary);">Status: ${currentTask.status}</span>
+                </div>
+                <span style="font-size:11px;color:var(--text-secondary);font-weight:500;">PIC Aktif: ${assigneeMember.name}</span>
+              </div>
+              <div style="width:42px;height:42px;border-radius:12px;background:rgba(16,185,129,0.1);color:#059669;display:grid;place-items:center;flex-shrink:0;">
+                ${ICONS.activity}
+              </div>
+            </div>
+          </div>
 
-              return `
-                <div style="padding:14px 16px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                      <div style="width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--indigo-600);display:grid;place-items:center;">
-                        ${avatarUrl ? `
-                          <img src="${avatarUrl}" alt="${c.authorName || c.author}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;font-weight:800;color:#fff;\\'>${initials}</span>';" />
-                        ` : `
-                          <span style="font-size:10px;font-weight:800;color:#fff;">${initials}</span>
-                        `}
-                      </div>
-                      <strong style="font-size:13px;color:var(--text-primary);">${c.authorName || c.author || 'Dev Team'}</strong>
-                      <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:${rStyle.bg};color:${rStyle.color};border:1px solid ${rStyle.border};">
-                        ${c.authorRole || memberMatch?.role || 'Team'}
-                      </span>
-                      ${c.isInternal ? `
-                        <span style="font-size:9.5px;color:var(--text-muted);display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:4px;background:rgba(100,116,139,0.08);">
-                          ${ICONS.lock} Internal
-                        </span>
-                      ` : `
-                        <span style="font-size:9.5px;color:#059669;display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:4px;background:rgba(16,185,129,0.1);">
-                          <i class="fi fi-rr-globe"></i> Publik
-                        </span>
-                      `}
+          <!-- Grid Utama 2 Kolom Proporsional (Kiri 62%: Subtask & AI Asisten | Kanan 38%: Jejak Audit Aktivitas) -->
+          <div class="overview-grid">
+            
+            <!-- Kolom Kiri: 1. Subtask & Sertifikasi + 2. AI Asisten & Fix Bug -->
+            <div class="overview-main">
+              
+              <!-- FITUR 1: SUBTASK & SERTIFIKASI SPESIFIKASI -->
+              <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:rgba(99,102,241,0.12);color:var(--indigo-600);display:grid;place-items:center;flex-shrink:0;">
+                      ${ICONS.checkSquare}
                     </div>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">${formattedTime}</span>
-                      <button type="button" class="btn-reply-comment" data-author-name="${c.authorName || c.author || 'Tim'}" style="border:none;background:transparent;color:var(--indigo-600);cursor:pointer;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;" title="Balas komentar ini">
-                        Balas
-                      </button>
-                      <button type="button" class="btn-delete-comment" data-comment-id="${c.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:3px;border-radius:4px;" title="Hapus komentar">
-                        ${ICONS.trash}
-                      </button>
+                    <div>
+                      <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">
+                        1. Subtask & Sertifikasi Spesifikasi
+                      </h3>
+                      <p style="font-size:11.5px;color:var(--text-muted);margin:2px 0 0 0;">
+                        Checklist kriteria kelulusan (Definition of Done) & verifikasi sertifikasi QA per item pekerjaan
+                      </p>
                     </div>
                   </div>
-                  <p style="font-size:13px;color:var(--text-secondary);margin:0;line-height:1.6;padding-left:36px;word-break:break-word;">
-                    ${c.text || c.body || ''}
-                  </p>
+                  <span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;${certBadgeStyle}">
+                    ${certStatusText}
+                  </span>
                 </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    } else if (this.activeTab === 'history') {
-      tabContentHtml = `
-        <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
-          <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">Jejak Audit Aktivitas & Perubahan Status</h3>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            ${eventsList.length === 0 ? '<p style="color:var(--text-muted);font-size:12px;">Belum ada jejak audit tercatat.</p>' : eventsList.map(e => `
-              <div style="padding:12px 14px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                  <strong style="font-size:12.5px;color:var(--text-primary);">${e.action}</strong>
-                  <p style="font-size:11px;color:var(--text-muted);margin:2px 0 0 0;">Oleh: ${e.actorName || 'User'} (${e.actorRole || 'Tim'})</p>
+
+                <!-- Progress Bar -->
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;font-size:11.5px;">
+                    <span style="color:var(--text-secondary);font-weight:600;">Progress Sertifikasi Deliverable</span>
+                    <strong style="font-family:var(--font-mono);color:var(--indigo-600);">${completedSubtasks} dari ${subtasks.length} Subtask (${subtaskPct}%)</strong>
+                  </div>
+                  <div style="width:100%;height:7px;border-radius:9999px;background:var(--bg-secondary);overflow:hidden;">
+                    <div style="width:${subtaskPct}%;height:100%;background:linear-gradient(90deg, #4f46e5, #10b981);transition:width 0.3s ease;"></div>
+                  </div>
                 </div>
-                <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-muted);">${new Date(e.timestamp || Date.now()).toLocaleDateString('id-ID')}</span>
+
+                <!-- Daftar Subtask & Status Sertifikasi -->
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  ${subtasks.length === 0 ? `
+                    <div style="padding:20px;border-radius:10px;border:1px dashed var(--border);text-align:center;color:var(--text-muted);font-size:12px;">
+                      Belum ada item subtask & sertifikasi pada tiket ini. Tambahkan item baru di bawah.
+                    </div>
+                  ` : subtasks.map((s, idx) => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:10px;background:${s.completed ? 'rgba(16,185,129,0.05)' : 'var(--bg-secondary)'};border:1px solid ${s.completed ? 'rgba(16,185,129,0.25)' : 'var(--border)'};">
+                      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;flex:1;min-width:0;">
+                        <input
+                          type="checkbox"
+                          class="chk-toggle-subtask"
+                          data-subtask-id="${s.id}"
+                          ${s.completed ? 'checked' : ''}
+                          style="width:17px;height:17px;accent-color:var(--indigo-600);cursor:pointer;flex-shrink:0;"
+                        />
+                        <span style="font-size:13px;font-weight:${s.completed ? '500' : '600'};color:${s.completed ? 'var(--text-muted)' : 'var(--text-primary)'};text-decoration:${s.completed ? 'line-through' : 'none'};line-height:1.4;">
+                          ${idx + 1}. ${s.title}
+                        </span>
+                      </label>
+                      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;${s.completed ? 'background:rgba(16,185,129,0.12);color:#059669;' : 'background:rgba(100,116,139,0.12);color:#64748b;'}">
+                          ${s.completed ? '✓ Terverifikasi' : 'Menunggu QA'}
+                        </span>
+                        <button class="btn-delete-subtask" data-subtask-id="${s.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:4px;display:inline-flex;" title="Hapus subtask">
+                          ${ICONS.trash}
+                        </button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- Form Tambah Subtask Baru -->
+                <form id="form-quick-subtask" style="display:flex;gap:8px;margin-top:2px;">
+                  <input
+                    type="text"
+                    id="input-quick-subtask"
+                    placeholder="Tambahkan item subtask / kriteria sertifikasi baru..."
+                    class="form-input"
+                    style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;"
+                    required
+                  />
+                  <button type="submit" class="btn btn-secondary btn-sm" style="font-weight:700;padding:9px 16px;">
+                    ${ICONS.plus} Tambah Subtask
+                  </button>
+                </form>
               </div>
-            `).join('')}
+
+              <!-- FITUR 2: AI ASISTEN & FIX BUG HUB -->
+              <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#ffffff;display:grid;place-items:center;flex-shrink:0;">
+                      ${ICONS.bot}
+                    </div>
+                    <div>
+                      <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0;">
+                        2. AI Dev Assistant & Automated Fix Bug
+                      </h3>
+                      <p style="font-size:11.5px;color:var(--text-muted);margin:2px 0 0 0;">
+                        Analisis otomatis kode sumber, generasi patch perbaikan bug, dan pengujian regresi CI/CD
+                      </p>
+                    </div>
+                  </div>
+                  <span style="font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:999px;background:rgba(99,102,241,0.12);color:var(--indigo-600);">
+                    AI Confidence 98%
+                  </span>
+                </div>
+
+                <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin:0;">
+                  Mesin AI menganalisis konteks tiket <strong>${currentTask.key}</strong> pada branch <code>${currentTask.branchName || 'feature/sanctum-rbac-auth'}</code>, menyusun patch kode sesuai arsitektur proyek, serta memvalidasi unit test sebelum diajukan ke Review PR.
+                </p>
+
+                <!-- Console Log AI -->
+                <div style="padding:16px;border-radius:10px;background:#0f172a;color:#f8fafc;font-family:var(--font-mono);font-size:12px;line-height:1.7;border:1px solid #1e293b;">
+                  <div><span style="color:#60a5fa;">$</span> git checkout -b ${currentTask.branchName || 'feature/sanctum-rbac-auth'}</div>
+                  <div><span style="color:#34d399;">✓</span> Branch synced with origin/main (0 conflicts)</div>
+                  <div><span style="color:#fbbf24;">●</span> AI Copilot analyzing ${currentTask.key}: "${currentTask.title}"...</div>
+                  <div><span style="color:#34d399;">✓</span> Patch synthesized &middot; 6/6 automated assertions PASS (0.14s)</div>
+                </div>
+
+                <!-- Tombol Aksi AI -->
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-top:4px;">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <button id="btn-trigger-ai-full" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;padding:8px 16px;border-radius:8px;">
+                      ${ICONS.sparkles}
+                      <span>${this.isAiProcessing ? 'Sedang Memproses Patch AI...' : 'Terapkan Patch AI ke Staging'}</span>
+                    </button>
+                    <button id="btn-quick-generate-tests" class="btn btn-secondary" style="font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:8px;">
+                      Generate Test Suite Otomatis
+                    </button>
+                  </div>
+                  <span style="font-size:11px;font-family:var(--font-mono);color:#10b981;font-weight:700;">
+                    ● CI Runner Ready
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Kolom Kanan: 3. JEJAK AUDIT AKTIVITAS (Sticky Rail Proporsional) -->
+            <div class="overview-sidebar" style="width:370px;">
+              <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,0.12);color:#059669;display:grid;place-items:center;flex-shrink:0;">
+                      ${ICONS.activity}
+                    </div>
+                    <div>
+                      <h3 style="font-size:13.5px;font-weight:800;color:var(--text-primary);margin:0;">
+                        3. Jejak Audit Aktivitas
+                      </h3>
+                      <span style="font-size:11px;color:var(--text-muted);">Riwayat perubahan status & tindakan tim</span>
+                    </div>
+                  </div>
+                  <span style="font-size:10.5px;font-family:var(--font-mono);font-weight:700;padding:2px 8px;border-radius:999px;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);">
+                    ${eventsList.length} Log
+                  </span>
+                </div>
+
+                <!-- Timeline Jejak Audit -->
+                <div style="display:flex;flex-direction:column;gap:12px;position:relative;">
+                  ${eventsList.map((e, idx) => `
+                    <div style="padding:12px 14px;border-radius:10px;background:var(--bg-secondary);border:1px solid var(--border);display:flex;flex-direction:column;gap:6px;position:relative;">
+                      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                        <div style="display:flex;align-items:center;gap:7px;">
+                          <span style="width:8px;height:8px;border-radius:50%;background:${idx === 0 ? 'var(--indigo-600)' : '#10b981'};flex-shrink:0;"></span>
+                          <strong style="font-size:12.5px;color:var(--text-primary);line-height:1.35;">${e.action}</strong>
+                        </div>
+                        <span style="font-size:10.5px;font-family:var(--font-mono);color:var(--text-muted);white-space:nowrap;">
+                          ${new Date(e.timestamp || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <div style="display:flex;align-items:center;justify-content:space-between;padding-left:15px;font-size:11px;color:var(--text-muted);">
+                        <span>Oleh: <strong style="color:var(--text-secondary);">${e.actorName || 'User'}</strong> (${e.actorRole || 'Tim'})</span>
+                        <span style="font-family:var(--font-mono);font-size:10px;">#${eventsList.length - idx}</span>
+                      </div>
+                    </div>
+                  `).join('')}
+
+                  <!-- Baseline Audit Entry: Tiket Dibuat -->
+                  <div style="padding:12px 14px;border-radius:10px;background:var(--bg-secondary);border:1px dashed var(--border);display:flex;flex-direction:column;gap:6px;opacity:0.85;">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                      <div style="display:flex;align-items:center;gap:7px;">
+                        <span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></span>
+                        <strong style="font-size:12px;color:var(--text-secondary);">Tiket ${currentTask.key} diinisialisasi ke sistem</strong>
+                      </div>
+                      <span style="font-size:10.5px;font-family:var(--font-mono);color:var(--text-muted);white-space:nowrap;">
+                        ${new Date(currentTask.createdAt || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div style="padding-left:15px;font-size:11px;color:var(--text-muted);">
+                      Pelapor: <strong style="color:var(--text-secondary);">${reporter.name}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       `;
@@ -854,7 +935,7 @@ export class TaskDetailView {
         ${tabsHtml}
       </div>
 
-      <!-- 3. Dynamic Tab Workspace Content (Grid 70/30 Proporsional) -->
+      <!-- 3. Dynamic Tab Workspace Content (Grid Proporsional) -->
       <div style="padding:20px 24px 32px 24px;flex:1 0 auto;">
         ${tabContentHtml}
       </div>
@@ -893,40 +974,6 @@ export class TaskDetailView {
       });
     }
 
-    // Stage Milestone Buttons Click (Interactive Stage Change)
-    this.container.querySelectorAll('.btn-stage-node[data-stage-id]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetStage = btn.dataset.stageId;
-        if (targetStage && targetStage !== task.status) {
-          store.updateTaskStatus(task.id, targetStage, `Dipindahkan via Lifecycle Stepper`);
-        }
-      });
-    });
-
-    // Advance to Next Phase Button
-    const advanceBtn = this.container.querySelector('#btn-advance-phase');
-    if (advanceBtn) {
-      advanceBtn.addEventListener('click', () => {
-        const curIdx = this.getStageIndex(task.status);
-        if (curIdx < SOFTWARE_HOUSE_STAGES.length - 1) {
-          const nextStage = SOFTWARE_HOUSE_STAGES[curIdx + 1];
-          store.updateTaskStatus(task.id, nextStage.id, `Lanjut ke fase ${nextStage.label}`);
-        } else {
-          store.addToast('success', 'Fase Selesai', 'Tiket sudah berada di fase akhir (Production Live).');
-        }
-      });
-    }
-
-    // Mark Blocked Button
-    const blockedBtn = this.container.querySelector('#btn-mark-blocked');
-    if (blockedBtn) {
-      blockedBtn.addEventListener('click', () => {
-        if (confirm(`Apakah Anda yakin ingin menandai tiket ${task.key} sebagai Blocked?`)) {
-          store.updateTaskStatus(task.id, 'Perlu Manual', 'Ditandai Blocked / Perlu Tinjauan Manual');
-        }
-      });
-    }
-
     // Tab switcher buttons
     this.container.querySelectorAll('.btn-detail-tab[data-tab]').forEach(tabBtn => {
       tabBtn.addEventListener('click', () => {
@@ -935,7 +982,7 @@ export class TaskDetailView {
       });
     });
 
-    // Quick Action Auto-Fix AI & Quick AI Fix inside overview
+    // Quick Action Auto-Fix AI & Quick AI Fix
     const triggerAi = () => {
       this.isAiProcessing = true;
       store.addToast('info', 'AI Dev Assistant', `Memulai analisis dan auto-fix patch untuk ${task.key}...`);
@@ -954,6 +1001,13 @@ export class TaskDetailView {
 
     const fullAiTrigger = this.container.querySelector('#btn-trigger-ai-full');
     if (fullAiTrigger) fullAiTrigger.addEventListener('click', triggerAi);
+
+    const genTestsBtn = this.container.querySelector('#btn-quick-generate-tests');
+    if (genTestsBtn) {
+      genTestsBtn.addEventListener('click', () => {
+        store.addToast('success', 'Test Suite Dibuat', `Unit & feature test otomatis untuk ${task.key} berhasil di-generate.`);
+      });
+    }
 
     // Delete task button
     const deleteBtn = this.container.querySelector('#btn-action-delete');
@@ -1016,13 +1070,6 @@ export class TaskDetailView {
       });
     }
 
-    const tabAuthorSelect = this.container.querySelector('#select-tab-comment-author');
-    if (tabAuthorSelect) {
-      tabAuthorSelect.addEventListener('change', (e) => {
-        this.selectedCommentAuthorId = e.target.value;
-      });
-    }
-
     // Add comment handler helper
     const handleCommentSubmit = (inputId, chkId, selectId) => {
       const input = this.container.querySelector(inputId);
@@ -1077,31 +1124,12 @@ export class TaskDetailView {
       });
     }
 
-    // Tab Comment Form in Comments Tab
-    const tabCommentForm = this.container.querySelector('#form-tab-comment');
-    if (tabCommentForm) {
-      tabCommentForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        handleCommentSubmit('#input-tab-comment', '#chk-tab-comment-internal', '#select-tab-comment-author');
-      });
-    }
-
-    const tabCommentInput = this.container.querySelector('#input-tab-comment');
-    if (tabCommentInput) {
-      tabCommentInput.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-          e.preventDefault();
-          handleCommentSubmit('#input-tab-comment', '#chk-tab-comment-internal', '#select-tab-comment-author');
-        }
-      });
-    }
-
     // Reply comment buttons
     this.container.querySelectorAll('.btn-reply-comment[data-author-name]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const authorName = btn.dataset.authorName;
-        const targetTextarea = this.container.querySelector('#input-quick-comment') || this.container.querySelector('#input-tab-comment');
+        const targetTextarea = this.container.querySelector('#input-quick-comment');
         if (targetTextarea && authorName) {
           const mention = `@${authorName} `;
           if (!targetTextarea.value.startsWith(mention)) {
