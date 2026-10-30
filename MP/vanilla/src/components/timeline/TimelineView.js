@@ -2,7 +2,7 @@
  * TimelineView Component (Vanilla ES Module)
  * Setara Atlassian Jira Software Cloud Roadmap & Gantt Timeline:
  * - 30-Day Gantt Timeline with Month & Day Sticky Headers
- * - Quick Project Switcher Pills (Perpustakaan Digital, Arena Futsal, POS Kopi Kenangan)
+ * - Terikat 100% pada Proyek yang Dipilih (store.getState().selectedProjectId)
  * - Two-tier Controls Section: Search & Status Filter on Row 1, Grouping & Status Legend on Row 2
  * - Uniform Metric Summary Cards (Progres, Aktif, Estimasi Jam, Target UAT) with Proportional Progress Bar
  * - Fixed 320px Left Column with Text Truncation & Ellipsis
@@ -70,41 +70,61 @@ export class TimelineView {
   render() {
     const state = store.getState();
     const activeProject = store.getActiveProject();
-    const { tasks, epics, projects, teamMembers } = state;
+    const currentProjectId = activeProject ? activeProject.id : state.selectedProjectId;
+    this.activeProjectFilter = currentProjectId;
 
-    const availableProjects = projects;
+    const { tasks, epics, sprints, projects, teamMembers } = state;
+    const projectTasks = tasks.filter(t => t.projectId === currentProjectId);
+    const currentEpics = epics.filter(e => e.projectId === currentProjectId);
+    const activeSprint = (sprints || []).find(s => s.projectId === currentProjectId && s.status === 'active') ||
+      (sprints || []).find(s => s.projectId === currentProjectId);
 
     // Filter tasks based on project, status, and search query
-    const filteredTasks = tasks.filter(task => {
-      if (this.activeProjectFilter !== 'all' && task.projectId !== this.activeProjectFilter) {
-        return false;
-      }
-
-
+    const filteredTasks = projectTasks.filter(task => {
       if (this.statusFilter !== 'all') {
         if (this.statusFilter === 'in_progress' && task.status !== 'In Progress' && task.status !== 'Dianalisis') return false;
         if (this.statusFilter === 'done' && task.status !== 'Selesai') return false;
-        if (this.statusFilter === 'qa' && task.status !== 'QA/Testing' && task.status !== 'Menunggu Persetujuan') return false;
+        if (this.statusFilter === 'qa' && task.status !== 'QA/Testing' && task.status !== 'In Review' && task.status !== 'Menunggu Persetujuan') return false;
         if (this.statusFilter === 'backlog' && task.status !== 'Backlog' && task.status !== 'To Do' && task.status !== 'Baru') return false;
       }
 
       if (this.searchQuery.trim()) {
         const q = this.searchQuery.toLowerCase();
-        const matchTitle = task.title.toLowerCase().includes(q);
-        const matchKey = task.key.toLowerCase().includes(q);
+        const matchTitle = (task.title || '').toLowerCase().includes(q);
+        const matchKey = (task.key || '').toLowerCase().includes(q);
         if (!matchTitle && !matchKey) return false;
       }
 
       return true;
     });
 
-    // Statistical calculations
+    // Statistical calculations (strictly for the selected project)
     const totalTasksCount = filteredTasks.length;
     const completedTasksCount = filteredTasks.filter(t => t.status === 'Selesai').length;
     const inProgressCount = filteredTasks.filter(t => t.status === 'In Progress' || t.status === 'Dianalisis').length;
-    const totalEstimatedHours = filteredTasks.reduce((acc, t) => acc + (t.estimateHours || 0), 0);
-    const totalLoggedHours = filteredTasks.reduce((acc, t) => acc + (t.timeLoggedHours || 0), 0);
+    const totalEstimatedHours = filteredTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+    const totalLoggedHours = filteredTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
     const completionPercentage = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+
+    // Dynamic UAT / Sprint target date for this project
+    const rawTargetDate = activeSprint?.endDate || activeProject?.targetDeadline || '2026-11-15';
+    let formattedTargetDate = rawTargetDate;
+    let remainingDaysLabel = 'On-Track';
+    try {
+      const targetObj = new Date(rawTargetDate);
+      if (!isNaN(targetObj.getTime())) {
+        formattedTargetDate = targetObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        const refToday = new Date(this.todayDateStr);
+        const diffD = Math.max(1, Math.ceil((targetObj.getTime() - refToday.getTime()) / (1000 * 3600 * 24)));
+        remainingDaysLabel = `H-${diffD} Hari`;
+      }
+    } catch (e) {
+      formattedTargetDate = rawTargetDate;
+    }
+
+    const activeWorkSummary = currentEpics.length > 0
+      ? currentEpics.slice(0, 2).map(e => e.title).join(' & ')
+      : (activeProject?.description || 'Pengerjaan modul utama proyek sesuai sprint aktif.');
 
     // 30-Day Calendar Days generator
     const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -130,22 +150,32 @@ export class TimelineView {
     const todayIndex = Math.round(diffTime / (1000 * 3600 * 24));
     const todayPercent = (todayIndex / this.totalDays) * 100;
 
-    // Grouping computation
+    // Grouping computation (strictly for the selected project)
     let groupedData = [];
     if (this.groupingMode === 'epic') {
-      const currentEpics = epics.filter(e => this.activeProjectFilter === 'all' || e.projectId === this.activeProjectFilter);
       groupedData = currentEpics.map(epic => {
         const groupTasks = filteredTasks.filter(t => t.epicId === epic.id);
-        const groupProj = availableProjects.find(p => p.id === epic.projectId);
         return {
           id: epic.id,
           title: epic.title,
           badge: epic.key,
           color: epic.color || '#0052cc',
-          subtext: groupProj ? groupProj.name : '',
+          subtext: activeProject ? activeProject.name : '',
           tasks: groupTasks
         };
-      }).filter(g => g.tasks.length > 0 || this.activeProjectFilter !== 'all');
+      });
+
+      const unlinkedTasks = filteredTasks.filter(t => !t.epicId || !currentEpics.some(e => e.id === t.epicId));
+      if (unlinkedTasks.length > 0) {
+        groupedData.push({
+          id: 'epic-unlinked',
+          title: 'Tiket Umum & Pemeliharaan (Tanpa Epik)',
+          badge: `${activeProject?.code || 'PRJ'}-GEN`,
+          color: '#64748b',
+          subtext: activeProject ? activeProject.name : '',
+          tasks: unlinkedTasks
+        });
+      }
     } else if (this.groupingMode === 'assignee') {
       groupedData = teamMembers.map(member => {
         const groupTasks = filteredTasks.filter(t => t.assigneeId === member.id);
@@ -160,52 +190,49 @@ export class TimelineView {
         };
       }).filter(g => g.tasks.length > 0);
     } else {
-      const statuses = ['Baru', 'In Progress', 'Dianalisis', 'QA/Testing', 'Menunggu Persetujuan', 'Selesai', 'Backlog'];
+      const statuses = ['Baru', 'To Do', 'In Progress', 'In Review', 'QA/Testing', 'Menunggu Persetujuan', 'Perlu Manual', 'Selesai', 'Backlog'];
       groupedData = statuses.map(status => {
         const groupTasks = filteredTasks.filter(t => t.status === status);
         return {
           id: status,
           title: status,
           badge: `${groupTasks.length} Tiket`,
-          color: status === 'Selesai' ? '#059669' : status === 'In Progress' ? '#0052cc' : status === 'Menunggu Persetujuan' ? '#d97706' : '#64748b',
-          subtext: 'Status Pengerjaan',
+          color: status === 'Selesai' ? '#059669' : status === 'In Progress' ? '#0052cc' : (status === 'Menunggu Persetujuan' || status === 'In Review') ? '#d97706' : '#64748b',
+          subtext: `Status Pengerjaan · ${activeProject?.code || ''}`,
           tasks: groupTasks
         };
       }).filter(g => g.tasks.length > 0);
     }
 
+    const codePrefix = (activeProject?.code || 'PRJ').split('-')[0];
+
     this.container.innerHTML = `
       <div class="timeline-container">
         
-        <!-- 1. Header & Quick Project Switcher Block -->
+        <!-- 1. Header & Active Project Context Badge -->
         <div class="timeline-header-block">
           <div>
             <div class="timeline-breadcrumb">
               <span>Proyek</span>
               <span>/</span>
-              <span class="timeline-breadcrumb__item--active">${activeProject?.name || 'Perpustakaan Digital'}</span>
+              <span class="timeline-breadcrumb__item--active">${this.escapeHtml(activeProject?.name || 'Proyek Aktif')}</span>
               <span>/</span>
-              <span class="timeline-breadcrumb__item--current">Roadmap</span>
+              <span class="timeline-breadcrumb__item--current">Roadmap &amp; Gantt</span>
             </div>
             <h1 class="timeline-title">
-              Roadmap &amp; Timeline Gantt Proyek
+              Roadmap &amp; Timeline Gantt — ${this.escapeHtml(activeProject?.code || 'PRJ')}
             </h1>
           </div>
 
-          <!-- Quick Project Switcher Pills -->
-          <div class="timeline-project-pills">
-            <button class="tl-proj-pill ${this.activeProjectFilter === 'proj-perpustakaan' ? 'tl-proj-pill--active' : ''}" data-proj="proj-perpustakaan">
-              <i class="fi fi-rr-book-alt" style="margin-right: 4px;"></i> Perpustakaan Digital
-            </button>
-            <button class="tl-proj-pill ${this.activeProjectFilter === 'proj-futsal' ? 'tl-proj-pill--active' : ''}" data-proj="proj-futsal">
-              <i class="fi fi-rr-football" style="margin-right: 4px;"></i> Arena Futsal Pro
-            </button>
-            <button class="tl-proj-pill ${this.activeProjectFilter === 'proj-1' ? 'tl-proj-pill--active' : ''}" data-proj="proj-1">
-              <i class="fi fi-rr-coffee" style="margin-right: 4px;"></i> POS Kopi Kenangan
-            </button>
-            <button class="tl-proj-pill ${this.activeProjectFilter === 'all' ? 'tl-proj-pill--active' : ''}" data-proj="all">
-              Semua (3 Proyek)
-            </button>
+          <!-- Project Context Info Badges (Strictly Bound to Selected Project) -->
+          <div class="timeline-project-pills" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="tl-proj-pill tl-proj-pill--active" style="cursor:default;display:inline-flex;align-items:center;gap:6px;">
+              <span style="width:8px;height:8px;border-radius:50%;background:${activeProject?.color || '#4f46e5'};display:inline-block;"></span>
+              <span>${this.escapeHtml(activeProject?.code || 'PRJ')} · ${this.escapeHtml(activeProject?.clientName || 'Klien')}</span>
+            </span>
+            <span class="tl-proj-pill" style="cursor:default;background:#f8fafc;color:#334155;border:1px solid #e2e8f0;">
+              📦 ${currentEpics.length} Epik Modul · ${projectTasks.length} Tiket
+            </span>
           </div>
         </div>
 
@@ -223,7 +250,7 @@ export class TimelineView {
                   type="text"
                   id="tlSearchInput"
                   class="timeline-search-input"
-                  placeholder="Cari tiket atau kode..."
+                  placeholder="Cari tiket atau kode (${codePrefix}-xxx)..."
                   value="${this.escapeHtml(this.searchQuery)}"
                   autocomplete="off"
                 />
@@ -233,7 +260,7 @@ export class TimelineView {
               <div class="timeline-status-select-wrap">
                 <label for="tlStatusFilter" class="timeline-filter-label">Status:</label>
                 <select id="tlStatusFilter" class="timeline-status-select">
-                  <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>Semua Status (${tasks.length})</option>
+                  <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>Semua Status (${projectTasks.length})</option>
                   <option value="in_progress" ${this.statusFilter === 'in_progress' ? 'selected' : ''}>Sedang Dikerjakan</option>
                   <option value="qa" ${this.statusFilter === 'qa' ? 'selected' : ''}>QA / Review Approval</option>
                   <option value="done" ${this.statusFilter === 'done' ? 'selected' : ''}>Selesai</option>
@@ -249,7 +276,7 @@ export class TimelineView {
             <div class="timeline-grouping-group">
               <span class="timeline-filter-label">Kelompokkan:</span>
               <div class="timeline-group-segmented">
-                <button class="tl-group-btn tl-proj-pill ${this.groupingMode === 'epic' ? 'tl-proj-pill--active' : ''}" data-group="epic">Epik</button>
+                <button class="tl-group-btn tl-proj-pill ${this.groupingMode === 'epic' ? 'tl-proj-pill--active' : ''}" data-group="epic">Epik (${currentEpics.length})</button>
                 <button class="tl-group-btn tl-proj-pill ${this.groupingMode === 'assignee' ? 'tl-proj-pill--active' : ''}" data-group="assignee">Engineer Tim</button>
                 <button class="tl-group-btn tl-proj-pill ${this.groupingMode === 'status' ? 'tl-proj-pill--active' : ''}" data-group="status">Status</button>
               </div>
@@ -292,15 +319,14 @@ export class TimelineView {
               <div class="timeline-metric-card__body">
                 <div class="timeline-metric-card__value-row">
                   <span class="timeline-metric-card__value">${completionPercentage}%</span>
-                  <span class="timeline-metric-card__subvalue">(${completedTasksCount}/${totalTasksCount} task)</span>
+                  <span class="timeline-metric-card__subvalue">(${completedTasksCount}/${totalTasksCount} tiket)</span>
                 </div>
-                <!-- Proportional visual progress bar -->
                 <div class="timeline-metric-card__progress-track">
                   <div class="timeline-metric-card__progress-bar" style="width: ${completionPercentage}%;"></div>
                 </div>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">${completedTasksCount} tiket selesai dari total beban pengerjaan sprint.</p>
+            <p class="timeline-metric-card__desc">${completedTasksCount} tiket selesai pada proyek ${this.escapeHtml(activeProject?.code || 'ini')}.</p>
           </div>
 
           <!-- Metric 2: Aktif Dikerjakan -->
@@ -312,11 +338,11 @@ export class TimelineView {
               <div class="timeline-metric-card__body">
                 <div class="timeline-metric-card__value-row">
                   <span class="timeline-metric-card__value timeline-metric-card__value--primary">${inProgressCount}</span>
-                  <span class="timeline-metric-card__subvalue">task aktif berjalan</span>
+                  <span class="timeline-metric-card__subvalue">tiket aktif berjalan</span>
                 </div>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Distributed lock, OPAC UI, dan QRIS payment gateway.</p>
+            <p class="timeline-metric-card__desc" title="${this.escapeHtml(activeWorkSummary)}">${this.escapeHtml(activeWorkSummary.slice(0, 75))}${activeWorkSummary.length > 75 ? '...' : ''}</p>
           </div>
 
           <!-- Metric 3: Alokasi Estimasi Waktu -->
@@ -328,27 +354,27 @@ export class TimelineView {
               <div class="timeline-metric-card__body">
                 <div class="timeline-metric-card__value-row">
                   <span class="timeline-metric-card__value">${totalEstimatedHours} Jam</span>
-                  <span class="timeline-metric-card__subvalue">(${totalLoggedHours}j logged)</span>
+                  <span class="timeline-metric-card__subvalue">(${totalLoggedHours}j tercatat)</span>
                 </div>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Beban kerja terdistribusi proporsional ke 5 role spesialis.</p>
+            <p class="timeline-metric-card__desc">Akumulasi jam pengerjaan modul proyek ${this.escapeHtml(activeProject?.code || '')}.</p>
           </div>
 
           <!-- Metric 4: Target Milestone UAT -->
           <div class="timeline-metric-card">
             <div>
               <div class="timeline-metric-card__header">
-                <span class="timeline-metric-card__label">Target Milestone UAT</span>
+                <span class="timeline-metric-card__label">Target Milestone &amp; UAT</span>
               </div>
               <div class="timeline-metric-card__body">
                 <div class="timeline-metric-card__value-row">
-                  <span class="timeline-metric-card__value timeline-metric-card__value--purple">01 Nov 2026</span>
-                  <span class="timeline-metric-card__badge">H-12 Hari</span>
+                  <span class="timeline-metric-card__value timeline-metric-card__value--purple">${formattedTargetDate}</span>
+                  <span class="timeline-metric-card__badge">${remainingDaysLabel}</span>
                 </div>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Sign-off UAT Termin 2 dan deployment Staging rilis.</p>
+            <p class="timeline-metric-card__desc">${this.escapeHtml(activeSprint ? activeSprint.name : `Target rilis & UAT ${activeProject?.clientName || 'Klien'}`)}</p>
           </div>
         </div>
 
@@ -359,7 +385,7 @@ export class TimelineView {
             <!-- Sticky Calendar Days Header -->
             <div class="timeline-header-row">
               <div class="timeline-col-ticket">
-                <span class="timeline-col-ticket__header-title">Tiket / Epik Pengerjaan</span>
+                <span class="timeline-col-ticket__header-title">Tiket / Epik Pengerjaan (${this.escapeHtml(activeProject?.code || 'PRJ')})</span>
                 <span class="timeline-col-ticket__header-sub">Tenggat &amp; PIC</span>
               </div>
 
@@ -378,7 +404,7 @@ export class TimelineView {
             <div>
               ${groupedData.length === 0 ? `
                 <div style="padding: 48px; text-align: center; color: #64748b; font-size: 13px; font-style: italic;">
-                  Tidak ada tiket atau epik yang cocok dengan kriteria filter saat ini.
+                  Tidak ada tiket atau epik yang cocok dengan kriteria filter pada proyek ${this.escapeHtml(activeProject?.name || 'ini')}.
                 </div>
               ` : groupedData.map(group => {
                 const isCollapsed = !!this.collapsedGroups[group.id];
@@ -411,9 +437,8 @@ export class TimelineView {
                       const assignee = teamMembers.find(m => m.id === task.assigneeId);
                       const isDone = task.status === 'Selesai';
                       const isHotfix = task.priority === 'Hotfix' || task.priority === 'Tinggi';
-                      const isReview = task.status === 'Menunggu Persetujuan' || task.status === 'QA/Testing';
+                      const isReview = task.status === 'Menunggu Persetujuan' || task.status === 'In Review' || task.status === 'QA/Testing';
 
-                      // Accessible WCAG Contrast Status Palette
                       const barColor = isDone ? '#059669' : isHotfix ? '#dc2626' : isReview ? '#6d28d9' : task.status === 'In Progress' ? '#0052cc' : '#475569';
 
                       return `
@@ -476,14 +501,14 @@ export class TimelineView {
           <div class="timeline-footer-card__left">
             <span style="color: #0052cc;">${Icons.info('', 16)}</span>
             <span>
-              Klik bar tiket atau judul di sebelah kiri untuk membuka Jira Issue Detail dialog secara interaktif.
+              Klik bar tiket atau judul di sebelah kiri untuk membuka detail pekerjaan secara interaktif.
             </span>
           </div>
 
           <div class="timeline-footer-card__right">
-            <span>Proyek: <strong>${this.activeProjectFilter === 'all' ? '3 Proyek' : availableProjects.find(p => p.id === this.activeProjectFilter)?.name || ''}</strong></span>
+            <span>Proyek: <strong>${this.escapeHtml(activeProject?.name || '')}</strong></span>
             <span>·</span>
-            <span>Total Tiket: <strong>${filteredTasks.length} Tiket</strong></span>
+            <span>Total Tiket Proyek: <strong>${filteredTasks.length} Tiket</strong></span>
           </div>
         </div>
 
@@ -498,19 +523,6 @@ export class TimelineView {
   }
 
   bindEvents() {
-    // Project switcher pills
-    const pills = this.container.querySelectorAll('.tl-proj-pill:not(.tl-group-btn)');
-    pills.forEach(pill => {
-      pill.addEventListener('click', () => {
-        const proj = pill.getAttribute('data-proj');
-        this.activeProjectFilter = proj;
-        if (proj !== 'all') {
-          store.setSelectedProjectId(proj);
-        }
-        this.render();
-      });
-    });
-
     // Grouping buttons
     const groupBtns = this.container.querySelectorAll('.tl-group-btn');
     groupBtns.forEach(btn => {

@@ -1,5 +1,36 @@
 const INITIAL_PROJECTS = [
   {
+    id: "proj-futsal",
+    code: "FTSL-PRO",
+    name: "Sistem Booking & Manajemen Lapangan Futsal (Arena Futsal Pro)",
+    clientName: "PT Champion Arena Nusantara (Arena Futsal Pro)",
+    clientEmail: "management@arenafutsalpro.id",
+    description: "Aplikasi booking lapangan futsal interaktif 4 lapangan, anti double-booking Redis lock, pembayaran DP QRIS dinamis 15 menit, POS kantin, dan tiket QR WhatsApp.",
+    status: "Active",
+    health: "On Track",
+    contractType: "Fixed Price",
+    contractValue: 52e6,
+    budgetUsed: 26e6,
+    totalHours: 420,
+    usedHours: 165,
+    totalIssues: 12,
+    doneIssues: 3,
+    targetDeadline: "2026-12-20",
+    color: "#10b981",
+    repoUrl: "github.com/softwarehouse/arena-futsal-booking-pro",
+    sentryDsn: "https://o4508.ingest.sentry.io/api/4508771/envelope/",
+    warrantyUntil: "2027-12-20",
+    maintenanceQuotaHours: 15,
+    maintenanceUsedHours: 2,
+    killSwitchActive: false,
+    workflowType: "ai_automation",
+    liveUrl: "https://booking.arenafutsalpro.id",
+    stagingUrl: "https://staging-futsal.agensi.dev",
+    hostingStatus: "Healthy",
+    warrantyDaysLeft: 320,
+    createdAt: "2026-10-15"
+  },
+  {
     id: "proj-mbn",
     code: "MBN",
     name: "Mobile Banking 3.0 Revamp",
@@ -148,6 +179,78 @@ const INITIAL_PROJECTS = [
 ];
 const INITIAL_EPICS = [
   {
+    id: "epic-mbn-1",
+    projectId: "proj-mbn",
+    key: "MBN-EPIC-1",
+    title: "Biometric Login FIDO2 & Device Binding Security",
+    description: "Autentikasi FaceID/Fingerprint standar FIDO2, hardware token binding, dan deteksi anomali sesi login.",
+    color: "#4f46e5"
+  },
+  {
+    id: "epic-mbn-2",
+    projectId: "proj-mbn",
+    key: "MBN-EPIC-2",
+    title: "Engine QRIS Cross-Border & BI-FAST Real-Time Transfer",
+    description: "Integrasi pembayaran QRIS lintas negara (SG/MY/TH) dan microservice settlement BI-FAST 24/7.",
+    color: "#0284c7"
+  },
+  {
+    id: "epic-mbn-3",
+    projectId: "proj-mbn",
+    key: "MBN-EPIC-3",
+    title: "Core Banking ISO-8583 Gateway & Stress Test 5.000 TPS",
+    description: "Adapter message broker ISO-8583 ke REST/gRPC, circuit breaker Resilience4j, dan uji beban K6.",
+    color: "#059669"
+  },
+  {
+    id: "epic-ecp-1",
+    projectId: "proj-ecp",
+    key: "ECP-EPIC-1",
+    title: "Sinkronisasi Katalog Multi-Channel & ERP SAP Connector",
+    description: "Sinkronisasi stok dua arah antara web storefront, marketplace, dan SAP S/4HANA real-time.",
+    color: "#db2777"
+  },
+  {
+    id: "epic-ecp-2",
+    projectId: "proj-ecp",
+    key: "ECP-EPIC-2",
+    title: "Checkout Engine, Flash Sale Queue & Payment Orchestrator",
+    description: "Antrean Redis stream untuk menahan trafik flash sale 10.000 req/detik dan multi-payment gateway.",
+    color: "#7c3aed"
+  },
+  {
+    id: "epic-ecp-3",
+    projectId: "proj-ecp",
+    key: "ECP-EPIC-3",
+    title: "WhatsApp Commerce Conversational Bot & Loyalty CRM",
+    description: "Katalog belanja interaktif di dalam WhatsApp Business API dan perhitungan poin member tiering.",
+    color: "#d97706"
+  },
+  {
+    id: "epic-iot-1",
+    projectId: "proj-iot",
+    key: "IOT-EPIC-1",
+    title: "Ingestion Pipeline MQTT Broker & Telemetry OBD-II",
+    description: "Penerimaan stream sensor GPS, RPM mesin, suhu kanvas rem, dan konsumsi BBM setiap 3 detik.",
+    color: "#0284c7"
+  },
+  {
+    id: "epic-iot-2",
+    projectId: "proj-iot",
+    key: "IOT-EPIC-2",
+    title: "Geofencing Map Live Tracking & AI Route Optimization",
+    description: "Peta WebGL pemantauan 500 armada truk real-time dan rekomendasi rute hemat bahan bakar.",
+    color: "#0d9488"
+  },
+  {
+    id: "epic-iot-3",
+    projectId: "proj-iot",
+    key: "IOT-EPIC-3",
+    title: "Predictive Maintenance Alert & Driver Behavior Scoring",
+    description: "Deteksi pengereman mendadak, batas kecepatan tol, dan jadwal servis berkala otomatis.",
+    color: "#e11d48"
+  },
+  {
     id: "epic-lib-1",
     projectId: "proj-perpustakaan",
     key: "LIB-EPIC-1",
@@ -270,6 +373,60 @@ const INITIAL_EPICS = [
 ];
 const INITIAL_SPRINTS = [
   {
+    id: "sprint-mbn-1",
+    projectId: "proj-mbn",
+    name: "Sprint 8: Biometric FIDO2, QRIS Cross-Border & Core Banking ISO-8583",
+    startDate: "2026-10-15",
+    endDate: "2026-10-31",
+    goal: "Selesaikan modul autentikasi biometrik FIDO2, settlement BI-FAST real-time, dan stress test 5.000 TPS",
+    status: "active"
+  },
+  {
+    id: "sprint-mbn-2",
+    projectId: "proj-mbn",
+    name: "Sprint 9: Penetration Testing BSSN/OJK & UAT Mobile Banking 3.0",
+    startDate: "2026-11-01",
+    endDate: "2026-11-15",
+    goal: "Lulus audit keamanan penetration testing dan sign-off UAT divisi Digital Banking Mandiri",
+    status: "future"
+  },
+  {
+    id: "sprint-ecp-1",
+    projectId: "proj-ecp",
+    name: "Sprint 6: Sinkronisasi ERP SAP S/4HANA & Redis Queue Flash Sale",
+    startDate: "2026-10-12",
+    endDate: "2026-10-28",
+    goal: "Stabilisasi konektor stok multi-gudang SAP dan antrean checkout flash sale 10.000 req/detik",
+    status: "active"
+  },
+  {
+    id: "sprint-ecp-2",
+    projectId: "proj-ecp",
+    name: "Sprint 7: WhatsApp Commerce Bot & Loyalty Tiering Member",
+    startDate: "2026-10-29",
+    endDate: "2026-11-12",
+    goal: "Integrasi katalog otomatis di WhatsApp Business API dan perhitungan poin belanja omnichannel",
+    status: "future"
+  },
+  {
+    id: "sprint-iot-1",
+    projectId: "proj-iot",
+    name: "Sprint 4: Pipeline MQTT Telemetry OBD-II & Live Geofencing Map",
+    startDate: "2026-10-16",
+    endDate: "2026-11-01",
+    goal: "Ingest data 500 sensor GPS/OBD-II armada truk real-time dan notifikasi pelanggaran batas kecepatan",
+    status: "active"
+  },
+  {
+    id: "sprint-iot-2",
+    projectId: "proj-iot",
+    name: "Sprint 5: AI Fuel Route Optimization & Predictive Maintenance",
+    startDate: "2026-11-02",
+    endDate: "2026-11-18",
+    goal: "Algoritma rekomendasi rute hemat BBM dan alert jadwal servis berkala otomatis",
+    status: "future"
+  },
+  {
     id: "sprint-lib-1",
     projectId: "proj-perpustakaan",
     name: "Sprint 1: Fondasi Microservices Laravel, React UI & Sirkulasi Buku",
@@ -383,6 +540,447 @@ const INITIAL_MEMBERS = [
   }
 ];
 const INITIAL_TASKS = [
+  // --- PROYEK MOBILE BANKING 3.0 REVAMP (proj-mbn) ---
+  {
+    id: "task-mbn-101",
+    key: "MBN-101",
+    projectId: "proj-mbn",
+    epicId: "epic-mbn-1",
+    sprintId: "sprint-mbn-1",
+    type: "Feature",
+    title: "[Security] Implementasi Biometric Login FIDO2 & Hardware Key Attestation",
+    description: "Autentikasi tanpa password menggunakan standar kriptografi kunci publik FIDO2/WebAuthn pada perangkat iOS Secure Enclave & Android Keystore.",
+    status: "Selesai",
+    priority: "Tinggi",
+    source: "Manual",
+    assigneeId: "user-dev-3",
+    reporterId: "user-pm",
+    estimateHours: 32,
+    timeLoggedHours: 30,
+    startDate: "2026-10-15",
+    dueDate: "2026-10-22",
+    branchName: "feature/mbn-101-biometric-fido2",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-mbn-1", title: "Setup FIDO2 attestation challenge & verification endpoint", completed: true },
+      { id: "sub-mbn-2", title: "Integrasi binding device ID dengan HSM Bank Mandiri", completed: true }
+    ],
+    relations: [],
+    createdAt: "2026-10-15T08:00:00Z",
+    lastStatusUpdated: "2026-10-21T16:00:00Z"
+  },
+  {
+    id: "task-mbn-102",
+    key: "MBN-102",
+    projectId: "proj-mbn",
+    epicId: "epic-mbn-2",
+    sprintId: "sprint-mbn-1",
+    type: "Feature",
+    title: "[Payment] Engine QRIS Cross-Border (Singapura, Malaysia, Thailand) & Kurs Real-Time",
+    description: "Modul pemindaian QRIS EMVCo lintas negara dengan konversi kurs treasury real-time dan settlement otomatis via gateway switching.",
+    status: "In Progress",
+    priority: "Tinggi",
+    source: "Manual",
+    assigneeId: "user-dev-1",
+    reporterId: "user-pm",
+    estimateHours: 40,
+    timeLoggedHours: 24,
+    startDate: "2026-10-18",
+    dueDate: "2026-10-28",
+    branchName: "feature/mbn-102-qris-crossborder",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-mbn-3", title: "Parser payload QRIS EMVCo SGQR, DuitNow, dan PromptPay", completed: true },
+      { id: "sub-mbn-4", title: "Integrasi API Treasury FX Rate caching Redis 30 detik", completed: true },
+      { id: "sub-mbn-5", title: "Uji transaksi sandbox lintas acquirer", completed: false }
+    ],
+    relations: [],
+    createdAt: "2026-10-17T09:00:00Z",
+    lastStatusUpdated: "2026-10-22T11:00:00Z"
+  },
+  {
+    id: "task-mbn-103",
+    key: "MBN-103",
+    projectId: "proj-mbn",
+    epicId: "epic-mbn-2",
+    sprintId: "sprint-mbn-1",
+    type: "Feature",
+    title: "[Frontend] Antarmuka Transfer BI-FAST Instan & Favorit Multi-Rekening",
+    description: "Desain layar transfer BI-FAST dengan pencarian proxy nomor HP/email, validasi nama penerima instan, dan bukti struk shareable.",
+    status: "In Review",
+    priority: "Sedang",
+    source: "Manual",
+    assigneeId: "user-dev-2",
+    reporterId: "user-pm",
+    estimateHours: 24,
+    timeLoggedHours: 20,
+    startDate: "2026-10-19",
+    dueDate: "2026-10-26",
+    branchName: "feature/mbn-103-bifast-ui",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-mbn-6", title: "Komponen input proxy BI-FAST & inquiry nama rekening", completed: true },
+      { id: "sub-mbn-7", title: "Animasi konfirmasi PIN 6 digit & generator e-receipt", completed: true }
+    ],
+    relations: [],
+    createdAt: "2026-10-18T10:00:00Z",
+    lastStatusUpdated: "2026-10-23T14:00:00Z"
+  },
+  {
+    id: "task-mbn-104",
+    key: "MBN-104",
+    projectId: "proj-mbn",
+    epicId: "epic-mbn-3",
+    sprintId: "sprint-mbn-1",
+    type: "Bug",
+    title: "[Hotfix] Timeout ISO-8583 Socket Pool saat Puncak Transaksi Gajian (Payroll Day)",
+    description: "Koneksi TCP pool ke Core Banking mengalami kehabisan descriptor saat beban melampaui 3.500 TPS karena idle socket tidak dilepas.",
+    status: "QA/Testing",
+    priority: "Hotfix",
+    severity: "S1 - Critical (Blocker)",
+    source: "Sentry",
+    assigneeId: "user-dev-3",
+    reporterId: "user-qa",
+    estimateHours: 16,
+    timeLoggedHours: 14,
+    startDate: "2026-10-20",
+    dueDate: "2026-10-25",
+    branchName: "fix/mbn-104-iso8583-socket-pool",
+    visibility: "internal",
+    subtasks: [
+      { id: "sub-mbn-8", title: "Konfigurasi Netty channel pool keep-alive & circuit breaker", completed: true },
+      { id: "sub-mbn-9", title: "Simulasi stress test 5.000 TPS menggunakan K6", completed: true }
+    ],
+    relations: [],
+    createdAt: "2026-10-20T07:30:00Z",
+    lastStatusUpdated: "2026-10-24T09:00:00Z"
+  },
+  {
+    id: "task-mbn-105",
+    key: "MBN-105",
+    projectId: "proj-mbn",
+    epicId: "epic-mbn-3",
+    sprintId: "sprint-mbn-1",
+    type: "Task",
+    title: "[QA] Penetration Testing Standar OJK/BSSN & Audit Enkripsi TLS 1.3 Pinning",
+    description: "Pengujian celah keamanan OWASP Mobile Top 10, verifikasi SSL certificate pinning, dan deteksi perangkat root/jailbreak.",
+    status: "To Do",
+    priority: "Tinggi",
+    source: "Manual",
+    assigneeId: "user-qa",
+    reporterId: "user-pm",
+    estimateHours: 28,
+    timeLoggedHours: 8,
+    startDate: "2026-10-24",
+    dueDate: "2026-10-30",
+    branchName: "test/mbn-105-ojk-pentest-suite",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-mbn-10", title: "Verifikasi anti-tampering & SSL pinning bypass test", completed: true },
+      { id: "sub-mbn-11", title: "Penyusunan dokumen laporan kepatuhan keamanan TI OJK", completed: false }
+    ],
+    relations: [],
+    createdAt: "2026-10-21T10:00:00Z",
+    lastStatusUpdated: "2026-10-23T11:00:00Z"
+  },
+  {
+    id: "task-mbn-106",
+    key: "MBN-106",
+    projectId: "proj-mbn",
+    epicId: "epic-mbn-1",
+    type: "Feature",
+    title: "[Backlog] Fitur Cardless Withdrawal ATM via Kode Otentikasi Dinamis",
+    description: "Nasabah dapat menarik uang tunai tanpa kartu di seluruh ATM Mandiri menggunakan token 6 digit berbatas waktu 30 menit.",
+    status: "Backlog",
+    priority: "Sedang",
+    source: "Manual",
+    assigneeId: "user-pm",
+    reporterId: "user-pm",
+    estimateHours: 20,
+    timeLoggedHours: 4,
+    startDate: "2026-11-01",
+    dueDate: "2026-11-10",
+    branchName: "feature/mbn-106-cardless-atm",
+    visibility: "client_public",
+    subtasks: [],
+    relations: [],
+    createdAt: "2026-10-22T09:00:00Z",
+    lastStatusUpdated: "2026-10-22T09:00:00Z"
+  },
+
+  // --- PROYEK E-COMMERCE OMNICHANNEL RETAIL ENGINE (proj-ecp) ---
+  {
+    id: "task-ecp-101",
+    key: "ECP-101",
+    projectId: "proj-ecp",
+    epicId: "epic-ecp-1",
+    sprintId: "sprint-ecp-1",
+    type: "Feature",
+    title: "[Backend] Worker Sinkronisasi Stok Real-Time ERP SAP S/4HANA & Gudang Regional",
+    description: "Sinkronisasi stok SKU antara 45 toko cabang, gudang pusat SAP S/4HANA, dan katalog web storefront dengan latency di bawah 2 detik.",
+    status: "Selesai",
+    priority: "Tinggi",
+    source: "Manual",
+    assigneeId: "user-dev-3",
+    reporterId: "user-pm",
+    estimateHours: 36,
+    timeLoggedHours: 36,
+    startDate: "2026-10-12",
+    dueDate: "2026-10-20",
+    branchName: "feature/ecp-101-sap-inventory-sync",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-ecp-1", title: "Webhook listener perubahan stok OData SAP S/4HANA", completed: true },
+      { id: "sub-ecp-2", title: "Rekonsiliasi delta stok otomatis setiap 5 menit", completed: true }
+    ],
+    relations: [],
+    createdAt: "2026-10-12T08:00:00Z",
+    lastStatusUpdated: "2026-10-20T17:00:00Z"
+  },
+  {
+    id: "task-ecp-102",
+    key: "ECP-102",
+    projectId: "proj-ecp",
+    epicId: "epic-ecp-2",
+    sprintId: "sprint-ecp-1",
+    type: "Bug",
+    title: "[Hotfix] Overselling Stok Kampanye Flash Sale 10.10 pada SKU Elektronik Populer",
+    description: "Terjadi selisih minus 12 unit stok saat 8.000 pembeli melakukan checkout bersamaan pada detik pertama flash sale.",
+    status: "In Progress",
+    priority: "Hotfix",
+    severity: "S1 - Critical (Blocker)",
+    source: "Sentry",
+    assigneeId: "user-dev-1",
+    reporterId: "user-qa",
+    estimateHours: 24,
+    timeLoggedHours: 18,
+    startDate: "2026-10-16",
+    dueDate: "2026-10-24",
+    branchName: "fix/ecp-102-flashsale-lua-atomic",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-ecp-3", title: "Implementasi Redis Lua script atomic decrement kuota flash sale", completed: true },
+      { id: "sub-ecp-4", title: "Uji beban 10.000 concurrent checkout via K6", completed: false }
+    ],
+    relations: [],
+    createdAt: "2026-10-16T09:00:00Z",
+    lastStatusUpdated: "2026-10-22T15:00:00Z"
+  },
+  {
+    id: "task-ecp-103",
+    key: "ECP-103",
+    projectId: "proj-ecp",
+    epicId: "epic-ecp-2",
+    sprintId: "sprint-ecp-1",
+    type: "Feature",
+    title: "[Frontend] Storefront Next.js 15 App Router & One-Page Checkout Omnichannel",
+    description: "Halaman keranjang dan checkout satu halaman dengan dukungan pengiriman kurir instan, ambil di toko (Click & Collect), dan split payment.",
+    status: "In Review",
+    priority: "Tinggi",
+    source: "Manual",
+    assigneeId: "user-dev-2",
+    reporterId: "user-pm",
+    estimateHours: 30,
+    timeLoggedHours: 26,
+    startDate: "2026-10-14",
+    dueDate: "2026-10-25",
+    branchName: "feature/ecp-103-onepage-checkout",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-ecp-5", title: "Pemilih lokasi cabang Click & Collect terdekat via Geolocation", completed: true },
+      { id: "sub-ecp-6", title: "Kalkulasi ongkir multi-ekspedisi & promo voucher", completed: true }
+    ],
+    relations: [],
+    createdAt: "2026-10-14T10:00:00Z",
+    lastStatusUpdated: "2026-10-23T13:00:00Z"
+  },
+  {
+    id: "task-ecp-104",
+    key: "ECP-104",
+    projectId: "proj-ecp",
+    epicId: "epic-ecp-3",
+    sprintId: "sprint-ecp-1",
+    type: "Feature",
+    title: "[Integration] Bot Katalog Belanja WhatsApp Commerce & Notifikasi Resi Otomatis",
+    description: "Pelanggan dapat memilih produk, mengecek stok cabang, dan menerima tautan pembayaran QRIS langsung dari chat WhatsApp resmi.",
+    status: "To Do",
+    priority: "Sedang",
+    source: "Manual",
+    assigneeId: "user-qa",
+    reporterId: "user-pm",
+    estimateHours: 20,
+    timeLoggedHours: 6,
+    startDate: "2026-10-22",
+    dueDate: "2026-10-28",
+    branchName: "feature/ecp-104-whatsapp-commerce",
+    visibility: "client_public",
+    subtasks: [],
+    relations: [],
+    createdAt: "2026-10-19T11:00:00Z",
+    lastStatusUpdated: "2026-10-21T10:00:00Z"
+  },
+  {
+    id: "task-ecp-105",
+    key: "ECP-105",
+    projectId: "proj-ecp",
+    epicId: "epic-ecp-3",
+    type: "Task",
+    title: "[Backlog] Mesin Loyalty Poin Member Tiering (Silver, Gold, Platinum) Lintas Toko",
+    description: "Penyatuan poin member belanja offline POS kasir dan web e-commerce dengan penukaran hadiah voucher.",
+    status: "Backlog",
+    priority: "Sedang",
+    source: "Manual",
+    assigneeId: "user-pm",
+    reporterId: "user-pm",
+    estimateHours: 18,
+    timeLoggedHours: 4,
+    startDate: "2026-10-29",
+    dueDate: "2026-11-08",
+    branchName: "feature/ecp-105-loyalty-tiering",
+    visibility: "client_public",
+    subtasks: [],
+    relations: [],
+    createdAt: "2026-10-20T08:00:00Z",
+    lastStatusUpdated: "2026-10-20T08:00:00Z"
+  },
+
+  // --- PROYEK SMART FLEET TELEMATICS & IOT TRACKING (proj-iot) ---
+  {
+    id: "task-iot-101",
+    key: "IOT-101",
+    projectId: "proj-iot",
+    epicId: "epic-iot-1",
+    sprintId: "sprint-iot-1",
+    type: "Feature",
+    title: "[IoT Backend] Ingestion Cluster EMQX MQTT Broker & TimescaleDB Telemetry",
+    description: "Arsitektur penerima paket data telemetri GPS & sensor OBD-II dari 500 unit truk logistik setiap 3 detik ke TimescaleDB.",
+    status: "Selesai",
+    priority: "Tinggi",
+    source: "Manual",
+    assigneeId: "user-dev-3",
+    reporterId: "user-pm",
+    estimateHours: 34,
+    timeLoggedHours: 34,
+    startDate: "2026-10-16",
+    dueDate: "2026-10-23",
+    branchName: "feature/iot-101-mqtt-timescaledb",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-iot-1", title: "Konfigurasi autentikasi mTLS sertifikat perangkat IoT truk", completed: true },
+      { id: "sub-iot-2", title: "Hypertable partitioning TimescaleDB untuk retensi 1 tahun", completed: true }
+    ],
+    relations: [],
+    createdAt: "2026-10-16T08:00:00Z",
+    lastStatusUpdated: "2026-10-23T15:00:00Z"
+  },
+  {
+    id: "task-iot-102",
+    key: "IOT-102",
+    projectId: "proj-iot",
+    epicId: "epic-iot-2",
+    sprintId: "sprint-iot-1",
+    type: "Feature",
+    title: "[Frontend] Peta Live Tracking Armada WebGL Mapbox & Polygon Geofencing",
+    description: "Visualisasi posisi 500 armada truk bergerak secara real-time via WebSocket beserta penandaan batas wilayah gudang (Geofence).",
+    status: "In Progress",
+    priority: "Tinggi",
+    source: "Manual",
+    assigneeId: "user-dev-2",
+    reporterId: "user-pm",
+    estimateHours: 28,
+    timeLoggedHours: 18,
+    startDate: "2026-10-19",
+    dueDate: "2026-10-28",
+    branchName: "feature/iot-102-mapbox-geofencing",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-iot-3", title: "Layer simbol truk dengan rotasi kompas heading GPS", completed: true },
+      { id: "sub-iot-4", title: "Drawer editor poligon geofence area pabrik & pelabuhan", completed: false }
+    ],
+    relations: [],
+    createdAt: "2026-10-18T09:00:00Z",
+    lastStatusUpdated: "2026-10-24T10:00:00Z"
+  },
+  {
+    id: "task-iot-103",
+    key: "IOT-103",
+    projectId: "proj-iot",
+    epicId: "epic-iot-3",
+    sprintId: "sprint-iot-1",
+    type: "Feature",
+    title: "[Fullstack] Engine Alert Pelanggaran Kecepatan, Harsh Braking & Anomali BBM",
+    description: "Deteksi instan jika pengemudi melebihi batas 80 km/jam di tol atau terjadi penurunan drastis level tangki solar (indikasi pencurian BBM).",
+    status: "In Review",
+    priority: "Tinggi",
+    source: "Manual",
+    assigneeId: "user-dev-1",
+    reporterId: "user-pm",
+    estimateHours: 26,
+    timeLoggedHours: 22,
+    startDate: "2026-10-20",
+    dueDate: "2026-10-27",
+    branchName: "feature/iot-103-fuel-anomaly-alert",
+    visibility: "client_public",
+    subtasks: [
+      { id: "sub-iot-5", title: "Filter Kalman untuk menghaluskan fluktuasi sensor pelampung solar", completed: true },
+      { id: "sub-iot-6", title: "Webhook alert instan ke Command Center Astra Logistik", completed: true }
+    ],
+    relations: [],
+    createdAt: "2026-10-19T11:00:00Z",
+    lastStatusUpdated: "2026-10-24T13:00:00Z"
+  },
+  {
+    id: "task-iot-104",
+    key: "IOT-104",
+    projectId: "proj-iot",
+    epicId: "epic-iot-1",
+    sprintId: "sprint-iot-1",
+    type: "Bug",
+    title: "[Bug] Duplikasi Paket Telemetri GPS saat Truk Melintasi Area Blank Spot Sinyal",
+    description: "Buffer lokal modem IoT mengirim ulang batch koordinat tanpa deduplikasi timestamp saat sinyal 4G pulih, mengacaukan perhitungan jarak tempuh.",
+    status: "QA/Testing",
+    priority: "Sedang",
+    severity: "S2 - Major",
+    source: "Sentry",
+    assigneeId: "user-qa",
+    reporterId: "user-qa",
+    estimateHours: 14,
+    timeLoggedHours: 12,
+    startDate: "2026-10-21",
+    dueDate: "2026-10-26",
+    branchName: "fix/iot-104-telemetry-dedup",
+    visibility: "internal",
+    subtasks: [
+      { id: "sub-iot-7", title: "Unique constraint (device_id, recorded_at) dengan ON CONFLICT DO NOTHING", completed: true }
+    ],
+    relations: [],
+    createdAt: "2026-10-21T08:30:00Z",
+    lastStatusUpdated: "2026-10-24T14:00:00Z"
+  },
+  {
+    id: "task-iot-105",
+    key: "IOT-105",
+    projectId: "proj-iot",
+    epicId: "epic-iot-3",
+    type: "Feature",
+    title: "[Backlog] Dashboard Skor Keselamatan Pengemudi & Jadwal Servis Prediktif",
+    description: "Laporan bulanan peringkat keselamatan mengemudi dan pengingat penggantian oli/kanvas rem berdasarkan jam mesin.",
+    status: "Backlog",
+    priority: "Sedang",
+    source: "Manual",
+    assigneeId: "user-pm",
+    reporterId: "user-pm",
+    estimateHours: 22,
+    timeLoggedHours: 6,
+    startDate: "2026-11-02",
+    dueDate: "2026-11-12",
+    branchName: "feature/iot-105-driver-scorecard",
+    visibility: "client_public",
+    subtasks: [],
+    relations: [],
+    createdAt: "2026-10-22T10:00:00Z",
+    lastStatusUpdated: "2026-10-22T10:00:00Z"
+  },
   // --- APLIKASI PERPUSTAKAAN DIGITAL (MICROSERVICES LARAVEL - REACT) ---
   // Jaka (Backend Dev) Tasks
   {
@@ -1717,6 +2315,7 @@ const INITIAL_TASKS = [
   },
   {
     id: "task-ftsl-101",
+    sprintId: "sprint-ftsl-1",
     key: "FTSL-101",
     projectId: "proj-futsal",
     epicId: "epic-ftsl-1",
@@ -1743,6 +2342,7 @@ const INITIAL_TASKS = [
   },
   {
     id: "task-ftsl-b101",
+    sprintId: "sprint-ftsl-1",
     key: "FTSL-B101",
     projectId: "proj-futsal",
     type: "Bug",
@@ -1772,6 +2372,7 @@ const INITIAL_TASKS = [
   },
   {
     id: "task-ftsl-b102",
+    sprintId: "sprint-ftsl-1",
     key: "FTSL-B102",
     projectId: "proj-futsal",
     type: "Bug",
@@ -1801,6 +2402,7 @@ const INITIAL_TASKS = [
   },
   {
     id: "task-ftsl-b103",
+    sprintId: "sprint-ftsl-1",
     key: "FTSL-B103",
     projectId: "proj-futsal",
     type: "Bug",
@@ -1855,6 +2457,9 @@ const INITIAL_TASKS = [
   },
   {
     id: "task-ftsl-102",
+    sprintId: "sprint-ftsl-1",
+    timeLoggedHours: 14,
+    status: "In Progress",
     key: "FTSL-102",
     projectId: "proj-futsal",
     epicId: "epic-ftsl-1",
@@ -1883,6 +2488,9 @@ const INITIAL_TASKS = [
   },
   {
     id: "task-ftsl-103",
+    sprintId: "sprint-ftsl-1",
+    timeLoggedHours: 10,
+    status: "Selesai",
     key: "FTSL-103",
     projectId: "proj-futsal",
     epicId: "epic-ftsl-2",
@@ -2422,6 +3030,122 @@ const INITIAL_CRM_DEALS = [
   }
 ];
 const INITIAL_INVOICES = [
+  {
+    id: "inv-mbn-101",
+    invoiceNumber: "INV/2026/09/MBN-001",
+    projectId: "proj-mbn",
+    clientName: "PT Bank Mandiri Digital",
+    type: "Termin 1: Down Payment (30%) Kick-off & Arsitektur FIDO2",
+    issueDate: "2026-09-05",
+    dueDate: "2026-09-19",
+    items: [
+      {
+        id: "item-mbn-1",
+        description: "Termin 1 (30%): Inisialisasi Arsitektur Mobile Banking 3.0 & Biometric FIDO2",
+        hoursOrUnits: 1,
+        ratePerUnit: 255e6,
+        amount: 255e6
+      }
+    ],
+    subtotal: 255e6,
+    discount: 0,
+    taxPpn: 2805e4,
+    totalAmount: 28305e4,
+    status: "Lunas",
+    notes: "Pembayaran Termin 1 Mobile Banking 3.0 Revamp telah diterima.",
+    bankAccount: {
+      bankName: "Bank Mandiri Corporate",
+      accountNumber: "124-00-9882190-1",
+      accountHolder: "PT Digital Manjer Solusindo"
+    }
+  },
+  {
+    id: "inv-mbn-102",
+    invoiceNumber: "INV/2026/10/MBN-002",
+    projectId: "proj-mbn",
+    clientName: "PT Bank Mandiri Digital",
+    type: "Termin 2: Deliverable QRIS Cross-Border & Core Banking Gateway (40%)",
+    issueDate: "2026-10-20",
+    dueDate: "2026-11-05",
+    items: [
+      {
+        id: "item-mbn-2",
+        description: "Termin 2 (40%): Integrasi QRIS Cross-Border, BI-FAST, dan Stress Test 5.000 TPS",
+        hoursOrUnits: 1,
+        ratePerUnit: 340e6,
+        amount: 340e6
+      }
+    ],
+    subtotal: 340e6,
+    discount: 0,
+    taxPpn: 374e5,
+    totalAmount: 3774e5,
+    status: "Disetujui PM",
+    notes: "Menunggu proses pencairan divisi Finance PT Bank Mandiri Digital.",
+    bankAccount: {
+      bankName: "Bank Mandiri Corporate",
+      accountNumber: "124-00-9882190-1",
+      accountHolder: "PT Digital Manjer Solusindo"
+    }
+  },
+  {
+    id: "inv-ecp-101",
+    invoiceNumber: "INV/2026/09/ECP-001",
+    projectId: "proj-ecp",
+    clientName: "PT Nusantara Retail Group",
+    type: "Termin 1: Konektor ERP SAP S/4HANA & Omnichannel Core (40%)",
+    issueDate: "2026-09-10",
+    dueDate: "2026-09-24",
+    items: [
+      {
+        id: "item-ecp-1",
+        description: "Termin 1: Sinkronisasi Multi-Gudang SAP S/4HANA & Storefront Omnichannel",
+        hoursOrUnits: 1,
+        ratePerUnit: 480e6,
+        amount: 480e6
+      }
+    ],
+    subtotal: 480e6,
+    discount: 0,
+    taxPpn: 528e5,
+    totalAmount: 5328e5,
+    status: "Lunas",
+    notes: "Terima kasih atas pembayaran Termin 1 PT Nusantara Retail Group.",
+    bankAccount: {
+      bankName: "Bank Central Asia (BCA)",
+      accountNumber: "883-091-2391",
+      accountHolder: "PT Digital Manjer Solusindo"
+    }
+  },
+  {
+    id: "inv-iot-101",
+    invoiceNumber: "INV/2026/10/IOT-001",
+    projectId: "proj-iot",
+    clientName: "PT Astra Logistik Pintar",
+    type: "Termin 1: Down Payment (30%) Pipeline MQTT & Sensor OBD-II",
+    issueDate: "2026-10-05",
+    dueDate: "2026-10-19",
+    items: [
+      {
+        id: "item-iot-1",
+        description: "Termin 1 (30%): Setup Cluster EMQX MQTT, TimescaleDB & Live Map Tracking",
+        hoursOrUnits: 1,
+        ratePerUnit: 276e6,
+        amount: 276e6
+      }
+    ],
+    subtotal: 276e6,
+    discount: 0,
+    taxPpn: 3036e4,
+    totalAmount: 30636e4,
+    status: "Lunas",
+    notes: "Terima kasih atas kerja sama PT Astra Logistik Pintar.",
+    bankAccount: {
+      bankName: "Bank Central Asia (BCA)",
+      accountNumber: "883-091-2391",
+      accountHolder: "PT Digital Manjer Solusindo"
+    }
+  },
   {
     id: "inv-lib-101",
     invoiceNumber: "INV/2026/10/LIB-001",

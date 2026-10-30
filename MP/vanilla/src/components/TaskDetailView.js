@@ -138,6 +138,15 @@ export class TaskDetailView {
 
     // Refresh state data
     const currentTask = state.tasks.find(t => t.id === task.id) || task;
+    const taskProject = (state.projects || []).find(p => p.id === currentTask.projectId) || store.getActiveProject() || { name: 'Proyek Aktif', code: 'PRJ' };
+    const taskEpic = (state.epics || []).find(e => e.id === currentTask.epicId);
+    const taskKeySlug = (currentTask.key || 'task-101').toLowerCase().replace(/[^a-z0-9-]+/g, '-');
+    const effectiveBranchName = currentTask.branchName || `${currentTask.type === 'Bug' ? 'fix' : 'feature'}/${taskKeySlug}-implementation`;
+    const aiRecommendationText = currentTask.rootCauseAnalysis
+      ? `Analisis Root Cause (${currentTask.key}): ${currentTask.rootCauseAnalysis} — AI Engine siap membuat PR perbaikan dan menjalankan CI tests pada proyek ${taskProject.name}.`
+      : currentTask.type === 'Bug'
+        ? `Laporan bug terdeteksi pada ${taskEpic ? `modul "${taskEpic.title}"` : `proyek ${taskProject.name}`} (${currentTask.key}). AI Engine siap mereproduksi trace exception, menyusun patch perbaikan untuk "${currentTask.title}", dan memvalidasi unit test otomatis.`
+        : `Rekomendasi implementasi untuk tiket ${currentTask.key} (${taskProject.code}): Selesaikan "${currentTask.title}"${taskEpic ? ` pada epik "${taskEpic.title}"` : ''} di branch ${effectiveBranchName} lalu jalankan automated test suite sebelum diajukan ke Review PR.`;
     const reporter = state.teamMembers.find(m => m.id === currentTask.reporterId) || { name: 'Asisyah (Manual)', role: 'Project Manager' };
     
     const subtasks = currentTask.subtasks || [];
@@ -214,8 +223,8 @@ export class TaskDetailView {
                   </div>
                   <p style="font-size:12.5px;font-weight:600;color:var(--text-primary);margin:6px 0 0 0;line-height:1.5;">
                     ${currentTask.type === 'Bug' 
-                      ? 'Laporan bug terdeteksi di modul perpustakaan. AI Engine siap mereproduksi trace exception, membuat PR perbaikan fix bug, dan menjalankan CI tests.'
-                      : 'Implementasi middleware otorisasi terdistribusi di seluruh microservices Laravel. Mengamankan endpoint peminjaman dan reservasi hanya untuk kartu aktif terverifikasi.'}
+                      ? aiRecommendationText
+                      : aiRecommendationText}
                   </p>
                   <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
                     <button id="btn-quick-ai-fix" class="btn btn-primary" style="font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
@@ -239,7 +248,7 @@ export class TaskDetailView {
                 <span style="font-size:11px;color:var(--text-muted);">Format: Markdown & Plain Text</span>
               </div>
               <div style="font-size:13px;line-height:1.7;color:var(--text-primary);background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;">
-                ${currentTask.description || 'Implementasi middleware otorisasi terdistribusi di seluruh microservices Laravel. Mengamankan endpoint peminjaman dan reservasi hanya untuk kartu aktif terverifikasi.'}
+                ${currentTask.description || `Penyelesaian deliverable teknis untuk tiket ${currentTask.key}: ${currentTask.title} pada proyek ${taskProject.name}.`}
               </div>
             </div>
 
@@ -592,7 +601,7 @@ export class TaskDetailView {
                   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
                     <span style="color:var(--text-muted);">Branch:</span>
                     <span style="font-family:var(--font-mono);color:var(--indigo-600);font-weight:700;word-break:break-all;">
-                      ${currentTask.branchName || 'feature/sanctum-rbac-auth'}
+                      ${effectiveBranchName}
                     </span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -658,7 +667,7 @@ export class TaskDetailView {
                   <span style="font-size:12px;font-weight:700;color:#059669;">✓ 6/6 Tests Pass</span>
                 </div>
                 <span style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                  ${currentTask.branchName || 'feature/sanctum-rbac-auth'}
+                  ${effectiveBranchName}
                 </span>
               </div>
               <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#ffffff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 10px rgba(79,70,229,0.22);">
@@ -807,12 +816,12 @@ export class TaskDetailView {
                 </div>
 
                 <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin:0;">
-                  Mesin AI menganalisis konteks tiket <strong>${currentTask.key}</strong> pada branch <code>${currentTask.branchName || 'feature/sanctum-rbac-auth'}</code>, menyusun patch kode sesuai arsitektur proyek, serta memvalidasi unit test sebelum diajukan ke Review PR.
+                  Mesin AI menganalisis konteks tiket <strong>${currentTask.key}</strong> (${taskProject.name}) pada branch <code>${effectiveBranchName}</code>, menyusun patch kode sesuai arsitektur proyek, serta memvalidasi unit test sebelum diajukan ke Review PR.
                 </p>
 
                 <!-- Console Log AI -->
                 <div style="padding:16px;border-radius:10px;background:#0f172a;color:#f8fafc;font-family:var(--font-mono);font-size:12px;line-height:1.7;border:1px solid #1e293b;">
-                  <div><span style="color:#60a5fa;">$</span> git checkout -b ${currentTask.branchName || 'feature/sanctum-rbac-auth'}</div>
+                  <div><span style="color:#60a5fa;">$</span> git checkout -b ${effectiveBranchName}</div>
                   <div><span style="color:#34d399;">✓</span> Branch synced with origin/main (0 conflicts)</div>
                   <div><span style="color:#fbbf24;">●</span> AI Copilot analyzing ${currentTask.key}: "${currentTask.title}"...</div>
                   <div><span style="color:#34d399;">✓</span> Patch synthesized &middot; 6/6 automated assertions PASS (0.14s)</div>

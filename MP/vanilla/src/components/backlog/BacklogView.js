@@ -29,6 +29,10 @@ export class BacklogView {
     this.isSprintCollapsed = false;
     this.isBacklogCollapsed = false;
     this.isWorkloadCollapsed = false;
+    this.isCreateSprintModalOpen = false;
+    this.isCreateEpicModalOpen = false;
+    this.sprintDurationDays = 14;
+    this.selectedEpicColor = "#4f46e5";
 
     this.init();
   }
@@ -36,6 +40,13 @@ export class BacklogView {
   init() {
     this.render();
     this.attachEvents();
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && (this.isCreateSprintModalOpen || this.isCreateEpicModalOpen)) {
+        this.isCreateSprintModalOpen = false;
+        this.isCreateEpicModalOpen = false;
+        this.render();
+      }
+    });
 
     store.subscribe(() => {
       // Re-render only if current view is backlog to avoid redundant processing
@@ -104,7 +115,7 @@ export class BacklogView {
     const activeSprint = projectSprints.find((s) => s.status === "active") ||
       projectSprints[0] || {
         id: "sprint-default",
-        name: "LIB Sprint 1 (Aktif)",
+        name: `${activeProject?.code || "PRJ"} Sprint 1 (Aktif)`,
         startDate: "12 Okt 2026",
         endDate: "26 Okt 2026",
       };
@@ -184,7 +195,7 @@ export class BacklogView {
                 <h1 class="backlog-page-title">Backlog &amp; Perencanaan Sprint</h1>
                 <span class="backlog-active-pill">
                   <span style="font-size: 8px;">●</span>
-                  <span>${this.escapeHtml(activeSprint?.name || "LIB Sprint 1")} Aktif</span>
+                  <span>${this.escapeHtml(activeSprint?.name || `${activeProject?.code || "PRJ"} Sprint 1`)} Aktif</span>
                 </span>
               </div>
             </div>
@@ -260,7 +271,7 @@ export class BacklogView {
                   id="backlogSearchInput"
                   class="backlog-search-input"
                   type="text"
-                  placeholder="Cari berdasarkan judul atau ID (LIB-xxx)..."
+                  placeholder="Cari berdasarkan judul atau ID (${(activeProject?.code || 'PRJ').split('-')[0]}-xxx)..."
                   value="${this.escapeHtml(this.searchQuery)}"
                 />
               </div>
@@ -578,8 +589,488 @@ export class BacklogView {
             </section>
 
           </main>
+        ${this.renderCreateSprintModal(activeProject, projectSprints, backlogPoolTasks, totalBacklogHours)}
+        ${this.renderCreateEpicModal(activeProject, projectEpics, teamMembers)}
         </div>
 
+      </div>
+    `;
+  }
+
+  renderCreateSprintModal(activeProject, projectSprints, backlogPoolTasks, totalBacklogHours) {
+    if (!this.isCreateSprintModalOpen) return "";
+
+    const projCode = activeProject?.code ? activeProject.code.split("-")[0] : "PRJ";
+    const nextSprintNum = (projectSprints?.length || 0) + 1;
+    const defaultSprintName = `Sprint ${nextSprintNum}: Pengembangan Fitur & Stabilisasi ${projCode}`;
+    const todayStr = new Date().toISOString().split("T")[0];
+    const endDateObj = new Date(Date.now() + (this.sprintDurationDays || 14) * 86400000);
+    const defaultEndStr = endDateObj.toISOString().split("T")[0];
+    const previewBacklogTasks = (backlogPoolTasks || []).slice(0, 6);
+
+    return `
+      <div
+        id="backlogCreateSprintBackdrop"
+        style="position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;"
+      >
+        <div
+          class="card"
+          style="width:100%;max-width:680px;max-height:90vh;background:var(--bg-card, #ffffff);border:1px solid var(--border, #e2e8f0);border-radius:16px;box-shadow:0 24px 48px rgba(15,23,42,0.24);display:flex;flex-direction:column;overflow:hidden;animation:modalSlideUp 0.18s ease;"
+        >
+          <!-- Modal Header -->
+          <div style="padding:18px 24px;background:linear-gradient(135deg, rgba(79,70,229,0.07), rgba(59,130,246,0.04));border-bottom:1px solid var(--border, #e2e8f0);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+              <div style="width:40px;height:40px;border-radius:10px;background:var(--indigo-600, #4f46e5);color:#ffffff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 10px rgba(79,70,229,0.25);">
+                ${Icons.calendar("", 18)}
+              </div>
+              <div style="min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary, #0f172a);">
+                    Buat Sprint Baru
+                  </h3>
+                  <span style="font-size:10.5px;font-family:var(--font-mono);font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(79,70,229,0.1);color:var(--indigo-600, #4f46e5);border:1px solid rgba(79,70,229,0.2);">
+                    ${this.escapeHtml(projCode)} · ${this.escapeHtml(activeProject?.name || "Proyek Aktif")}
+                  </span>
+                </div>
+                <p style="margin:2px 0 0 0;font-size:12px;color:var(--text-muted, #64748b);">
+                  Atur durasi iterasi, target pencapaian (Sprint Goal), kapasitas jam, dan alokasi tiket awal dari Backlog Pool.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="closeCreateSprintModalBtn"
+              style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border, #e2e8f0);background:var(--bg-card, #fff);color:var(--text-muted, #64748b);cursor:pointer;display:grid;place-items:center;font-size:15px;font-weight:700;flex-shrink:0;"
+              title="Tutup Modal (Esc)"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Modal Form Body -->
+          <form id="createSprintModalForm" style="padding:20px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;flex:1;">
+            <!-- Baris 1: Nama Sprint & Preset Cepat -->
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Nama Sprint <span style="color:#ef4444;">*</span>
+                </label>
+                <span style="font-size:10.5px;color:var(--text-muted, #64748b);">Urutan ke-${nextSprintNum} pada proyek ini</span>
+              </div>
+              <input
+                type="text"
+                id="modalSprintNameInput"
+                value="${this.escapeHtml(defaultSprintName)}"
+                placeholder="Contoh: Sprint 15: Integrasi QRIS & Optimasi Query Database..."
+                style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:13px;font-weight:600;color:var(--text-primary, #0f172a);"
+                required
+              />
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
+                <span style="font-size:10.5px;color:var(--text-muted);font-weight:600;">Template Cepat:</span>
+                <button type="button" class="sprint-preset-chip" data-sprint-title="Sprint ${nextSprintNum}: Fondasi Arsitektur API & Core Microservices" data-sprint-goal="Menyelesaikan REST API utama, autentikasi RBAC, dan skema database terdistribusi." style="border:1px solid rgba(79,70,229,0.25);background:rgba(79,70,229,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                  + Fondasi API & Backend
+                </button>
+                <button type="button" class="sprint-preset-chip" data-sprint-title="Sprint ${nextSprintNum}: Integrasi UI Frontend & Stabilisasi Bug" data-sprint-goal="Menyelesaikan integrasi komponen antarmuka, state management, dan perbaikan bug kritis S1/S2." style="border:1px solid rgba(79,70,229,0.25);background:rgba(79,70,229,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                  + Integrasi UI & Stabilisasi
+                </button>
+                <button type="button" class="sprint-preset-chip" data-sprint-title="Sprint ${nextSprintNum}: Pengujian Regresi QA, Load Test & UAT" data-sprint-goal="Verifikasi stress test beban tinggi, kelulusan seluruh skenario QA Staging, dan sign-off UAT klien." style="border:1px solid rgba(79,70,229,0.25);background:rgba(79,70,229,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                  + QA Staging & UAT Rilis
+                </button>
+              </div>
+            </div>
+
+            <!-- Baris 2: Durasi Siklus & Status Awal (Grid 2 Kolom Proporsional) -->
+            <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Durasi Siklus Sprint
+                </label>
+                <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;">
+                  ${[
+                    { days: 7, label: "1 Minggu (7H)" },
+                    { days: 14, label: "2 Minggu (14H)" },
+                    { days: 21, label: "3 Minggu (21H)" },
+                  ]
+                    .map(
+                      (d) => `
+                    <button
+                      type="button"
+                      class="sprint-duration-btn"
+                      data-days="${d.days}"
+                      style="padding:8px 6px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid ${
+                        this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--border, #cbd5e1)"
+                      };background:${
+                        this.sprintDurationDays === d.days ? "rgba(79,70,229,0.1)" : "var(--bg-secondary, #f8fafc)"
+                      };color:${this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--text-secondary, #475569)"};"
+                    >
+                      ${d.label}
+                    </button>
+                  `
+                    )
+                    .join("")}
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Status Eksekusi Sprint
+                </label>
+                <select
+                  id="modalSprintStatusSelect"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;font-weight:600;color:var(--text-primary, #0f172a);"
+                >
+                  <option value="future" selected>Direncanakan (Future Sprint)</option>
+                  <option value="active">● Aktifkan Langsung (Active Sprint)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Baris 3: Tanggal Mulai, Tanggal Selesai, & Target Kapasitas Jam (Grid 3 Kolom Proporsional) -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Tanggal Mulai <span style="color:#ef4444;">*</span>
+                </label>
+                <input
+                  type="date"
+                  id="modalSprintStartInput"
+                  value="${todayStr}"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;font-family:var(--font-mono);font-weight:700;color:var(--text-primary);"
+                  required
+                />
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Tanggal Selesai <span style="color:#ef4444;">*</span>
+                </label>
+                <input
+                  type="date"
+                  id="modalSprintEndInput"
+                  value="${defaultEndStr}"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;font-family:var(--font-mono);font-weight:700;color:var(--text-primary);"
+                  required
+                />
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Kapasitas Tim (Jam)
+                </label>
+                <input
+                  type="number"
+                  id="modalSprintCapacityInput"
+                  value="160"
+                  min="20"
+                  max="800"
+                  step="10"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;font-family:var(--font-mono);font-weight:700;color:var(--indigo-600);"
+                />
+              </div>
+            </div>
+
+            <!-- Baris 4: Target & Sasaran Sprint (Sprint Goal) -->
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                Sasaran &amp; Deliverable Utama (Sprint Goal) <span style="color:#ef4444;">*</span>
+              </label>
+              <textarea
+                id="modalSprintGoalInput"
+                rows="2"
+                placeholder="Jelaskan fokus pencapaian utama sprint ini, kriteria keberhasilan rilis, dan modul yang ditargetkan selesai..."
+                style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;color:var(--text-primary);resize:vertical;"
+                required
+              >Menyelesaikan deliverable prioritas tinggi pada backlog serta memastikan kualitas rilis staging lulus verifikasi QA.</textarea>
+            </div>
+
+            <!-- Baris 5: Alokasi Tiket Awal dari Backlog Pool (Opsional) -->
+            <div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:10px;background:var(--bg-secondary, #f8fafc);border:1px solid var(--border, #e2e8f0);">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-primary, #0f172a);">
+                  Tarik Tiket dari Backlog Pool ke Sprint Ini (Opsional)
+                </span>
+                <span style="font-size:11px;font-weight:700;color:var(--indigo-600);font-family:var(--font-mono);">
+                  Tersedia: ${backlogPoolTasks.length} Tiket (${totalBacklogHours}h)
+                </span>
+              </div>
+
+              ${
+                previewBacklogTasks.length === 0
+                  ? `<div style="font-size:12px;color:var(--text-muted);font-style:italic;padding:6px 0;">Tidak ada tiket di Backlog Pool saat ini.</div>`
+                  : `
+                <div style="display:flex;flex-direction:column;gap:6px;max-height:145px;overflow-y:auto;padding-right:4px;">
+                  ${previewBacklogTasks
+                    .map(
+                      (t) => `
+                    <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:7px;background:var(--bg-card, #fff);border:1px solid var(--border, #e2e8f0);cursor:pointer;font-size:12px;">
+                      <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+                        <input type="checkbox" class="sprint-backlog-task-chk" value="${t.id}" style="width:15px;height:15px;accent-color:var(--indigo-600);cursor:pointer;flex-shrink:0;" />
+                        <span style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:var(--indigo-600);flex-shrink:0;">${t.key}</span>
+                        <span style="font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${this.escapeHtml(t.title)}</span>
+                      </div>
+                      <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0;">${t.estimateHours || 4}h</span>
+                    </label>
+                  `
+                    )
+                    .join("")}
+                </div>
+              `
+              }
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--border, #e2e8f0);flex-wrap:wrap;">
+              <span style="font-size:11.5px;color:var(--text-muted);">
+                💡 Sprint baru akan langsung muncul di daftar perencanaan proyek.
+              </span>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <button
+                  type="button"
+                  id="cancelCreateSprintModalBtn"
+                  class="btn btn-secondary"
+                  style="padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:700;"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  style="padding:8px 18px;border-radius:8px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;"
+                >
+                  ${Icons.plus("", 14)}
+                  <span>Simpan Sprint</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCreateEpicModal(activeProject, projectEpics, teamMembers) {
+    if (!this.isCreateEpicModalOpen) return "";
+
+    const projCode = activeProject?.code ? activeProject.code.split("-")[0] : "PRJ";
+    const nextEpicNum = (projectEpics?.length || 0) + 1;
+    const defaultEpicKey = `${projCode}-EPIC-${nextEpicNum}`;
+
+    const colorOptions = [
+      { hex: "#4f46e5", name: "Indigo" },
+      { hex: "#0284c7", name: "Sky Blue" },
+      { hex: "#0d9488", name: "Teal" },
+      { hex: "#059669", name: "Emerald" },
+      { hex: "#d97706", name: "Amber" },
+      { hex: "#e11d48", name: "Rose" },
+      { hex: "#7c3aed", name: "Purple" },
+    ];
+
+    return `
+      <div
+        id="backlogCreateEpicBackdrop"
+        style="position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;"
+      >
+        <div
+          class="card"
+          style="width:100%;max-width:640px;max-height:90vh;background:var(--bg-card, #ffffff);border:1px solid var(--border, #e2e8f0);border-radius:16px;box-shadow:0 24px 48px rgba(15,23,42,0.24);display:flex;flex-direction:column;overflow:hidden;animation:modalSlideUp 0.18s ease;"
+        >
+          <!-- Modal Header -->
+          <div style="padding:18px 24px;background:linear-gradient(135deg, rgba(79,70,229,0.07), rgba(13,148,136,0.05));border-bottom:1px solid var(--border, #e2e8f0);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+              <div style="width:40px;height:40px;border-radius:10px;background:${this.selectedEpicColor || "#4f46e5"};color:#ffffff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 10px rgba(79,70,229,0.25);">
+                ${Icons.layers("", 18)}
+              </div>
+              <div style="min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary, #0f172a);">
+                    Buat Epik Modul Baru
+                  </h3>
+                  <span style="font-size:10.5px;font-family:var(--font-mono);font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(79,70,229,0.1);color:var(--indigo-600, #4f46e5);border:1px solid rgba(79,70,229,0.2);">
+                    ${this.escapeHtml(defaultEpicKey)}
+                  </span>
+                </div>
+                <p style="margin:2px 0 0 0;font-size:12px;color:var(--text-muted, #64748b);">
+                  Kelompokkan fitur besar, arsitektur modul, dan penanggung jawab teknis ke dalam satu Epik terstruktur.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="closeCreateEpicModalBtn"
+              style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border, #e2e8f0);background:var(--bg-card, #fff);color:var(--text-muted, #64748b);cursor:pointer;display:grid;place-items:center;font-size:15px;font-weight:700;flex-shrink:0;"
+              title="Tutup Modal (Esc)"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Modal Form Body -->
+          <form id="createEpicModalForm" style="padding:20px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;flex:1;">
+            <!-- Baris 1: Kode Epik & Judul Epik (Grid Proporsional 1 : 2.6) -->
+            <div style="display:grid;grid-template-columns:150px 1fr;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Kode Epik <span style="color:#ef4444;">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="modalEpicKeyInput"
+                  value="${this.escapeHtml(defaultEpicKey)}"
+                  style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #c7d2fe;background:#eef2ff;font-size:12.5px;font-family:var(--font-mono);font-weight:800;color:var(--indigo-600);"
+                  required
+                />
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Nama / Judul Epik Modul <span style="color:#ef4444;">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="modalEpicTitleInput"
+                  placeholder="Contoh: Integrasi Payment Gateway QRIS & Webhook..."
+                  style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:13px;font-weight:600;color:var(--text-primary, #0f172a);"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Template Cepat Epik -->
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:-6px;">
+              <span style="font-size:10.5px;color:var(--text-muted);font-weight:600;">Template Cepat:</span>
+              <button type="button" class="epic-preset-chip" data-epic-title="Integrasi Payment Gateway QRIS & Rekonsiliasi Otomatis" data-epic-desc="Layanan pembayaran QRIS dinamis, callback webhook asinkron, dan mutasi transaksi real-time." style="border:1px solid rgba(79,70,229,0.25);background:rgba(79,70,229,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                + Payment Gateway & QRIS
+              </button>
+              <button type="button" class="epic-preset-chip" data-epic-title="Autentikasi Terpusat RBAC, JWT & Keamanan API" data-epic-desc="Manajemen hak akses multi-role, proteksi rate limiter endpoint, dan audit log keamanan." style="border:1px solid rgba(79,70,229,0.25);background:rgba(79,70,229,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                + Autentikasi & Keamanan RBAC
+              </button>
+              <button type="button" class="epic-preset-chip" data-epic-title="Dashboard Analitik Eksekutif & Laporan Ekspor" data-epic-desc="Visualisasi metrik performa operasional real-time serta ekspor laporan PDF/Excel." style="border:1px solid rgba(79,70,229,0.25);background:rgba(79,70,229,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                + Dashboard & Pelaporan
+              </button>
+            </div>
+
+            <!-- Baris 2: Kategori Arsitektur, PIC Lead Modul, & Estimasi Jam (Grid 3 Kolom Proporsional) -->
+            <div style="display:grid;grid-template-columns:1fr 1.2fr 0.8fr;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Kategori Modul
+                </label>
+                <select
+                  id="modalEpicCategorySelect"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;font-weight:600;color:var(--text-primary);"
+                >
+                  <option value="Fullstack Module">Fullstack Module</option>
+                  <option value="Backend & API">Backend &amp; API</option>
+                  <option value="Frontend & UI">Frontend &amp; UI</option>
+                  <option value="Infrastructure & DevOps">Infrastructure &amp; DevOps</option>
+                  <option value="QA & Performance">QA &amp; Performance</option>
+                </select>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  PIC / Lead Modul
+                </label>
+                <select
+                  id="modalEpicLeadSelect"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;font-weight:600;color:var(--text-primary);"
+                >
+                  ${teamMembers
+                    .map(
+                      (m) => `
+                    <option value="${m.id}">${this.escapeHtml(m.name)} (${this.escapeHtml(m.role)})</option>
+                  `
+                    )
+                    .join("")}
+                </select>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Target Beban (Jam)
+                </label>
+                <input
+                  type="number"
+                  id="modalEpicHoursInput"
+                  value="40"
+                  min="4"
+                  max="500"
+                  step="4"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;font-family:var(--font-mono);font-weight:700;color:var(--text-primary);"
+                />
+              </div>
+            </div>
+
+            <!-- Baris 3: Warna Identitas Epik -->
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                Warna Identitas Badge Epik
+              </label>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                ${colorOptions
+                  .map(
+                    (c) => `
+                  <button
+                    type="button"
+                    class="epic-color-swatch"
+                    data-color="${c.hex}"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;cursor:pointer;font-size:11.5px;font-weight:700;border:2px solid ${
+                      this.selectedEpicColor === c.hex ? c.hex : "var(--border, #e2e8f0)"
+                    };background:${this.selectedEpicColor === c.hex ? `${c.hex}15` : "var(--bg-secondary, #f8fafc)"};color:var(--text-primary);"
+                  >
+                    <span style="width:12px;height:12px;border-radius:50%;background:${c.hex};display:inline-block;"></span>
+                    <span>${c.name}</span>
+                  </button>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+
+            <!-- Baris 4: Deskripsi & Ruang Lingkup Epik -->
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                Deskripsi &amp; Ruang Lingkup Spesifikasi <span style="color:#ef4444;">*</span>
+              </label>
+              <textarea
+                id="modalEpicDescInput"
+                rows="3"
+                placeholder="Jelaskan arsitektur modul, cakupan fitur, endpoint API, serta kriteria penyelesaian (Definition of Done) untuk epik ini..."
+                style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:12.5px;color:var(--text-primary);resize:vertical;"
+                required
+              ></textarea>
+            </div>
+
+            <!-- Baris 5: Opsi Buat Tiket Inisial Otomatis -->
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(79,70,229,0.05);border:1px solid rgba(79,70,229,0.2);cursor:pointer;">
+              <input type="checkbox" id="modalEpicAutoTaskChk" checked style="width:16px;height:16px;accent-color:var(--indigo-600);cursor:pointer;" />
+              <div style="display:flex;flex-direction:column;">
+                <span style="font-size:12px;font-weight:700;color:var(--text-primary);">Buat tiket spesifikasi awal secara otomatis di Backlog Pool</span>
+                <span style="font-size:11px;color:var(--text-muted);">Otomatis menambahkan 1 tiket teknis yang langsung terhubung ke epik baru ini.</span>
+              </div>
+            </label>
+
+            <!-- Modal Footer -->
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid var(--border, #e2e8f0);">
+              <button
+                type="button"
+                id="cancelCreateEpicModalBtn"
+                class="btn btn-secondary"
+                style="padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:700;"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                style="padding:8px 18px;border-radius:8px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:${this.selectedEpicColor || "#4f46e5"};border-color:${this.selectedEpicColor || "#4f46e5"};"
+              >
+                ${Icons.plus("", 14)}
+                <span>Simpan Epik</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     `;
   }
@@ -726,7 +1217,130 @@ export class BacklogView {
       }
 
       // Add Epic Button
+      // Add Epic Button -> Open Create Epic Modal
       if (e.target.closest("#addEpicBtn")) {
+        this.isCreateEpicModalOpen = true;
+        this.render();
+        setTimeout(() => {
+          const titleInput = this.element.querySelector("#modalEpicTitleInput");
+          if (titleInput) titleInput.focus();
+        }, 40);
+        return;
+      }
+
+      // Close Create Epic Modal
+      if (
+        e.target.closest("#closeCreateEpicModalBtn") ||
+        e.target.closest("#cancelCreateEpicModalBtn") ||
+        e.target.id === "backlogCreateEpicBackdrop"
+      ) {
+        this.isCreateEpicModalOpen = false;
+        this.render();
+        return;
+      }
+
+      // Epic Preset Chip Click
+      const epicPreset = e.target.closest(".epic-preset-chip");
+      if (epicPreset) {
+        const titleInput = this.element.querySelector("#modalEpicTitleInput");
+        const descInput = this.element.querySelector("#modalEpicDescInput");
+        if (titleInput && epicPreset.dataset.epicTitle) {
+          titleInput.value = epicPreset.dataset.epicTitle;
+          titleInput.focus();
+        }
+        if (descInput && epicPreset.dataset.epicDesc) {
+          descInput.value = epicPreset.dataset.epicDesc;
+        }
+        return;
+      }
+
+      // Epic Color Swatch Click
+      const colorSwatch = e.target.closest(".epic-color-swatch");
+      if (colorSwatch) {
+        const prevTitle = this.element.querySelector("#modalEpicTitleInput")?.value || "";
+        const prevKey = this.element.querySelector("#modalEpicKeyInput")?.value || "";
+        const prevDesc = this.element.querySelector("#modalEpicDescInput")?.value || "";
+        const prevCat = this.element.querySelector("#modalEpicCategorySelect")?.value || "Fullstack Module";
+        const prevLead = this.element.querySelector("#modalEpicLeadSelect")?.value || "";
+        const prevHours = this.element.querySelector("#modalEpicHoursInput")?.value || "40";
+
+        this.selectedEpicColor = colorSwatch.dataset.color || "#4f46e5";
+        this.render();
+
+        const titleInput = this.element.querySelector("#modalEpicTitleInput");
+        const keyInput = this.element.querySelector("#modalEpicKeyInput");
+        const descInput = this.element.querySelector("#modalEpicDescInput");
+        const catSelect = this.element.querySelector("#modalEpicCategorySelect");
+        const leadSelect = this.element.querySelector("#modalEpicLeadSelect");
+        const hoursInput = this.element.querySelector("#modalEpicHoursInput");
+
+        if (titleInput) titleInput.value = prevTitle;
+        if (keyInput && prevKey) keyInput.value = prevKey;
+        if (descInput) descInput.value = prevDesc;
+        if (catSelect) catSelect.value = prevCat;
+        if (leadSelect && prevLead) leadSelect.value = prevLead;
+        if (hoursInput) hoursInput.value = prevHours;
+        return;
+      }
+
+      // Create Sprint Button -> Open Create Sprint Modal
+      if (e.target.closest("#createSprintBtn") || e.target.closest("#createSprintHeaderBtn")) {
+        this.isCreateSprintModalOpen = true;
+        this.render();
+        setTimeout(() => {
+          const nameInput = this.element.querySelector("#modalSprintNameInput");
+          if (nameInput) nameInput.focus();
+        }, 40);
+        return;
+      }
+
+      // Close Create Sprint Modal
+      if (
+        e.target.closest("#closeCreateSprintModalBtn") ||
+        e.target.closest("#cancelCreateSprintModalBtn") ||
+        e.target.id === "backlogCreateSprintBackdrop"
+      ) {
+        this.isCreateSprintModalOpen = false;
+        this.render();
+        return;
+      }
+
+      // Sprint Preset Chip Click
+      const sprintPreset = e.target.closest(".sprint-preset-chip");
+      if (sprintPreset) {
+        const nameInput = this.element.querySelector("#modalSprintNameInput");
+        const goalInput = this.element.querySelector("#modalSprintGoalInput");
+        if (nameInput && sprintPreset.dataset.sprintTitle) {
+          nameInput.value = sprintPreset.dataset.sprintTitle;
+          nameInput.focus();
+        }
+        if (goalInput && sprintPreset.dataset.sprintGoal) {
+          goalInput.value = sprintPreset.dataset.sprintGoal;
+        }
+        return;
+      }
+
+      // Sprint Duration Button Click
+      const durationBtn = e.target.closest(".sprint-duration-btn");
+      if (durationBtn) {
+        const days = Number(durationBtn.dataset.days) || 14;
+        this.sprintDurationDays = days;
+        const startInput = this.element.querySelector("#modalSprintStartInput");
+        const endInput = this.element.querySelector("#modalSprintEndInput");
+        const startBase = startInput && startInput.value ? new Date(startInput.value) : new Date();
+        const endCalc = new Date(startBase.getTime() + days * 86400000).toISOString().split("T")[0];
+        if (endInput) endInput.value = endCalc;
+
+        this.element.querySelectorAll(".sprint-duration-btn").forEach((btn) => {
+          const isActive = Number(btn.dataset.days) === days;
+          btn.style.borderColor = isActive ? "var(--indigo-600, #4f46e5)" : "var(--border, #cbd5e1)";
+          btn.style.background = isActive ? "rgba(79,70,229,0.1)" : "var(--bg-secondary, #f8fafc)";
+          btn.style.color = isActive ? "var(--indigo-600, #4f46e5)" : "var(--text-secondary, #475569)";
+        });
+        return;
+      }
+
+      if (false) {
         const title = prompt("Masukkan Judul Epik Baru (contoh: Integrasi Payment Gateway & Webhook):");
         if (title && title.trim()) {
           const newEpic = {
@@ -742,7 +1356,7 @@ export class BacklogView {
       }
 
       // Create Sprint Button
-      if (e.target.closest("#createSprintBtn") || e.target.closest("#createSprintHeaderBtn")) {
+      if (false && (e.target.closest("#createSprintBtn") || e.target.closest("#createSprintHeaderBtn"))) {
         const sprintCount = (store.getState().sprints || []).length + 1;
         const newSprint = {
           id: "sprint-" + Date.now(),
@@ -838,6 +1452,119 @@ export class BacklogView {
     });
 
     // Search input event
+    this.element.addEventListener("submit", (e) => {
+      if (e.target.id === "createSprintModalForm") {
+        e.preventDefault();
+        const state = store.getState();
+        const nameVal = this.element.querySelector("#modalSprintNameInput")?.value.trim();
+        const statusVal = this.element.querySelector("#modalSprintStatusSelect")?.value || "future";
+        const startVal = this.element.querySelector("#modalSprintStartInput")?.value || "2026-11-01";
+        const endVal = this.element.querySelector("#modalSprintEndInput")?.value || "2026-11-14";
+        const capVal = Number(this.element.querySelector("#modalSprintCapacityInput")?.value) || 160;
+        const goalVal = this.element.querySelector("#modalSprintGoalInput")?.value.trim() || "";
+
+        if (!nameVal) return;
+
+        const newSprintId = `sprint-${Date.now()}`;
+        const newSprint = {
+          id: newSprintId,
+          projectId: state.selectedProjectId,
+          name: nameVal,
+          startDate: startVal,
+          endDate: endVal,
+          capacityHours: capVal,
+          goal: goalVal,
+          status: statusVal,
+        };
+
+        const updatedSprints = (state.sprints || []).map((s) => {
+          if (statusVal === "active" && s.projectId === state.selectedProjectId && s.status === "active") {
+            return { ...s, status: "future" };
+          }
+          return s;
+        });
+
+        const selectedTaskIds = Array.from(this.element.querySelectorAll(".sprint-backlog-task-chk:checked")).map(
+          (chk) => chk.value
+        );
+
+        const updatedTasks = (state.tasks || []).map((t) => {
+          if (selectedTaskIds.includes(t.id)) {
+            return { ...t, sprintId: newSprintId };
+          }
+          return t;
+        });
+
+        this.isCreateSprintModalOpen = false;
+        store.setState({
+          sprints: [...updatedSprints, newSprint],
+          tasks: updatedTasks,
+        });
+        store.addToast(
+          "success",
+          "Sprint Berhasil Dibuat",
+          `Sprint "${nameVal}" (${startVal} s/d ${endVal})${
+            selectedTaskIds.length > 0 ? ` beserta ${selectedTaskIds.length} tiket` : ""
+          } berhasil ditambahkan.`
+        );
+        return;
+      }
+
+      if (e.target.id === "createEpicModalForm") {
+        e.preventDefault();
+        const state = store.getState();
+        const activeProj = store.getActiveProject();
+        const keyVal = this.element.querySelector("#modalEpicKeyInput")?.value.trim() || "EPIC-NEW";
+        const titleVal = this.element.querySelector("#modalEpicTitleInput")?.value.trim();
+        const catVal = this.element.querySelector("#modalEpicCategorySelect")?.value || "Fullstack Module";
+        const leadVal = this.element.querySelector("#modalEpicLeadSelect")?.value || "user-dev-1";
+        const hoursVal = Number(this.element.querySelector("#modalEpicHoursInput")?.value) || 40;
+        const descVal = this.element.querySelector("#modalEpicDescInput")?.value.trim() || "";
+        const autoCreateTask = this.element.querySelector("#modalEpicAutoTaskChk")?.checked;
+
+        if (!titleVal) return;
+
+        const newEpicId = `epic-${Date.now()}`;
+        const newEpic = {
+          id: newEpicId,
+          projectId: state.selectedProjectId,
+          key: keyVal,
+          title: titleVal,
+          category: catVal,
+          leadId: leadVal,
+          estimateHours: hoursVal,
+          description: descVal,
+          color: this.selectedEpicColor || "#4f46e5",
+        };
+
+        this.isCreateEpicModalOpen = false;
+        this.filterEpic = newEpicId;
+        store.setState({ epics: [...(state.epics || []), newEpic] });
+
+        if (autoCreateTask) {
+          const projPrefix = activeProj?.code ? activeProj.code.split("-")[0] : "PRJ";
+          store.createTask({
+            projectId: state.selectedProjectId,
+            type: "Feature",
+            title: `[${catVal.split(" ")[0]}] Setup Arsitektur & Implementasi ${titleVal}`,
+            description: descVal || `Implementasi spesifikasi modul ${titleVal} (${keyVal}).`,
+            priority: "Tinggi",
+            assigneeId: leadVal,
+            epicId: newEpicId,
+            estimateHours: Math.min(24, Math.max(8, Math.round(hoursVal / 2))),
+            dueDate: new Date(Date.now() + 10 * 86400000).toISOString().split("T")[0],
+            visibility: "client_public",
+            source: "Manual",
+            status: "Backlog",
+            branchName: `feat/${projPrefix.toLowerCase()}-${keyVal.toLowerCase()}`,
+          });
+        }
+
+        store.addToast("success", "Epik Baru Ditambahkan", `Epik "${keyVal}: ${titleVal}" berhasil dibuat.`);
+        return;
+      }
+    });
+
     this.element.addEventListener("input", (e) => {
       if (e.target.id === "backlogSearchInput") {
         this.searchQuery = e.target.value;

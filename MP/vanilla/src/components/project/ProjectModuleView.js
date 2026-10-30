@@ -467,9 +467,15 @@ export class ProjectModuleView {
         ${projects.map(p => {
           const contractJt = Math.round((p.contractValue || 185e6) / 1e6);
           const budgetUsedJt = Math.round((p.budgetUsed || 65e6) / 1e6);
-          const totalIssues = p.totalIssues || 9;
-          const doneIssues = p.doneIssues || 2;
-          const progPct = totalIssues ? Math.round((doneIssues / totalIssues) * 100) : 22;
+          const pTasks = (store.getState().tasks || []).filter(t => t.projectId === p.id);
+          const totalIssues = pTasks.length > 0 ? pTasks.length : (p.totalIssues || 9);
+          const doneIssues = pTasks.length > 0 ? pTasks.filter(t => t.status === 'Selesai' || t.status === 'Deploy Production').length : (p.doneIssues || 2);
+          const calcUsedHours = pTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
+          const calcEstHours = pTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+          const displayUsedHours = calcUsedHours > 0 ? calcUsedHours : (p.usedHours || 120);
+          const displayTotalHours = Math.max(displayUsedHours, p.totalHours || calcEstHours || 400);
+          var progPct = totalIssues ? Math.round((doneIssues / totalIssues) * 100) : 22;
+          var progPct = totalIssues ? Math.round((doneIssues / totalIssues) * 100) : 22;
           const health = p.health || 'On Track';
           const isAtRisk = health === 'At Risk';
 
@@ -523,7 +529,7 @@ export class ProjectModuleView {
                   </div>
                   <div>
                     <span class="pm-cs-label">Jam Kerja Terpakai</span>
-                    <span class="pm-cs-val">${p.usedHours || 480} / ${p.totalHours || 1200} Jam</span>
+                    <span class="pm-cs-val">${displayUsedHours} / ${displayTotalHours} Jam</span>
                   </div>
                 </div>
               </div>
@@ -569,9 +575,15 @@ export class ProjectModuleView {
             ${projects.map(p => {
               const contractJt = Math.round((p.contractValue || 185e6) / 1e6);
               const budgetUsedJt = Math.round((p.budgetUsed || 65e6) / 1e6);
-              const totalIssues = p.totalIssues || 9;
-              const doneIssues = p.doneIssues || 2;
-              const progPct = totalIssues ? Math.round((doneIssues / totalIssues) * 100) : 22;
+              const pTasks = (store.getState().tasks || []).filter(t => t.projectId === p.id);
+          const totalIssues = pTasks.length > 0 ? pTasks.length : (p.totalIssues || 9);
+          const doneIssues = pTasks.length > 0 ? pTasks.filter(t => t.status === 'Selesai' || t.status === 'Deploy Production').length : (p.doneIssues || 2);
+          const calcUsedHours = pTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
+          const calcEstHours = pTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+          const displayUsedHours = calcUsedHours > 0 ? calcUsedHours : (p.usedHours || 120);
+          const displayTotalHours = Math.max(displayUsedHours, p.totalHours || calcEstHours || 400);
+              var progPct = totalIssues ? Math.round((doneIssues / totalIssues) * 100) : 22;
+              var progPct = totalIssues ? Math.round((doneIssues / totalIssues) * 100) : 22;
               const health = p.health || 'On Track';
               const isAtRisk = health === 'At Risk';
 
@@ -607,7 +619,7 @@ export class ProjectModuleView {
                     <strong>Rp ${budgetUsedJt}Jt</strong> <span style="color: #64748b;">/ Rp ${contractJt}Jt</span>
                   </td>
                   <td>
-                    <strong>${p.usedHours || 480}h</strong> <span style="color: #64748b;">/ ${p.totalHours || 1200}h</span>
+                    <strong>${displayUsedHours}h</strong> <span style="color: #64748b;">/ ${displayTotalHours}h</span>
                   </td>
                   <td>
                     <span style="color: #475569; font-weight: 500;">${p.targetDeadline || '2026-11-30'}</span>
@@ -1617,7 +1629,41 @@ export class ProjectModuleView {
     const isAtRisk = health === 'At Risk';
 
     // Active sprint tasks preview
-    const activeTasks = tasks.slice(0, 5);
+    const state = store.getState();
+    const projectEpics = (state.epics || []).filter(e => e.projectId === activeProject.id);
+    const projectSprints = (state.sprints || []).filter(s => s.projectId === activeProject.id);
+    const activeSprint = projectSprints.find(s => s.status === 'active') || projectSprints[0];
+    const projectInvoices = (state.invoices || []).filter(i => i.projectId === activeProject.id);
+    const daysToDeadline = Math.max(7, Math.ceil((new Date(deadline).getTime() - new Date('2026-10-20').getTime()) / 86400000) || 45);
+    const sprintTasks = activeSprint ? tasks.filter(t => t.sprintId === activeSprint.id) : [];
+    const activeTasks = (sprintTasks.length > 0 ? sprintTasks : tasks).slice(0, 5);
+    const dpInvoice = projectInvoices[0];
+    const dynamicMilestones = projectEpics.length > 0
+      ? projectEpics.slice(0, 4).map((ep, idx) => {
+          const epTasks = tasks.filter(t => t.epicId === ep.id);
+          const epDone = epTasks.filter(t => t.status === 'Selesai' || t.status === 'Deploy Production').length;
+          const epPct = epTasks.length > 0 ? Math.round((epDone / epTasks.length) * 100) : (idx === 0 ? 100 : idx === 1 ? 60 : 25);
+          const terminLabels = [
+            dpInvoice ? `Termin 1 (${dpInvoice.status})` : 'Termin 1 (DP 30% Lunas)',
+            'Termin 2 (40% Deliverable Sprint)',
+            'Termin 3 (30% UAT & Go-Live)',
+            `Garansi SLA (${activeProject.contractType || 'Fixed Price'})`
+          ];
+          const targetDates = [startDate, activeSprint?.endDate || '2026-11-05', deadline, activeProject.warrantyUntil || '2027-10-31'];
+          return {
+            id: ep.id,
+            name: `M${idx + 1}: ${ep.title}`,
+            pct: epPct,
+            date: targetDates[idx] || deadline,
+            done: epPct === 100,
+            termin: terminLabels[idx] || 'Deliverable Modul'
+          };
+        })
+      : [
+          { id: 'm1', name: `M1: Inisialisasi & Arsitektur ${activeProject.code}`, pct: 100, date: startDate, done: true, termin: 'Termin DP 30% Lunas' },
+          { id: 'm2', name: `M2: Pengembangan Modul Inti ${activeProject.name}`, pct: overallProgPct, date: activeSprint?.endDate || deadline, done: false, termin: 'Termin 2 (40%) On-Track' },
+          { id: 'm3', name: `M3: Pengujian QA & UAT (${clientName})`, pct: 20, date: deadline, done: false, termin: 'Termin 3 (30%) Pelunasan' }
+        ];
 
     // Milestones and payment terms
     const milestones = [
@@ -1711,7 +1757,7 @@ export class ProjectModuleView {
             </div>
             <div class="pm-ws-kpi-val">${deadline}</div>
             <div class="pm-ws-kpi-sub" style="color: #059669; font-weight: 700; margin-bottom: 2px;">
-              Sisa 56 hari menuju Go-Live
+              Sisa ${daysToDeadline} hari menuju Go-Live
             </div>
             <div class="pm-ws-kpi-sub" style="font-size: 11px;">Mulai: ${startDate}</div>
           </div>
@@ -1722,7 +1768,7 @@ export class ProjectModuleView {
           <!-- Column Left: Sprint Berjalan Saat Ini -->
           <div class="pm-ws-card">
             <div class="pm-ws-card-header">
-              <h3 class="pm-ws-card-title">Sprint Berjalan Saat Ini</h3>
+              <h3 class="pm-ws-card-title">Sprint Berjalan: ${activeSprint ? activeSprint.name : `Sprint 1 (${activeProject.code})`}</h3>
               <button class="pm-ws-card-link" data-switch-ws-tab="backlog">
                 <span>Lihat Detail Backlog</span>
                 <i class="fi fi-rr-arrow-up-right"></i>
@@ -1756,7 +1802,7 @@ export class ProjectModuleView {
               </button>
             </div>
             <div style="display: flex; flex-direction: column; gap: 12px;">
-              ${milestones.map(m => `
+              ${dynamicMilestones.map(m => `
                 <div style="padding: 10px 12px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px;">
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -2188,10 +2234,10 @@ export class ProjectModuleView {
   renderFilesTab({ project }) {
     const files = [
       { name: `SRS-${project.code}-Spesifikasi-Kebutuhan-Sistem-v1.4.pdf`, size: '2.8 MB', date: '2026-10-18', uploader: 'Asisyah (PM)', type: 'PDF' },
-      { name: 'OpenAPI-Microservices-Katalog-Buku.yaml', size: '240 KB', date: '2026-10-19', uploader: 'Jaka (Backend)', type: 'YAML' },
+      { name: `OpenAPI-Spec-${project.code}-Endpoints.yaml`, size: '240 KB', date: '2026-10-19', uploader: 'Jaka (Backend)', type: 'YAML' },
       { name: 'Docker-Compose-Production-Traefik.yml', size: '12 KB', date: '2026-10-20', uploader: 'Azi (Fullstack)', type: 'YML' },
       { name: 'Berita-Acara-Kickoff-UAT-Signoff.pdf', size: '1.2 MB', date: '2026-10-18', uploader: 'Asisyah (PM)', type: 'PDF' },
-      { name: 'Design-Tokens-OPAC-React-Figma-Export.zip', size: '18.4 MB', date: '2026-10-21', uploader: 'Aldyana (Frontend)', type: 'ZIP' }
+      { name: `UI-Design-System-${project.code}-Figma-Export.zip`, size: '18.4 MB', date: '2026-10-21', uploader: 'Aldyana (Frontend)', type: 'ZIP' }
     ];
 
     return `
@@ -2359,7 +2405,29 @@ export class ProjectModuleView {
       { member: members.find((m) => m.id === 'user-qa') || members[3], hours: 30, billableHours: 30, rate: 220000, taskDesc: 'Matrix pengujian sirkulasi, k6 stress test 2000 RPS, UAT audit' }
     ];
 
-    const totalHours = timesheetData.reduce((acc, row) => acc + row.hours, 0);
+    const defaultRoleActivities = {
+      'user-pm': `Koordinasi WBS, sprint backlog grooming, dan verifikasi UAT bersama ${project.clientName}`,
+      'user-dev-3': `Pengembangan backend API, skema database, dan optimasi query pada proyek ${project.name}`,
+      'user-dev-2': `Implementasi komponen UI/UX frontend dan state management untuk ${project.name}`,
+      'user-dev-1': `Integrasi fullstack, konfigurasi gateway, dan CI/CD pipeline ${project.code}`,
+      'user-qa': `Penyusunan test matrix QA, stress test beban, dan regresi staging ${project.code}`
+    };
+    const dynamicTimesheetData = members.map((m) => {
+      const mTasks = (tasks || []).filter((t) => t.assigneeId === m.id);
+      const loggedH = mTasks.reduce((sum, t) => sum + (Number(t.timeLoggedHours) || 0), 0);
+      const estH = mTasks.reduce((sum, t) => sum + (Number(t.estimateHours) || 0), 0);
+      const effectiveHours = loggedH > 0 ? loggedH : (estH > 0 ? Math.max(4, Math.round(estH * 0.6)) : 8);
+      const taskSummary = mTasks.length > 0
+        ? mTasks.map((t) => `${t.key}: ${t.title.replace(/^\[[^\]]+\]\s*/, '')}`).join(' • ')
+        : (defaultRoleActivities[m.id] || `Dukungan teknis & review deliverable ${project.code}`);
+      return {
+        member: m,
+        hours: effectiveHours,
+        billableHours: effectiveHours,
+        taskDesc: taskSummary
+      };
+    });
+    const totalHours = dynamicTimesheetData.reduce((acc, row) => acc + row.hours, 0);
 
     return `
       <div class="pm-timesheets-view">
@@ -2386,7 +2454,7 @@ export class ProjectModuleView {
               </tr>
             </thead>
             <tbody>
-              ${timesheetData.map((row) => `
+              ${dynamicTimesheetData.map((row) => `
                 <tr>
                   <td>
                     <div class="pm-assignee-cell">
@@ -2426,6 +2494,44 @@ export class ProjectModuleView {
   // =========================================================================
   renderInvoicesTab({ project }) {
     const projectInvoices = (store.getState().invoices || []).filter((i) => i.projectId === project.id);
+    const contractVal = Number(project.contractValue) || 185000000;
+    const budgetUsed = Number(project.budgetUsed) || Math.round(contractVal * 0.45);
+    const remainingBudget = Math.max(0, contractVal - budgetUsed);
+    const burnPct = Math.min(100, Math.round((budgetUsed / contractVal) * 100));
+    const dpAmount = Math.round(contractVal * 0.3);
+    const t2Amount = Math.round(contractVal * 0.4);
+    const t3Amount = Math.round(contractVal * 0.3);
+    const dynamicInvoices = projectInvoices.length > 0
+      ? [
+          ...projectInvoices,
+          ...(projectInvoices.length === 1
+            ? [
+                {
+                  id: `inv-${project.id}-t2`,
+                  invoiceNumber: `INV/2026/11/${project.code}-002`,
+                  clientName: project.clientName,
+                  type: `Termin 2: Deliverable Sprint & Staging UAT (40% — ${project.code})`,
+                  totalAmount: t2Amount,
+                  issueDate: project.targetDeadline || '2026-11-15',
+                  status: 'Menunggu'
+                },
+                {
+                  id: `inv-${project.id}-t3`,
+                  invoiceNumber: `INV/2026/12/${project.code}-003`,
+                  clientName: project.clientName,
+                  type: `Termin 3: Final Go-Live & Handover Source Code (30% — ${project.code})`,
+                  totalAmount: t3Amount,
+                  issueDate: project.targetDeadline || '2026-12-01',
+                  status: 'Draft'
+                }
+              ]
+            : [])
+        ]
+      : [
+          { id: 'inv-1', invoiceNumber: `INV/2026/10/${project.code}-001`, clientName: project.clientName, type: `Termin 1: Down Payment Kick-Off (30% — ${project.code})`, totalAmount: dpAmount, issueDate: project.createdAt || '2026-10-18', status: 'Lunas' },
+          { id: 'inv-2', invoiceNumber: `INV/2026/11/${project.code}-002`, clientName: project.clientName, type: `Termin 2: Deliverable Staging & UAT (40% — ${project.code})`, totalAmount: t2Amount, issueDate: '2026-11-10', status: 'Menunggu' },
+          { id: 'inv-3', invoiceNumber: `INV/2026/12/${project.code}-003`, clientName: project.clientName, type: `Termin 3: Go-Live & Handover (30% — ${project.code})`, totalAmount: t3Amount, issueDate: project.targetDeadline || '2026-12-01', status: 'Draft' }
+        ];
     const invoices = projectInvoices.length > 0 ? projectInvoices : [
       { id: 'inv-1', invoiceNumber: `INV/2026/10/${project.code}-001`, type: 'Termin 1: Down Payment (DP 30%)', totalAmount: 55500000, issueDate: '2026-10-18', status: 'Lunas' },
       { id: 'inv-2', invoiceNumber: `INV/2026/11/${project.code}-002`, type: 'Termin 2: Deliverable Staging & UAT (40%)', totalAmount: 74000000, issueDate: '2026-11-05', status: 'Menunggu' },
@@ -2434,6 +2540,42 @@ export class ProjectModuleView {
 
     return `
       <div class="pm-invoices-view">
+        <div class="pm-ws-kpi-grid" style="margin-bottom: 18px;">
+          <div class="pm-ws-kpi-card">
+            <div class="pm-ws-kpi-top">
+              <span>Nilai Kontrak (${project.code})</span>
+              <i class="fi fi-rr-dollar" style="color: #4f46e5; font-size: 16px;"></i>
+            </div>
+            <div class="pm-ws-kpi-val" style="font-size: 20px;">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(contractVal)}</div>
+            <div class="pm-ws-kpi-sub">Klien: ${project.clientName} (${project.contractType || 'Fixed Price'})</div>
+          </div>
+          <div class="pm-ws-kpi-card">
+            <div class="pm-ws-kpi-top">
+              <span>Realisasi Anggaran (${burnPct}%)</span>
+              <i class="fi fi-rr-chart-pie-alt" style="color: #0284c7; font-size: 16px;"></i>
+            </div>
+            <div class="pm-ws-kpi-val" style="font-size: 20px; color: #0284c7;">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(budgetUsed)}</div>
+            <div class="pm-ws-kpi-bar">
+              <div class="pm-ws-kpi-bar-fill" style="width: ${burnPct}%; background: #0284c7;"></div>
+            </div>
+          </div>
+          <div class="pm-ws-kpi-card">
+            <div class="pm-ws-kpi-top">
+              <span>Sisa Anggaran Proyek</span>
+              <i class="fi fi-rr-wallet" style="color: #059669; font-size: 16px;"></i>
+            </div>
+            <div class="pm-ws-kpi-val" style="font-size: 20px; color: #059669;">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(remainingBudget)}</div>
+            <div class="pm-ws-kpi-sub">${100 - burnPct}% cadangan alokasi tersedia</div>
+          </div>
+          <div class="pm-ws-kpi-card">
+            <div class="pm-ws-kpi-top">
+              <span>Total Termin Tagihan</span>
+              <i class="fi fi-rr-document-signed" style="color: #d97706; font-size: 16px;"></i>
+            </div>
+            <div class="pm-ws-kpi-val" style="font-size: 20px;">${dynamicInvoices.length} Faktur</div>
+            <div class="pm-ws-kpi-sub">${dynamicInvoices.filter(i => i.status === 'Lunas').length} Lunas · ${dynamicInvoices.filter(i => i.status !== 'Lunas').length} Menunggu/Draft</div>
+          </div>
+        </div>
         <div class="pm-list-header">
           <div>
             <h3 class="pm-section-title">Faktur Tagihan Proyek (${project.name})</h3>
@@ -2457,7 +2599,7 @@ export class ProjectModuleView {
               </tr>
             </thead>
             <tbody>
-              ${invoices.map((inv) => `
+              ${dynamicInvoices.map((inv) => `
                 <tr>
                   <td><strong>${inv.invoiceNumber}</strong></td>
                   <td>${inv.type || 'Termin Proyek'}</td>

@@ -86,8 +86,8 @@ export class KanbanBoard {
     const doneCount = filteredTasks.filter((t) => ['Selesai', 'Deploy Production', 'Dipantau'].includes(t.status)).length;
     const completionPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
     const criticalBugs = filteredTasks.filter((t) => t.type === 'Bug' && (t.severity?.startsWith('S1') || t.severity?.startsWith('S2') || t.priority === 'Hotfix'));
-    const activeSprintObj = (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id) || (state.sprints && state.sprints[0]);
-    const activeSprintName = activeSprintObj ? activeSprintObj.name : 'Sprint 1 - MVP';
+    const activeSprintObj = (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id && s.status === 'active') || (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id);
+    const activeSprintName = activeSprintObj ? activeSprintObj.name : `Sprint 1: ${activeProject ? activeProject.name : 'MVP'}`;
 
     // Columns HTML
     const columnsHtml = STAGES.map((stage, stageIdx) => {
