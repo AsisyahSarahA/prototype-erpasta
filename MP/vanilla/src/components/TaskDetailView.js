@@ -134,9 +134,6 @@ export class TaskDetailView {
 
     // Refresh state data
     const currentTask = state.tasks.find(t => t.id === task.id) || task;
-    const project = state.projects.find(p => p.id === currentTask.projectId) || { name: 'Sistem Perpustakaan Digital Kampus (Laravel Microservices & React SPA)', code: 'LIB' };
-    const epic = state.epics.find(e => e.id === currentTask.epicId) || { title: 'Microservice Katalog Buku, Pengarang & ISBN (Laravel Backend)' };
-    const assignee = state.teamMembers.find(m => m.id === currentTask.assigneeId) || { name: 'Jaka (Backend Dev)', role: 'Backend Engineer' };
     const reporter = state.teamMembers.find(m => m.id === currentTask.reporterId) || { name: 'Asisyah (Manual)', role: 'Project Manager' };
     
     const subtasks = currentTask.subtasks || [];
@@ -144,13 +141,6 @@ export class TaskDetailView {
     const subtaskPct = subtasks.length > 0 ? Math.round((completedSubtasks / subtasks.length) * 100) : 0;
     const loggedHours = currentTask.timeLoggedHours || 0;
     const estHours = Number(currentTask.estimateHours) || 20;
-
-    // Stage calculation
-    const currentStageIdx = this.getStageIndex(currentTask.status);
-    const activeStage = SOFTWARE_HOUSE_STAGES[currentStageIdx] || SOFTWARE_HOUSE_STAGES[0];
-    const activePercent = activeStage.pct;
-    // Calculate progress line percentage between node 1 (8%) and node 6 (92%)
-    const activeProgressWidth = (currentStageIdx / (SOFTWARE_HOUSE_STAGES.length - 1)) * 84 + 8;
 
     // Priority badge class
     let priorityBadgeBg = 'rgba(59,130,246,0.1); color:#2563eb; border:1px solid rgba(59,130,246,0.25);';
@@ -161,43 +151,6 @@ export class TaskDetailView {
     } else if (currentTask.priority === 'Rendah') {
       priorityBadgeBg = 'rgba(100,116,139,0.1); color:#64748b; border:1px solid rgba(100,116,139,0.25);';
     }
-
-    // Circular Milestone Nodes HTML (Persis Gaya CRM Gambar 2)
-    const milestoneNodesHtml = SOFTWARE_HOUSE_STAGES.map((st, idx) => {
-      const isPast = idx < currentStageIdx;
-      const isCurrent = idx === currentStageIdx;
-
-      let circleInlineStyle = '';
-      if (isCurrent) {
-        circleInlineStyle = 'background:#4f46e5;color:#ffffff;box-shadow:0 0 0 4px rgba(99,102,241,0.25);border:none;';
-      } else if (isPast) {
-        circleInlineStyle = 'background:#10b981;color:#ffffff;box-shadow:0 0 0 2px rgba(16,185,129,0.3);border:none;';
-      } else {
-        circleInlineStyle = 'background:var(--bg-card);color:var(--text-muted);border:2px dashed #cbd5e1;';
-      }
-
-      return `
-        <button
-          class="btn-stage-node"
-          data-stage-id="${st.id}"
-          style="display:flex;flex-direction:column;align-items:center;border:none;background:transparent;cursor:pointer;gap:6px;transition:all var(--transition);position:relative;z-index:2;min-width:64px;"
-          title="Pindahkan tiket ke: ${st.label}"
-        >
-          <div style="width:40px;height:40px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;font-weight:800;transition:all var(--transition);${circleInlineStyle}">
-            <span>${st.pct}%</span>
-            ${isPast ? `<span style="font-size:9px;line-height:1;">✓</span>` : ''}
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:11px;font-weight:${isCurrent ? '800' : '600'};color:${isCurrent ? 'var(--indigo-600)' : 'var(--text-primary)'};white-space:nowrap;">
-              ${st.label}
-            </div>
-            <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);">
-              ${isCurrent ? '<span style="color:var(--indigo-600);font-weight:700;">Sedang Aktif</span>' : isPast ? 'Selesai' : 'Klik untuk pindah'}
-            </span>
-          </div>
-        </button>
-      `;
-    }).join('');
 
     // Tabs List
     const commentsList = (state.comments || []).filter(c => c.taskId === currentTask.id);
@@ -218,7 +171,7 @@ export class TaskDetailView {
         <button
           class="btn-detail-tab ${isActive ? 'active' : ''}"
           data-tab="${t.id}"
-          style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:${isActive ? '800' : '600'};color:${isActive ? 'var(--indigo-600)' : 'var(--text-secondary)'};border-bottom:2px solid ${isActive ? 'var(--indigo-600)' : 'transparent'};transition:all var(--transition);white-space:nowrap;"
+          style="display:inline-flex;align-items:center;gap:6px;padding:11px 16px;flex-shrink:0;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:${isActive ? '800' : '600'};color:${isActive ? 'var(--indigo-600)' : 'var(--text-secondary)'};border-bottom:2px solid ${isActive ? 'var(--indigo-600)' : 'transparent'};transition:all var(--transition);white-space:nowrap;"
         >
           <span>${t.label}</span>
           ${t.badge !== undefined ? `
@@ -383,7 +336,7 @@ export class TaskDetailView {
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;">
                     <span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;"></span>
-                    <span style="font-size:11px;color:var(--text-secondary);font-weight:600;">
+                    <span id="comment-author-role-label" style="font-size:11px;color:var(--text-secondary);font-weight:600;">
                       ${state.teamMembers.find(m => m.id === (this.selectedCommentAuthorId || 'user-pm'))?.role || 'Team Member'}
                     </span>
                   </div>
@@ -457,12 +410,15 @@ export class TaskDetailView {
                           `}
                         </div>
 
-                        <!-- Right: Timestamp & Delete Button -->
-                        <div style="display:flex;align-items:center;gap:6px;">
+                        <!-- Right: Timestamp, Reply & Delete Button -->
+                        <div style="display:flex;align-items:center;gap:8px;">
                           <span style="font-size:10.5px;font-family:var(--font-mono);color:var(--text-muted);">
                             ${formattedTime}
                           </span>
-                          <button class="btn-delete-comment" data-comment-id="${c.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:3px;border-radius:4px;display:inline-flex;align-items:center;line-height:1;" title="Hapus komentar">
+                          <button type="button" class="btn-reply-comment" data-author-name="${c.authorName || c.author || 'Tim'}" style="border:none;background:transparent;color:var(--indigo-600);cursor:pointer;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;" title="Balas komentar ini">
+                            Balas
+                          </button>
+                          <button type="button" class="btn-delete-comment" data-comment-id="${c.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:3px;border-radius:4px;display:inline-flex;align-items:center;line-height:1;" title="Hapus komentar">
                             ${ICONS.trash}
                           </button>
                         </div>
@@ -485,10 +441,28 @@ export class TaskDetailView {
             
             <div class="card" style="padding:20px 22px;display:flex;flex-direction:column;gap:16px;">
               
-              <div style="border-bottom:1px solid var(--border);padding-bottom:10px;">
+              <div style="border-bottom:1px solid var(--border);padding-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
                 <h3 style="font-size:12px;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin:0;">
                   DETAIL TIKET
                 </h3>
+                <span style="font-size:10.5px;font-family:var(--font-mono);font-weight:700;color:var(--indigo-600);background:rgba(99,102,241,0.1);padding:2px 8px;border-radius:6px;">
+                  ${currentTask.key}
+                </span>
+              </div>
+
+              <!-- STATUS TIKET -->
+              <div class="form-group" style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;">
+                  STATUS WORKFLOW
+                </label>
+                <select id="meta-task-status" class="form-select" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-weight:700;color:var(--text-primary);outline:none;">
+                  <option value="Backlog" ${currentTask.status === 'Backlog' ? 'selected' : ''}>Backlog</option>
+                  <option value="To Do" ${currentTask.status === 'To Do' ? 'selected' : ''}>To Do</option>
+                  <option value="In Progress" ${currentTask.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                  <option value="In Review" ${currentTask.status === 'In Review' ? 'selected' : ''}>In Review (PR)</option>
+                  <option value="QA/Testing" ${currentTask.status === 'QA/Testing' ? 'selected' : ''}>QA / Staging</option>
+                  <option value="Selesai" ${currentTask.status === 'Selesai' ? 'selected' : ''}>Selesai (Done)</option>
+                </select>
               </div>
 
               <!-- PRIORITAS -->
@@ -530,8 +504,8 @@ export class TaskDetailView {
                   PELAPOR (REPORTER)
                 </label>
                 <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);">
-                  <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;">
-                    A
+                  <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;">
+                    ${(reporter.name || 'A').charAt(0).toUpperCase()}
                   </div>
                   <span style="font-size:12.5px;font-weight:600;color:var(--text-primary);">
                     ${reporter.name}
@@ -781,9 +755,12 @@ export class TaskDetailView {
                         </span>
                       `}
                     </div>
-                    <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
                       <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">${formattedTime}</span>
-                      <button class="btn-delete-comment" data-comment-id="${c.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:3px;border-radius:4px;" title="Hapus komentar">
+                      <button type="button" class="btn-reply-comment" data-author-name="${c.authorName || c.author || 'Tim'}" style="border:none;background:transparent;color:var(--indigo-600);cursor:pointer;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;" title="Balas komentar ini">
+                        Balas
+                      </button>
+                      <button type="button" class="btn-delete-comment" data-comment-id="${c.id}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:3px;border-radius:4px;" title="Hapus komentar">
                         ${ICONS.trash}
                       </button>
                     </div>
@@ -816,172 +793,69 @@ export class TaskDetailView {
       `;
     }
 
-    // MAIN COMPONENT MARKUP (100% PERSIS GAYA SALES PIPELINE CRM GAMBAR 2)
+    // MAIN COMPONENT MARKUP (PROPORSIONAL, BERSIH, TANPA TRACK RECORD & TANPA TEKS JUDUL PROYEK DUPLIKAT)
     this.container.innerHTML = `
-      <!-- 1. Header Workspace Bar (Proporsional & Bersih) -->
-      <div style="padding:18px 24px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow-xs);">
-        
-        <!-- Baris 1: Tombol Icon Panah Saja + Badges di Kiri, Tombol Aksi di Kanan -->
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-          <!-- Kiri: Panah Kiri Saja + Key + Status + Priority + Type -->
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <!-- Back to Kanban Icon Only Button -->
-            <button
-              id="btn-back-kanban"
-              class="btn btn-secondary btn-icon"
-              style="width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);cursor:pointer;transition:all var(--transition);"
-              title="Kembali ke Papan Kanban"
-            >
-              ${ICONS.arrowLeft}
-            </button>
+      <!-- 1. Compact Action & Badges Bar -->
+      <div style="padding:12px 24px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;flex-shrink:0;">
+        <!-- Kiri: Key + Status + Priority + Type -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <!-- Key Badge (Copyable) -->
+          <button
+            id="btn-copy-key"
+            style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-weight:800;font-size:11.5px;padding:4px 10px;border-radius:6px;background:rgba(99,102,241,0.1);color:var(--indigo-600);border:1px solid rgba(99,102,241,0.25);cursor:pointer;outline:none;"
+            title="Klik untuk salin kode tiket"
+          >
+            <span>${currentTask.key}</span>
+            ${ICONS.copy}
+          </button>
 
-            <!-- Key Badge (Copyable) -->
-            <button
-              id="btn-copy-key"
-              style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-weight:800;font-size:11.5px;padding:4px 10px;border-radius:6px;background:rgba(99,102,241,0.1);color:var(--indigo-600);border:1px solid rgba(99,102,241,0.25);cursor:pointer;outline:none;"
-              title="Klik untuk salin kode tiket"
-            >
-              <span>${currentTask.key}</span>
-              ${ICONS.copy}
-            </button>
+          <!-- Status Lozenge -->
+          <span style="font-size:10.5px;font-family:var(--font-mono);font-weight:800;padding:4px 9px;border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);">
+            ${currentTask.status.toUpperCase()}
+          </span>
 
-            <!-- Status Lozenge -->
-            <span style="font-size:10.5px;font-family:var(--font-mono);font-weight:800;padding:3px 8px;border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);">
-              ${currentTask.status.toUpperCase()}
-            </span>
+          <!-- Priority Badge -->
+          <span style="font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:9999px;${priorityBadgeBg}">
+            ${currentTask.priority}
+          </span>
 
-            <!-- Priority Badge -->
-            <span style="font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:9999px;${priorityBadgeBg}">
-              ${currentTask.priority}
-            </span>
-
-            <!-- Type Pill -->
-            <span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;background:rgba(99,102,241,0.08);color:var(--indigo-600);border:1px solid rgba(99,102,241,0.2);">
-              ✨ ${currentTask.type || 'Feature'}
-            </span>
-          </div>
-
-          <!-- Kanan: Quick Action Buttons -->
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <button id="btn-action-attach" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
-              ${ICONS.paperclip}
-              <span>Lampirkan</span>
-            </button>
-            <button id="btn-action-add-subtask" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
-              ${ICONS.checkSquare}
-              <span>Buat Subtask</span>
-            </button>
-            <button id="btn-action-link-issue" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
-              ${ICONS.link}
-              <span>Tautkan Masalah</span>
-            </button>
-            <button id="btn-action-auto-fix" class="btn btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 14px;border-radius:8px;background:linear-gradient(135deg, #4f46e5, #7c3aed);border:none;">
-              ${ICONS.sparkles}
-              <span>Auto-Fix AI</span>
-            </button>
-            <button id="btn-action-delete" class="btn btn-danger btn-sm" style="padding:7px 10px;border-radius:8px;" title="Hapus tiket">
-              ${ICONS.trash}
-            </button>
-          </div>
+          <!-- Type Pill -->
+          <span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;background:rgba(99,102,241,0.08);color:var(--indigo-600);border:1px solid rgba(99,102,241,0.2);">
+            ✨ ${currentTask.type || 'Feature'}
+          </span>
         </div>
 
-        <!-- Baris 2: Judul Tiket (Lebar Penuh & Lega) -->
-        <div style="padding-top:2px;">
-          <h1 style="font-size:19px;font-weight:800;color:var(--text-primary);letter-spacing:-0.02em;margin:0;line-height:1.35;">
-            ${currentTask.title}
-          </h1>
-        </div>
-
-        <!-- Baris 3: Metadata Info Horisontal Satu Baris Rapi -->
-        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;">
-          <span style="font-weight:700;color:var(--text-primary);display:inline-flex;align-items:center;gap:5px;">
-            <i class="fi fi-rr-book-alt" style="font-size:13px;color:var(--indigo-600);"></i>
-            <span>${project.name}</span>
-          </span>
-          <span>•</span>
-          <span style="color:var(--indigo-600);font-weight:600;display:inline-flex;align-items:center;gap:4px;">
-            <i class="fi fi-rr-layers" style="font-size:13px;"></i>
-            <span>${epic.title}</span>
-          </span>
-          <span>•</span>
-          <span>Dibuat 18 Okt 2026 · Diperbarui 19.00</span>
-          <span>•</span>
-          <span style="display:inline-flex;align-items:center;gap:4px;color:var(--text-muted);">
-            ${ICONS.lock}
-            <span>Internal Saja</span>
-          </span>
+        <!-- Kanan: Quick Action Buttons -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button id="btn-action-attach" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
+            ${ICONS.paperclip}
+            <span>Lampirkan</span>
+          </button>
+          <button id="btn-action-add-subtask" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
+            ${ICONS.checkSquare}
+            <span>Buat Subtask</span>
+          </button>
+          <button id="btn-action-link-issue" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
+            ${ICONS.link}
+            <span>Tautkan Masalah</span>
+          </button>
+          <button id="btn-action-auto-fix" class="btn btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 14px;border-radius:8px;background:linear-gradient(135deg, #4f46e5, #7c3aed);border:none;">
+            ${ICONS.sparkles}
+            <span>Auto-Fix AI</span>
+          </button>
+          <button id="btn-action-delete" class="btn btn-danger btn-sm" style="padding:7px 10px;border-radius:8px;" title="Hapus tiket">
+            ${ICONS.trash}
+          </button>
         </div>
       </div>
 
-        <!-- 2. Track Record Pipeline / Lifecycle Stepper (Persis Gambar 2) -->
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          
-          <!-- Outer Header Row: Track Record Title & Badges OUTSIDE/ABOVE card -->
-          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;font-size:12px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-weight:800;font-size:11px;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.05em;">
-                TRACK RECORD TIKET:
-              </span>
-              <div style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:9999px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);color:var(--indigo-600);font-weight:700;font-family:var(--font-mono);font-size:11px;">
-                <span style="width:6px;height:6px;border-radius:50%;background:var(--indigo-600);display:inline-block;"></span>
-                <span>${activePercent}% SIKLUS CAPAIAN</span>
-              </div>
-            </div>
-
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:11.5px;font-weight:600;color:var(--text-secondary);">
-                Tahap Saat Ini: <strong style="color:var(--text-primary);">${activeStage.label}</strong>
-              </span>
-              <span style="font-size:10px;font-family:var(--font-mono);font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(245,158,11,0.1);color:#d97706;border:1px solid rgba(245,158,11,0.25);">
-                SLA: 2 Hari
-              </span>
-            </div>
-          </div>
-
-          <!-- Stepper White Card Container -->
-          <div class="card" style="padding:18px 22px;border-radius:var(--radius-xl);border:1px solid var(--border);position:relative;overflow:hidden;background:var(--bg-card);box-shadow:var(--shadow-xs);">
-            
-            <!-- Horizontal Continuous Progress Track Background Line -->
-            <div style="position:absolute;top:38px;left:8%;right:8%;height:3px;background:var(--border);z-index:1;"></div>
-            
-            <!-- Active Colored Progress Line -->
-            <div style="position:absolute;top:38px;left:8%;height:3px;background:linear-gradient(90deg, #3b82f6, #6366f1, #10b981);z-index:1;width:${activeProgressWidth}%;transition:width 0.4s ease;"></div>
-
-            <!-- Circular Milestone Nodes (6 Fase Software House Gambar 1) -->
-            <div class="stepper-rail-container">
-              ${milestoneNodesHtml}
-            </div>
-
-            <!-- Bottom Gate Standar Mutu & Action Buttons Row (Persis Gambar 2) -->
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-size:12px;">
-              <div style="display:flex;align-items:center;gap:6px;color:var(--text-muted);font-size:11.5px;">
-                <span style="font-weight:700;color:var(--text-secondary);">Gate Standar Mutu:</span>
-                <span>${activeStage.gateRule}</span>
-              </div>
-
-              <div style="display:flex;align-items:center;gap:8px;">
-                <button id="btn-advance-phase" class="btn btn-primary btn-sm" style="font-weight:700;padding:7px 14px;border-radius:8px;background:var(--indigo-600);color:#ffffff;display:inline-flex;align-items:center;gap:6px;">
-                  <span>Lanjut Fase Berikutnya</span>
-                  ${ICONS.arrowRight}
-                </button>
-                <button id="btn-mark-blocked" class="btn btn-danger btn-sm" style="font-weight:700;padding:7px 12px;border-radius:8px;background:rgba(239,68,68,0.08);color:#ef4444;border:1px solid rgba(239,68,68,0.3);">
-                  Tandai Blocked
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-      <!-- 3. Navigation Tabs Bar (Persis Gambar 2) -->
-      <div style="padding:0 24px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;gap:4px;overflow-x:auto;">
+      <!-- 2. Navigation Tabs Bar (Sticky & Tidak Menyusut) -->
+      <div style="padding:0 24px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px;overflow-x:auto;overflow-y:hidden;min-height:44px;flex-shrink:0;">
         ${tabsHtml}
       </div>
 
-      <!-- 4. Dynamic Tab Workspace Content (Grid 70/30 Proporsional) -->
-      <div style="padding:24px;flex:1;">
+      <!-- 3. Dynamic Tab Workspace Content (Grid 70/30 Proporsional) -->
+      <div style="padding:20px 24px 32px 24px;flex:1 0 auto;">
         ${tabContentHtml}
       </div>
     `;
@@ -999,6 +873,8 @@ export class TaskDetailView {
   }
 
   attachEvents(task) {
+    const state = store.getState();
+
     // Back to Kanban button
     const backBtn = this.container.querySelector('#btn-back-kanban');
     if (backBtn) {
@@ -1131,6 +1007,12 @@ export class TaskDetailView {
     if (authorSelect) {
       authorSelect.addEventListener('change', (e) => {
         this.selectedCommentAuthorId = e.target.value;
+        const currentState = store.getState();
+        const selectedMember = (currentState.teamMembers || []).find(m => m.id === this.selectedCommentAuthorId);
+        const roleLabel = this.container.querySelector('#comment-author-role-label');
+        if (roleLabel && selectedMember) {
+          roleLabel.textContent = selectedMember.role;
+        }
       });
     }
 
@@ -1146,10 +1028,11 @@ export class TaskDetailView {
       const input = this.container.querySelector(inputId);
       const chkInternal = this.container.querySelector(chkId);
       const selAuthor = this.container.querySelector(selectId);
+      const currentState = store.getState();
       
       if (input && input.value.trim()) {
         const authorId = (selAuthor ? selAuthor.value : this.selectedCommentAuthorId) || 'user-pm';
-        const member = (state.teamMembers || []).find(m => m.id === authorId) || (state.teamMembers || [])[0] || {
+        const member = (currentState.teamMembers || []).find(m => m.id === authorId) || (currentState.teamMembers || [])[0] || {
           id: 'user-pm',
           name: 'Asisyah',
           role: 'Project Manajer',
@@ -1184,6 +1067,16 @@ export class TaskDetailView {
       });
     }
 
+    const quickCommentInput = this.container.querySelector('#input-quick-comment');
+    if (quickCommentInput) {
+      quickCommentInput.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          handleCommentSubmit('#input-quick-comment', '#chk-comment-internal', '#select-comment-author');
+        }
+      });
+    }
+
     // Tab Comment Form in Comments Tab
     const tabCommentForm = this.container.querySelector('#form-tab-comment');
     if (tabCommentForm) {
@@ -1193,16 +1086,51 @@ export class TaskDetailView {
       });
     }
 
+    const tabCommentInput = this.container.querySelector('#input-tab-comment');
+    if (tabCommentInput) {
+      tabCommentInput.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          handleCommentSubmit('#input-tab-comment', '#chk-tab-comment-internal', '#select-tab-comment-author');
+        }
+      });
+    }
+
+    // Reply comment buttons
+    this.container.querySelectorAll('.btn-reply-comment[data-author-name]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const authorName = btn.dataset.authorName;
+        const targetTextarea = this.container.querySelector('#input-quick-comment') || this.container.querySelector('#input-tab-comment');
+        if (targetTextarea && authorName) {
+          const mention = `@${authorName} `;
+          if (!targetTextarea.value.startsWith(mention)) {
+            targetTextarea.value = mention + targetTextarea.value;
+          }
+          targetTextarea.focus();
+          targetTextarea.setSelectionRange(targetTextarea.value.length, targetTextarea.value.length);
+        }
+      });
+    });
+
     // Delete comment buttons (Interactive per comment)
     this.container.querySelectorAll('.btn-delete-comment[data-comment-id]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const commentId = btn.dataset.commentId;
-        if (commentId && confirm('Apakah Anda yakin ingin menghapus komentar ini?')) {
+        if (commentId) {
           store.deleteComment(commentId);
         }
       });
     });
+
+    // Metadata inputs: Status Workflow
+    const statusSelect = this.container.querySelector('#meta-task-status');
+    if (statusSelect) {
+      statusSelect.addEventListener('change', (e) => {
+        store.updateTaskStatus(task.id, e.target.value, `Status diubah ke ${e.target.value}`);
+      });
+    }
 
     // Metadata inputs: Priority
     const prioritySelect = this.container.querySelector('#meta-task-priority');

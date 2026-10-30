@@ -85,14 +85,13 @@ export class TopBar {
     if (activeTab === 'task_detail' && selectedTask) {
       leftContent = `
         <div class="header-breadcrumb">
-          <button id="header-back-kanban" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;">
+          <button id="header-back-kanban" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;flex-shrink:0;">
             ${ICONS.arrowLeft}
             <span>Kembali</span>
           </button>
           <span class="header-crumb-sep">${ICONS.chevronRight}</span>
-          <span class="badge badge-purple" style="font-family:var(--font-mono);font-weight:800;">${selectedTask.key}</span>
-          <span class="header-breadcrumb-title" style="max-width:320px;" title="${selectedTask.title}">${selectedTask.title}</span>
-          <span class="badge badge-${selectedTask.status === 'Selesai' ? 'emerald' : selectedTask.status === 'In Progress' ? 'blue' : 'amber'}" style="font-size:10px;">
+          <span class="badge badge-purple" style="font-family:var(--font-mono);font-weight:800;flex-shrink:0;">${selectedTask.key}</span>
+          <span class=" badge badge-${selectedTask.status === 'Selesai' ? 'emerald' : selectedTask.status === 'In Progress' ? 'blue' : 'amber'}" style="font-size:10px;flex-shrink:0;">
             ${selectedTask.status}
           </span>
         </div>

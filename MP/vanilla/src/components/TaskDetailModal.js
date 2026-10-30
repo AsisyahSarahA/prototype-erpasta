@@ -1618,7 +1618,12 @@ ${currentTask.prDiff.split('\n').map(line => {
         const text = textInput ? textInput.value.trim() : '';
         const isInternal = internalCheck ? internalCheck.checked : false;
         if (text) {
-          store.addComment(currentTask.id, text, isInternal);
+          store.addComment({
+            taskId: currentTask.id,
+            text,
+            body: text,
+            isInternal
+          });
           textInput.value = '';
         }
       });

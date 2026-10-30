@@ -33,6 +33,7 @@ export class ProjectModuleView {
     this.portfolioClient = 'all';
     this.portfolioContract = 'all';
     this.isCreateProjectOpen = false;
+    this.newProjectDraft = this.getDefaultProjectDraft();
 
     this.activeWorkspaceTab = 'ringkasan'; // 'ringkasan' | 'kanban' | 'backlog' | 'timeline' | 'list'
 
@@ -626,60 +627,450 @@ export class ProjectModuleView {
   }
 
   renderCreateProjectModal() {
+    const state = store.getState();
+    const members = state.teamMembers || [];
+    const draft = this.newProjectDraft || this.getDefaultProjectDraft();
+    const modules = draft.modules || [];
+    const totalEstHours = modules.reduce((sum, m) => sum + (Number(m.estimateHours) || 0), 0);
+    const totalAutoTickets = modules.length * 2;
+
     return `
       <div class="pm-modal-backdrop" id="pmCreateProjectBackdrop">
-        <div class="pm-modal-card" style="max-width: 520px;">
+        <div class="pm-modal-card">
+          <!-- Modal Header -->
           <div class="pm-modal-header">
-            <div>
-              <h3 class="pm-modal-title">Buat Proyek Baru (CRM Intake)</h3>
-              <p class="pm-modal-subtitle">Tambahkan proyek baru hasil closing deal atau inisiasi software house</p>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);">
+                <i class="fi fi-rr-magic-wand"></i>
+              </div>
+              <div>
+                <h3 class="pm-modal-title">Buat Proyek Baru &amp; AI PRD / BRD Generator</h3>
+                <p class="pm-modal-subtitle">Unggah dokumen PRD/BRD untuk di-generate otomatis oleh AI atau atur modul arsitektur proyek secara kustom</p>
+              </div>
             </div>
-            <button id="pmCloseCreateProjectBtn" class="pm-modal-close-btn">&times;</button>
+            <button type="button" id="pmCloseCreateProjectBtn" class="pm-modal-close-btn" title="Tutup">&times;</button>
           </div>
+
+          <!-- Modal Body -->
           <div class="pm-modal-body">
-            <div class="pm-form-group">
-              <label class="pm-form-label">Nama Proyek *</label>
-              <input type="text" id="pmNewProjName" class="pm-form-input" placeholder="Contoh: Digital Core Banking v2..." required />
-            </div>
-            <div class="pm-form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div class="pm-form-group">
-                <label class="pm-form-label">Kode Proyek *</label>
-                <input type="text" id="pmNewProjCode" class="pm-form-input" placeholder="Contoh: DCB-01" required />
+            <!-- 1. AI PRD / BRD UPLOAD & AUTO-GENERATOR -->
+            <div class="pm-ai-prd-box">
+              <div class="pm-ai-prd-top">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="background: #4f46e5; color: #fff; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.04em;">
+                    ✨ AI DOCUMENT PARSER
+                  </span>
+                  <strong style="font-size: 13.5px; color: #1e1b4b;">Import File PRD / BRD (Otomatis Ekstrak Proyek &amp; Modul)</strong>
+                </div>
+                ${draft.aiGeneratedBadge ? `
+                  <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;">
+                    ✓ Spesifikasi &amp; ${modules.length} Modul Berhasil Di-generate AI
+                  </span>
+                ` : ''}
               </div>
-              <div class="pm-form-group">
-                <label class="pm-form-label">Model Kontrak</label>
-                <select id="pmNewProjContract" class="pm-form-input">
-                  <option value="Fixed Price">Fixed Price</option>
-                  <option value="Time Material">Time &amp; Material</option>
-                </select>
+
+              <input type="file" id="pmPrdBrdFileInput" accept=".pdf,.doc,.docx,.md,.txt,.json" style="display: none;" />
+
+              <div class="pm-ai-prd-dropzone" id="pmPrdDropzone">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div style="width: 42px; height: 42px; border-radius: 10px; background: #eef2ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; border: 1px solid #c7d2fe;">
+                    <i class="fi fi-rr-cloud-upload-alt"></i>
+                  </div>
+                  <div>
+                    ${draft.uploadedFileName ? `
+                      <div style="font-size: 13px; font-weight: 800; color: #1e1b4b; display: flex; align-items: center; gap: 8px;">
+                        <span>📄 ${draft.uploadedFileName}</span>
+                        <span style="font-size: 11px; font-weight: 700; color: #4f46e5; background: #e0e7ff; padding: 2px 7px; border-radius: 5px;">${draft.uploadedDocType || 'PRD'} • ${draft.uploadedFileSize || '240 KB'}</span>
+                      </div>
+                      <div style="font-size: 12px; color: #475569; margin-top: 2px;">
+                        Dokumen siap! Klik tombol <strong>Generate via AI</strong> di kanan atau unggah file lain untuk memperbarui modul.
+                      </div>
+                    ` : `
+                      <div style="font-size: 13px; font-weight: 700; color: #1e293b;">
+                        Klik untuk unggah file <span style="color: #4f46e5; text-decoration: underline;">PRD / BRD</span> atau tarik file ke area ini
+                      </div>
+                      <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
+                        Mendukung format <strong>.PDF, .DOCX, .MD, .TXT</strong> — AI otomatis menyusun identitas proyek, modul (Epics), estimasi jam &amp; PIC.
+                      </div>
+                    `}
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button type="button" id="pmBrowsePrdBtn" class="pm-ws-btn pm-ws-btn--outline" style="height: 36px; font-size: 12px; background: #fff;">
+                    <i class="fi fi-rr-folder-open"></i>
+                    <span>Pilih File PRD/BRD</span>
+                  </button>
+                  <button type="button" id="pmRunAiPrdBtn" class="pm-ws-btn pm-ws-btn--primary" style="height: 36px; font-size: 12px; background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+                    <i class="fi fi-rr-magic-wand"></i>
+                    <span>${draft.isAiGenerating ? 'Menganalisis Dokumen...' : '✨ Generate via AI'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Sample PRD/BRD Templates -->
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 700; color: #475569;">Simulasi Cepat Dokumen PRD/BRD:</span>
+                <button type="button" class="pm-ai-preset-chip" data-preset="simrs">
+                  <i class="fi fi-rr-document"></i>
+                  <span>PRD_SIMRS_Rumah_Sakit_Digital.pdf</span>
+                </button>
+                <button type="button" class="pm-ai-preset-chip" data-preset="wms">
+                  <i class="fi fi-rr-document"></i>
+                  <span>BRD_Smart_Warehouse_WMS.docx</span>
+                </button>
+                <button type="button" class="pm-ai-preset-chip" data-preset="fintech">
+                  <i class="fi fi-rr-document"></i>
+                  <span>PRD_Core_Payment_QRIS_Engine.md</span>
+                </button>
               </div>
             </div>
-            <div class="pm-form-group">
-              <label class="pm-form-label">Nama Klien / Institusi *</label>
-              <input type="text" id="pmNewProjClient" class="pm-form-input" placeholder="Contoh: PT Bank Mandiri Digital" required />
-            </div>
-            <div class="pm-form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div class="pm-form-group">
-                <label class="pm-form-label">Nilai Kontrak (Rp)</label>
-                <input type="number" id="pmNewProjValue" class="pm-form-input" placeholder="Contoh: 850000000" />
+
+            <!-- 2. IDENTITAS PROYEK & KONTRAK KLIEN -->
+            <div class="pm-modal-section-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                <span style="font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.04em;">
+                  1. Informasi Utama Proyek &amp; Kontrak
+                </span>
+                <span style="font-size: 11px; color: #64748b;">Wajib diisi (*)</span>
               </div>
+
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px;">
+                <div class="pm-form-group">
+                  <label class="pm-form-label">Nama Proyek *</label>
+                  <input type="text" id="pmNewProjName" class="pm-form-input" placeholder="Contoh: Sistem Informasi Manajemen Rumah Sakit (SIMRS)" value="${draft.name}" required />
+                </div>
+                <div class="pm-form-group">
+                  <label class="pm-form-label">Kode Proyek (Key) *</label>
+                  <input type="text" id="pmNewProjCode" class="pm-form-input" placeholder="Contoh: SIMRS-01" value="${draft.code}" required />
+                </div>
+                <div class="pm-form-group">
+                  <label class="pm-form-label">Model Kontrak</label>
+                  <select id="pmNewProjContract" class="pm-form-input">
+                    <option value="Fixed Price" ${draft.contractType === 'Fixed Price' ? 'selected' : ''}>Fixed Price</option>
+                    <option value="Time Material" ${draft.contractType === 'Time Material' ? 'selected' : ''}>Time &amp; Material</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px;">
+                <div class="pm-form-group">
+                  <label class="pm-form-label">Nama Klien / Institusi *</label>
+                  <input type="text" id="pmNewProjClient" class="pm-form-input" placeholder="Contoh: RSUD Nusantara Medika" value="${draft.clientName}" required />
+                </div>
+                <div class="pm-form-group">
+                  <label class="pm-form-label">Nilai Kontrak (Rp)</label>
+                  <input type="number" id="pmNewProjValue" class="pm-form-input" placeholder="Contoh: 650000000" value="${draft.contractValue}" />
+                </div>
+                <div class="pm-form-group">
+                  <label class="pm-form-label">Target Go-Live</label>
+                  <input type="date" id="pmNewProjTarget" class="pm-form-input" value="${draft.targetDeadline || '2026-12-31'}" />
+                </div>
+              </div>
+
               <div class="pm-form-group">
-                <label class="pm-form-label">Target Rilis</label>
-                <input type="date" id="pmNewProjTarget" class="pm-form-input" value="2026-12-31" />
+                <label class="pm-form-label">Deskripsi &amp; Ringkasan Arsitektur (Hasil Ekstraksi PRD/BRD)</label>
+                <textarea id="pmNewProjDesc" class="pm-form-input" rows="2" placeholder="Ringkasan kebutuhan bisnis, tech stack, dan deliverable utama proyek...">${draft.description}</textarea>
               </div>
             </div>
-            <div class="pm-form-group">
-              <label class="pm-form-label">Deskripsi &amp; Ringkasan Proyek</label>
-              <textarea id="pmNewProjDesc" class="pm-form-input" rows="3" placeholder="Jelaskan kebutuhan teknis, arsitektur, dan deliverable proyek..."></textarea>
+
+            <!-- 3. PENGATURAN MODUL-MODUL PROYEK (EPICS & ALOKASI TIM) -->
+            <div class="pm-modal-section-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                <div>
+                  <span style="font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.04em;">
+                    2. Konfigurasi Modul-Modul Proyek (Epics &amp; Alokasi PIC)
+                  </span>
+                  <p style="margin: 2px 0 0 0; font-size: 11.5px; color: #64748b;">
+                    Setiap modul otomatis dibuatkan Epic, Branch Git terisolasi, dan tiket pekerjaan awal di Papan Kanban.
+                  </p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button type="button" id="pmAddModuleRowBtn" class="pm-ws-btn pm-ws-btn--outline" style="height: 32px; font-size: 12px; padding: 0 12px;">
+                    <i class="fi fi-rr-plus"></i>
+                    <span>Tambah Modul</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="pm-module-builder-list" id="pmModuleBuilderList">
+                ${modules.length === 0 ? `
+                  <div style="text-align: center; padding: 24px; border: 1px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 12.5px;">
+                    Belum ada modul. Klik <strong>+ Tambah Modul</strong> atau gunakan <strong>✨ Generate via AI</strong> di atas.
+                  </div>
+                ` : modules.map((mod, idx) => `
+                  <div class="pm-module-builder-row" data-mod-index="${idx}">
+                    <div style="display: grid; grid-template-columns: 110px 1fr 190px 100px 34px; gap: 10px; align-items: center;">
+                      <div>
+                        <span style="font-size: 10px; font-weight: 700; color: #64748b; display: block; margin-bottom: 3px;">KODE MODUL</span>
+                        <input type="text" class="pm-form-input pm-mod-key-input" value="${mod.keySuffix || `EPIC-${idx + 1}`}" style="padding: 6px 9px; font-size: 12px; font-family: var(--font-mono); font-weight: 700; color: #4f46e5; background: #eef2ff; border-color: #c7d2fe;" />
+                      </div>
+                      <div>
+                        <span style="font-size: 10px; font-weight: 700; color: #64748b; display: block; margin-bottom: 3px;">NAMA MODUL / FITUR UTAMA *</span>
+                        <input type="text" class="pm-form-input pm-mod-title-input" value="${mod.title}" placeholder="Contoh: Modul Autentikasi & RBAC..." style="padding: 6px 10px; font-size: 12.5px; font-weight: 700; background: #fff;" />
+                      </div>
+                      <div>
+                        <span style="font-size: 10px; font-weight: 700; color: #64748b; display: block; margin-bottom: 3px;">PIC / DEVELOPER</span>
+                        <select class="pm-form-input pm-mod-assignee-input" style="padding: 6px 8px; font-size: 12px; font-weight: 600; background: #fff;">
+                          ${members.map(m => `
+                            <option value="${m.id}" ${mod.assigneeId === m.id ? 'selected' : ''}>${m.name} (${m.role})</option>
+                          `).join('')}
+                        </select>
+                      </div>
+                      <div>
+                        <span style="font-size: 10px; font-weight: 700; color: #64748b; display: block; margin-bottom: 3px;">ESTIMASI (JAM)</span>
+                        <input type="number" class="pm-form-input pm-mod-hours-input" value="${mod.estimateHours || 24}" min="1" style="padding: 6px 8px; font-size: 12px; font-weight: 700; background: #fff;" />
+                      </div>
+                      <div style="padding-top: 16px;">
+                        <button type="button" class="pm-del-module-btn" data-del-mod="${idx}" style="width: 32px; height: 32px; border-radius: 7px; border: 1px solid #fecaca; background: #fef2f2; color: #ef4444; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Hapus Modul">
+                          <i class="fi fi-rr-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <input type="text" class="pm-form-input pm-mod-desc-input" value="${mod.description || ''}" placeholder="Spesifikasi deliverable modul, endpoint API, atau komponen UI yang dibutuhkan..." style="padding: 6px 10px; font-size: 12px; color: #475569; background: #ffffff;" />
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
             </div>
           </div>
+
+          <!-- Modal Footer -->
           <div class="pm-modal-footer">
-            <button id="pmCancelCreateProjectBtn" class="pm-btn pm-btn--outline">Batal</button>
-            <button id="pmSaveNewProjectBtn" class="pm-btn pm-btn--primary">Simpan Proyek</button>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: #475569;">
+              <span style="font-weight: 700; color: #0f172a; background: #f1f5f9; padding: 4px 10px; border-radius: 6px;">
+                📦 ${modules.length} Modul (Epics)
+              </span>
+              <span style="font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 4px 10px; border-radius: 6px;">
+                ⏱️ ${totalEstHours} Jam Estimasi
+              </span>
+              <span style="font-weight: 700; color: #059669; background: #ecfdf5; padding: 4px 10px; border-radius: 6px;">
+                📋 ${totalAutoTickets} Tiket Kanban Otomatis
+              </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button type="button" id="pmCancelCreateProjectBtn" class="pm-ws-btn pm-ws-btn--outline">Batal</button>
+              <button type="button" id="pmSaveNewProjectBtn" class="pm-ws-btn pm-ws-btn--primary" style="padding: 0 18px; height: 38px;">
+                <i class="fi fi-rr-rocket-lunch"></i>
+                <span>Buat Proyek &amp; Generate Workspace</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     `;
+  }
+
+  getDefaultProjectDraft() {
+    return {
+      name: '',
+      code: '',
+      clientName: '',
+      contractType: 'Fixed Price',
+      contractValue: 450000000,
+      targetDeadline: '2026-12-31',
+      description: '',
+      uploadedFileName: '',
+      uploadedFileSize: '',
+      uploadedDocType: 'PRD',
+      isAiGenerating: false,
+      aiGeneratedBadge: false,
+      modules: [
+        {
+          id: 'mod-init-1',
+          keySuffix: 'EPIC-1',
+          title: 'Fondasi Arsitektur, Autentikasi RBAC & Skema Database',
+          description: 'Setup repository, autentikasi pengguna multi-role (JWT/Sanctum), dan migrasi database utama.',
+          assigneeId: 'user-dev-3',
+          estimateHours: 28
+        },
+        {
+          id: 'mod-init-2',
+          keySuffix: 'EPIC-2',
+          title: 'Modul Operasional Utama & Antarmuka Pengguna (Frontend SPA)',
+          description: 'Slicing antarmuka pengguna responsif, manajemen state, dan integrasi alur transaksi inti.',
+          assigneeId: 'user-dev-2',
+          estimateHours: 36
+        },
+        {
+          id: 'mod-init-3',
+          keySuffix: 'EPIC-3',
+          title: 'Integrasi API Eksternal, Payment Gateway & Pelaporan',
+          description: 'Koneksi webhook pembayaran otomatis, notifikasi WhatsApp/Email, dan export laporan PDF/Excel.',
+          assigneeId: 'user-dev-1',
+          estimateHours: 24
+        },
+        {
+          id: 'mod-init-4',
+          keySuffix: 'EPIC-4',
+          title: 'Pengujian Integrasi QA, Stress Test K6 & Deployment Staging',
+          description: 'Penyusunan test matrix end-to-end, uji beban server K6, dan pipeline CI/CD Docker.',
+          assigneeId: 'user-qa',
+          estimateHours: 20
+        }
+      ]
+    };
+  }
+
+  syncDraftFromModalDom() {
+    if (!this.isCreateProjectOpen) return;
+    const nameEl = this.container.querySelector('#pmNewProjName');
+    const codeEl = this.container.querySelector('#pmNewProjCode');
+    const clientEl = this.container.querySelector('#pmNewProjClient');
+    const contractEl = this.container.querySelector('#pmNewProjContract');
+    const valEl = this.container.querySelector('#pmNewProjValue');
+    const targetEl = this.container.querySelector('#pmNewProjTarget');
+    const descEl = this.container.querySelector('#pmNewProjDesc');
+
+    if (nameEl) this.newProjectDraft.name = nameEl.value;
+    if (codeEl) this.newProjectDraft.code = codeEl.value;
+    if (clientEl) this.newProjectDraft.clientName = clientEl.value;
+    if (contractEl) this.newProjectDraft.contractType = contractEl.value;
+    if (valEl) this.newProjectDraft.contractValue = Number(valEl.value) || 0;
+    if (targetEl) this.newProjectDraft.targetDeadline = targetEl.value;
+    if (descEl) this.newProjectDraft.description = descEl.value;
+
+    const rows = this.container.querySelectorAll('.pm-module-builder-row');
+    if (rows.length > 0) {
+      this.newProjectDraft.modules = Array.from(rows).map((row, idx) => ({
+        id: `mod-${Date.now()}-${idx}`,
+        keySuffix: row.querySelector('.pm-mod-key-input')?.value || `EPIC-${idx + 1}`,
+        title: row.querySelector('.pm-mod-title-input')?.value || `Modul ${idx + 1}`,
+        assigneeId: row.querySelector('.pm-mod-assignee-input')?.value || 'user-dev-1',
+        estimateHours: Number(row.querySelector('.pm-mod-hours-input')?.value) || 20,
+        description: row.querySelector('.pm-mod-desc-input')?.value || ''
+      }));
+    }
+  }
+
+  runAiPrdGenerator(presetOrHint = '', customFileContent = '') {
+    this.syncDraftFromModalDom();
+    this.newProjectDraft.isAiGenerating = true;
+    this.render();
+
+    setTimeout(() => {
+      const hint = `${presetOrHint} ${this.newProjectDraft.uploadedFileName} ${this.newProjectDraft.name} ${this.newProjectDraft.description} ${customFileContent}`.toLowerCase();
+
+      // Check if customFileContent has explicit markdown headings or numbered modules
+      const extractedLines = (customFileContent || '')
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => /^#{1,3}\s+.+|^(modul|epic|fitur)\s*\d*[:.-]\s*.+/i.test(l));
+
+      if (/simrs|rumah sakit|hospital|klinik|medis|pasien|kesehatan/i.test(hint)) {
+        this.newProjectDraft = {
+          ...this.newProjectDraft,
+          name: 'Sistem Informasi Manajemen Rumah Sakit (SIMRS & RME SatuSehat)',
+          code: 'SIMRS-01',
+          clientName: 'RSUD Nusantara Medika Utama',
+          contractType: 'Fixed Price',
+          contractValue: 950000000,
+          targetDeadline: '2027-02-28',
+          uploadedFileName: this.newProjectDraft.uploadedFileName || 'PRD_SIMRS_Rumah_Sakit_Digital.pdf',
+          uploadedFileSize: this.newProjectDraft.uploadedFileSize || '1.4 MB',
+          uploadedDocType: 'PRD',
+          description: 'Hasil Ekstraksi AI PRD: Platform SIMRS terintegrasi Rekam Medis Elektronik (RME), Pendaftaran Antrean Online BPJS VClaim, Billing Farmasi & Apotek, serta sinkronisasi API Kemenkes SatuSehat.',
+          isAiGenerating: false,
+          aiGeneratedBadge: true,
+          modules: [
+            { id: 'm-1', keySuffix: 'EPIC-1', title: 'Modul Admisi Pasien, Antrean Online & Bridging BPJS VClaim', description: 'Pendaftaran pasien rawat jalan/inap, kiosk antrean mandiri, dan validasi SEP BPJS Kesehatan.', assigneeId: 'user-dev-3', estimateHours: 36 },
+            { id: 'm-2', keySuffix: 'EPIC-2', title: 'Rekam Medis Elektronik (RME) Dokter & Odontogram / ICD-10', description: 'Form asesmen medis SOAP, riwayat alergi, diagnosis ICD-10, dan e-Resep langsung ke instalasi farmasi.', assigneeId: 'user-dev-2', estimateHours: 42 },
+            { id: 'm-3', keySuffix: 'EPIC-3', title: 'Manajemen Instalasi Farmasi, Stok Obat & Billing Kasir RS', description: 'Pemotongan stok obat otomatis per batch/expired date, racikan resep, dan kasir pembayaran multi-jaminan.', assigneeId: 'user-dev-1', estimateHours: 32 },
+            { id: 'm-4', keySuffix: 'EPIC-4', title: 'Integrasi Microservice Kemenkes SatuSehat (FHIR HL7 Standard)', description: 'Sinkronisasi encounter, observation, dan medication request ke platform SatuSehat secara real-time.', assigneeId: 'user-dev-3', estimateHours: 28 },
+            { id: 'm-5', keySuffix: 'EPIC-5', title: 'QA End-to-End Testing, Audit Keamanan Data Medis & UAT RS', description: 'Pengujian beban 1.500 concurrent user, enkripsi data pasien, dan sign-off UAT manajemen rumah sakit.', assigneeId: 'user-qa', estimateHours: 24 }
+          ]
+        };
+      } else if (/wms|warehouse|gudang|logistik|supply|stok|inventory|erp/i.test(hint)) {
+        this.newProjectDraft = {
+          ...this.newProjectDraft,
+          name: 'Smart Warehouse Management System (WMS) & Multi-Hub Logistics',
+          code: 'WMS-PRO',
+          clientName: 'PT Nusantara Distribusi Logistik',
+          contractType: 'Time Material',
+          contractValue: 780000000,
+          targetDeadline: '2027-01-31',
+          uploadedFileName: this.newProjectDraft.uploadedFileName || 'BRD_Smart_Warehouse_WMS.docx',
+          uploadedFileSize: this.newProjectDraft.uploadedFileSize || '890 KB',
+          uploadedDocType: 'BRD',
+          description: 'Hasil Ekstraksi AI BRD: Sistem manajemen gudang multi-lokasi dengan fitur Inbound/Outbound PDA Barcode Scanner, Putaway Rak Otomatis, Stock Opname Real-Time, dan Integrasi Armada Pengiriman.',
+          isAiGenerating: false,
+          aiGeneratedBadge: true,
+          modules: [
+            { id: 'm-1', keySuffix: 'EPIC-1', title: 'Master Gudang Multi-Zona, Bin Location & Rak 3D Mapping', description: 'Pemetaan kapasitas lorong, rak, dan bin gudang beserta aturan suhu/kategori barang.', assigneeId: 'user-dev-3', estimateHours: 30 },
+            { id: 'm-2', keySuffix: 'EPIC-2', title: 'Aplikasi Mobile PDA Scanner: Inbound Receiving & Putaway', description: 'Antarmuka scanner barcode Android untuk penerimaan PO supplier dan rekomendasi penempatan rak.', assigneeId: 'user-dev-2', estimateHours: 34 },
+            { id: 'm-3', keySuffix: 'EPIC-3', title: 'Engine Picking Wave (FIFO/FEFO), Packing & Surat Jalan', description: 'Algoritma pengambilan barang berbasis tanggal kadaluarsa (FEFO) dan cetak label resi otomatis.', assigneeId: 'user-dev-1', estimateHours: 32 },
+            { id: 'm-4', keySuffix: 'EPIC-4', title: 'Sinkronisasi Stok Real-Time ERP SAP & Webhook Marketplace', description: 'Message broker RabbitMQ/Redis untuk sinkronisasi stok gudang ke SAP dan kanal B2B.', assigneeId: 'user-dev-3', estimateHours: 28 },
+            { id: 'm-5', keySuffix: 'EPIC-5', title: 'Stress Test Transaksi Gudang & Verifikasi QA lapangan', description: 'Simulasi 5.000 scan SKU/jam dan pengujian offline-sync pada perangkat PDA gudang.', assigneeId: 'user-qa', estimateHours: 22 }
+          ]
+        };
+      } else if (/fintech|payment|qris|bank|wallet|transaksi|keuangan/i.test(hint)) {
+        this.newProjectDraft = {
+          ...this.newProjectDraft,
+          name: 'Core Payment Gateway & QRIS Cross-Border Settlement Engine',
+          code: 'PAY-GW',
+          clientName: 'PT FinTech Nusantara Sejahtera',
+          contractType: 'Fixed Price',
+          contractValue: 1150000000,
+          targetDeadline: '2027-03-15',
+          uploadedFileName: this.newProjectDraft.uploadedFileName || 'PRD_Core_Payment_QRIS_Engine.md',
+          uploadedFileSize: this.newProjectDraft.uploadedFileSize || '520 KB',
+          uploadedDocType: 'PRD',
+          description: 'Hasil Ekstraksi AI PRD: Engine pemrosesan pembayaran berkecepatan tinggi dengan dukungan QRIS MPM/CPM, Virtual Account Multi-Bank, Rekonsiliasi Otomatis H+0, dan Fraud Detection AI.',
+          isAiGenerating: false,
+          aiGeneratedBadge: true,
+          modules: [
+            { id: 'm-1', keySuffix: 'EPIC-1', title: 'Core Ledger Double-Entry & Idempotent Transaction API', description: 'Arsitektur pencatatan jurnal keuangan anti-duplikasi dengan PostgreSQL serializable lock.', assigneeId: 'user-dev-3', estimateHours: 40 },
+            { id: 'm-2', keySuffix: 'EPIC-2', title: 'Switching Integrasi QRIS Dinamis & Multi-Bank Virtual Account', description: 'Konektor ISO-8583 / SNAP BI untuk penerbitan QRIS dan callback settlement real-time.', assigneeId: 'user-dev-1', estimateHours: 38 },
+            { id: 'm-3', keySuffix: 'EPIC-3', title: 'Merchant Dashboard React SPA, Settlement & Disbursement', description: 'Portal monitoring transaksi merchant, penarikan dana instan, dan manajemen API Key.', assigneeId: 'user-dev-2', estimateHours: 32 },
+            { id: 'm-4', keySuffix: 'EPIC-4', title: 'Automated Reconciliation Engine & Anomaly Fraud Alert', description: 'Pencocokan mutasi bank otomatis dan pemblokiran transaksi mencurigakan.', assigneeId: 'user-dev-3', estimateHours: 28 },
+            { id: 'm-5', keySuffix: 'EPIC-5', title: 'Security Penetration Test, PCI-DSS Check & K6 5.000 TPS', description: 'Pengujian beban ekstrem 5.000 TPS dan audit keamanan enkripsi payload.', assigneeId: 'user-qa', estimateHours: 26 }
+          ]
+        };
+      } else {
+        // Custom file or custom project name typed by user
+        const rawTitle = this.newProjectDraft.name || (this.newProjectDraft.uploadedFileName ? this.newProjectDraft.uploadedFileName.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ') : 'Sistem Enterprise Digital Transformation');
+        const words = rawTitle.replace(/[^a-zA-Z0-9\s]/g, '').trim().split(/\s+/);
+        const generatedCode = (words.map(w => w[0]).join('').toUpperCase().slice(0, 4) || 'PRJ') + '-01';
+
+        const customModules = extractedLines.length >= 2
+          ? extractedLines.slice(0, 7).map((line, idx) => {
+              const cleanTitle = line.replace(/^#{1,3}\s+|^(modul|epic|fitur)\s*\d*[:.-]\s*/i, '').trim();
+              const assignees = ['user-dev-3', 'user-dev-2', 'user-dev-1', 'user-qa', 'user-pm'];
+              return {
+                id: `m-cust-${idx}`,
+                keySuffix: `EPIC-${idx + 1}`,
+                title: cleanTitle || `Modul Utama ${idx + 1}`,
+                description: `Implementasi end-to-end, API backend, dan antarmuka untuk ${cleanTitle} sesuai spesifikasi dokumen ${this.newProjectDraft.uploadedDocType || 'PRD'}.`,
+                assigneeId: assignees[idx % assignees.length],
+                estimateHours: 24 + (idx % 3) * 6
+              };
+            })
+          : [
+              { id: 'm-c1', keySuffix: 'EPIC-1', title: `Arsitektur Core Backend, Auth RBAC & Database (${rawTitle})`, description: 'Perancangan skema database, autentikasi JWT/SSO, dan REST API core service.', assigneeId: 'user-dev-3', estimateHours: 30 },
+              { id: 'm-c2', keySuffix: 'EPIC-2', title: `Dashboard Operasional & Antarmuka Web SPA (${rawTitle})`, description: 'Slicing UI/UX responsif, komponen interaktif, dan integrasi state management.', assigneeId: 'user-dev-2', estimateHours: 36 },
+              { id: 'm-c3', keySuffix: 'EPIC-3', title: 'Workflow Bisnis Utama, Automasi & Notifikasi Real-Time', description: 'Implementasi business logic utama, antrian background job, dan webhook notifikasi.', assigneeId: 'user-dev-1', estimateHours: 32 },
+              { id: 'm-c4', keySuffix: 'EPIC-4', title: 'Modul Analitik Eksekutif & Export Pelaporan (PDF/Excel)', description: 'Agregasi metrik KPI real-time, filter periode laporan, dan cetak dokumen resmi.', assigneeId: 'user-dev-1', estimateHours: 24 },
+              { id: 'm-c5', keySuffix: 'EPIC-5', title: 'Pengujian Integrasi QA, Stress Test K6 & Deployment Staging', description: 'Eksekusi test case menyeluruh, uji beban K6, dan rilis ke server staging/production.', assigneeId: 'user-qa', estimateHours: 22 }
+            ];
+
+        this.newProjectDraft = {
+          ...this.newProjectDraft,
+          name: rawTitle,
+          code: this.newProjectDraft.code || generatedCode,
+          clientName: this.newProjectDraft.clientName || 'PT Korporasi Mitra Nusantara',
+          contractValue: this.newProjectDraft.contractValue || 680000000,
+          targetDeadline: this.newProjectDraft.targetDeadline || '2027-02-15',
+          description: this.newProjectDraft.description || `Hasil Ekstraksi AI (${this.newProjectDraft.uploadedFileName || 'PRD/BRD'}): Pengembangan sistem ${rawTitle} dengan arsitektur modular terukur, integrasi API, dan pengujian otomatis berstandar software house.`,
+          isAiGenerating: false,
+          aiGeneratedBadge: true,
+          modules: customModules
+        };
+      }
+
+      store.addToast('success', 'AI PRD/BRD Generator Selesai', `Berhasil mengekstrak spesifikasi proyek dan menyusun ${this.newProjectDraft.modules.length} modul arsitektur!`);
+      this.render();
+    }, 550);
   }
 
   attachPortfolioEvents() {
@@ -750,55 +1141,329 @@ export class ProjectModuleView {
     const createBtn = this.container.querySelector('#pmCreateNewProjectBtn');
     if (createBtn) {
       createBtn.addEventListener('click', () => {
+        this.newProjectDraft = this.getDefaultProjectDraft();
         this.isCreateProjectOpen = true;
         this.render();
       });
     }
+
+    // Edit Project Icon on Portfolio Cards
+    this.container.querySelectorAll('[data-edit-project]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const pId = btn.dataset.editProject;
+        if (pId) {
+          store.setSelectedProjectId(pId);
+          this.isSettingsOpen = true;
+          this.openWorkspace(pId, 'ringkasan');
+        }
+      });
+    });
 
     const closeBtn = this.container.querySelector('#pmCloseCreateProjectBtn');
     if (closeBtn) closeBtn.addEventListener('click', () => { this.isCreateProjectOpen = false; this.render(); });
     const cancelBtn = this.container.querySelector('#pmCancelCreateProjectBtn');
     if (cancelBtn) cancelBtn.addEventListener('click', () => { this.isCreateProjectOpen = false; this.render(); });
 
+    const backdrop = this.container.querySelector('#pmCreateProjectBackdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          this.isCreateProjectOpen = false;
+          this.render();
+        }
+      });
+    }
+
+    // PRD / BRD File Upload & Dropzone Events
+    const fileInput = this.container.querySelector('#pmPrdBrdFileInput');
+    const browseBtn = this.container.querySelector('#pmBrowsePrdBtn');
+    const dropzone = this.container.querySelector('#pmPrdDropzone');
+    const runAiBtn = this.container.querySelector('#pmRunAiPrdBtn');
+
+    const handleSelectedFile = (file) => {
+      if (!file) return;
+      this.syncDraftFromModalDom();
+      const sizeKb = Math.max(1, Math.round(file.size / 1024));
+      const isBrd = /brd|business/i.test(file.name);
+      this.newProjectDraft.uploadedFileName = file.name;
+      this.newProjectDraft.uploadedFileSize = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`;
+      this.newProjectDraft.uploadedDocType = isBrd ? 'BRD' : 'PRD';
+
+      if (/\.(txt|md|json)$/i.test(file.name) && typeof FileReader !== 'undefined') {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const content = String(ev.target?.result || '');
+          this.runAiPrdGenerator(file.name, content);
+        };
+        reader.readAsText(file);
+      } else {
+        this.runAiPrdGenerator(file.name, '');
+      }
+    };
+
+    if (browseBtn && fileInput) {
+      browseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+      });
+    }
+
+    if (dropzone && fileInput) {
+      dropzone.addEventListener('click', (e) => {
+        if (e.target.closest('#pmRunAiPrdBtn') || e.target.closest('#pmBrowsePrdBtn')) return;
+        fileInput.click();
+      });
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('drag-active');
+      });
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('drag-active');
+      });
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('drag-active');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleSelectedFile(file);
+      });
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (file) handleSelectedFile(file);
+      });
+    }
+
+    if (runAiBtn) {
+      runAiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.runAiPrdGenerator('', '');
+      });
+    }
+
+    // Sample PRD/BRD Preset Chips
+    this.container.querySelectorAll('.pm-ai-preset-chip[data-preset]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const preset = chip.dataset.preset;
+        this.syncDraftFromModalDom();
+        if (preset === 'simrs') {
+          this.newProjectDraft.uploadedFileName = 'PRD_SIMRS_Rumah_Sakit_Digital.pdf';
+          this.newProjectDraft.uploadedFileSize = '1.4 MB';
+          this.newProjectDraft.uploadedDocType = 'PRD';
+        } else if (preset === 'wms') {
+          this.newProjectDraft.uploadedFileName = 'BRD_Smart_Warehouse_WMS.docx';
+          this.newProjectDraft.uploadedFileSize = '890 KB';
+          this.newProjectDraft.uploadedDocType = 'BRD';
+        } else if (preset === 'fintech') {
+          this.newProjectDraft.uploadedFileName = 'PRD_Core_Payment_QRIS_Engine.md';
+          this.newProjectDraft.uploadedFileSize = '520 KB';
+          this.newProjectDraft.uploadedDocType = 'PRD';
+        }
+        this.runAiPrdGenerator(preset, '');
+      });
+    });
+
+    // Add Module Row Button
+    const addModBtn = this.container.querySelector('#pmAddModuleRowBtn');
+    if (addModBtn) {
+      addModBtn.addEventListener('click', () => {
+        this.syncDraftFromModalDom();
+        const nextIdx = (this.newProjectDraft.modules || []).length + 1;
+        this.newProjectDraft.modules.push({
+          id: `mod-${Date.now()}`,
+          keySuffix: `EPIC-${nextIdx}`,
+          title: '',
+          description: '',
+          assigneeId: 'user-dev-1',
+          estimateHours: 24
+        });
+        this.render();
+      });
+    }
+
+    // Delete Module Row Buttons
+    this.container.querySelectorAll('.pm-del-module-btn[data-del-mod]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.syncDraftFromModalDom();
+        const idx = Number(btn.dataset.delMod);
+        if (!isNaN(idx)) {
+          this.newProjectDraft.modules.splice(idx, 1);
+          this.render();
+        }
+      });
+    });
+
+    // Save New Project & Auto-Generate Epics, Sprints & Kanban Tasks
     const saveBtn = this.container.querySelector('#pmSaveNewProjectBtn');
     if (saveBtn) {
       saveBtn.addEventListener('click', () => {
-        const name = this.container.querySelector('#pmNewProjName').value;
-        const code = this.container.querySelector('#pmNewProjCode').value;
-        const client = this.container.querySelector('#pmNewProjClient').value;
-        const contractType = this.container.querySelector('#pmNewProjContract').value;
-        const contractVal = Number(this.container.querySelector('#pmNewProjValue').value) || 100e6;
-        const target = this.container.querySelector('#pmNewProjTarget').value || '2026-12-31';
-        const desc = this.container.querySelector('#pmNewProjDesc').value;
+        this.syncDraftFromModalDom();
+        const { name, code, clientName, contractType, contractValue, targetDeadline, description, modules } = this.newProjectDraft;
 
-        if (name && code && client) {
-          const newProj = {
-            id: `proj-${Date.now()}`,
-            code: code.toUpperCase(),
-            name,
-            clientName: client,
-            clientEmail: 'client@partner.corp',
-            description: desc,
-            status: 'Active',
-            health: 'On Track',
-            contractType,
-            contractValue: contractVal,
-            budgetUsed: 0,
-            totalHours: 1000,
-            usedHours: 0,
-            totalIssues: 5,
-            doneIssues: 0,
-            targetDeadline: target,
-            color: '#4f46e5',
-            createdAt: new Date().toISOString().split('T')[0]
-          };
-          store.getState().projects.push(newProj);
-          store.addToast('success', 'Proyek Dibuat', `Proyek ${name} berhasil ditambahkan.`);
-          this.isCreateProjectOpen = false;
-          this.render();
-        } else {
-          alert('Mohon isi nama proyek, kode, dan nama klien.');
+        if (!name.trim() || !code.trim() || !clientName.trim()) {
+          store.addToast('error', 'Data Belum Lengkap', 'Mohon isi Nama Proyek, Kode Proyek, dan Nama Klien.');
+          return;
         }
+
+        const cleanCode = code.trim().toUpperCase();
+        const newProjId = `proj-${Date.now()}`;
+        const validModules = (modules && modules.length > 0) ? modules : this.getDefaultProjectDraft().modules;
+        const totalHours = validModules.reduce((sum, m) => sum + (Number(m.estimateHours) || 20), 0);
+
+        const epicColors = ['#4f46e5', '#0284c7', '#059669', '#d97706', '#7c3aed', '#e11d48'];
+        const newEpics = [];
+        const newTasks = [];
+        const newBranches = [
+          {
+            name: 'main',
+            commitHash: 'a1b2c3d',
+            moduleName: 'Main Production Branch',
+            isDefault: true,
+            lastUpdated: new Date().toISOString()
+          }
+        ];
+
+        const newSprintId = `sprint-${Date.now()}`;
+        const newSprint = {
+          id: newSprintId,
+          projectId: newProjId,
+          name: `Sprint 1: Inisialisasi Arsitektur & Pengerjaan Modul ${cleanCode}`,
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+          goal: `Menyelesaikan fondasi utama dan pengiriman ${validModules.length} modul dari dokumen ${this.newProjectDraft.uploadedDocType || 'PRD'}.`,
+          status: 'active'
+        };
+
+        validModules.forEach((mod, idx) => {
+          const epicId = `epic-${newProjId}-${idx + 1}`;
+          const epicKey = `${cleanCode}-${mod.keySuffix || `EPIC-${idx + 1}`}`;
+          const modTitle = (mod.title || `Modul Utama ${idx + 1}`).trim();
+          const modDesc = (mod.description || `Implementasi spesifikasi teknis untuk ${modTitle}.`).trim();
+          const modHours = Number(mod.estimateHours) || 24;
+          const picId = mod.assigneeId || 'user-dev-1';
+          const branchSlug = modTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24);
+          const branchName = `feat/${epicKey.toLowerCase()}-${branchSlug}`;
+
+          newEpics.push({
+            id: epicId,
+            projectId: newProjId,
+            key: epicKey,
+            title: modTitle,
+            description: modDesc,
+            color: epicColors[idx % epicColors.length]
+          });
+
+          newBranches.push({
+            name: branchName,
+            commitHash: Math.random().toString(16).substring(2, 9),
+            moduleName: modTitle,
+            epicId,
+            assigneeId: picId,
+            isDefault: false,
+            lastUpdated: new Date().toISOString()
+          });
+
+          // Task 1: Core / Backend implementation for module
+          newTasks.push({
+            id: `task-${newProjId}-${idx + 1}-1`,
+            key: `${cleanCode}-${101 + idx * 2}`,
+            projectId: newProjId,
+            epicId,
+            sprintId: newSprintId,
+            type: 'Feature',
+            title: `[Core/API] ${modTitle}`,
+            description: `${modDesc}\n\nDeliverable otomatis dari ekstraksi AI ${this.newProjectDraft.uploadedFileName || 'PRD/BRD'}.`,
+            status: idx === 0 ? 'In Progress' : 'To Do',
+            priority: idx < 2 ? 'Tinggi' : 'Sedang',
+            source: 'AI PRD Generator',
+            assigneeId: picId,
+            reporterId: 'user-pm',
+            estimateHours: Math.max(4, Math.round(modHours * 0.6)),
+            timeLoggedHours: 0,
+            startDate: new Date().toISOString().split('T')[0],
+            dueDate: new Date(Date.now() + (5 + idx * 3) * 86400000).toISOString().split('T')[0],
+            visibility: 'client_public',
+            branchName,
+            subtasks: [
+              { id: `sub-${Date.now()}-${idx}-1`, title: `Perancangan skema data & arsitektur ${modTitle}`, completed: idx === 0 },
+              { id: `sub-${Date.now()}-${idx}-2`, title: `Implementasi service logic & endpoint API`, completed: false },
+              { id: `sub-${Date.now()}-${idx}-3`, title: `Unit test & dokumentasi endpoint`, completed: false }
+            ],
+            relations: [],
+            createdAt: new Date().toISOString(),
+            lastStatusUpdated: new Date().toISOString()
+          });
+
+          // Task 2: UI / Integration & QA Verification for module
+          newTasks.push({
+            id: `task-${newProjId}-${idx + 1}-2`,
+            key: `${cleanCode}-${102 + idx * 2}`,
+            projectId: newProjId,
+            epicId,
+            sprintId: newSprintId,
+            type: 'Task',
+            title: `[UI & Integrasi QA] ${modTitle}`,
+            description: `Integrasi antarmuka pengguna dan pengujian skenario bisnis untuk modul: ${modTitle}.`,
+            status: 'Backlog',
+            priority: 'Sedang',
+            source: 'AI PRD Generator',
+            assigneeId: picId === 'user-dev-3' ? 'user-dev-2' : picId,
+            reporterId: 'user-pm',
+            estimateHours: Math.max(4, Math.round(modHours * 0.4)),
+            timeLoggedHours: 0,
+            startDate: new Date().toISOString().split('T')[0],
+            dueDate: new Date(Date.now() + (7 + idx * 3) * 86400000).toISOString().split('T')[0],
+            visibility: 'client_public',
+            branchName,
+            subtasks: [
+              { id: `sub-${Date.now()}-${idx}-4`, title: `Slicing komponen UI & integrasi state`, completed: false },
+              { id: `sub-${Date.now()}-${idx}-5`, title: `Verifikasi test case QA & staging review`, completed: false }
+            ],
+            relations: [],
+            createdAt: new Date().toISOString(),
+            lastStatusUpdated: new Date().toISOString()
+          });
+        });
+
+        const newProj = {
+          id: newProjId,
+          code: cleanCode,
+          name: name.trim(),
+          clientName: clientName.trim(),
+          clientEmail: 'pic@client-enterprise.co.id',
+          description: description.trim() || `Pengembangan sistem ${name.trim()} dengan ${validModules.length} modul arsitektur.`,
+          status: 'Active',
+          health: 'On Track',
+          contractType: contractType || 'Fixed Price',
+          contractValue: Number(contractValue) || 450000000,
+          budgetUsed: 0,
+          totalHours,
+          usedHours: 0,
+          totalIssues: newTasks.length,
+          doneIssues: 0,
+          targetDeadline: targetDeadline || '2026-12-31',
+          color: '#4f46e5',
+          repoUrl: `github.com/softwarehouse/${cleanCode.toLowerCase()}-enterprise`,
+          workflowType: 'ai_automation',
+          hostingStatus: 'Healthy',
+          branches: newBranches,
+          createdAt: new Date().toISOString().split('T')[0]
+        };
+
+        const currentState = store.getState();
+        store.setState({
+          projects: [newProj, ...(currentState.projects || [])],
+          epics: [...newEpics, ...(currentState.epics || [])],
+          sprints: [newSprint, ...(currentState.sprints || [])],
+          tasks: [...newTasks, ...(currentState.tasks || [])],
+          selectedProjectId: newProjId
+        });
+
+        this.isCreateProjectOpen = false;
+        store.addToast('success', 'Proyek & Modul Berhasil Dibuat!', `${newProj.name} (${cleanCode}) dibuat dengan ${newEpics.length} modul dan ${newTasks.length} tiket otomatis.`);
+        this.openWorkspace(newProjId, 'ringkasan');
       });
     }
   }
