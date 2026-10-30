@@ -84,6 +84,7 @@ export class TaskDetailView {
     this.container.style.cssText = 'flex:1;display:flex;flex-direction:column;height:100%;overflow-y:auto;background:var(--bg-primary);';
 
     this.activeTab = 'overview'; // 'overview' | 'subtask_ai_audit'
+    this.isSubtaskModalOpen = false;
     this.copiedKey = false;
     this.isAiProcessing = false;
     this.selectedCommentAuthorId = 'user-pm';
@@ -160,7 +161,7 @@ export class TaskDetailView {
     const eventsList = (state.events || []).filter(e => e.taskId === currentTask.id);
 
     const TABS = [
-      { id: 'overview', label: 'Overview' },
+      { id: 'overview', label: 'Ringkasan' },
       {
         id: 'subtask_ai_audit',
         label: 'Subtask & AI & LOG',
@@ -222,7 +223,7 @@ export class TaskDetailView {
                       <span>Jalankan Auto-Fix AI</span>
                     </button>
                     <button id="btn-quick-generate-tests" class="btn btn-secondary" style="font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;">
-                      Generate Test Suite Otomatis
+                      Buat Test Suite Otomatis
                     </button>
                   </div>
                 </div>
@@ -265,30 +266,43 @@ export class TaskDetailView {
               <div style="display:flex;flex-direction:column;gap:8px;">
                 ${subtasks.length === 0 ? `
                   <p style="font-size:12px;color:var(--text-muted);font-style:italic;margin:0;">Belum ada subtask pada tiket ini. Tambahkan subtask baru di bawah.</p>
-                ` : subtasks.map((s) => `
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:var(--radius-md);background:${s.completed ? 'rgba(16,185,129,0.05)' : 'var(--bg-secondary)'};border:1px solid ${s.completed ? 'rgba(16,185,129,0.2)' : 'var(--border)'};">
-                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;min-width:0;">
+                ` : subtasks.map((s) => {
+                  const subAssignee = s.assigneeId ? (state.teamMembers || []).find(m => m.id === s.assigneeId) : null;
+                  return `
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:var(--radius-md);background:${s.completed ? 'rgba(16,185,129,0.05)' : 'var(--bg-secondary)'};border:1px solid ${s.completed ? 'rgba(16,185,129,0.2)' : 'var(--border)'};">
+                    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;flex:1;min-width:0;">
                       <input
                         type="checkbox"
                         class="chk-toggle-subtask"
                         data-subtask-id="${s.id}"
                         ${s.completed ? 'checked' : ''}
-                        style="width:16px;height:16px;accent-color:var(--indigo-600);cursor:pointer;"
+                        style="width:16px;height:16px;margin-top:2px;accent-color:var(--indigo-600);cursor:pointer;flex-shrink:0;"
                       />
-                      <span style="font-size:12.5px;color:${s.completed ? 'var(--text-muted)' : 'var(--text-primary)'};text-decoration:${s.completed ? 'line-through' : 'none'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                        ${s.title}
-                      </span>
+                      <div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;">
+                        <span style="font-size:12.5px;font-weight:${s.completed ? '500' : '600'};color:${s.completed ? 'var(--text-muted)' : 'var(--text-primary)'};text-decoration:${s.completed ? 'line-through' : 'none'};line-height:1.4;">
+                          ${s.title}
+                        </span>
+                        ${(s.category || subAssignee || s.estimateHours || s.notes) ? `
+                          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:var(--text-muted);">
+                            ${s.category ? `<span style="padding:1px 6px;border-radius:4px;background:rgba(99,102,241,0.08);color:var(--indigo-600);font-weight:700;">${s.category}</span>` : ''}
+                            ${subAssignee ? `<span>PIC: <strong style="color:var(--text-secondary);">${subAssignee.name}</strong></span>` : ''}
+                            ${s.estimateHours ? `<span style="font-family:var(--font-mono);font-weight:600;">${s.estimateHours} Jam</span>` : ''}
+                            ${s.notes ? `<span style="color:var(--text-muted);">· ${s.notes}</span>` : ''}
+                          </div>
+                        ` : ''}
+                      </div>
                     </label>
                     <button
                       class="btn-delete-subtask"
                       data-subtask-id="${s.id}"
-                      style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:2px;margin-left:8px;"
+                      style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;padding:2px;margin-left:8px;flex-shrink:0;"
                       title="Hapus subtask"
                     >
                       ${ICONS.trash}
                     </button>
                   </div>
-                `).join('')}
+                `;
+                }).join('')}
               </div>
 
               <!-- Inline Add Subtask Form -->
@@ -716,19 +730,31 @@ export class TaskDetailView {
                     <div style="padding:20px;border-radius:10px;border:1px dashed var(--border);text-align:center;color:var(--text-muted);font-size:12px;">
                       Belum ada item subtask & sertifikasi pada tiket ini. Tambahkan item baru di bawah.
                     </div>
-                  ` : subtasks.map((s, idx) => `
+                  ` : subtasks.map((s, idx) => {
+                    const subAssignee = s.assigneeId ? (state.teamMembers || []).find(m => m.id === s.assigneeId) : null;
+                    return `
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:10px;background:${s.completed ? 'rgba(16,185,129,0.05)' : 'var(--bg-secondary)'};border:1px solid ${s.completed ? 'rgba(16,185,129,0.25)' : 'var(--border)'};">
-                      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;flex:1;min-width:0;">
+                      <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;flex:1;min-width:0;">
                         <input
                           type="checkbox"
                           class="chk-toggle-subtask"
                           data-subtask-id="${s.id}"
                           ${s.completed ? 'checked' : ''}
-                          style="width:17px;height:17px;accent-color:var(--indigo-600);cursor:pointer;flex-shrink:0;"
+                          style="width:17px;height:17px;margin-top:2px;accent-color:var(--indigo-600);cursor:pointer;flex-shrink:0;"
                         />
-                        <span style="font-size:13px;font-weight:${s.completed ? '500' : '600'};color:${s.completed ? 'var(--text-muted)' : 'var(--text-primary)'};text-decoration:${s.completed ? 'line-through' : 'none'};line-height:1.4;">
-                          ${idx + 1}. ${s.title}
-                        </span>
+                        <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1;">
+                          <span style="font-size:13px;font-weight:${s.completed ? '500' : '600'};color:${s.completed ? 'var(--text-muted)' : 'var(--text-primary)'};text-decoration:${s.completed ? 'line-through' : 'none'};line-height:1.4;">
+                            ${idx + 1}. ${s.title}
+                          </span>
+                          ${(s.category || subAssignee || s.estimateHours || s.notes) ? `
+                            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:var(--text-muted);">
+                              ${s.category ? `<span style="padding:1px 6px;border-radius:4px;background:rgba(99,102,241,0.08);color:var(--indigo-600);font-weight:700;">${s.category}</span>` : ''}
+                              ${subAssignee ? `<span>PIC: <strong style="color:var(--text-secondary);">${subAssignee.name}</strong></span>` : ''}
+                              ${s.estimateHours ? `<span style="font-family:var(--font-mono);font-weight:600;">${s.estimateHours} Jam</span>` : ''}
+                              ${s.notes ? `<span style="color:var(--text-muted);">· ${s.notes}</span>` : ''}
+                            </div>
+                          ` : ''}
+                        </div>
                       </label>
                       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                         <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;${s.completed ? 'background:rgba(16,185,129,0.12);color:#059669;' : 'background:rgba(100,116,139,0.12);color:#64748b;'}">
@@ -739,7 +765,8 @@ export class TaskDetailView {
                         </button>
                       </div>
                     </div>
-                  `).join('')}
+                  `;
+                  }).join('')}
                 </div>
 
                 <!-- Form Tambah Subtask Baru -->
@@ -799,7 +826,7 @@ export class TaskDetailView {
                       <span>${this.isAiProcessing ? 'Sedang Memproses Patch AI...' : 'Terapkan Patch AI ke Staging'}</span>
                     </button>
                     <button id="btn-quick-generate-tests" class="btn btn-secondary" style="font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:8px;">
-                      Generate Test Suite Otomatis
+                      Buat Test Suite Otomatis
                     </button>
                   </div>
                   <span style="font-size:11px;font-family:var(--font-mono);color:#10b981;font-weight:700;">
@@ -874,70 +901,218 @@ export class TaskDetailView {
       `;
     }
 
-    // MAIN COMPONENT MARKUP (PROPORSIONAL, BERSIH, TANPA TRACK RECORD & TANPA TEKS JUDUL PROYEK DUPLIKAT)
+    // MAIN COMPONENT MARKUP (PROPORSIONAL, BERSIH, SATU BAR NAVIGASI & INFO TIKET)
     this.container.innerHTML = `
-      <!-- 1. Compact Action & Badges Bar -->
-      <div style="padding:12px 24px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;flex-shrink:0;">
-        <!-- Kiri: Key + Status + Priority + Type -->
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <!-- Key Badge (Copyable) -->
+      <!-- 1. Unified Navigation Tabs & Ticket Info Bar (Proporsional & Sejajar) -->
+      <div style="padding:0 24px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;min-height:48px;flex-shrink:0;">
+        <!-- Kiri: Navigation Sub-Tabs -->
+        <div style="display:flex;align-items:center;gap:4px;overflow-x:auto;overflow-y:hidden;">
+          ${tabsHtml}
+        </div>
+
+        <!-- Kanan: Key + Status + Priority + Type + Buat Subtask -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;">
           <button
             id="btn-copy-key"
-            style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-weight:800;font-size:11.5px;padding:4px 10px;border-radius:6px;background:rgba(99,102,241,0.1);color:var(--indigo-600);border:1px solid rgba(99,102,241,0.25);cursor:pointer;outline:none;"
+            style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-weight:800;font-size:11px;padding:4px 9px;border-radius:6px;background:rgba(99,102,241,0.1);color:var(--indigo-600);border:1px solid rgba(99,102,241,0.25);cursor:pointer;outline:none;"
             title="Klik untuk salin kode tiket"
           >
             <span>${currentTask.key}</span>
             ${ICONS.copy}
           </button>
 
-          <!-- Status Lozenge -->
           <span style="font-size:10.5px;font-family:var(--font-mono);font-weight:800;padding:4px 9px;border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);">
             ${currentTask.status.toUpperCase()}
           </span>
 
-          <!-- Priority Badge -->
           <span style="font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:9999px;${priorityBadgeBg}">
             ${currentTask.priority}
           </span>
 
-          <!-- Type Pill -->
           <span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;background:rgba(99,102,241,0.08);color:var(--indigo-600);border:1px solid rgba(99,102,241,0.2);">
             ✨ ${currentTask.type || 'Feature'}
           </span>
-        </div>
 
-        <!-- Kanan: Quick Action Buttons -->
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <button id="btn-action-attach" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
-            ${ICONS.paperclip}
-            <span>Lampirkan</span>
-          </button>
-          <button id="btn-action-add-subtask" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
+          <button id="btn-action-add-subtask" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:6px 12px;border-radius:8px;margin-left:4px;">
             ${ICONS.checkSquare}
             <span>Buat Subtask</span>
           </button>
-          <button id="btn-action-link-issue" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 12px;border-radius:8px;">
-            ${ICONS.link}
-            <span>Tautkan Masalah</span>
-          </button>
-          <button id="btn-action-auto-fix" class="btn btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:7px 14px;border-radius:8px;background:linear-gradient(135deg, #4f46e5, #7c3aed);border:none;">
-            ${ICONS.sparkles}
-            <span>Auto-Fix AI</span>
-          </button>
-          <button id="btn-action-delete" class="btn btn-danger btn-sm" style="padding:7px 10px;border-radius:8px;" title="Hapus tiket">
-            ${ICONS.trash}
-          </button>
         </div>
       </div>
 
-      <!-- 2. Navigation Tabs Bar (Sticky & Tidak Menyusut) -->
-      <div style="padding:0 24px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px;overflow-x:auto;overflow-y:hidden;min-height:44px;flex-shrink:0;">
-        ${tabsHtml}
-      </div>
-
-      <!-- 3. Dynamic Tab Workspace Content (Grid Proporsional) -->
+      <!-- 2. Dynamic Tab Workspace Content (Grid Proporsional) -->
       <div style="padding:20px 24px 32px 24px;flex:1 0 auto;">
         ${tabContentHtml}
+      </div>
+
+      <!-- 3. Modal Buat Subtask Baru -->
+      <div
+        id="subtaskModalBackdrop"
+        style="display:${this.isSubtaskModalOpen ? 'flex' : 'none'};position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;"
+      >
+        <div
+          class="card"
+          style="width:100%;max-width:560px;background:var(--bg-card, #ffffff);border:1px solid var(--border, #e2e8f0);border-radius:16px;box-shadow:0 20px 45px rgba(15,23,42,0.22);overflow:hidden;display:flex;flex-direction:column;animation:modalSlideUp 0.18s ease;"
+        >
+          <!-- Modal Header -->
+          <div style="padding:18px 22px;background:linear-gradient(135deg, rgba(79,70,229,0.06), rgba(59,130,246,0.04));border-bottom:1px solid var(--border, #e2e8f0);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+              <div style="width:38px;height:38px;border-radius:10px;background:var(--indigo-600, #4f46e5);color:#ffffff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 10px rgba(79,70,229,0.25);">
+                ${ICONS.checkSquare}
+              </div>
+              <div style="min-width:0;">
+                <h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary, #0f172a);">
+                  Buat Subtask & Spesifikasi Baru
+                </h3>
+                <p style="margin:2px 0 0 0;font-size:11.5px;color:var(--text-muted, #64748b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  Tiket Induk: <strong style="font-family:var(--font-mono);color:var(--indigo-600);">${currentTask.key}</strong> — ${currentTask.title}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="btnCloseSubtaskModal"
+              style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border, #e2e8f0);background:var(--bg-card, #fff);color:var(--text-muted, #64748b);cursor:pointer;display:grid;place-items:center;font-size:15px;font-weight:700;flex-shrink:0;"
+              title="Tutup Modal (Esc)"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Modal Form Body -->
+          <form id="form-modal-subtask" style="padding:20px 22px;display:flex;flex-direction:column;gap:16px;">
+            <!-- Judul Subtask -->
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                Judul Subtask / Deliverable <span style="color:#ef4444;">*</span>
+              </label>
+              <input
+                type="text"
+                id="modalSubtaskTitle"
+                class="form-input"
+                placeholder="Contoh: Implementasi validasi token JWT & unit test endpoint..."
+                style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border, #cbd5e1);background:var(--bg-secondary, #f8fafc);font-size:13px;font-weight:600;color:var(--text-primary);"
+                required
+              />
+              <!-- Quick Preset Chips -->
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
+                <span style="font-size:10.5px;color:var(--text-muted);font-weight:600;">Template Cepat:</span>
+                <button type="button" class="subtask-preset-chip" data-preset-title="Pembuatan skema validasi API & middleware otorisasi" data-preset-cat="Backend / API" style="border:1px solid rgba(99,102,241,0.25);background:rgba(99,102,241,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                  + Validasi API
+                </button>
+                <button type="button" class="subtask-preset-chip" data-preset-title="Integrasi komponen UI & state management reaktif" data-preset-cat="Frontend / UI" style="border:1px solid rgba(99,102,241,0.25);background:rgba(99,102,241,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                  + Integrasi UI
+                </button>
+                <button type="button" class="subtask-preset-chip" data-preset-title="Penulisan unit test & uji regresi QA Staging" data-preset-cat="QA & Testing" style="border:1px solid rgba(99,102,241,0.25);background:rgba(99,102,241,0.06);color:var(--indigo-600);border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:700;cursor:pointer;">
+                  + Unit Test & QA
+                </button>
+              </div>
+            </div>
+
+            <!-- Grid 2 Kolom: Kategori & PIC Pelaksana -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Kategori Spesifikasi
+                </label>
+                <select
+                  id="modalSubtaskCategory"
+                  class="form-select"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-weight:600;color:var(--text-primary);"
+                >
+                  <option value="Backend / API">Backend / API</option>
+                  <option value="Frontend / UI">Frontend / UI</option>
+                  <option value="Database / Schema">Database / Schema</option>
+                  <option value="QA & Testing">QA & Testing</option>
+                  <option value="DevOps & Security">DevOps & Security</option>
+                </select>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  PIC Pelaksana Subtask
+                </label>
+                <select
+                  id="modalSubtaskAssignee"
+                  class="form-select"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-weight:600;color:var(--text-primary);"
+                >
+                  ${state.teamMembers.map(m => `
+                    <option value="${m.id}" ${currentTask.assigneeId === m.id ? 'selected' : ''}>
+                      ${m.name} (${m.role})
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+            </div>
+
+            <!-- Grid 2 Kolom: Estimasi Jam & Status Verifikasi -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Estimasi Waktu (Jam)
+                </label>
+                <input
+                  type="number"
+                  id="modalSubtaskHours"
+                  min="0.5"
+                  step="0.5"
+                  value="2"
+                  class="form-input"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-family:var(--font-mono);font-weight:700;color:var(--text-primary);"
+                />
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                  Status Verifikasi Awal
+                </label>
+                <select
+                  id="modalSubtaskStatus"
+                  class="form-select"
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-weight:600;color:var(--text-primary);"
+                >
+                  <option value="pending" selected>Menunggu QA (Belum Selesai)</option>
+                  <option value="completed">✓ Terverifikasi QA (Selesai)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Catatan / Kriteria Kelulusan (DoD) -->
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary, #334155);">
+                Kriteria Selesai / Catatan Teknis (Opsional)
+              </label>
+              <textarea
+                id="modalSubtaskNotes"
+                rows="2"
+                class="form-textarea"
+                placeholder="Tuliskan kriteria penerimaan (Acceptance Criteria) atau catatan pengujian..."
+                style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;color:var(--text-primary);resize:vertical;"
+              ></textarea>
+            </div>
+
+            <!-- Modal Footer Buttons -->
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid var(--border);">
+              <button
+                type="button"
+                id="btnCancelSubtaskModal"
+                class="btn btn-secondary"
+                style="padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:700;"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                style="padding:8px 18px;border-radius:8px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;"
+              >
+                ${ICONS.plus}
+                <span>Simpan Subtask</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     `;
 
@@ -1214,28 +1389,94 @@ export class TaskDetailView {
       });
     }
 
-    // Action bar buttons: Lampirkan, Buat Subtask, Tautkan Masalah
-    const btnAttach = this.container.querySelector('#btn-action-attach');
-    if (btnAttach) {
-      btnAttach.addEventListener('click', () => {
-        store.addToast('info', 'Lampirkan Berkas', 'Pilih file PDF, gambar, atau log untuk dilampirkan.');
-      });
-    }
-
+    // Open Create Subtask Modal
     const btnSubtask = this.container.querySelector('#btn-action-add-subtask');
+    const subtaskModalBackdrop = this.container.querySelector('#subtaskModalBackdrop');
+    const closeSubtaskModal = () => {
+      this.isSubtaskModalOpen = false;
+      if (subtaskModalBackdrop) {
+        subtaskModalBackdrop.style.display = 'none';
+      }
+    };
+
     if (btnSubtask) {
       btnSubtask.addEventListener('click', () => {
-        const title = prompt('Masukkan judul subtask baru:');
-        if (title && title.trim()) {
-          store.addSubtask(task.id, title.trim());
+        this.isSubtaskModalOpen = true;
+        if (subtaskModalBackdrop) {
+          subtaskModalBackdrop.style.display = 'flex';
+          const titleInput = this.container.querySelector('#modalSubtaskTitle');
+          if (titleInput) {
+            setTimeout(() => titleInput.focus(), 40);
+          }
+        } else {
+          this.render();
         }
       });
     }
 
-    const btnLink = this.container.querySelector('#btn-action-link-issue');
-    if (btnLink) {
-      btnLink.addEventListener('click', () => {
-        store.addToast('info', 'Tautkan Masalah', 'Fitur relasi issue Jira (blocks/is blocked by/relates to) aktif.');
+    const btnCloseModal = this.container.querySelector('#btnCloseSubtaskModal');
+    if (btnCloseModal) {
+      btnCloseModal.addEventListener('click', closeSubtaskModal);
+    }
+
+    const btnCancelModal = this.container.querySelector('#btnCancelSubtaskModal');
+    if (btnCancelModal) {
+      btnCancelModal.addEventListener('click', closeSubtaskModal);
+    }
+
+    if (subtaskModalBackdrop) {
+      subtaskModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === subtaskModalBackdrop) {
+          closeSubtaskModal();
+        }
+      });
+    }
+
+    // Preset chips inside Subtask Modal
+    this.container.querySelectorAll('.subtask-preset-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const titleInput = this.container.querySelector('#modalSubtaskTitle');
+        const catSelect = this.container.querySelector('#modalSubtaskCategory');
+        if (titleInput && chip.dataset.presetTitle) {
+          titleInput.value = chip.dataset.presetTitle;
+          titleInput.focus();
+        }
+        if (catSelect && chip.dataset.presetCat) {
+          catSelect.value = chip.dataset.presetCat;
+        }
+      });
+    });
+
+    // Submit Create Subtask Modal Form
+    const modalSubtaskForm = this.container.querySelector('#form-modal-subtask');
+    if (modalSubtaskForm) {
+      modalSubtaskForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const titleInput = this.container.querySelector('#modalSubtaskTitle');
+        const catSelect = this.container.querySelector('#modalSubtaskCategory');
+        const assigneeSelectModal = this.container.querySelector('#modalSubtaskAssignee');
+        const hoursInput = this.container.querySelector('#modalSubtaskHours');
+        const statusSelectModal = this.container.querySelector('#modalSubtaskStatus');
+        const notesInput = this.container.querySelector('#modalSubtaskNotes');
+
+        const titleVal = titleInput ? titleInput.value.trim() : '';
+        if (!titleVal) return;
+
+        const newSubtask = {
+          id: `sub-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          title: titleVal,
+          category: catSelect ? catSelect.value : 'Backend / API',
+          assigneeId: assigneeSelectModal ? assigneeSelectModal.value : task.assigneeId,
+          estimateHours: hoursInput ? (Number(hoursInput.value) || 2) : 2,
+          completed: statusSelectModal ? statusSelectModal.value === 'completed' : false,
+          notes: notesInput ? notesInput.value.trim() : ''
+        };
+
+        this.isSubtaskModalOpen = false;
+        const currentTaskLatest = store.getState().tasks.find((t) => t.id === task.id) || task;
+        const updatedSubtasks = [...(currentTaskLatest.subtasks || []), newSubtask];
+        store.updateTask(task.id, { subtasks: updatedSubtasks });
+        store.addToast('success', 'Subtask Ditambahkan', `Subtask "${titleVal}" berhasil ditambahkan ke tiket ${task.key}.`);
       });
     }
   }

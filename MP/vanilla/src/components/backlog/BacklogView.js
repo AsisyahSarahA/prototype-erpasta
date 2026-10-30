@@ -192,17 +192,17 @@ export class BacklogView {
             <div class="backlog-header-actions">
               <button id="createSprintBtn" class="btn btn-secondary" style="font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: var(--radius-lg);">
                 ${Icons.plus("", 13)}
-                <span>Create Sprint</span>
+                <span>Buat Sprint</span>
               </button>
 
               <button id="completeSprintBtn" class="btn btn-secondary" style="font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: var(--radius-lg);">
                 ${Icons.checkCircle("", 13)}
-                <span>Complete Sprint</span>
+                <span>Selesaikan Sprint</span>
               </button>
 
               <button id="openCreateTaskBacklogBtn" class="btn btn-primary" style="font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: var(--radius-lg);">
                 ${Icons.plus("", 13)}
-                <span>Create Issue</span>
+                <span>Buat Tiket</span>
               </button>
             </div>
           </div>

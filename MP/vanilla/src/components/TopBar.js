@@ -130,7 +130,7 @@ export class TopBar {
           title="Tampilan Tabel Detail JQL"
         >
           ${ICONS.table}
-          <span>Table (JQL)</span>
+          <span>Tabel (JQL)</span>
         </button>
         <button
           class="btn-view-mode ${activeTab === 'timeline' ? 'active' : ''}"

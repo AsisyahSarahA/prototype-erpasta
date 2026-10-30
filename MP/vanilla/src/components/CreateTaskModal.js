@@ -388,7 +388,7 @@ export class CreateTaskModal {
                 <div class="create-field-group">
                   <div class="create-field-label">
                     <span>PENANGGUNG JAWAB (PIC)</span>
-                    <button type="button" id="assignToMeCreateBtn" class="create-inline-link">Assign ke Saya</button>
+                    <button type="button" id="assignToMeCreateBtn" class="create-inline-link">Tugaskan ke Saya</button>
                   </div>
                   <select id="taskAssigneeSelect" class="create-input">
                     ${teamMembers.map((m) => `
@@ -500,7 +500,7 @@ export class CreateTaskModal {
                 class="create-btn-submit"
               >
                 ${Icons.check('', 15)}
-                <span>Buat Issue</span>
+                <span>Buat Tiket</span>
               </button>
             </div>
           </div>

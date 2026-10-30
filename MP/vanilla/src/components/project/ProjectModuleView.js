@@ -703,7 +703,7 @@ export class ProjectModuleView {
                   </button>
                   <button type="button" id="pmRunAiPrdBtn" class="pm-ws-btn pm-ws-btn--primary" style="height: 36px; font-size: 12px; background: linear-gradient(135deg, #4f46e5, #7c3aed);">
                     <i class="fi fi-rr-magic-wand"></i>
-                    <span>${draft.isAiGenerating ? 'Menganalisis Dokumen...' : '✨ Generate via AI'}</span>
+                    <span>${draft.isAiGenerating ? 'Menganalisis Dokumen...' : '✨ Buat dengan AI'}</span>
                   </button>
                 </div>
               </div>
@@ -853,7 +853,7 @@ export class ProjectModuleView {
               <button type="button" id="pmCancelCreateProjectBtn" class="pm-ws-btn pm-ws-btn--outline">Batal</button>
               <button type="button" id="pmSaveNewProjectBtn" class="pm-ws-btn pm-ws-btn--primary" style="padding: 0 18px; height: 38px;">
                 <i class="fi fi-rr-rocket-lunch"></i>
-                <span>Buat Proyek &amp; Generate Workspace</span>
+                <span>Buat Proyek</span>
               </button>
             </div>
           </div>
@@ -1642,8 +1642,8 @@ export class ProjectModuleView {
           </p>
           <div class="pm-ws-hero-btns">
             <div class="pm-ws-hero-btns-left">
-              <button class="pm-ws-hero-btn-primary" data-switch-ws-tab="kanban">Buka Board Kanban</button>
-              <button class="pm-ws-hero-btn-secondary" data-nav-to-client="true">Lihat Client Portal</button>
+              <button class="pm-ws-hero-btn-primary" data-switch-ws-tab="kanban">Buka Papan Kanban</button>
+              <button class="pm-ws-hero-btn-secondary" data-nav-to-client="true">Lihat Portal Klien</button>
             </div>
             <div class="pm-ws-hero-btns-right">
               <button id="pmWsEditProjBtn" class="pm-ws-btn pm-ws-btn--outline" title="Edit konfigurasi proyek">
@@ -1656,7 +1656,7 @@ export class ProjectModuleView {
               </button>
               <button id="pmWsCreateIssueBtn" class="pm-ws-btn pm-ws-btn--primary" title="Tambah issue / task baru">
                 <i class="fi fi-rr-plus"></i>
-                <span>Buat Issue</span>
+                <span>Buat Tiket</span>
               </button>
             </div>
           </div>
@@ -2072,7 +2072,7 @@ export class ProjectModuleView {
                 <div class="pm-ms-footer">
                   <span class="pm-ms-tasks-count"><i class="fi fi-rr-list-check"></i> ${childTasks.length || 3} Tasks Terhubung</span>
                   <button class="pm-btn pm-btn--sm pm-btn--ghost" onclick="store.setActiveTab('kanban');">
-                    Lihat di Board <i class="fi fi-rr-arrow-right"></i>
+                    Lihat di Papan <i class="fi fi-rr-arrow-right"></i>
                   </button>
                 </div>
               </div>
@@ -2099,7 +2099,7 @@ export class ProjectModuleView {
           </div>
           <div style="display: flex; gap: 8px;">
             <button class="pm-btn pm-btn--outline" onclick="store.setActiveTab('timeline');">
-              <i class="fi fi-rr-expand"></i> Buka Full Gantt Roadmap
+              <i class="fi fi-rr-expand"></i> Buka Roadmap Gantt Penuh
             </button>
           </div>
         </div>
