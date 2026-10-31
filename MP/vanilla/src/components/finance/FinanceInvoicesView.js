@@ -12,6 +12,7 @@ export class FinanceInvoicesView {
     this.element = document.createElement('div');
     this.element.className = 'finance-view';
 
+    this.activeTab = 'termin'; // 'termin' | 'riwayat'
     this.selectedInvoice = null;
     this.showCreateModal = false;
     this.statusFilter = 'all';
@@ -85,6 +86,18 @@ export class FinanceInvoicesView {
               ${Icons.plus('', 14)}
               <span>Invoice Task Selesai (${unbilledCompletedTasks.length})</span>
             </button>
+
+            <!-- Sub Tab Riwayat di sebelah button Invoice Task Selesai -->
+            <div class="finance-subtab-container">
+              <button id="subtabTerminBtn" class="finance-subtab-btn ${this.activeTab === 'termin' ? 'active' : ''}" title="Tampilkan status evaluasi kelayakan termin proyek">
+                ${Icons.folder('', 13)}
+                <span>Kelayakan Termin</span>
+              </button>
+              <button id="subtabRiwayatBtn" class="finance-subtab-btn ${this.activeTab === 'riwayat' ? 'active' : ''}" title="Tampilkan daftar tagihan & riwayat invoice">
+                ${Icons.clock('', 13)}
+                <span>Riwayat (${invoices.length})</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -127,255 +140,274 @@ export class FinanceInvoicesView {
           </div>
         </div>
 
-        <!-- 2. Projects Milestone Status Grid (Perpustakaan, Futsal, POS) -->
-        <div class="finance-milestone-card">
-          <div class="finance-milestone-header">
-            <div>
-              <div class="finance-milestone-title">
-                <span style="color: #059669;">${Icons.trendingUp('', 16)}</span>
-                <span>Status Kelayakan Penagihan Termin Proyek (SOP Progres &gt; 10%)</span>
+        ${this.activeTab === 'termin' ? `
+          <!-- 3. Projects Milestone Status Grid (Perpustakaan, Futsal, POS) -->
+          <div class="finance-milestone-card">
+            <div class="finance-milestone-header">
+              <div>
+                <div class="finance-milestone-title">
+                  <span style="color: #059669;">${Icons.trendingUp('', 16)}</span>
+                  <span>Status Kelayakan Penagihan Termin Proyek (SOP Progres &gt; 10%)</span>
+                </div>
+                <p style="font-size: 12px; color: var(--color-zinc-500); margin: 2px 0 0 0;">
+                  Evaluasi progres tiap project secara real-time. Invoice termin hanya dapat diterbitkan bila progres melebihi ambang 10%.
+                </p>
               </div>
-              <p style="font-size: 12px; color: var(--color-zinc-500); margin: 2px 0 0 0;">
-                Evaluasi progres tiap project secara real-time. Invoice termin hanya dapat diterbitkan bila progres melebihi ambang 10%.
+              <div style="font-size: 11px; color: var(--color-zinc-500);">
+                Ambang Batas Minimum: <strong style="color: #047857;">&gt; 10%</strong>
+              </div>
+            </div>
+
+            <div class="finance-projects-grid">
+              ${projects.map((proj) => {
+                const progress = store.getProjectProgress(proj.id);
+                const isEligible = progress > 10;
+                const projTasks = tasks.filter((t) => t.projectId === proj.id);
+                const completedTasksCount = projTasks.filter((t) => t.status === 'Selesai').length;
+
+                return `
+                  <div class="finance-project-item ${isEligible ? 'eligible' : 'ineligible'}">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                      <div class="finance-proj-top">
+                        <div>
+                          <span class="finance-proj-code">${proj.code}</span>
+                          <div class="finance-proj-name" title="${proj.name}">${proj.name}</div>
+                          <div class="finance-proj-client">${proj.clientName}</div>
+                        </div>
+                        <div class="finance-status-pill ${isEligible ? 'pass' : 'fail'}">
+                          ${isEligible ? `${Icons.checkCircle('', 12)} Lolos (&gt; 10%)` : `${Icons.alertTriangle('', 12)} Belum (&le; 10%)`}
+                        </div>
+                      </div>
+
+                      <div class="finance-proj-stat">
+                        <span style="color: var(--color-zinc-500);">Nilai Kontrak:</span>
+                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--color-zinc-900);">${this.formatIDR(proj.contractValue)}</span>
+                      </div>
+
+                      <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--color-zinc-500);">
+                        <span>Task Selesai:</span>
+                        <span style="font-family: var(--font-mono); font-weight: 500; color: var(--color-zinc-700);">${completedTasksCount} / ${projTasks.length} task</span>
+                      </div>
+
+                      <!-- Progress Gauge -->
+                      <div class="finance-progress-container">
+                        <div class="finance-progress-header">
+                          <span style="color: var(--color-zinc-500);">Capaian Progres:</span>
+                          <span style="font-family: var(--font-mono); font-weight: 700; color: var(--color-zinc-900);">${progress}%</span>
+                        </div>
+                        <div class="finance-progress-bar-bg">
+                          <div class="finance-threshold-line" title="Batas Minimum SOP 10%"></div>
+                          <div class="finance-progress-fill ${isEligible ? 'green' : 'amber'}" style="width: ${Math.min(100, Math.max(3, progress))}%;"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      ${isEligible ? `
+                        <button class="finance-btn-primary issue-milestone-btn" data-project-id="${proj.id}" style="width: 100%; justify-content: center;">
+                          <span style="color: #34d399;">${Icons.percent('', 14)}</span>
+                          <span>Terbitkan Invoice (${progress}%)</span>
+                          ${Icons.arrowRight('', 14)}
+                        </button>
+                      ` : `
+                        <button disabled class="finance-btn-secondary" style="width: 100%; justify-content: center; cursor: not-allowed; opacity: 0.7; color: var(--color-zinc-400);">
+                          <span style="color: #f59e0b;">${Icons.alertTriangle('', 14)}</span>
+                          <span>Belum Mencapai 10% (${progress}%)</span>
+                        </button>
+                        <p style="font-size: 10px; color: #92400e; text-align: center; margin: 4px 0 0 0;">
+                          Selesaikan minimal 1 task di Kanban Board untuk membuka penagihan.
+                        </p>
+                      `}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- 4. Automated Dual-Notification Banner -->
+          <div class="finance-info-banner">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              ${Icons.bell('', 16)}
+            </div>
+            <div>
+              <div style="font-weight: 700; color: #312e81; display: flex; align-items: center; gap: 8px;">
+                <span>Alur Otomasi Notifikasi Ganda ke Finance &amp; CRM:</span>
+                <span style="font-size: 10px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 9999px; background: white; color: #4338ca; border: 1px solid #c7d2fe; font-weight: 600;">
+                  Dual-Channel Broadcast
+                </span>
+              </div>
+              <p style="font-size: 11px; margin: 4px 0 0 0; line-height: 1.5; color: rgba(49, 46, 129, 0.85);">
+                Setiap kali invoice termin berhasil diterbitkan, sistem otomatis mendispatch notifikasi real-time ke modul <strong>Finance</strong> (verifikasi piutang) dan modul <strong>CRM</strong> (update timeline pembayaran klien), serta langsung mengupdate lonceng notifikasi di TopBar.
               </p>
             </div>
-            <div style="font-size: 11px; color: var(--color-zinc-500);">
-              Ambang Batas Minimum: <strong style="color: #047857;">&gt; 10%</strong>
-            </div>
           </div>
 
-          <div class="finance-projects-grid">
-            ${projects.map((proj) => {
-              const progress = store.getProjectProgress(proj.id);
-              const isEligible = progress > 10;
-              const projTasks = tasks.filter((t) => t.projectId === proj.id);
-              const completedTasksCount = projTasks.filter((t) => t.status === 'Selesai').length;
-
-              return `
-                <div class="finance-project-item ${isEligible ? 'eligible' : 'ineligible'}">
-                  <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="finance-proj-top">
-                      <div>
-                        <span class="finance-proj-code">${proj.code}</span>
-                        <div class="finance-proj-name" title="${proj.name}">${proj.name}</div>
-                        <div class="finance-proj-client">${proj.clientName}</div>
-                      </div>
-                      <div class="finance-status-pill ${isEligible ? 'pass' : 'fail'}">
-                        ${isEligible ? `${Icons.checkCircle('', 12)} Lolos (&gt; 10%)` : `${Icons.alertTriangle('', 12)} Belum (&le; 10%)`}
-                      </div>
-                    </div>
-
-                    <div class="finance-proj-stat">
-                      <span style="color: var(--color-zinc-500);">Nilai Kontrak:</span>
-                      <span style="font-family: var(--font-mono); font-weight: 700; color: var(--color-zinc-900);">${this.formatIDR(proj.contractValue)}</span>
-                    </div>
-
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--color-zinc-500);">
-                      <span>Task Selesai:</span>
-                      <span style="font-family: var(--font-mono); font-weight: 500; color: var(--color-zinc-700);">${completedTasksCount} / ${projTasks.length} task</span>
-                    </div>
-
-                    <!-- Progress Gauge -->
-                    <div class="finance-progress-container">
-                      <div class="finance-progress-header">
-                        <span style="color: var(--color-zinc-500);">Capaian Progres:</span>
-                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--color-zinc-900);">${progress}%</span>
-                      </div>
-                      <div class="finance-progress-bar-bg">
-                        <div class="finance-threshold-line" title="Batas Minimum SOP 10%"></div>
-                        <div class="finance-progress-fill ${isEligible ? 'green' : 'amber'}" style="width: ${Math.min(100, Math.max(3, progress))}%;"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    ${isEligible ? `
-                      <button class="finance-btn-primary issue-milestone-btn" data-project-id="${proj.id}" style="width: 100%; justify-content: center;">
-                        <span style="color: #34d399;">${Icons.percent('', 14)}</span>
-                        <span>Terbitkan Invoice (${progress}%)</span>
-                        ${Icons.arrowRight('', 14)}
-                      </button>
-                    ` : `
-                      <button disabled class="finance-btn-secondary" style="width: 100%; justify-content: center; cursor: not-allowed; opacity: 0.7; color: var(--color-zinc-400);">
-                        <span style="color: #f59e0b;">${Icons.alertTriangle('', 14)}</span>
-                        <span>Belum Mencapai 10% (${progress}%)</span>
-                      </button>
-                      <p style="font-size: 10px; color: #92400e; text-align: center; margin: 4px 0 0 0;">
-                        Selesaikan minimal 1 task di Kanban Board untuk membuka penagihan.
-                      </p>
-                    `}
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-
-        <!-- 3. Automated Dual-Notification Banner -->
-        <div class="finance-info-banner">
-          <div style="width: 32px; height: 32px; border-radius: 8px; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            ${Icons.bell('', 16)}
-          </div>
-          <div>
-            <div style="font-weight: 700; color: #312e81; display: flex; align-items: center; gap: 8px;">
-              <span>Alur Otomasi Notifikasi Ganda ke Finance &amp; CRM:</span>
-              <span style="font-size: 10px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 9999px; background: white; color: #4338ca; border: 1px solid #c7d2fe; font-weight: 600;">
-                Dual-Channel Broadcast
+          <!-- Quick link to Riwayat -->
+          <div style="background: white; border: 1px solid var(--color-zinc-200); border-radius: 12px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="display: inline-flex; width: 34px; height: 34px; border-radius: 8px; background: #e0e7ff; color: #4338ca; align-items: center; justify-content: center; flex-shrink: 0;">
+                ${Icons.clock('', 16)}
               </span>
+              <div>
+                <strong style="color: #0f172a; font-size: 13px;">Daftar Tagihan &amp; Riwayat Invoice (${invoices.length})</strong>
+                <div style="font-size: 11.5px; color: #64748b;">Terdapat ${invoices.length} tagihan &amp; faktur tercatat. Klik tab Riwayat untuk melihat seluruh rincian dan mencetak faktur.</div>
+              </div>
             </div>
-            <p style="font-size: 11px; margin: 4px 0 0 0; line-height: 1.5; color: rgba(49, 46, 129, 0.85);">
-              Setiap kali invoice termin berhasil diterbitkan, sistem otomatis mendispatch notifikasi real-time ke modul <strong>Finance</strong> (verifikasi piutang) dan modul <strong>CRM</strong> (update timeline pembayaran klien), serta langsung mengupdate lonceng notifikasi di TopBar.
-            </p>
+            <button id="goToRiwayatBtn" class="finance-btn-secondary">
+              <span>Buka Tab Riwayat</span>
+              ${Icons.arrowRight('', 13)}
+            </button>
           </div>
-        </div>
-
-        <!-- 4. Invoices List Section -->
-        <div class="finance-table-card">
-          <div class="finance-table-header">
-            <div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--color-zinc-900);">
-                Daftar Tagihan &amp; Riwayat Invoice (${invoices.length})
-              </div>
-              <div style="font-size: 12px; color: var(--color-zinc-500);">
-                Mata Uang: IDR (Rupiah) · Pajak Pertambahan Nilai (PPN): 11% UU HPP
-              </div>
-            </div>
-
-            <!-- Filter Pills -->
-            <div class="finance-filter-pills">
-              ${[
-                { id: 'all', label: `Semua (${invoices.length})` },
-                { id: 'Terkirim ke Finance', label: `Terkirim ke Finance (${invoices.filter(i => i.status === 'Terkirim ke Finance').length})` },
-                { id: 'Disetujui PM', label: 'Disetujui PM' },
-                { id: 'Terkirim ke Klien', label: 'Terkirim ke Klien' },
-                { id: 'Lunas', label: 'Lunas' }
-              ].map(tab => `
-                <button class="finance-filter-btn ${this.statusFilter === tab.id ? 'active' : ''}" data-filter="${tab.id}">
-                  ${tab.label}
-                </button>
-              `).join('')}
-            </div>
-          </div>
-
-          <div class="finance-invoices-cards-grid">
-            ${filteredInvoices.length === 0 ? `
-              <div style="padding: 32px; text-align: center; color: var(--color-zinc-400); font-size: 12px;">
-                Tidak ada invoice pada status ini.
-              </div>
-            ` : filteredInvoices.map(inv => {
-              const isPaid = inv.status === 'Lunas';
-              const isSentToFinance = inv.status === 'Terkirim ke Finance';
-              const isSentToClient = inv.status === 'Terkirim ke Klien';
-              const isApprovedPm = inv.status === 'Disetujui PM';
-
-              return `
-                <div class="finance-invoice-card ${isPaid ? 'finance-invoice-card--paid' : ''}">
-                  <div class="finance-invoice-card__header">
-                    <div class="finance-invoice-card__id-group">
-                      <span class="finance-invoice-num">${inv.invoiceNumber}</span>
-                      
-                      <!-- Status Badge -->
-                      <span class="finance-status-pill ${
-                        isPaid ? 'pass' : isSentToFinance ? 'teal' : isApprovedPm ? 'blue' : isSentToClient ? 'purple' : 'amber'
-                      }">
-                        ${isSentToFinance ? Icons.send('', 12) : ''}
-                        ${isPaid ? Icons.checkCircle('', 12) : ''}
-                        <span>${inv.status}</span>
-                      </span>
-
-                      ${inv.percentage ? `
-                        <span class="finance-termin-pill">
-                          Termin ${inv.percentage}%
-                        </span>
-                      ` : ''}
-
-                      <span style="font-size: 12px; color: #475569; font-weight: 600;">
-                        ${inv.type}
-                      </span>
-                    </div>
-
-                    <div class="finance-invoice-card__amount">
-                      <span class="finance-amount-val">${this.formatIDR(inv.totalAmount)}</span>
-                      <span class="finance-amount-sub">Total Nett (PPN 11% inc.)</span>
-                    </div>
-                  </div>
-
-                  <div class="finance-invoice-card__body">
-                    <div class="finance-body-col">
-                      <span class="finance-body-label">Klien &amp; Proyek:</span>
-                      <span class="finance-body-val">
-                        <strong style="color: #0f172a;">${inv.clientName}</strong>
-                      </span>
-                      <span class="finance-body-meta">ID Proyek: <strong>${inv.projectId || 'Software'}</strong></span>
-                    </div>
-
-                    <div class="finance-body-col">
-                      <span class="finance-body-label">Rincian Finansial:</span>
-                      <span class="finance-body-val">Subtotal: ${this.formatIDR(inv.subtotal)}</span>
-                      <span class="finance-body-meta">PPN (11% UU HPP): ${this.formatIDR(inv.taxPpn)} · ${inv.items.length} item</span>
-                    </div>
-
-                    <div class="finance-body-col">
-                      <span class="finance-body-label">Jatuh Tempo &amp; Status:</span>
-                      <span class="finance-body-val" style="font-weight: 700; color: ${isPaid ? '#059669' : '#b45309'}; font-family: var(--font-mono);">
-                        ${inv.dueDate || '-'}
-                      </span>
-                      <span class="finance-body-meta">${isPaid ? '<i class="fi fi-rr-check"></i> Lunas Terverifikasi' : 'Menunggu Pelunasan / Review'}</span>
-                    </div>
-                  </div>
-
-                  ${inv.notes ? `
-                    <div class="finance-invoice-card__notes">
-                      ${Icons.fileText('', 12)}
-                      <span>Catatan: &ldquo;${inv.notes}&rdquo;</span>
-                    </div>
-                  ` : ''}
-
-                  <div class="finance-invoice-card__actions">
-                    <button class="finance-btn-secondary view-invoice-btn" data-invoice-id="${inv.id}">
-                      ${Icons.fileText('', 13)}
-                      <span>Buka &amp; Cetak Faktur</span>
-                    </button>
-
-                    <div class="finance-action-group">
-                      ${inv.status === 'Draft' ? `
-                        <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Disetujui PM" style="background: #0052cc;">
-                          ${Icons.check('', 12)}
-                          <span>Setujui (PM)</span>
-                        </button>
-                      ` : ''}
-
-                      ${inv.status === 'Disetujui PM' ? `
-                        <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Terkirim ke Finance" style="background: #0d9488;">
-                          ${Icons.send('', 12)}
-                          <span>Kirim ke Finance</span>
-                        </button>
-                      ` : ''}
-
-                      ${inv.status === 'Terkirim ke Finance' ? `
-                        <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Terkirim ke Klien" style="background: #4f46e5;">
-                          ${Icons.send('', 12)}
-                          <span>Kirim ke Klien</span>
-                        </button>
-                        <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Lunas" style="background: #059669;">
-                          ${Icons.check('', 12)}
-                          <span>Tandai Lunas</span>
-                        </button>
-                      ` : ''}
-
-                      ${inv.status === 'Terkirim ke Klien' ? `
-                        <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Lunas" style="background: #059669;">
-                          ${Icons.check('', 12)}
-                          <span>Tandai Lunas</span>
-                        </button>
-                      ` : ''}
-                    </div>
-                  </div>
+        ` : `
+          <!-- 5. Invoices List Section (Sub-Tab Riwayat) -->
+          <div class="finance-table-card">
+            <div class="finance-table-header">
+              <div>
+                <div style="font-size: 14px; font-weight: 700; color: var(--color-zinc-900);">
+                  Daftar Tagihan &amp; Riwayat Invoice (${invoices.length})
                 </div>
-              `;
-            }).join('')}
+                <div style="font-size: 12px; color: var(--color-zinc-500);">
+                  Mata Uang: IDR (Rupiah) · Pajak Pertambahan Nilai (PPN): 11% UU HPP
+                </div>
+              </div>
+
+              <!-- Filter Pills -->
+              <div class="finance-filter-pills">
+                ${[
+                  { id: 'all', label: `Semua (${invoices.length})` },
+                  { id: 'Terkirim ke Finance', label: `Terkirim ke Finance (${invoices.filter(i => i.status === 'Terkirim ke Finance').length})` },
+                  { id: 'Disetujui PM', label: 'Disetujui PM' },
+                  { id: 'Terkirim ke Klien', label: 'Terkirim ke Klien' },
+                  { id: 'Lunas', label: 'Lunas' }
+                ].map(tab => `
+                  <button class="finance-filter-btn ${this.statusFilter === tab.id ? 'active' : ''}" data-filter="${tab.id}">
+                    ${tab.label}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="finance-invoices-cards-grid">
+              ${filteredInvoices.length === 0 ? `
+                <div style="padding: 32px; text-align: center; color: var(--color-zinc-400); font-size: 12px;">
+                  Tidak ada invoice pada status ini.
+                </div>
+              ` : filteredInvoices.map(inv => {
+                const isPaid = inv.status === 'Lunas';
+                const isSentToFinance = inv.status === 'Terkirim ke Finance';
+                const isSentToClient = inv.status === 'Terkirim ke Klien';
+                const isApprovedPm = inv.status === 'Disetujui PM';
+
+                return `
+                  <div class="finance-invoice-card ${isPaid ? 'finance-invoice-card--paid' : ''}">
+                    <div class="finance-invoice-card__header">
+                      <div class="finance-invoice-card__id-group">
+                        <span class="finance-invoice-num">${inv.invoiceNumber}</span>
+                        
+                        <!-- Status Badge -->
+                        <span class="finance-status-pill ${
+                          isPaid ? 'pass' : isSentToFinance ? 'teal' : isApprovedPm ? 'blue' : isSentToClient ? 'purple' : 'amber'
+                        }">
+                          ${isSentToFinance ? Icons.send('', 12) : ''}
+                          ${isPaid ? Icons.checkCircle('', 12) : ''}
+                          <span>${inv.status}</span>
+                        </span>
+
+                        ${inv.percentage ? `
+                          <span class="finance-termin-pill">
+                            Termin ${inv.percentage}%
+                          </span>
+                        ` : ''}
+
+                        <span style="font-size: 12px; color: #475569; font-weight: 600;">
+                          ${inv.type}
+                        </span>
+                      </div>
+
+                      <div class="finance-invoice-card__amount">
+                        <span class="finance-amount-val">${this.formatIDR(inv.totalAmount)}</span>
+                        <span class="finance-amount-sub">Total Nett (PPN 11% inc.)</span>
+                      </div>
+                    </div>
+
+                    <div class="finance-invoice-card__body">
+                      <div class="finance-body-col">
+                        <span class="finance-body-label">Klien &amp; Proyek:</span>
+                        <span class="finance-body-val">
+                          <strong style="color: #0f172a;">${inv.clientName}</strong>
+                        </span>
+                        <span class="finance-body-meta">ID Proyek: <strong>${inv.projectId || 'Software'}</strong></span>
+                      </div>
+
+                      <div class="finance-body-col">
+                        <span class="finance-body-label">Rincian Finansial:</span>
+                        <span class="finance-body-val">Subtotal: ${this.formatIDR(inv.subtotal)}</span>
+                        <span class="finance-body-meta">PPN (11% UU HPP): ${this.formatIDR(inv.taxPpn)} · ${inv.items.length} item</span>
+                      </div>
+
+                      <div class="finance-body-col">
+                        <span class="finance-body-label">Jatuh Tempo &amp; Status:</span>
+                        <span class="finance-body-val" style="font-weight: 700; color: ${isPaid ? '#059669' : '#b45309'}; font-family: var(--font-mono);">
+                          ${inv.dueDate || '-'}
+                        </span>
+                        <span class="finance-body-meta">${isPaid ? '<i class="fi fi-rr-check"></i> Lunas Terverifikasi' : 'Menunggu Pelunasan / Review'}</span>
+                      </div>
+                    </div>
+
+                    ${inv.notes ? `
+                      <div class="finance-invoice-card__notes">
+                        ${Icons.fileText('', 12)}
+                        <span>Catatan: &ldquo;${inv.notes}&rdquo;</span>
+                      </div>
+                    ` : ''}
+
+                    <div class="finance-invoice-card__actions">
+                      <button class="finance-btn-secondary view-invoice-btn" data-invoice-id="${inv.id}">
+                        ${Icons.fileText('', 13)}
+                        <span>Buka &amp; Cetak Faktur</span>
+                      </button>
+
+                      <div class="finance-action-group">
+                        ${inv.status === 'Draft' ? `
+                          <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Disetujui PM" style="background: #0052cc;">
+                            ${Icons.check('', 12)}
+                            <span>Setujui (PM)</span>
+                          </button>
+                        ` : ''}
+
+                        ${inv.status === 'Disetujui PM' ? `
+                          <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Terkirim ke Finance" style="background: #0d9488;">
+                            ${Icons.send('', 12)}
+                            <span>Kirim ke Finance</span>
+                          </button>
+                        ` : ''}
+
+                        ${inv.status === 'Terkirim ke Finance' ? `
+                          <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Terkirim ke Klien" style="background: #4f46e5;">
+                            ${Icons.send('', 12)}
+                            <span>Kirim ke Klien</span>
+                          </button>
+                          <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Lunas" style="background: #059669;">
+                            ${Icons.check('', 12)}
+                            <span>Tandai Lunas</span>
+                          </button>
+                        ` : ''}
+
+                        ${inv.status === 'Terkirim ke Klien' ? `
+                          <button class="finance-btn-primary transition-status-btn" data-invoice-id="${inv.id}" data-target-status="Lunas" style="background: #059669;">
+                            ${Icons.check('', 12)}
+                            <span>Tandai Lunas</span>
+                          </button>
+                        ` : ''}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
           </div>
-        </div>
+        `}
       </div>
 
       <!-- Detail Print / View Invoice Modal -->
@@ -451,24 +483,27 @@ export class FinanceInvoicesView {
                 </tr>
               `).join('')}
             </tbody>
+            <tfoot>
+              <tr style="border-top: 1px solid var(--color-zinc-200);">
+                <td colspan="3" style="padding: 8px 0; text-align: right; color: var(--color-zinc-500);">Subtotal:</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${this.formatIDR(inv.subtotal)}</td>
+              </tr>
+              <tr>
+                <td colspan="3" style="padding: 4px 0; text-align: right; color: var(--color-zinc-500);">PPN (11% UU HPP):</td>
+                <td style="padding: 4px 0; text-align: right; font-weight: 600;">${this.formatIDR(inv.taxPpn)}</td>
+              </tr>
+              <tr style="border-top: 2px solid var(--color-zinc-900); font-size: 13px;">
+                <td colspan="3" style="padding: 10px 0; text-align: right; font-weight: 700; color: var(--color-zinc-900);">Total Akhir (Nett):</td>
+                <td style="padding: 10px 0; text-align: right; font-weight: 800; color: var(--color-zinc-900); font-family: var(--font-mono);">${this.formatIDR(inv.totalAmount)}</td>
+              </tr>
+            </tfoot>
           </table>
 
-          <!-- Totals -->
-          <div style="display: flex; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--color-zinc-200);">
-            <div style="width: 250px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
-              <div style="display: flex; justify-content: space-between; color: var(--color-zinc-600);">
-                <span>Subtotal:</span>
-                <span style="font-weight: 600; color: var(--color-zinc-900);">${this.formatIDR(inv.subtotal)}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; color: var(--color-zinc-600);">
-                <span>PPN (11% UU HPP):</span>
-                <span style="font-weight: 600; color: var(--color-zinc-900);">${this.formatIDR(inv.taxPpn)}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; padding-top: 6px; border-top: 1px solid var(--color-zinc-200);">
-                <span>Total Tagihan (Nett):</span>
-                <span style="color: #059669;">${this.formatIDR(inv.totalAmount)}</span>
-              </div>
-            </div>
+          <!-- Bank & Notes -->
+          <div style="font-size: 11px; color: var(--color-zinc-500); background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; line-height: 1.5;">
+            <strong>Informasi Pembayaran Rekening Perusahaan:</strong>
+            <p style="margin: 2px 0 0 0;">Bank Central Asia (BCA) — No. Rekening: <strong>800-192-8811</strong> a.n PT Digital Manjer Solusindo</p>
+            <p style="margin: 2px 0 0 0;">Bukti transfer dapat diupload otomatis via portal klien atau dikonfirmasi langsung oleh divisi Finance.</p>
           </div>
 
           <!-- Actions -->
@@ -486,6 +521,19 @@ export class FinanceInvoicesView {
 
   bindEvents() {
     this.element.addEventListener('click', (e) => {
+      // Sub-tab Navigation
+      if (e.target.closest('#subtabRiwayatBtn') || e.target.closest('#goToRiwayatBtn')) {
+        this.activeTab = 'riwayat';
+        this.render();
+        return;
+      }
+
+      if (e.target.closest('#subtabTerminBtn')) {
+        this.activeTab = 'termin';
+        this.render();
+        return;
+      }
+
       if (e.target.closest('#openMilestoneBtn')) {
         this.milestoneModal.open(store.getState().selectedProjectId);
         return;
@@ -503,6 +551,7 @@ export class FinanceInvoicesView {
         const taskIds = unbilledTasks.map((t) => t.id);
         const newInv = store.createInvoiceFromCompletedTasks(state.selectedProjectId, taskIds, 'Pekerjaan Selesai');
         if (newInv) {
+          this.activeTab = 'riwayat';
           this.selectedInvoice = newInv;
           this.render();
         }

@@ -198,7 +198,7 @@
               </a>
               <a href="${prefix}MP/vanilla/index.html#team" class="nav-sub-btn ${activeModule === "project" && (activeSubpage === "team" || activeSubpage === "timesheet") ? "active" : ""}" data-module="project" data-sub="team" onclick="window.navigateToModuleSubpage('project', 'team', '${prefix}MP/vanilla/index.html#team', event)">
                 <span class="nav-sub-dot"></span>
-                <span>Tim HR & Workload</span>
+                <span>Management Team</span>
               </a>
               <a href="${prefix}MP/vanilla/index.html#finance" class="nav-sub-btn ${activeModule === "project" && activeSubpage === "finance" ? "active" : ""}" data-module="project" data-sub="finance" onclick="window.navigateToModuleSubpage('project', 'finance', '${prefix}MP/vanilla/index.html#finance', event)">
                 <span class="nav-sub-dot"></span>
