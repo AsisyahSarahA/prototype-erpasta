@@ -394,6 +394,48 @@ export class CrmDealsView {
     this.render();
   }
 
+  handleBackStep() {
+    switch (this.activeStep) {
+      case 'finance_top':
+        // Dari Langkah 3, kembali ke Langkah 2: Pembagian Modul
+        this.activeStep = 'allocation';
+        this.render();
+        store.addToast('info', 'Tahapan Proyek', 'Kembali ke Langkah 2: Pembagian Modul ke Developer.');
+        break;
+      case 'allocation':
+        // Dari Langkah 2, kembali ke Langkah 1: Penerimaan Aplikasi & List Modul
+        this.activeStep = 'intake';
+        this.render();
+        store.addToast('info', 'Tahapan Proyek', 'Kembali ke Langkah 1: Penerimaan Aplikasi & Spesifikasi.');
+        break;
+      case 'portfolio_dashboard':
+        // Dari Dashboard Portofolio, kembali ke Langkah 1
+        this.activeStep = 'intake';
+        this.render();
+        break;
+      case 'intake':
+      default:
+        // Dari Langkah 1 (tahapan awal), kembali ke Daftar Proyek
+        this.closeProjectToCatalog();
+        store.addToast('info', 'Katalog Proyek', 'Kembali ke daftar seluruh proyek.');
+        break;
+    }
+  }
+
+  getBackStepLabel() {
+    switch (this.activeStep) {
+      case 'finance_top':
+        return '← Kembali ke Langkah 2: Pembagian Modul';
+      case 'allocation':
+        return '← Kembali ke Langkah 1: Penerimaan Aplikasi';
+      case 'portfolio_dashboard':
+        return '← Kembali ke Alur Eksekusi';
+      case 'intake':
+      default:
+        return '← Kembali ke Daftar Proyek';
+    }
+  }
+
   closeProjectToCatalog() {
     this.isProjectOpened = false;
     this.render();
@@ -533,16 +575,29 @@ export class CrmDealsView {
         
         <!-- TOP BREADCRUMB & KEMBALI KE DAFTAR PROYEK -->
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background: #ffffff; padding: 12px 20px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-          <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <!-- Tombol Kembali Sesuai Tahapan (Tidak langsung keluar) -->
             <button
               type="button"
-              id="crmBackToCatalogBtn"
-              style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; background: #f8fafc; color: #334155; font-size: 12px; font-weight: 700; border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.15s ease;"
+              id="crmBackBtn"
+              class="crm-nav-back-btn"
+              title="Kembali ke tahapan sebelumnya"
             >
-              <span>← Kembali ke Daftar Proyek</span>
+              <span>${this.getBackStepLabel()}</span>
             </button>
 
-            <div style="height: 18px; width: 1px; background: #e2e8f0;"></div>
+            <!-- Pintasan Langsung ke Katalog Proyek -->
+            <button
+              type="button"
+              id="crmDirectCatalogBtn"
+              class="crm-nav-catalog-btn"
+              title="Lihat katalog seluruh proyek"
+            >
+              ${Icons.layers('', 13)}
+              <span>Daftar Proyek</span>
+            </button>
+
+            <div style="height: 18px; width: 1px; background: #e2e8f0; margin: 0 4px;"></div>
 
             <div style="font-size: 12px; color: #64748b;">
               Proyek Aktif: <strong style="color: #0f172a;">[${activeProject.code}] ${activeProject.title}</strong>
@@ -1590,8 +1645,14 @@ export class CrmDealsView {
   // =========================================================================
   attachEvents() {
     this.element.addEventListener('click', (e) => {
-      // 0a. Back to Catalog Button
-      if (e.target.closest('#crmBackToCatalogBtn')) {
+      // 0a. Sequential Back Button (Kembali Sesuai Tahapan)
+      if (e.target.closest('#crmBackBtn')) {
+        this.handleBackStep();
+        return;
+      }
+
+      // 0b. Direct Back to Catalog Buttons
+      if (e.target.closest('#crmDirectCatalogBtn, #step1BackCatalogBtn, #crmBackToCatalogBtn')) {
         this.closeProjectToCatalog();
         return;
       }
