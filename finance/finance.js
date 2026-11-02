@@ -24,7 +24,8 @@
     'journal': 'Jurnal Umum (General Journal)',
     'report-company': 'Laba Rugi Perusahaan (Consolidated P&L)',
     'report-project': 'Profitabilitas Proyek (P&L per Project)',
-    'report-customer': 'Laporan Keuangan per Customer'
+    'report-customer': 'Laporan Keuangan per Customer',
+    'messages': 'Pusat Pesan',
   };
 
   // Switch Subpage
@@ -873,7 +874,7 @@
       btnApprove.className = 'btn btn-xs primary';
       btnApprove.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim ke Klien';
       btnApprove.onclick = function() {
-        window.showFinanceToast(`Invoice ${invoiceNum} untuk ${clientName} (${projectName}) terkirim via Email & WhatsApp!`, 'success');
+        window.openPreviewInvoice(projectName, clientName, 'Invoice ' + invoiceNum, 13320000);
         this.disabled = true;
         this.innerHTML = '<i class="fa-solid fa-check"></i> Terkirim';
       };
@@ -975,8 +976,9 @@
       btnTrigger3.className = 'btn btn-xs primary';
       btnTrigger3.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Kirim ke Klien`;
       btnTrigger3.onclick = function() {
-        window.showFinanceToast(`Invoice Termin 3 resmi terkirim ke klien ${clientName}!`, 'success');
+        window.openPreviewInvoice(projectName, clientName, 'Invoice Termin 3 (Pelunasan)', 9990000);
         this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-check"></i> Terkirim';
       };
     }
 
@@ -1242,6 +1244,193 @@
 
 
   // Initialize on DOM Ready
+
+  // ==========================================================================
+  // WHATSAPP CHAT SIMULATION (INTEGRATED WITH CRM & PROJECTS)
+  // ==========================================================================
+
+
+  // Chat History Central Store
+  let globalChatHistory = JSON.parse(localStorage.getItem('erp_chat_history') || '{}');
+  let currentChatKey = null;
+
+
+  window.saveChatMessage = function(key, sender, text) {
+    if (!globalChatHistory[key]) {
+      globalChatHistory[key] = [];
+    }
+    globalChatHistory[key].push({ sender, text, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+    localStorage.setItem('erp_chat_history', JSON.stringify(globalChatHistory));
+    window.renderMessageCenter();
+  };
+
+  window.renderMessageCenter = function() {
+    const container = document.getElementById('message-list-content');
+    if (!container) return;
+
+    if (Object.keys(globalChatHistory).length === 0) {
+      container.innerHTML = `<p style="padding: 20px; color: var(--text-muted);">Belum ada riwayat percakapan. Mulai simulasi WA dari modul Penagihan (AR).</p>`;
+      return;
+    }
+
+    let html = '<div style="display: flex; flex-direction: column; gap: 16px;">';
+    for (const [key, messages] of Object.entries(globalChatHistory)) {
+      html += `
+        <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-xs);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+            <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary);"><i class="fa-brands fa-whatsapp" style="color:#25D366; margin-right:6px;"></i> ${key}</h4>
+            <span class="badge info">${messages.length} Pesan</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; background: #f8fafc; padding: 10px; border-radius: var(--radius-sm);">
+      `;
+      messages.forEach(m => {
+        const bg = m.sender === 'admin' ? '#dcf8c6' : '#fff';
+        const align = m.sender === 'admin' ? 'align-self: flex-end;' : 'align-self: flex-start;';
+        html += `
+          <div style="${align} background: ${bg}; padding: 6px 10px; border-radius: 6px; font-size: 12px; max-width: 80%; box-shadow: 0 1px 1px rgba(0,0,0,0.05);">
+            <div><strong>${m.sender === 'admin' ? 'Anda' : 'Klien'}:</strong> ${m.text}</div>
+            <div style="font-size: 9px; color: #667781; text-align: right; margin-top: 2px;">${m.time}</div>
+          </div>
+        `;
+      });
+      html += `</div></div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  };
+
+  /**
+   * Preview Invoice before WhatsApp Send
+   */
+  window.openPreviewInvoice = function(projectName, clientName, terminName, amount) {
+    const previewContainer = document.getElementById('invoice-preview-content');
+    const confirmBtn = document.getElementById('btnConfirmSendWa');
+    
+    previewContainer.innerHTML = `
+      <div style="font-family: monospace;">
+        <p><strong>Klien:</strong> ${clientName}</p>
+        <p><strong>Proyek:</strong> ${projectName}</p>
+        <p><strong>Invoice:</strong> ${terminName}</p>
+        <hr style="margin: 10px 0; border: 0; border-top: 1px solid #ccc;">
+        <p style="font-size: 16px; font-weight: bold;">Total: Rp ${amount.toLocaleString('id-ID')}</p>
+      </div>
+    `;
+
+    confirmBtn.onclick = function() {
+      closeFinanceModal('modalInvoicePreview');
+      window.openWhatsAppSimulation(projectName, clientName, terminName, amount);
+    };
+
+    window.openFinanceModal('modalInvoicePreview');
+  };
+
+
+  /**
+   * Opens the WhatsApp simulation modal with pre-filled billing data.
+   * Dynamically pulls PIC info based on the client name.
+   */
+  window.openWhatsAppSimulation = function(projectName, clientName, terminName, amount) {
+    const picNameEl = document.getElementById('waSimPicName');
+    currentChatKey = `${clientName} - ${projectName}`;
+
+    const phoneEl = document.getElementById('waSimPhone');
+    const projectBadge = document.getElementById('waSimProjectBadge');
+    const chatMsgs = document.getElementById('wa-chat-messages');
+
+    // Simulated CRM Data Lookup
+    const crmContacts = {
+      'RS Medika Utama': { pic: 'Heru Prasetyo (Finance Manager)', phone: '+62 817-6543-2100' },
+      'PT Alpha Global': { pic: 'Sari Wijaya (Chief Commercial Officer)', phone: '+62 811-2233-4455' },
+      'PT Maju Sejahtera Industri': { pic: 'Budi Santoso (HR Head)', phone: '+62 812-9876-5432' },
+      'PT Retail Nusantara Prima': { pic: 'Siska Lestari (IT Lead)', phone: '+62 813-1122-3344' }
+    };
+
+    const contact = crmContacts[clientName] || { pic: 'PIC Client', phone: '+62 8xx-xxxx-xxxx' };
+
+    if (picNameEl) picNameEl.textContent = contact.pic;
+    if (phoneEl) phoneEl.textContent = contact.phone;
+    if (projectBadge) projectBadge.textContent = `Proyek: ${projectName}`;
+
+    // Auto-generate message text
+    const formattedAmount = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
+    const msgText = `Halo Bapak/Ibu *${contact.pic.split(' ')[0]}*, kami dari bagian Finance ASTACODE ingin menyampaikan tagihan *${terminName}* untuk proyek *${projectName}* sebesar *${formattedAmount}* sudah diterbitkan. Kami juga lampirkan invoice resminya. Terima kasih!`;
+
+    // Clear and add initial messages
+    if (chatMsgs) {
+      chatMsgs.innerHTML = `
+        <div style="align-self: center; background: #e1f3fb; padding: 5px 12px; border-radius: 8px; font-size: 11px; color: #54656f; margin-bottom: 10px; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);">
+          HARI INI
+        </div>
+        <div style="align-self: flex-start; background: #fff; padding: 8px 12px; border-radius: 0 8px 8px 8px; max-width: 85%; font-size: 13px; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); position: relative; margin-bottom: 4px;">
+          <div style="white-space: pre-wrap;">${msgText}</div>
+          <div style="font-size: 10px; color: #667781; text-align: right; margin-top: 4px;">
+            10:45 <i class="fa-solid fa-check-double" style="color: #53bdeb; margin-left: 3px;"></i>
+          </div>
+        </div>
+        <div style="align-self: flex-start; background: #fff; padding: 6px; border-radius: 0 8px 8px 8px; max-width: 85%; font-size: 13px; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; background: #f0f2f5; border-radius: 4px; padding: 8px; gap: 10px;">
+            <div style="width: 40px; height: 40px; background: #ff5722; border-radius: 4px; display: grid; place-items: center; color: #fff;">
+              <i class="fa-solid fa-file-pdf fa-xl"></i>
+            </div>
+            <div style="flex: 1; overflow: hidden;">
+              <div style="font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Invoice_${terminName.replace(/ /g, '_')}.pdf</div>
+              <div style="font-size: 11px; color: #667781;">1.2 MB • PDF</div>
+            </div>
+          </div>
+          <div style="font-size: 10px; color: #667781; text-align: right; margin-top: 4px; padding: 0 4px;">
+            10:45 <i class="fa-solid fa-check-double" style="color: #53bdeb; margin-left: 3px;"></i>
+          </div>
+        </div>
+      `;
+      chatMsgs.scrollTop = chatMsgs.scrollHeight;
+    }
+
+    window.openFinanceModal('modalWhatsAppSim');
+  };
+
+  /**
+   * Sends a manual message in the simulation and triggers an AI response.
+   */
+  window.sendWaSimMessage = function() {
+    const input = document.getElementById('wa-message-input');
+    const chatMsgs = document.getElementById('wa-chat-messages');
+    if (!input || !input.value.trim()) return;
+
+    const text = input.value;
+    input.value = '';
+
+    // Save to history
+    window.saveChatMessage(currentChatKey, 'admin', text);
+
+    // Add User Message
+    chatMsgs.insertAdjacentHTML('beforeend', `
+      <div style="align-self: flex-end; background: #dcf8c6; padding: 8px 12px; border-radius: 8px 0 8px 8px; max-width: 85%; font-size: 13px; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); margin-bottom: 10px;">
+        <div>${text}</div>
+        <div style="font-size: 10px; color: #667781; text-align: right; margin-top: 4px;">
+          ${new Date().getHours()}:${new Date().getMinutes().toString().padStart(2, '0')} <i class="fa-solid fa-check-double" style="color: #53bdeb; margin-left: 3px;"></i>
+        </div>
+      </div>
+    `);
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+
+    // Simulate Client Response
+    setTimeout(() => {
+      const responseText = "Baik, terima kasih pak/bu. Segera kami proses untuk approval internal kami dan kami kabari jika dana sudah ditransfer.";
+      window.saveChatMessage(currentChatKey, 'client', responseText);
+
+      chatMsgs.insertAdjacentHTML('beforeend', `
+        <div style="align-self: flex-start; background: #fff; padding: 8px 12px; border-radius: 0 8px 8px 8px; max-width: 85%; font-size: 13px; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); margin-bottom: 10px;">
+          <div>${responseText}</div>
+          <div style="font-size: 10px; color: #667781; text-align: right; margin-top: 4px;">
+            ${new Date().getHours()}:${new Date().getMinutes().toString().padStart(2, '0')}
+          </div>
+        </div>
+      `);
+      chatMsgs.scrollTop = chatMsgs.scrollHeight;
+      window.showFinanceToast('Klien memberikan respon via WhatsApp!', 'info');
+    }, 1500);
+  };
+
   document.addEventListener('DOMContentLoaded', () => {
     const hash = (window.location.hash || '').replace('#', '');
     const initialPage = hash || 'dashboard';
@@ -1286,6 +1475,10 @@
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
           modal.classList.remove('show');
+
+    // Render Message Center on Load if available
+    window.renderMessageCenter();
+
         }
       });
     });

@@ -71,6 +71,11 @@
           <button type="button" class="finance-subnav-item" data-target="pengeluaran" onclick="window.switchFinancePage('pengeluaran')">
             <i class="fa-solid fa-money-bill-wave"></i>
             <span>Pengeluaran</span>
+
+          <button type="button" class="finance-subnav-item" data-target="messages" onclick="window.switchFinancePage('messages')">
+            <i class="fa-solid fa-comments"></i>
+            <span>Pusat Pesan</span>
+          </button>
           </button>
           <button type="button" class="finance-subnav-item" data-target="opex" onclick="window.switchFinancePage('opex')">
             <i class="fa-solid fa-building"></i>
@@ -501,22 +506,15 @@
                     <tr id="termin-row-1" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-08-01" data-amount="9990000">
                       <td>
                         <strong style="color:var(--text-primary);"><i class="fa-solid fa-file-invoice text-muted" style="margin-right:6px;"></i><span id="tname-1">Termin 1: DP Awal (30%)</span></strong>
-                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-1">01 Agu 2026</span> • Ref: INV-2608-001</div>
+                        <div style="font-size:10.5px; color:var(--text-muted);">Ref: INV-2608-001</div>
                       </td>
                       <td>Rp 9.000.000</td>
-                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 990.000</td>
-                      <td style="color:#B45309; font-weight:600;">- Rp 180.000</td>
-                      <td style="font-weight:800; color:var(--text-primary); text-align:right;">
-                        Rp 9.990.000
-                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 9.810.000</div>
-                      </td>
+                      <td>Rp 990.000</td>
+                      <td style="font-weight:700; text-align:right;">Rp 9.990.000</td>
                       <td><span class="badge success">✅ LUNAS</span></td>
+                      <td><span style="font-size:11px; color:var(--text-muted);">Selesai</span></td>
                       <td style="text-align:right;">
-                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
-                          <button class="btn btn-xs" onclick="showInvoiceTaxDetail('Termin 1 (DP 30%)', 9000000, 990000, 180000, 'Lunas')" title="Rincian Pajak"><i class="fa-solid fa-receipt"></i></button>
-                          <button class="btn btn-xs" onclick="openEditTerminModal('1', 'Termin 1: DP Awal (30%)', 9000000, '2026-08-01', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')" title="Edit Jadwal / Data"><i class="fa-solid fa-pen-to-square"></i></button>
-                          <button class="btn btn-xs danger" onclick="deleteTerminRow('termin-row-1', 'Termin 1 (DP 30%)')" title="Hapus Termin"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
+                        <button class="btn btn-xs" onclick="window.openPreviewInvoice('Aplikasi Kasir RS Medika', 'RS Medika Utama', 'Termin 1: DP Awal (30%)', 9990000)" title="Kirim ke Klien"><i class="fa-brands fa-whatsapp"></i></button>
                       </td>
                     </tr>
 
@@ -524,22 +522,15 @@
                     <tr id="rowTermin2" style="background:#FFFBEB;" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-10-01" data-amount="13320000">
                       <td>
                         <strong style="color:#B45309;"><i class="fa-solid fa-code-compare" style="margin-right:6px;"></i><span id="tname-2">Termin 2: UAT Selesai (40%)</span></strong>
-                        <div style="font-size:10.5px; color:#B45309;">Ref: INV-2610-002 • Jatuh Tempo: <span id="tdue-2">01 Okt 2026</span> • <span class="badge neutral" style="font-size:9.5px;">Triggered by PM Task Done</span></div>
+                        <div style="font-size:10.5px; color:#B45309;">Ref: INV-2610-002</div>
                       </td>
                       <td>Rp 12.000.000</td>
-                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 1.320.000</td>
-                      <td style="color:#B45309; font-weight:600;">- Rp 240.000</td>
-                      <td style="font-weight:800; color:#B45309; text-align:right;">
-                        Rp 13.320.000
-                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 13.080.000</div>
-                      </td>
-                      <td><span class="badge amber-draft" id="badgeTermin2">🟡 DRAFT (Verifikasi Finance)</span></td>
+                      <td>Rp 1.320.000</td>
+                      <td style="font-weight:700; text-align:right;">Rp 13.320.000</td>
+                      <td><span class="badge amber-draft" id="badgeTermin2">🟡 DRAFT (Verifikasi)</span></td>
+                      <td><span style="font-size:11px; color:var(--text-muted);">-</span></td>
                       <td style="text-align:right;">
-                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
-                          <button class="btn btn-xs success" id="btnApproveTermin2" onclick="approveSpecificProjectInvoice('INV-2610-002', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')"><i class="fa-solid fa-check"></i> Approve Invoice</button>
-                          <button class="btn btn-xs" onclick="openEditTerminModal('2', 'Termin 2: UAT Selesai (40%)', 12000000, '2026-10-01', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')" title="Edit Termin"><i class="fa-solid fa-pen-to-square"></i></button>
-                          <button class="btn btn-xs danger" onclick="deleteTerminRow('rowTermin2', 'Termin 2 (UAT)')" title="Hapus Termin"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
+                        <button class="btn btn-xs success" id="btnApproveTermin2" onclick="approveSpecificProjectInvoice('INV-2610-002', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')"><i class="fa-solid fa-check"></i> Approve</button>
                       </td>
                     </tr>
 
@@ -1154,8 +1145,26 @@
           </div>
         </section>
 
+        <section id="view-messages" class="view-section">
+          <div class="hero-banner">
+            <div class="hero-left">
+              <div class="hero-icon"><i class="fa-solid fa-comments"></i></div>
+              <div class="hero-title">
+                <h2>Pusat Pesan (Komunikasi Klien)</h2>
+                <p>Riwayat percakapan WhatsApp terkait penagihan invoice & termin proyek.</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-panel">
+            <div id="message-list-content">
+               <p style="padding: 20px; color: var(--text-muted);">Belum ada riwayat percakapan. Mulai simulasi WA dari modul Penagihan (AR).</p>
+            </div>
+          </div>
+        </section>
 
-        <!-- ===============        <!-- ================================================================
+
+
+        <!-- ================================================================
              5. PENGGAJIAN KARYAWAN (PAYROLL OPEX - SYNC HR)
              ================================================================ -->
         <section id="view-payroll" class="view-section">
@@ -3481,6 +3490,66 @@
   </div>
 
 
+
+
+  <!-- Modal: WhatsApp Simulation -->
+  <div class="modal-backdrop" id="modalWhatsAppSim">
+    <div class="modal-card" style="max-width: 650px;">
+      <div class="modal-header" style="background:#075E54; color:#fff;">
+        <h3 style="color:#fff;"><i class="fa-brands fa-whatsapp" style="color:#25D366; margin-right:8px;"></i> Simulasi WhatsApp: Notifikasi Penagihan Termin</h3>
+        <button class="icon-btn" style="color:#fff;" onclick="closeFinanceModal('modalWhatsAppSim')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="background:#E5DDD5; padding:16px;">
+        <div style="background:#128C7E; color:#fff; padding:8px 12px; border-radius:8px; margin-bottom:12px; font-size:12px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong>Penerima: <span id="waSimPicName">Budi Santoso (PIC)</span></strong>
+            <div style="font-size:10.5px; opacity:0.9;">No. WhatsApp: <span id="waSimPhone">+62 812-9876-5432</span> (CRM Data)</div>
+          </div>
+          <span class="badge success" id="waSimProjectBadge" style="background:#25D366; color:#fff;">Proyek: Aplikasi Kasir</span>
+        </div>
+        <div id="wa-chat-messages" style="height:280px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:10px; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-attachment: local;">
+          <!-- Chat bubbles will be injected here -->
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+          <div style="flex:1; background:#fff; border-radius:24px; padding:8px 16px; display:flex; align-items:center; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">
+            <i class="fa-regular fa-face-smile" style="color:#8696a0; margin-right:12px; font-size:20px;"></i>
+            <input type="text" id="wa-message-input" placeholder="Ketik pesan..." style="border:none; outline:none; flex:1; font-size:14px;" onkeydown="if(event.key==='Enter') window.sendWaSimMessage()">
+            <i class="fa-solid fa-paperclip" style="color:#8696a0; margin-left:12px; font-size:18px;"></i>
+          </div>
+          <button type="button" onclick="window.sendWaSimMessage()" style="width:45px; height:45px; border-radius:50%; background:#00a884; color:#fff; border:none; display:grid; place-items:center; cursor:pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding:10px 16px; background:#f0f2f5;">
+        <div style="font-size:11px; color:#667781; flex:1;">
+          <i class="fa-solid fa-lock" style="font-size:9px;"></i> Pesan terenkripsi secara end-to-end. Data PIC ditarik otomatis dari CRM.
+        </div>
+        <button type="button" class="btn" onclick="closeFinanceModal('modalWhatsAppSim')">Selesai</button>
+      </div>
+    </div>
+
+  <!-- Modal: Preview Invoice -->
+  <div class="modal-backdrop" id="modalInvoicePreview">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-invoice"></i> Pratinjau Invoice</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalInvoicePreview')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="invoice-preview-content" style="padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+           <!-- Data akan diisi via JS -->
+           <p>Memuat pratinjau...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeFinanceModal('modalInvoicePreview')">Batal</button>
+        <button class="btn primary" id="btnConfirmSendWa">Konfirmasi & Kirim via WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
 
   <!-- Scripts -->
   <script src="finance.js"></script>

@@ -1,0 +1,151 @@
+  };
+
+  // ==========================================================================
+  // PROJECT-SPECIFIC INVOICE APPROVAL FROM PM
+  // (Persetujuan per-klien dan per-proyek, tidak borongan sekaligus)
+  // ==========================================================================
+
+  window.approveSpecificProjectInvoice = function(invoiceNum, projectName, clientName) {
+    const badge = document.getElementById('badgeTermin2');
+    const btnApprove = document.getElementById('btnApproveTermin2');
+    const notice = document.getElementById('pmDraftNotice');
+    const row = document.getElementById('rowTermin2');
+
+    if (badge) {
+      badge.className = 'badge warning';
+      badge.innerHTML = '<i class="fa-solid fa-clock"></i> 🟡 MENUNGGU BAYAR';
+    }
+
+    if (row) {
+      row.style.background = '';
+    }
+
+    if (btnApprove) {
+      btnApprove.className = 'btn btn-xs primary';
+      btnApprove.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim ke Klien';
+      btnApprove.onclick = function() {
+        window.openWhatsAppSimulation(projectName, clientName, 'Invoice ' + invoiceNum, 13320000);
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-check"></i> Terkirim';
+      };
+    }
+
+    if (notice) {
+      notice.style.background = '#ECFDF5';
+      notice.style.borderColor = '#A7F3D0';
+      const desc = document.getElementById('pmDraftNoticeDesc');
+      if (desc) {
+        desc.textContent = `Invoice ${invoiceNum} untuk proyek [${projectName}] klien [${clientName}] telah disetujui Finance. Status kini 'Menunggu Pembayaran'.`;
+        desc.style.color = '#065F46';
+      }
+      const actions = notice.querySelector('div:last-child');
+      if (actions) {
+        actions.innerHTML = `<span class="badge success"><i class="fa-solid fa-check-double"></i> Disetujui (${projectName})</span>`;
+      }
+    }
+
+    window.showFinanceToast(`✅ Invoice ${invoiceNum} untuk proyek [${projectName} - ${clientName}] berhasil diapprove!`, 'success');
+  };
+
+  // Backward compatibility wrapper
+  window.approveDraftInvoice = function(invoiceNum) {
+    window.approveSpecificProjectInvoice(invoiceNum, 'Aplikasi Kasir RS Medika', 'RS Medika Utama');
+  };
+
+  // Action: Trigger Khusus Termin 3 Selesai di PM dengan spesifikasi proyek
+  window.simulatePmApprovalTermin3 = function(projectName = 'Aplikasi Kasir RS Medika', clientName = 'RS Medika Utama') {
+    const notice = document.getElementById('pmDraftNotice');
+    if (notice) {
+      notice.style.display = 'flex';
+      notice.style.background = '#FFFBEB';
+      notice.style.borderColor = '#FDE68A';
+      notice.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:#FEF3C7; color:#D97706; display:grid; place-items:center; font-size:16px;">
+            <i class="fa-solid fa-bell-concierge"></i>
+          </div>
+          <div>
+            <strong style="font-size:12.5px; color:#92400E; display:block;">Invoice Baru Masuk: Proyek ${projectName} (INV-2612-003)</strong>
+            <span style="font-size:11px; color:#B45309;" id="pmDraftNoticeDesc">PM telah menandai tuntas milestone "Pelunasan & BAST (Termin 3)". Menunggu persetujuan Finance khusus untuk klien [${clientName}]!</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-xs success" onclick="approveTermin3Draft('${projectName}', '${clientName}')"><i class="fa-solid fa-check"></i> Approve [${projectName}]</button>
+        </div>
+      `;
+    }
+
+    const badge3 = document.getElementById('badgeTermin3');
+    if (badge3) {
+      badge3.className = 'badge amber-draft';
+      badge3.innerHTML = '🟡 DRAFT PM (Perlu Approval)';
+    }
+
+    const btnTrigger3 = document.getElementById('btnTriggerTermin3');
+    if (btnTrigger3) {
+      btnTrigger3.className = 'btn btn-xs success';
+      btnTrigger3.innerHTML = `<i class="fa-solid fa-check"></i> Approve Termin 3`;
+      btnTrigger3.onclick = function() {
+        window.approveTermin3Draft(projectName, clientName);
+      };
+    }
+
+    // Scroll smoothly to invoices view
+    window.switchFinancePage('invoices');
+    window.showFinanceToast(`🚀 Milestone proyek '${projectName}' ditandai selesai oleh PM! Draf invoice masuk ke antrean Finance.`, 'info');
+  };
+
+  // Action: Approve Termin 3 Draft khusus proyek
+  window.approveTermin3Draft = function(projectName = 'Aplikasi Kasir RS Medika', clientName = 'RS Medika Utama') {
+    const notice = document.getElementById('pmDraftNotice');
+    if (notice) {
+      notice.style.background = '#ECFDF5';
+      notice.style.borderColor = '#A7F3D0';
+      notice.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:#D1FAE5; color:#059669; display:grid; place-items:center; font-size:16px;">
+            <i class="fa-solid fa-check-circle"></i>
+          </div>
+          <div>
+            <strong style="font-size:12.5px; color:#065F46; display:block;">Invoice INV-2612-003 [${projectName}] Resmi Disetujui</strong>
+            <span style="font-size:11px; color:#047857;">Persetujuan Finance selesai untuk klien ${clientName}. Invoice diterbitkan.</span>
+          </div>
+        </div>
+        <span class="badge success"><i class="fa-solid fa-check-double"></i> Terbit & Aktif</span>
+      `;
+    }
+
+    const badge3 = document.getElementById('badgeTermin3');
+    if (badge3) {
+      badge3.className = 'badge warning';
+      badge3.innerHTML = '🟡 MENUNGGU BAYAR';
+    }
+
+    const btnTrigger3 = document.getElementById('btnTriggerTermin3');
+    if (btnTrigger3) {
+      btnTrigger3.className = 'btn btn-xs primary';
+      btnTrigger3.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Kirim ke Klien`;
+      btnTrigger3.onclick = function() {
+        window.openWhatsAppSimulation(projectName, clientName, 'Invoice Termin 3 (Pelunasan)', 9990000);
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-check"></i> Terkirim';
+      };
+    }
+
+    window.showFinanceToast(`✅ Invoice Termin 3 untuk proyek [${projectName}] berhasil diapprove per-klien!`, 'success');
+  };
+
+  // Action: Sinkronkan Termin dari Kontrak Quotation CRM
+  window.syncTerminsFromCrm = function() {
+    window.showFinanceToast('🔄 Menyinkronkan kesepakatan termin dari Quotation CRM...', 'info');
+    setTimeout(() => {
+      window.showFinanceToast('✨ 100% Termin kontrak MoU & Quotation CRM telah tersinkron dengan Finance!', 'success');
+    }, 900);
+  };
+
+  // ==========================================================================
+  // HR MODULE INTEGRATION (MASTER GAJI POKOK MENGIKUTI JABATAN HR)
+  // ==========================================================================
+
+  // Master Standar Gaji Pokok & Tunjangan Berdasarkan Jabatan di Astacode HR
+  const HR_SALARY_STANDARDS = {
