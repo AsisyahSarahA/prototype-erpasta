@@ -2581,7 +2581,7 @@ export class ProjectModuleView {
             <h3 class="pm-section-title">Faktur Tagihan Proyek (${project.name})</h3>
             <span class="pm-section-desc">Penerbitan termin tagihan proyek, status pembayaran, dan riwayat transfer klien.</span>
           </div>
-          <button class="pm-btn pm-btn--primary" onclick="store.setActiveTab('finance');">
+          <button class="pm-btn pm-btn--primary" onclick="store.setActiveTab('crm');">
             <i class="fi fi-rr-plus"></i> Buat Faktur Tagihan
           </button>
         </div>

@@ -25,7 +25,7 @@ export class ClientPortalView {
 
     this.onSelectTask = options.onSelectTask || ((task) => store.openTaskDetail(task));
     this.onOpenIntakeModal = options.onOpenIntakeModal || (() => store.openIntakeModal());
-    this.onSelectInvoice = options.onSelectInvoice || (() => store.setActiveTab('finance'));
+    this.onSelectInvoice = options.onSelectInvoice || (() => store.setActiveTab('crm'));
 
     // State
     this.activeChannel = 'bot'; // 'bot' | 'pm' | 'dev' | 'frontend'
@@ -674,7 +674,7 @@ Atau ketik langsung kendala Anda untuk auto-triage AI.`,
         } else if (action === 'openGit') {
           store.setActiveTab('github');
         } else if (action === 'openFinance') {
-          store.setActiveTab('finance');
+          store.setActiveTab('crm');
         } else if (action === 'switchChannel' && channel) {
           this.activeChannel = channel;
           this.render();
@@ -722,7 +722,7 @@ Atau ketik langsung kendala Anda untuk auto-triage AI.`,
 
       // 9. Open Finance Tab
       if (e.target.closest('#sdOpenFinanceBtn')) {
-        store.setActiveTab('finance');
+        store.setActiveTab('crm');
         return;
       }
 
