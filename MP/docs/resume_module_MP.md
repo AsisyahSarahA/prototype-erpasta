@@ -73,9 +73,108 @@ graph TD
 
 ---
 
-## 4. Rincian Fitur & Spesifikasi Sub-Modul
+## 4. Transformasi Alur Kerja: Dari Manual Menjadi Tersistem
 
-### 4.1 Modul Portofolio & Workspace Proyek (`ProjectModuleView.js` & Agile Suite)
+Transformasi operasional pada modul MP membedakan secara tegas antara cara kerja konvensional (manual & terfragmentasi) dengan cara kerja modern (tersistem & terintegrasi end-to-end):
+
+### 4.1 Kondisi Operasional Manual (As-Is / Sebelum Tersistem)
+Pada software house tradisional tanpa sistem terintegrasi, operasional delivery menemui berbagai hambatan:
+1. **Sales Handover ke PM via Chat**:
+   * Penjualan yang berhasil closing (Deal Won) dikomunikasikan secara informal melalui WhatsApp atau spreadsheet terpisah.
+   * PM harus membaca ulang dokumen penawaran teknis (Word/PDF), mengetik ulang daftar fitur, dan menyusun breakdown modul secara manual.
+   * Sering terjadi salah paham terkait ruang lingkup (*scope creep*) karena tidak ada batasan kontrak yang terkunci otomatis.
+2. **Pembagian Tugas & Estimasi Subjektif**:
+   * PM membagikan modul ke developer lewat pesan teks grup atau rapat kickoff yang berlarut-larut.
+   * Estimasi jam kerja hanya berdasarkan intuisi; tim Backend sering kelebihan beban (*overload*) sementara tim Frontend atau QA menganggur (*idle*) tanpa ada visibilitas kapasitas nyata.
+3. **Pelacakan Eksekusi Tercecer**:
+   * PM menanyakan kemajuan pekerjaan satu per satu secara manual ("Fitur A sudah sampai mana?").
+   * Tiket pekerjaan di Trello/Jira terpisah dari repositori GitHub, sehingga commit dan pull request tidak terlacak statusnya secara langsung.
+4. **Laporan Bug & Komplain Klien Berserakan**:
+   * Klien menyampaikan keluhan di grup WhatsApp/Telegram pribadi tanpa nomor tiket, tanpa format error log, dan tanpa batasan SLA garansi.
+   * Laporan sering tenggelam, tidak jelas siapa penanggung jawabnya, dan developer diganggu langsung oleh klien di luar jam kerja.
+5. **Debugging & Perbaikan Manual Berulang**:
+   * Developer harus membuka server, membaca log mentah secara manual, membuat branch lokal tanpa konvensi, dan menguji sendiri tanpa standar review yang baku.
+6. **Penagihan Termin (Invoicing) Sering Terlambat**:
+   * Ketika fitur selesai atau lolos UAT, PM lupa memberitahu Finance bahwa milestone telah tercapai.
+   * Tim Finance membuat invoice penagihan manual di Excel berhari-hari setelah serah terima, menyebabkan penundaan pembayaran dari klien dan mengganggu arus kas (*cash flow*).
+
+---
+
+### 4.2 Kondisi Operasional Tersistem di ASTACODE MP (To-Be / Setelah Tersistem)
+Dengan diterapkannya modul MP, seluruh siklus kerja terstandarisasi menjadi sistem otomatis:
+
+```mermaid
+flowchart TD
+    subgraph S1["1. INTAKE PROYEK (CRM DEALS WON)"]
+        A1["Deal Won di CRM"] -->|Otomatis Sinkron| A2["Katalog Proyek (Card/Tabel)"]
+        A2 -->|Klik Buka Proyek| A3["Langkah 1: Review Arsitektur & Modul Bawaan"]
+    end
+
+    subgraph S2["2. ALOKASI & HANDOVER TIM"]
+        A3 -->|Lanjut ke Langkah 2| B1["Matriks Kapasitas 5 Peran Rekayasa"]
+        B1 -->|Assign Dev & Jam Estimasi| B2["Tombol '🚀 Terbitkan ke Backlog Kanban'"]
+    end
+
+    subgraph S3["3. EKSEKUSI AGILE & GITHUB"]
+        B2 --> C1["Kanban Board 7 Kolom & Sprint"]
+        C1 -->|Branching feat/ fix/| C2["GitHub Webhook & Automated Checks"]
+    end
+
+    subgraph S4["4. SERVICE DESK & AI BUG FIX"]
+        D1["Laporan Klien via Telegram Bot"] -->|Auto Generate Ticket| D2["Service Desk & SLA Countdown"]
+        D2 -->|Trigger AI Diagnostic| D3["Gemini API Root Cause Analysis"]
+        D3 -->|Auto Create Branch & PR| D4["Human Approval (Tech Lead Gate)"]
+        D4 -->|Merge & Deploy Staging| C1
+    end
+
+    subgraph S5["5. VERIFIKASI & PENAGIHAN TERMIN (TOP)"]
+        C1 -->|Pencapaian UAT / Milestone| E1["Langkah 3: Setting TOP & Invoicing"]
+        E1 -->|Klik 'Terbitkan Invoice'| E2["Kirim Faktur Otomatis ke Modul Finance"]
+        E2 --> E3["Status Pembayaran Terverifikasi (Paid)"]
+    end
+```
+
+1. **Intake Terpusat (CRM Deals Won - Langkah 1)**:
+   * Proyek yang closing di CRM otomatis masuk ke daftar proyek MP lengkap dengan arsitektur teknis, nilai kontrak, mandays budget, dan daftar epics bawaan.
+   * Tidak ada input ganda; data ruang lingkup terkunci otomatis sesuai kesepakatan penawaran.
+2. **Alokasi Modul Presisi (Langkah 2 - Capacity Matrix)**:
+   * PM membagikan modul langsung ke 5 peran rekayasa (*PM, Backend, Frontend, Fullstack, QA*) dengan visibilitas beban kerja jam/mandays real-time.
+   * 1-Klik tombol *🚀 Terbitkan ke Backlog Kanban* langsung menciptakan tugas terstruktur di papan Kanban.
+3. **Eksekusi Agile & Integrasi GitHub**:
+   * Papan Kanban 7 tahap (`Backlog` ➔ `To Do` ➔ `In Progress` ➔ `Code Review` ➔ `In QA` ➔ `Done` ➔ `Released`) dengan kontrol WIP limits.
+   * Integrasi VCS GitHub mengunci branch `main`, mengarahkan pengerjaan ke branch `feat/` atau `fix/`, dan mewajibkan review approval sebelum merge.
+4. **Service Desk Omnichannel & SLA**:
+   * Webhook Telegram Bot (4 kanal) mengonversi pesan keluhan klien menjadi tiket insiden resmi (`TICKET-xxx`) secara instan.
+   * SLA countdown timer otomatis menghitung batas waktu respon dan perbaikan berdasarkan kontrak garansi.
+5. **Otomasi Fix Bug AI dengan Guardrail**:
+   * *AI Diagnostic Engine* (Gemini API) menganalisis stack trace error, menemukan akar masalah, mengklasifikasi keparahan, serta membuat branch `fix/` dan draft PR secara otomatis.
+   * *Human-in-the-Loop Approval*: Senior developer memvalidasi kode sebelum merge dan deploy ke staging.
+6. **Penagihan Termin Terhubung Langsung (Langkah 3 - Setting TOP)**:
+   * Termin pembayaran (30/40/30) langsung mengunci jadwal penagihan berdasarkan milestone deliverable.
+   * Tombol *Terbitkan Invoice* menerbitkan nomor faktur resmi (`INV/2026/xx/xxxx`) dan menembakkannya langsung ke antrean modul Finance tanpa perlu dokumen fisik atau input manual berulang.
+7. **Navigasi Kembali Bertahap (Step-by-Step Back Navigation)**:
+   * Tombol kembali pada eksekusi proyek bergerak mundur berurutan antar tahap (Langkah 3 ➔ Langkah 2 ➔ Langkah 1 ➔ Katalog Proyek), menjaga fokus pengerjaan pengguna agar tidak keluar secara tidak sengaja.
+
+---
+
+### 4.3 Tabel Komparasi Head-to-Head: Manual vs Tersistem ASTACODE MP
+
+| Dimensi Operasional | Alur Kerja Manual (Konvensional) | Alur Kerja Tersistem (ASTACODE MP) | Efisiensi & Dampak |
+| :--- | :--- | :--- | :--- |
+| **Sales Handover ke Delivery** | Chat WhatsApp informal, proposal PDF terpisah, re-input manual ke spreadsheet. | Sinkronisasi otomatis dari CRM Deals Won ke Langkah 1; arsitektur & epics langsung termuat. | **Kickoff 80% lebih cepat**; nihil kesalahan input data kontrak. |
+| **Alokasi SDM & Estimasi** | Rapat panjang, tebak-tebakan jam kerja, sering terjadi overload pada dev tertentu. | Matriks kapasitas 5 peran (*PM, Backend, Frontend, Fullstack, QA*) dengan kalkulasi beban jam real-time. | **Beban kerja seimbang**; eliminasi bottleneck dan idle time. |
+| **Handover Tugas ke Papan Kerja** | PM membuat tiket satu per satu secara manual di papan Trello/Jira. | 1-Klik tombol *🚀 Terbitkan ke Backlog Kanban* langsung menciptakan seluruh epics & tasks. | **Handover instan** dalam hitungan detik. |
+| **Pelacakan Progress Proyek** | Ditanya manual di grup chat ("sudah selesai belum?"), status tidak transparan. | Board Kanban 7 kolom, WIP limit, roadmap Gantt, JQL search, dan burnup mandays real-time. | **Transparansi 100%**; blocker teridentifikasi sejak dini. |
+| **Manajemen Repositori & Cabang** | Branching bebas tanpa aturan, commit langsung ke main, sering merge conflict. | Integrasi aturan cabang GitHub (`main`, `staging`, `develop`, `feat/`, `fix/`) + protected branches. | **Kualitas kode terjamin**; zero unauthorized merge. |
+| **Intake Bug & Komplain Klien** | Chat WA pribadi, pesan tenggelam, tanpa nomor tiket, SLA terabaikan. | Omnichannel Telegram Bot (4 kanal) otomatis menerbitkan tiket resmi + SLA countdown timer. | **Zero lost tickets**; kepatuhan SLA garansi terukur. |
+| **Proses Debugging & Patching** | Membaca log server manual, investigasi berjam-jam, buat branch perbaikan manual. | AI Diagnostic Engine (Gemini) auto-parse stack trace, Root Cause Analysis, dan auto-generate draft PR. | **Investigasi 60% lebih cepat** dengan kontrol persetujuan manusia. |
+| **Penagihan Termin & Invoice** | PM lupa milestone tercapai; koordinasi lambat ke Finance; buat invoice manual di Word/Excel. | Langkah 3 mengunci skema termin (TOP); 1-klik *Terbitkan Invoice* langsung sinkron ke modul Finance. | **Arus kas lancar**; invoice terbit tepat waktu saat milestone selesai. |
+
+---
+
+## 5. Rincian Fitur & Spesifikasi Sub-Modul
+
+### 5.1 Modul Portofolio & Workspace Proyek (`ProjectModuleView.js` & Agile Suite)
 Pusat kendali eksekusi proyek dengan navigasi berbasis portofolio dan workspace individual.
 * **Workspace Proyek Terpadu (10 Sub-Tab)**:
   1. `Ringkasan`: Dashboard metrik proyek, burnup mandays, status kesehatan delivery, dan persentase deliverable.
@@ -95,7 +194,7 @@ Pusat kendali eksekusi proyek dengan navigasi berbasis portofolio dan workspace 
 
 ---
 
-### 4.2 Modul Otomasi Fix Bug AI (`AiAutomationHub.js`)
+### 5.2 Modul Otomasi Fix Bug AI (`AiAutomationHub.js`)
 Inovasi otomasi penanganan insiden bug perangkat lunak menggunakan kecerdasan buatan (Gemini Pro/Flash API):
 * **AI Diagnostic Engine**: Membaca otomatis pesan error klien, tangkapan layar, dan exception stack trace sistem.
 * **Root Cause Analysis (RCA)**: Mengidentifikasi baris kode yang rusak, memberikan ringkasan penyebab kegagalan, dan menyusun rekomendasi patch solusi.
@@ -106,7 +205,7 @@ Inovasi otomasi penanganan insiden bug perangkat lunak menggunakan kecerdasan bu
 
 ---
 
-### 4.3 Modul GitHub & Cabang (`GithubSettingsView.js`)
+### 5.3 Modul GitHub & Cabang (`GithubSettingsView.js`)
 Pusat kontrol integrasi Version Control System (VCS) untuk software house:
 * **Pengaturan Repositori & Autentikasi**: Pengelolaan Personal Access Token (PAT), OAuth, dan konfigurasi Webhook dua arah.
 * **Strategi Percabangan (Branching Strategy)**:
@@ -118,7 +217,7 @@ Pusat kontrol integrasi Version Control System (VCS) untuk software house:
 
 ---
 
-### 4.4 Modul Service Desk & Portal Klien (`ClientPortalView.js`)
+### 5.4 Modul Service Desk & Portal Klien (`ClientPortalView.js`)
 Jembatan komunikasi real-time antara klien pemesan aplikasi dengan tim rekayasa:
 * **Integrasi Bot Telegram Terpadu**:
   * Webhook listener terhubung ke 4 kanal bot spesifik: *Channel Umum*, *Channel PM*, *Channel Developer Backend*, dan *Channel Frontend*.
@@ -128,7 +227,7 @@ Jembatan komunikasi real-time antara klien pemesan aplikasi dengan tim rekayasa:
 
 ---
 
-### 4.5 Modul Management Team & Kapasitas SDM (`HrTeamView.js`)
+### 5.5 Modul Management Team & Kapasitas SDM (`HrTeamView.js`)
 Matriks visibilitas kapasitas sumber daya manusia di software house:
 * **Matriks 5 Peran Rekayasa Utama**:
   1. **Project Manager (PM)** — *Asisyah Sarah Azzahra*
@@ -142,7 +241,7 @@ Matriks visibilitas kapasitas sumber daya manusia di software house:
 
 ---
 
-### 4.6 Modul CRM Deals Won & Alur Eksekusi Terpadu (`CrmDealsView.js`)
+### 5.6 Modul CRM Deals Won & Alur Eksekusi Terpadu (`CrmDealsView.js`)
 Modul integrasi hulu ke hilir yang menghubungkan closing penjualan dari divisi CRM dengan penagihan termin ke divisi Finance:
 * **Tampilan Awal Katalog Proyek (Clean Catalog View)**:
   * Saat pertama kali dirender, sistem menampilkan daftar proyek deal won tanpa membuka detail proyek agar halaman tetap bersih dan terfokus.
@@ -169,9 +268,9 @@ Modul integrasi hulu ke hilir yang menghubungkan closing penjualan dari divisi C
 
 ---
 
-## 5. Alur Kerja End-to-End (Workflows)
+## 6. Alur Kerja End-to-End (Workflows)
 
-### 5.1 Alur Proyek Baru (Sales Handover to Delivery)
+### 6.1 Alur Proyek Baru (Sales Handover to Delivery)
 
 ```mermaid
 sequenceDiagram
@@ -193,7 +292,7 @@ sequenceDiagram
     Fin-->>PM: Notifikasi Pembayaran Diverifikasi (Paid)
 ```
 
-### 5.2 Alur Otomasi Perbaikan Bug (AI Incident Resolution)
+### 6.2 Alur Otomasi Perbaikan Bug (AI Incident Resolution)
 
 ```mermaid
 sequenceDiagram
@@ -217,7 +316,7 @@ sequenceDiagram
 
 ---
 
-## 6. Struktur Data & Entitas Utama (`store.js`)
+## 7. Struktur Data & Entitas Utama (`store.js`)
 
 | Entitas | Atribut Utama | Relasi |
 | :--- | :--- | :--- |
@@ -231,7 +330,7 @@ sequenceDiagram
 
 ---
 
-## 7. Catatan Pembaruan & Optimalisasi Terakhir
+## 8. Catatan Pembaruan & Optimalisasi Terakhir
 
 1. **Konsolidasi Alur Finansial**:
    * Sub-modul lama *Finance & Invoices* di sidebar Management Project telah **dihapus** demi simplifikasi arsitektur.
@@ -244,4 +343,3 @@ sequenceDiagram
 ---
 
 *Dokumen ini disusun sebagai ringkasan resmi arsitektur dan spesifikasi modul Management Project (MP) pada platform ASTACODE ERP.*
-
