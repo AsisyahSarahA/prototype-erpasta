@@ -161,7 +161,7 @@ export class NotificationPopover {
         store.markNotificationAsRead(id);
         this.close();
         if (type === 'finance') {
-          store.setActiveTab('finance');
+          store.setActiveTab('crm');
         } else if (type === 'crm') {
           store.setActiveTab('crm');
         }

@@ -38,7 +38,6 @@ const VIEW_TITLES = {
   github: 'GitHub & Cabang',
   client: 'Service Desk / Klien',
   team: 'Tim HR & Workload',
-  finance: 'Finance & Invoices',
   crm: 'CRM Deals Won',
   task_detail: 'Detail Tiket Pekerjaan'
 };

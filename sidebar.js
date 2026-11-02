@@ -200,10 +200,6 @@
                 <span class="nav-sub-dot"></span>
                 <span>Management Team</span>
               </a>
-              <a href="${prefix}MP/vanilla/index.html#finance" class="nav-sub-btn ${activeModule === "project" && activeSubpage === "finance" ? "active" : ""}" data-module="project" data-sub="finance" onclick="window.navigateToModuleSubpage('project', 'finance', '${prefix}MP/vanilla/index.html#finance', event)">
-                <span class="nav-sub-dot"></span>
-                <span>Finance & Invoices</span>
-              </a>
               <a href="${prefix}MP/vanilla/index.html#crm" class="nav-sub-btn ${activeModule === "project" && activeSubpage === "crm" ? "active" : ""}" data-module="project" data-sub="crm" onclick="window.navigateToModuleSubpage('project', 'crm', '${prefix}MP/vanilla/index.html#crm', event)">
                 <span class="nav-sub-dot"></span>
                 <span>CRM Deals Won</span>

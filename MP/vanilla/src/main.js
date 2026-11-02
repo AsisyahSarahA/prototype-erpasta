@@ -18,7 +18,6 @@ import { BacklogView } from './components/backlog/BacklogView.js';
 import { TimelineView } from './components/timeline/TimelineView.js';
 import { TaskListView } from './components/list/TaskListView.js';
 import { AiAutomationHub } from './components/ai/AiAutomationHub.js';
-import { FinanceInvoicesView } from './components/finance/FinanceInvoicesView.js';
 import { CrmDealsView } from './components/crm/CrmDealsView.js';
 import { HrTeamView } from './components/hr/HrTeamView.js';
 import { GithubSettingsView } from './components/settings/GithubSettingsView.js';
@@ -62,7 +61,6 @@ class App {
     const timelineView = new TimelineView();
     const taskListView = new TaskListView();
     const aiAutomationHub = new AiAutomationHub();
-    const financeInvoicesView = new FinanceInvoicesView();
     const crmDealsView = new CrmDealsView({
       onNavigateToProject: (pId) => {
         store.setSelectedProjectId(pId);
@@ -77,7 +75,7 @@ class App {
     const clientPortalView = new ClientPortalView({
       onSelectTask: (task) => store.openTaskDetail(task),
       onOpenIntakeModal: () => store.openIntakeModal(),
-      onSelectInvoice: () => store.setActiveTab('finance')
+      onSelectInvoice: () => store.setActiveTab('crm')
     });
     const projectModuleView = new ProjectModuleView({
       onSelectTask: (task) => store.openTaskDetail(task),
@@ -107,7 +105,6 @@ class App {
       timelineView,
       taskListView,
       aiAutomationHub,
-      financeInvoicesView,
       crmDealsView,
       hrTeamView,
       githubSettingsView,
@@ -263,7 +260,7 @@ class App {
         this.viewportContent.appendChild(this.components.aiAutomationHub.getElement());
         break;
       case 'finance':
-        this.viewportContent.appendChild(this.components.financeInvoicesView.getElement());
+        store.setActiveTab('crm');
         break;
       case 'crm':
         this.viewportContent.appendChild(this.components.crmDealsView.getElement());
