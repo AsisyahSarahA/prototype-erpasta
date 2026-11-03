@@ -225,6 +225,10 @@
                 <span class="nav-sub-dot"></span>
                 <span>Pemasukan (AR & Termin)</span>
               </a>
+              <a href="${prefix}finance/index.html#messages" class="nav-sub-btn ${activeModule === "finance" && (activeSubpage === "messages" || activeSubpage === "view-messages") ? "active" : ""}" data-module="finance" data-sub="messages" onclick="window.navigateToModuleSubpage('finance', 'messages', '${prefix}finance/index.html#messages', event)">
+                <span class="nav-sub-dot"></span>
+                <span>Pusat Pesan (Chat WA)</span>
+              </a>
               <a href="${prefix}finance/index.html#expenses" class="nav-sub-btn ${activeModule === "finance" && (activeSubpage === "expenses" || activeSubpage === "view-expenses" || activeSubpage === "klaim" || activeSubpage === "view-klaim") ? "active" : ""}" data-module="finance" data-sub="expenses" onclick="window.navigateToModuleSubpage('finance', 'expenses', '${prefix}finance/index.html#expenses', event)">
                 <span class="nav-sub-dot"></span>
                 <span>Klaim & Struk (AI OCR)</span>
