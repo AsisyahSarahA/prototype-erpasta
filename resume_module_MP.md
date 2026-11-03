@@ -194,14 +194,32 @@ Pusat kendali eksekusi proyek dengan navigasi berbasis portofolio dan workspace 
 
 ---
 
-### 5.2 Modul Otomasi Fix Bug AI (`AiAutomationHub.js`)
-Inovasi otomasi penanganan insiden bug perangkat lunak menggunakan kecerdasan buatan (Gemini Pro/Flash API):
-* **AI Diagnostic Engine**: Membaca otomatis pesan error klien, tangkapan layar, dan exception stack trace sistem.
-* **Root Cause Analysis (RCA)**: Mengidentifikasi baris kode yang rusak, memberikan ringkasan penyebab kegagalan, dan menyusun rekomendasi patch solusi.
-* **Automated Branch & PR Generation**: Secara otomatis membuat branch perbaikan Git dengan format `fix/<issue-key>-<short-desc>` dan draft Pull Request ke GitHub.
-* **Human-in-the-Loop Safety Guardrail**:
-  > [!IMPORTANT]
-  > AI bertindak sebagai asisten diagnostik. Sistem secara ketat melarang AI melakukan *merge* langsung ke branch utama (`main`) atau *deploy production* tanpa persetujuan manual (approval) dari Senior Developer / Tech Lead.
+### 5.2 Modul Otomasi Fix Bug AI & Intelligent Triage Hub (`AiAutomationHub.js`)
+Pusat kendali otomasi rekayasa perangkat lunak berbasis AI Ops & DevOps modern:
+* **4 Executive Automation Scorecards (Metrik Kinerja Otomasi)**:
+  1. *Status Engine AI & Kill-Switch*: Gemini 2.5 Pro & Claude 3.5 Sonnet Hybrid Engine · Uptime 99.9% Siaga.
+  2. *Patch Success Rate*: 94.6% Auto-Fix Lolos Test Suite · Rata-rata 2m 14s / Patch.
+  3. *Antrean Bug Proyek*: Total tiket aktif terklasifikasi (*Low, Medium, Hard*) & jumlah siap review PR.
+  4. *Efisiensi Jam Developer*: Kalkulasi estimasi jam rekayasa yang dihemat (~42 jam/bulan) dan garansi bebas bug Rp0.
+* **5 Tahap Alur Kerja Otomasi (Interactive Workflow Stepper)**:
+  * `1. Deteksi & Ingest`: Penangkapan insiden dari Sentry Webhook & Bot Service Desk.
+  * `2. Diagnostik & Triage AST`: Parsing pohon sintaksis kode dan klasifikasi otomatis tingkat kesulitan (*Rendah / Sedang / Susah*).
+  * `3. Patch & Unit Test`: AI membuat branch `fix/`, menulis patch kode, dan menjalankan *5/5 regression unit tests*.
+  * `4. Review & Staging Gate`: Persetujuan *Human-in-the-Loop* (Senior Dev / Tech Lead) sebelum merge ke Staging.
+  * `5. Rilis & Monitoring`: Deploy ke Production dilindungi gerbang *Canary Monitoring Sentry 30 Menit* (Auto-Rollback jika error rate > 2.0%).
+* **Live AI Fix Studio / Workbench (Split-Screen 40% / 60% Proporsional)**:
+  * **Kolom Kiri (40% - Konteks & Analisis Akar Masalah)**:
+    * Dropdown selector tiket & tombol skenario cepat: *⚡ Kasus Rendah (Auto-Fix AI)* dan *🛡️ Kasus Susah (Manual Dev)*.
+    * Target file kode, stacktrace exception yang diformat jelas, dan *Root Cause Analysis (RCA)* dari Gemini.
+    * Kotak *Safety Guardrail*: Menjelaskan alasan keamanan mengapa AI diizinkan auto-deploy atau wajib dialihkan ke Lead Dev.
+  * **Kolom Kanan (60% - Meja Kerja Solusi & Eksekusi Alur)**:
+    * Mini Stepper siklus hidup tiket dan bar *Keyakinan AI (Confidence Score)*: 96% (Hijau), 84% (Kuning), 46% (Merah).
+    * 4 Tab Meja Kerja: `1. Patch Diff` (Sebelum vs Sesudah), `2. Unit Tests` (5/5 Passing), `3. Git Branch & PR`, `4. Telemetri Sentry`.
+    * **Action Cluster Bar Kontekstual 1-Klik**: Tombol aksi dinamis sesuai status (`⚡ Jalankan Auto-Fix AI`, `✅ Setujui PR & Merge ke Staging`, `🚀 Deploy ke Production`, `🛠️ Selesaikan Manual oleh Lead Dev`, `↩️ Uji Rollback Darurat`).
+* **Antrean Kerja Proporsional (Pipeline Kanban 6 Tahap vs Tabel Detail)**:
+  * Mendukung visualisasi Kanban 6 kolom (*Laporan Masuk ➔ Dianalisis AI ➔ Pengerjaan Fix ➔ Review PR ➔ QA Staging ➔ Rilis & Monitor*).
+  * Filter klasifikasi instan (*Semua, Rendah, Sedang, Susah, Menunggu Review PR, Staging & Monitoring*).
+  * Tombol navigasi langsung **`💬 Ke Service Desk`** untuk menghubungkan penanganan bug dengan komunikasi klien.
 
 ---
 
@@ -217,13 +235,26 @@ Pusat kontrol integrasi Version Control System (VCS) untuk software house:
 
 ---
 
-### 5.4 Modul Service Desk & Portal Klien (`ClientPortalView.js`)
-Jembatan komunikasi real-time antara klien pemesan aplikasi dengan tim rekayasa:
-* **Integrasi Bot Telegram Terpadu**:
-  * Webhook listener terhubung ke 4 kanal bot spesifik: *Channel Umum*, *Channel PM*, *Channel Developer Backend*, dan *Channel Frontend*.
-  * Setiap keluhan klien yang masuk otomatis menghasilkan tiket insiden resmi (`TICKET-xxx`).
-* **SLA Countdown Timer**: Pelacakan waktu tanggap (Response Time) dan waktu penyelesaian (Resolution Time) berdasarkan kontrak garansi.
-* **Client Restricted Access View**: Klien dapat memantau status pengerjaan tiket dan menyetujui pengujian tanpa dapat melihat catatan internal atau diskusi teknis rahasia para developer.
+### 5.4 Modul Service Desk, Bot Omnichannel & Automasi Klien (`ClientPortalView.js`)
+Jembatan komunikasi real-time antara klien pemesan aplikasi dengan tim rekayasa, dilengkapi sistem bot kustom dan otomasi penuh:
+* **Fitur Pembuatan & Manajemen Bot Layanan Baru (+ Buat Bot Baru)**:
+  * Pengguna dapat membuat dan mendaftarkan bot baru langsung dari UI (mendukung *Telegram Bot API*, *WhatsApp Cloud API*, *Slack Webhook*, dan *Custom REST Webhook*).
+  * Konfigurasi mencakup: handle/nama bot (`@NamaBot`), token API / secret, webhook endpoint URL, batas target SLA (15m, 30m, 60m), pesan sambutan kustom, dan toggle auto-sync AI.
+  * Dropdown switcher bot aktif pada header memungkinkan perpindahan antar bot secara instan.
+* **Sinkronisasi Penuh dengan Modul Otomasi Fix Bug AI (`AiAutomationHub.js`)**:
+  * Setiap laporan kendala dari bot langsung terhubung ke *Intelligent Orchestrator* (Gemini API & Claude Coding Agent).
+  * Tombol aksi 1-klik di chat stream (**⚡ Jalankan Auto-Fix AI**) yang langsung memicu analisis AST, checkout branch `fix/`, pembuatan patch, dan pengujian 5/5 unit regression tests.
+  * Tombol pintasan langsung **🚀 Buka di Studio AI Hub** untuk melihat Root Cause Analysis dan diff PR secara mendalam di workbench AI.
+  * Bot secara otomatis mengirimkan kabar status ke ruang obrolan saat PR patch berhasil dibuat atau di-deploy.
+* **Formulir Laporan Bug Terstruktur (🚨 Lapor Kendala / Bug)**:
+  * Modal input pelaporan bug resmi dengan field keparahan (*S1 Critical Blocker 30m, S2 Major 120m, S3 Minor 8h*), lingkungan (*Production, Staging, UAT*), dan langkah reproduksi.
+  * Opsi checkbox untuk langsung mengeksekusi analisis otomatis AI saat tiket diterbitkan.
+* **Pusat Aturan Automasi Service Desk (⚡ Automasi & Webhook)**:
+  * 5 aturan automasi terpadu: Auto-Triage & Klasifikasi, Sinkronisasi Dua Arah AI Hub, Routing Otomatis ke On-Call Dev Siaga, Notifikasi Webhook Balasan ke Grup Klien, serta SLA Countdown & Safety Escalation Guardrail.
+* **Arena Obrolan Telegram 3 Kolom Proporsional & Transparansi Klien**:
+  * Kolom Kiri: **Seluruh Bot Layanan (@ProjectManjerBot, @AstaPosTelematicsBot, @LogistikCareBot, dan bot baru) langsung masuk ke daftar chat** lengkap dengan tab filter (*Semua*, *Bot Layanan*, *Tim Dev*), avatar platform, badge kode proyek, status online, indikator AI Sync, dan snippet pesan terakhir. Setiap pergantian bot otomatis menyinkronkan proyek aktif ERP.
+  * Kolom Tengah: Aliran obrolan Telegram interaktif dengan quick commands (`/status`, `/autofix`, `/sync`, `/human`, `/invoice`, `/sla`), indikator mengetik, dan tombol inline responsif.
+  * Kolom Kanan: Panel transparansi kuota maintenance bulanan, widget live pipeline Otomasi Fix Bug AI, profil kontrak, dan riwayat termin faktur.
 
 ---
 
