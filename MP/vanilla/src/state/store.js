@@ -59,6 +59,59 @@ class Store {
         webhookSecret: "whsec_98fbc1a284e9411d332cba91b",
         webhookUrl: "https://api.softwarehouse.dev/api/webhooks/github",
       },
+      serviceBots: [
+        {
+          id: "bot-default-1",
+          name: "@ProjectManjerBot",
+          platform: "telegram",
+          platformLabel: "Telegram Bot API Resmi",
+          projectId: "proj-perpustakaan",
+          token: "719284192:AAHKz91823x918AstaCodeSecureToken",
+          tokenMasked: "719284...x918",
+          webhookUrl: "https://api.erpasta.id/webhooks/telegram/proj-perpustakaan",
+          status: "active",
+          autoAiSync: true,
+          defaultSeverity: "S2 - Major",
+          slaTargetMinutes: 30,
+          welcomeMessage: "Halo Tim Klien! Selamat datang di Service Desk Resmi ASTACODE (@ProjectManjerBot). Kanal ini terhubung langsung dengan AI Bug Diagnostics dan Tim Engineering kami.",
+          totalReportsIngested: 14,
+          createdAt: "2026-10-01",
+        },
+        {
+          id: "bot-default-2",
+          name: "@AstaPosTelematicsBot",
+          platform: "telegram",
+          platformLabel: "Telegram Bot API Resmi",
+          projectId: "proj-1",
+          token: "612984112:BBJLz19283y771AstaPosSecureToken",
+          tokenMasked: "612984...83y",
+          webhookUrl: "https://api.erpasta.id/webhooks/telegram/proj-pos",
+          status: "active",
+          autoAiSync: true,
+          defaultSeverity: "S2 - Major",
+          slaTargetMinutes: 15,
+          welcomeMessage: "Halo! Layanan bantuan teknis POS & Telematics ASTACODE siap melayani pelaporan insiden kasir & backend.",
+          totalReportsIngested: 9,
+          createdAt: "2026-10-15",
+        },
+        {
+          id: "bot-default-3",
+          name: "@LogistikCareBot",
+          platform: "telegram",
+          platformLabel: "Telegram Bot API Resmi",
+          projectId: "proj-iot",
+          token: "518294119:CCKMz84920z112LogistikSecureToken",
+          tokenMasked: "518294...z112",
+          webhookUrl: "https://api.erpasta.id/webhooks/telegram/proj-logistik",
+          status: "active",
+          autoAiSync: true,
+          defaultSeverity: "S1 - Critical",
+          slaTargetMinutes: 15,
+          welcomeMessage: "Layanan Siaga Insiden Telematika Armada PT Logistik Express Sentosa. Terhubung langsung ke On-Call Dev & AI Engine.",
+          totalReportsIngested: 6,
+          createdAt: "2026-10-20",
+        },
+      ],
       notifications: [
         {
           id: "notif-init-1",
@@ -368,7 +421,7 @@ class Store {
     const newBug = {
       id: `bug-${Date.now()}`,
       key: nextKey,
-      projectId: report.projectId,
+      projectId: report.projectId || (project ? project.id : "proj-perpustakaan"),
       epicId: report.epicId || "",
       type: "Bug",
       title: report.title,
@@ -390,6 +443,7 @@ class Store {
       startDate: new Date().toISOString().split("T")[0],
       dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0],
       visibility: "client_public",
+      aiSynced: true,
       subtasks: [
         { id: `sub-${Date.now()}-1`, title: "Verifikasi reproduksi bug & log exception", completed: false },
         { id: `sub-${Date.now()}-2`, title: "Tulis patch fix & unit regression test", completed: false },
@@ -398,13 +452,90 @@ class Store {
       lastStatusUpdated: new Date().toISOString(),
     };
 
+    let serviceBots = this.state.serviceBots || [];
+    if (report.botId) {
+      serviceBots = serviceBots.map(b => b.id === report.botId ? { ...b, totalReportsIngested: (b.totalReportsIngested || 0) + 1 } : b);
+    }
+
     this.setState({
       tasks: [newBug, ...this.state.tasks],
+      serviceBots,
       isIntakeModalOpen: false,
     });
 
     this.addToast("success", "Laporan Masuk Berhasil Di-triage", `Tiket ${nextKey} tercatat di sistem.`);
+
+    if (report.autoAiFix || report.autoAiSync) {
+      setTimeout(() => {
+        this.runAiFixer(newBug.id).catch(err => console.error("Auto AI Fix error:", err));
+      }, 400);
+    }
+
     return newBug;
+  }
+
+  addServiceBot(botData) {
+    const newBot = {
+      id: `bot-${Date.now()}`,
+      name: botData.name.startsWith('@') ? botData.name : `@${botData.name}`,
+      platform: botData.platform || 'telegram',
+      platformLabel: botData.platformLabel || (botData.platform === 'whatsapp' ? 'WhatsApp Cloud API' : botData.platform === 'slack' ? 'Slack Webhook' : 'Telegram Bot API Resmi'),
+      projectId: botData.projectId || this.state.selectedProjectId,
+      token: botData.token || `tok_${Date.now()}_secret`,
+      tokenMasked: botData.token ? `${botData.token.slice(0, 6)}...${botData.token.slice(-4)}` : 'tok_sec...77a',
+      webhookUrl: botData.webhookUrl || `https://api.erpasta.id/webhooks/${botData.platform || 'telegram'}/${botData.projectId || this.state.selectedProjectId}`,
+      status: 'active',
+      autoAiSync: botData.autoAiSync !== undefined ? botData.autoAiSync : true,
+      defaultSeverity: botData.defaultSeverity || 'S2 - Major',
+      slaTargetMinutes: botData.slaTargetMinutes || 30,
+      welcomeMessage: botData.welcomeMessage || `Halo! Layanan bantuan ${botData.name} siap melayani. Laporan bug Anda akan ditriage otomatis oleh AI Engine dan disinkronkan ke tim developer.`,
+      totalReportsIngested: 0,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+
+    const serviceBots = [newBot, ...(this.state.serviceBots || [])];
+    this.setState({ serviceBots });
+    this.addToast('success', 'Bot Layanan Berhasil Dibuat', `${newBot.name} aktif dan terhubung ke proyek.`);
+    return newBot;
+  }
+
+  updateServiceBot(botId, updates) {
+    const serviceBots = (this.state.serviceBots || []).map(b => b.id === botId ? { ...b, ...updates } : b);
+    this.setState({ serviceBots });
+    this.addToast('info', 'Konfigurasi Bot Diperbarui', 'Pengaturan bot berhasil disimpan.');
+  }
+
+  toggleServiceBotStatus(botId) {
+    const serviceBots = (this.state.serviceBots || []).map(b => {
+      if (b.id === botId) {
+        const nextStatus = b.status === 'active' ? 'paused' : 'active';
+        return { ...b, status: nextStatus };
+      }
+      return b;
+    });
+    this.setState({ serviceBots });
+  }
+
+  deleteServiceBot(botId) {
+    const serviceBots = (this.state.serviceBots || []).filter(b => b.id !== botId);
+    this.setState({ serviceBots });
+    this.addToast('info', 'Bot Dihapus', 'Bot layanan telah dihapus dari sistem.');
+  }
+
+  getServiceBots() {
+    return this.state.serviceBots || [];
+  }
+
+  getProjectServiceBots(projectId) {
+    const targetId = projectId || this.state.selectedProjectId;
+    return (this.state.serviceBots || []).filter(b => b.projectId === targetId);
+  }
+
+  async syncTicketToAiHub(taskId) {
+    const task = this.state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    this.addToast("info", "Sinkronisasi AI", `Mengirim tiket ${task.key} ke Otomasi Fix Bug AI Engine...`);
+    await this.runAiFixer(taskId);
   }
 
   toggleSubtask(taskId, subtaskId) {
