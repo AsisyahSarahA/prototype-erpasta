@@ -35,7 +35,10 @@ export class ProjectModuleView {
     this.isCreateProjectOpen = false;
     this.newProjectDraft = this.getDefaultProjectDraft();
 
-    this.activeWorkspaceTab = 'ringkasan'; // 'ringkasan' | 'kanban' | 'backlog' | 'timeline' | 'list'
+    this.activeWorkspaceTab = 'ringkasan';
+    this.financeTopSubTab = 'top_setting';
+    this.isTermin2Invoiced = false;
+    this.isTermin3Invoiced = false; // 'ringkasan' | 'kanban' | 'backlog' | 'timeline' | 'list'
 
     // Sub-components for workspace tabs
     this.kanbanBoard = new KanbanBoard();
@@ -217,6 +220,8 @@ export class ProjectModuleView {
   }
 
   openWorkspaceWithTab(tab = 'ringkasan') {
+    if (tab === 'finance_budget') tab = 'finance';
+    if (tab === 'time') tab = 'ringkasan';
     this.currentViewMode = 'workspace';
     this.activeWorkspaceTab = tab;
     this.render();
@@ -291,14 +296,9 @@ export class ProjectModuleView {
           <span>Daftar Pekerjaan (JQL)</span>
           <span class="pm-ws-tab-badge">${taskStats.total}</span>
         </button>
-        
-        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'time' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="time">
-          <i class="fi fi-rr-clock"></i>
-          <span>Time Tracking</span>
-        </button>
-        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'finance_budget' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="finance_budget">
+        <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'finance' || this.activeWorkspaceTab === 'finance_budget' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="finance">
           <i class="fi fi-rr-dollar"></i>
-          <span>Finance &amp; Budget</span>
+          <span>Finance</span>
         </button>
       </nav>
     `;
@@ -1569,9 +1569,7 @@ export class ProjectModuleView {
         contentArea.innerHTML = this.renderQaTab(activeProject, projectTasks);
       } else if (this.activeWorkspaceTab === 'docs') {
         contentArea.innerHTML = this.renderNotesTab({ project: activeProject });
-      } else if (this.activeWorkspaceTab === 'time') {
-        contentArea.innerHTML = this.renderTimesheetsTab({ project: activeProject, members, tasks: projectTasks });
-      } else if (this.activeWorkspaceTab === 'finance_budget') {
+      } else if (this.activeWorkspaceTab === 'finance' || this.activeWorkspaceTab === 'finance_budget') {
         contentArea.innerHTML = this.renderInvoicesTab({ project: activeProject });
       }
     }
@@ -2490,141 +2488,387 @@ export class ProjectModuleView {
   }
 
   // =========================================================================
-  // 11. SUB-MODULE: INVOICES
+  // 11. SUB-MODULE: FINANCE (SETTING TOP & INVOICING SESUAI GAMBAR)
   // =========================================================================
   renderInvoicesTab({ project }) {
-    const projectInvoices = (store.getState().invoices || []).filter((i) => i.projectId === project.id);
-    const contractVal = Number(project.contractValue) || 185000000;
-    const budgetUsed = Number(project.budgetUsed) || Math.round(contractVal * 0.45);
-    const remainingBudget = Math.max(0, contractVal - budgetUsed);
-    const burnPct = Math.min(100, Math.round((budgetUsed / contractVal) * 100));
-    const dpAmount = Math.round(contractVal * 0.3);
-    const t2Amount = Math.round(contractVal * 0.4);
-    const t3Amount = Math.round(contractVal * 0.3);
-    const dynamicInvoices = projectInvoices.length > 0
-      ? [
-          ...projectInvoices,
-          ...(projectInvoices.length === 1
-            ? [
-                {
-                  id: `inv-${project.id}-t2`,
-                  invoiceNumber: `INV/2026/11/${project.code}-002`,
-                  clientName: project.clientName,
-                  type: `Termin 2: Deliverable Sprint & Staging UAT (40% — ${project.code})`,
-                  totalAmount: t2Amount,
-                  issueDate: project.targetDeadline || '2026-11-15',
-                  status: 'Menunggu'
-                },
-                {
-                  id: `inv-${project.id}-t3`,
-                  invoiceNumber: `INV/2026/12/${project.code}-003`,
-                  clientName: project.clientName,
-                  type: `Termin 3: Final Go-Live & Handover Source Code (30% — ${project.code})`,
-                  totalAmount: t3Amount,
-                  issueDate: project.targetDeadline || '2026-12-01',
-                  status: 'Draft'
-                }
-              ]
-            : [])
-        ]
-      : [
-          { id: 'inv-1', invoiceNumber: `INV/2026/10/${project.code}-001`, clientName: project.clientName, type: `Termin 1: Down Payment Kick-Off (30% — ${project.code})`, totalAmount: dpAmount, issueDate: project.createdAt || '2026-10-18', status: 'Lunas' },
-          { id: 'inv-2', invoiceNumber: `INV/2026/11/${project.code}-002`, clientName: project.clientName, type: `Termin 2: Deliverable Staging & UAT (40% — ${project.code})`, totalAmount: t2Amount, issueDate: '2026-11-10', status: 'Menunggu' },
-          { id: 'inv-3', invoiceNumber: `INV/2026/12/${project.code}-003`, clientName: project.clientName, type: `Termin 3: Go-Live & Handover (30% — ${project.code})`, totalAmount: t3Amount, issueDate: project.targetDeadline || '2026-12-01', status: 'Draft' }
-        ];
-    const invoices = projectInvoices.length > 0 ? projectInvoices : [
-      { id: 'inv-1', invoiceNumber: `INV/2026/10/${project.code}-001`, type: 'Termin 1: Down Payment (DP 30%)', totalAmount: 55500000, issueDate: '2026-10-18', status: 'Lunas' },
-      { id: 'inv-2', invoiceNumber: `INV/2026/11/${project.code}-002`, type: 'Termin 2: Deliverable Staging & UAT (40%)', totalAmount: 74000000, issueDate: '2026-11-05', status: 'Menunggu' },
-      { id: 'inv-3', invoiceNumber: `INV/2026/12/${project.code}-003`, type: 'Termin 3: Go-Live & Handover (30%)', totalAmount: 55500000, issueDate: '2026-12-01', status: 'Draft' }
+    const activeProject = project || store.getActiveProject() || {};
+    const code = activeProject.code || 'LIB-DIG';
+    const title = activeProject.name || activeProject.title || 'Sistem Informasi Perpustakaan Digital Kampus (Laravel Microservices & React SPA)';
+    const clientName = activeProject.clientName || activeProject.customer_name || 'Universitas Nusantara Cendekia (Perpustakaan Pusat)';
+    const pmName = activeProject.pmName || activeProject.pm_name || 'Asisyah Sarah Azzahra';
+    const contractNumber = activeProject.contractNumber || (code === 'LIB-DIG' ? 'CT/2026/10/0001' : `CT/2026/10/${code}-001`);
+
+    // Financial calculations
+    const contractVal = Number(activeProject.contractValue) || 185000000;
+    const actualMandays = activeProject.usedHours ? Math.round(activeProject.usedHours / 8) : 110;
+    const budgetMandays = activeProject.totalHours ? Math.round(activeProject.totalHours / 8) : 110;
+    const progressPct = 100;
+
+    const dpVal = Math.round(contractVal * 0.3);
+    const uatVal = Math.round(contractVal * 0.4);
+    const finalVal = Math.round(contractVal * 0.3);
+
+    const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
+
+    const termins = (activeProject.top_scheme && activeProject.top_scheme.items) ? activeProject.top_scheme.items : [
+      {
+        term_no: 1,
+        name: 'Down Payment (DP)',
+        description: 'Pembayaran uang muka untuk kick-off proyek & resource allocation',
+        value: 30,
+        calculated_amount: dpVal,
+        trigger_label: 'Saat penandatanganan kontrak / MoU',
+        due_days_label: 'Net 7',
+        status: 'Paid',
+        is_locked: true,
+        invoice_no: 'INV/2026/10/0001'
+      },
+      {
+        term_no: 2,
+        name: 'Progress / UAT Milestone',
+        description: 'Penyelesaian fitur utama sirkulasi, OPAC & pengujian UAT client',
+        value: 40,
+        calculated_amount: uatVal,
+        trigger_label: 'Setelah penyelesaian UAT aplikasi',
+        due_days_label: 'Net 14',
+        status: this.isTermin2Invoiced ? 'Invoiced' : 'Planned',
+        is_locked: this.isTermin2Invoiced,
+        invoice_no: this.isTermin2Invoiced ? `INV/2026/11/${code}-002` : null
+      },
+      {
+        term_no: 3,
+        name: 'Pelunasan Final',
+        description: 'Serah terima sistem final dan dokumen BAST perpustakaan',
+        value: 30,
+        calculated_amount: finalVal,
+        trigger_label: 'Setelah penandatanganan BAST',
+        due_days_label: 'Net 14',
+        status: this.isTermin3Invoiced ? 'Invoiced' : 'Planned',
+        is_locked: this.isTermin3Invoiced,
+        invoice_no: this.isTermin3Invoiced ? `INV/2026/12/${code}-003` : null
+      }
+    ];
+
+    const issuedInvoices = [
+      {
+        no: 'INV/2026/10/0001',
+        title: 'Termin 1: Down Payment (DP 30%)',
+        amount: dpVal,
+        date: '18 Okt 2026',
+        status: 'LUNAS (PAID)'
+      },
+      ...(this.isTermin2Invoiced ? [{
+        no: `INV/2026/11/${code}-002`,
+        title: 'Termin 2: Progress / UAT Milestone (40%)',
+        amount: uatVal,
+        date: '05 Nov 2026',
+        status: 'MENUNGGU'
+      }] : []),
+      ...(this.isTermin3Invoiced ? [{
+        no: `INV/2026/12/${code}-003`,
+        title: 'Termin 3: Pelunasan Final (30%)',
+        amount: finalVal,
+        date: '01 Des 2026',
+        status: 'DRAFT'
+      }] : [])
     ];
 
     return `
-      <div class="pm-invoices-view">
-        <div class="pm-ws-kpi-grid" style="margin-bottom: 18px;">
-          <div class="pm-ws-kpi-card">
-            <div class="pm-ws-kpi-top">
-              <span>Nilai Kontrak (${project.code})</span>
-              <i class="fi fi-rr-dollar" style="color: #4f46e5; font-size: 16px;"></i>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; max-width: 1440px; margin: 0 auto; width: 100%; padding: 20px 24px;">
+        
+        <!-- 1. KARTU PROYEK AKTIF TERPILIH (PERSIS SEPERTI DI GAMBAR) -->
+        <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 22px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; background: rgba(99,102,241,.1); color: #4338ca; border: 1px solid rgba(99,102,241,.2);">
+                  ${code}
+                </span>
+                <h2 style="font-weight: 800; font-size: 17px; color: #0f172a; margin: 0;">
+                  ${title}
+                </h2>
+                <span style="padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; background: rgba(16,185,129,.1); color: #047857; border: 1px solid rgba(16,185,129,.2);">
+                  ACTIVE · DEAL WON
+                </span>
+              </div>
+
+              <p style="font-size: 12px; color: #64748b; margin: 6px 0 0 0;">
+                Klien: <strong style="color: #0f172a;">${clientName}</strong> • Penanggung Jawab PM: <strong>${pmName}</strong>
+              </p>
             </div>
-            <div class="pm-ws-kpi-val" style="font-size: 20px;">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(contractVal)}</div>
-            <div class="pm-ws-kpi-sub">Klien: ${project.clientName} (${project.contractType || 'Fixed Price'})</div>
-          </div>
-          <div class="pm-ws-kpi-card">
-            <div class="pm-ws-kpi-top">
-              <span>Realisasi Anggaran (${burnPct}%)</span>
-              <i class="fi fi-rr-chart-pie-alt" style="color: #0284c7; font-size: 16px;"></i>
+
+            <!-- 4 Metrics Proportional Strip (Matches Screenshot) -->
+            <div style="display: flex; align-items: center; gap: 20px; font-size: 12px; font-family: var(--font-mono, monospace); flex-wrap: wrap;">
+              <div>
+                <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">NILAI KONTRAK</span>
+                <p style="font-weight: 800; color: #059669; margin: 2px 0 0 0; font-size: 14.5px;">
+                  ${formatIDR(contractVal)}
+                </p>
+              </div>
+
+              <div style="border-left: 1px solid #e2e8f0; padding-left: 18px;">
+                <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">MANDAYS BUDGET</span>
+                <p style="font-weight: 800; color: #4338ca; margin: 2px 0 0 0; font-size: 13.5px;">
+                  ${actualMandays} / ${budgetMandays} MD
+                </p>
+              </div>
+
+              <div style="border-left: 1px solid #e2e8f0; padding-left: 18px;">
+                <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">SKEMA TERMIN</span>
+                <p style="font-weight: 800; color: #0f172a; margin: 2px 0 0 0; font-size: 13px;">
+                  30/40/30
+                </p>
+              </div>
+
+              <div style="border-left: 1px solid #e2e8f0; padding-left: 18px;">
+                <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">STATUS KONTRAK</span>
+                <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; display: inline-block; margin-top: 3px;">
+                  AKTIF BERJALAN
+                </span>
+              </div>
             </div>
-            <div class="pm-ws-kpi-val" style="font-size: 20px; color: #0284c7;">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(budgetUsed)}</div>
-            <div class="pm-ws-kpi-bar">
-              <div class="pm-ws-kpi-bar-fill" style="width: ${burnPct}%; background: #0284c7;"></div>
-            </div>
           </div>
-          <div class="pm-ws-kpi-card">
-            <div class="pm-ws-kpi-top">
-              <span>Sisa Anggaran Proyek</span>
-              <i class="fi fi-rr-wallet" style="color: #059669; font-size: 16px;"></i>
-            </div>
-            <div class="pm-ws-kpi-val" style="font-size: 20px; color: #059669;">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(remainingBudget)}</div>
-            <div class="pm-ws-kpi-sub">${100 - burnPct}% cadangan alokasi tersedia</div>
+
+          <!-- Progress Bar (Matches Screenshot) -->
+          <div style="width: 100%; height: 6px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; margin-top: 4px;">
+            <div style="width: ${progressPct}%; height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 100%); border-radius: 9999px;"></div>
           </div>
-          <div class="pm-ws-kpi-card">
-            <div class="pm-ws-kpi-top">
-              <span>Total Termin Tagihan</span>
-              <i class="fi fi-rr-document-signed" style="color: #d97706; font-size: 16px;"></i>
-            </div>
-            <div class="pm-ws-kpi-val" style="font-size: 20px;">${dynamicInvoices.length} Faktur</div>
-            <div class="pm-ws-kpi-sub">${dynamicInvoices.filter(i => i.status === 'Lunas').length} Lunas · ${dynamicInvoices.filter(i => i.status !== 'Lunas').length} Menunggu/Draft</div>
-          </div>
-        </div>
-        <div class="pm-list-header">
-          <div>
-            <h3 class="pm-section-title">Faktur Tagihan Proyek (${project.name})</h3>
-            <span class="pm-section-desc">Penerbitan termin tagihan proyek, status pembayaran, dan riwayat transfer klien.</span>
-          </div>
-          <button class="pm-btn pm-btn--primary" onclick="store.setActiveTab('crm');">
-            <i class="fi fi-rr-plus"></i> Buat Faktur Tagihan
-          </button>
         </div>
 
-        <div class="pm-table-container">
-          <table class="pm-table">
-            <thead>
-              <tr>
-                <th>Nomor Faktur</th>
-                <th>Keterangan / Termin</th>
-                <th width="150">Nominal Tagihan</th>
-                <th width="130">Tanggal Terbit</th>
-                <th width="120">Status</th>
-                <th width="100">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${dynamicInvoices.map((inv) => `
-                <tr>
-                  <td><strong>${inv.invoiceNumber}</strong></td>
-                  <td>${inv.type || 'Termin Proyek'}</td>
-                  <td><strong>${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(inv.totalAmount || 0)}</strong></td>
-                  <td>${inv.issueDate || '-'}</td>
-                  <td>
-                    <span class="pm-badge ${inv.status === 'Lunas' ? 'pm-badge--green' : inv.status === 'Menunggu' ? 'pm-badge--yellow' : 'pm-badge--gray'}">
-                      ${inv.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button class="pm-btn pm-btn--sm pm-btn--outline" onclick="alert('Mencetak Faktur ${inv.invoiceNumber}');">
-                      <i class="fi fi-rr-download"></i> Cetak
-                    </button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+        <!-- PERMINTAAN USER: JANGAN ADA KAN CARD TAHAPAN PROSES -->
+
+        <!-- 2. HEADER MODUL KONTRAK, INVOICING & SETTING TOP (PERSIS SEPERTI DI GAMBAR) -->
+        <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.01em;">
+                Modul Kontrak, Invoicing &amp; Setting TOP (Termin Pembayaran)
+              </h2>
+              <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(99,102,241,.1); color: #4338ca; border: 1px solid rgba(99,102,241,.2);">
+                PRD Section 8.11.1
+              </span>
+            </div>
+            <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">
+              Setting TOP diwariskan langsung dari Quotation yang disetujui (Deal) dan mengendalikan jadwal penerbitan invoice per termin.
+            </p>
+          </div>
+
+          <!-- View Switcher Subtabs (Matches Screenshot Top Right) -->
+          <div style="display: flex; align-items: center; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+            <button type="button" class="pm-finance-top-subtab-btn ${this.financeTopSubTab === 'top_setting' ? 'active' : ''}" data-subtab="top_setting" style="padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s ease; ${this.financeTopSubTab === 'top_setting' ? 'background: white; color: #4338ca; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.05);' : 'background: none; color: #64748b;'}">
+              Setting TOP Kontrak Ini
+            </button>
+            <button type="button" class="pm-finance-top-subtab-btn ${this.financeTopSubTab === 'invoices' ? 'active' : ''}" data-subtab="invoices" style="padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s ease; ${this.financeTopSubTab === 'invoices' ? 'background: white; color: #4338ca; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.05);' : 'background: none; color: #64748b;'}">
+              Daftar Invoice Terbit (${issuedInvoices.length})
+            </button>
+          </div>
         </div>
+
+        ${this.financeTopSubTab === 'top_setting' ? `
+          <!-- 3. KONTRAK / PROYEK TERPILIH SUMMARY BAR (PERSIS SEPERTI DI GAMBAR) -->
+          <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px;">
+              
+              <!-- Proyek Aktif Info (Left) -->
+              <div style="flex: 1; min-width: 320px;">
+                <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">
+                  KONTRAK / PROYEK TERPILIH:
+                </span>
+                <div style="font-weight: 800; font-size: 14.5px; color: #0f172a;">
+                  ${contractNumber} • ${title}
+                </div>
+                <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
+                  Klien: <strong>${clientName}</strong>
+                </div>
+              </div>
+
+              <!-- Right Metrics (Matches Screenshot) -->
+              <div style="display: flex; align-items: center; gap: 24px; font-size: 12px; flex-wrap: wrap;">
+                <div>
+                  <span style="color: #64748b; font-size: 11px; display: block;">Nilai Kontrak Total:</span>
+                  <p style="font-family: var(--font-mono, monospace); font-weight: 800; font-size: 16px; color: #4338ca; margin: 2px 0 0 0;">
+                    ${formatIDR(contractVal)}
+                  </p>
+                </div>
+
+                <div style="border-left: 1px solid #e2e8f0; padding-left: 20px;">
+                  <span style="color: #64748b; font-size: 11px; display: block;">Skema Termin TOP:</span>
+                  <p style="font-weight: 700; color: #0f172a; margin: 2px 0 0 0;">
+                    30/40/30 (${termins.length} Termin)
+                  </p>
+                </div>
+
+                <div style="border-left: 1px solid #e2e8f0; padding-left: 20px;">
+                  <span style="color: #64748b; font-size: 11px; display: block;">Status Kontrak:</span>
+                  <span style="padding: 3px 10px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; display: inline-block; margin-top: 2px;">
+                    AKTIF BERJALAN
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 4. JADWAL TERMIN PEMBAYARAN KONTRAK TABLE (PERSIS SEPERTI DI GAMBAR) -->
+          <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 16px;">
+            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+              <h3 style="font-size: 14.5px; font-weight: 800; color: #0f172a; margin: 0;">
+                Jadwal Termin Pembayaran Kontrak ${contractNumber}
+              </h3>
+              <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
+                🔒 Termin yang sudah diterbitkan invoice terkunci demi kepatuhan akuntansi (PRD BR-19).
+              </p>
+            </div>
+
+            <!-- Table of Termins matching Screenshot -->
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 12px;">
+                <thead>
+                  <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.05em;">
+                    <th style="padding: 12px 14px; width: 44px; text-align: center;">NO</th>
+                    <th style="padding: 12px 14px;">NAMA TERMIN</th>
+                    <th style="padding: 12px 14px; width: 90px;">PORSI (%)</th>
+                    <th style="padding: 12px 14px; width: 160px;">NOMINAL (IDR)</th>
+                    <th style="padding: 12px 14px;">PEMICU TAGIHAN (TRIGGER)</th>
+                    <th style="padding: 12px 14px; width: 140px;">STATUS TERMIN</th>
+                    <th style="padding: 12px 14px; text-align: right; width: 160px;">AKSI FINANCE</th>
+                  </tr>
+                </thead>
+                <tbody style="border-top: 1px solid #e2e8f0;">
+                  ${termins.map((term, idx) => {
+                    const isPaid = term.status === 'Paid';
+                    const isInvoiced = term.status === 'Invoiced' || term.is_locked;
+
+                    return `
+                      <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
+                        <td style="padding: 14px; text-align: center; font-family: var(--font-mono, monospace); font-weight: 700; color: #64748b;">
+                          ${idx + 1}
+                        </td>
+
+                        <td style="padding: 14px;">
+                          <div style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                            <span>${term.name}</span>
+                            ${isInvoiced ? `<span title="Terkunci: Invoice sudah terbit" style="color: #94a3b8; font-size: 12px;">🔒</span>` : ''}
+                          </div>
+                          <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                            ${term.description || ''}
+                          </div>
+                        </td>
+
+                        <td style="padding: 14px; font-family: var(--font-mono, monospace); font-weight: 700; color: #0f172a;">
+                          ${term.value}%
+                        </td>
+
+                        <td style="padding: 14px; font-family: var(--font-mono, monospace); font-weight: 800; color: #059669; font-size: 12.5px;">
+                          ${formatIDR(term.calculated_amount)}
+                        </td>
+
+                        <td style="padding: 14px; color: #334155;">
+                          <div style="font-weight: 500;">${term.trigger_label || '-'}</div>
+                          <span style="font-size: 10.5px; font-family: var(--font-mono, monospace); color: #64748b;">${term.due_days_label || '-'}</span>
+                        </td>
+
+                        <td style="padding: 14px;">
+                          ${isPaid ? `
+                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">
+                              ✔ LUNAS (PAID)
+                            </span>
+                          ` : isInvoiced ? `
+                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;">
+                              🔒 INVOICED
+                            </span>
+                          ` : `
+                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #fffbeb; color: #b45309; border: 1px solid #fde68a;">
+                              PLANNED
+                            </span>
+                          `}
+                        </td>
+
+                        <td style="padding: 14px; text-align: right;">
+                          ${isPaid ? `
+                            <span style="font-size: 11px; color: #64748b; font-family: var(--font-mono, monospace); font-weight: 700;">
+                              ${term.invoice_no || 'INV/2026/10/0001'}
+                            </span>
+                          ` : isInvoiced ? `
+                            <span style="font-size: 11px; color: #4338ca; font-family: var(--font-mono, monospace); font-weight: 700;">
+                              ${term.invoice_no || 'Invoice Terbit'}
+                            </span>
+                          ` : `
+                            <button type="button" class="pm-issue-invoice-btn" data-term-no="${term.term_no}" style="padding: 6px 14px; border-radius: 8px; background: #4338ca; color: white; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(67, 56, 202, 0.25); transition: background 0.15s ease;">
+                              Terbitkan Invoice
+                            </button>
+                          `}
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ` : `
+          <!-- TAB: DAFTAR INVOICE TERBIT -->
+          <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 16px;">
+            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="font-size: 14.5px; font-weight: 800; color: #0f172a; margin: 0;">
+                  Daftar Faktur Tagihan Terbit (${issuedInvoices.length})
+                </h3>
+                <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
+                  Arsip invoice resmi untuk proyek [${code}] ${title}
+                </p>
+              </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 12px;">
+                <thead>
+                  <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.05em;">
+                    <th style="padding: 12px 14px;">NOMOR INVOICE</th>
+                    <th style="padding: 12px 14px;">DESKRIPSI TERMIN</th>
+                    <th style="padding: 12px 14px;">NOMINAL TAGIHAN</th>
+                    <th style="padding: 12px 14px;">TANGGAL TERBIT</th>
+                    <th style="padding: 12px 14px;">STATUS</th>
+                    <th style="padding: 12px 14px; text-align: right;">AKSI</th>
+                  </tr>
+                </thead>
+                <tbody style="border-top: 1px solid #e2e8f0;">
+                  ${issuedInvoices.map((inv) => `
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 14px; font-family: var(--font-mono, monospace); font-weight: 700; color: #0f172a;">
+                        ${inv.no}
+                      </td>
+                      <td style="padding: 14px; color: #334155;">
+                        ${inv.title}
+                      </td>
+                      <td style="padding: 14px; font-family: var(--font-mono, monospace); font-weight: 800; color: #059669;">
+                        ${formatIDR(inv.amount)}
+                      </td>
+                      <td style="padding: 14px; color: #64748b;">
+                        ${inv.date}
+                      </td>
+                      <td style="padding: 14px;">
+                        <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; ${inv.status.includes('LUNAS') ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' : 'background: #fffbeb; color: #b45309; border: 1px solid #fde68a;'}">
+                          ${inv.status}
+                        </span>
+                      </td>
+                      <td style="padding: 14px; text-align: right;">
+                        <button type="button" class="pm-print-invoice-btn" data-inv="${inv.no}" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #334155; font-size: 11px; font-weight: 600; cursor: pointer;">
+                          Cetak Faktur
+                        </button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `}
+
       </div>
     `;
   }
 
-  // =========================================================================
   // 12. SUB-MODULE: PAYMENTS
   // =========================================================================
   renderPaymentsTab({ project }) {
@@ -2907,6 +3151,39 @@ export class ProjectModuleView {
   // EVENT ATTACHMENTS & EVENT LISTENERS
   // =========================================================================
   attachEvents() {
+    // Finance Subtabs Switching
+    this.container.querySelectorAll('.pm-finance-top-subtab-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const subtab = e.currentTarget.dataset.subtab;
+        if (subtab) {
+          this.financeTopSubTab = subtab;
+          this.render();
+        }
+      });
+    });
+
+    // Issue Invoice Action in Finance Tab
+    this.container.querySelectorAll('.pm-issue-invoice-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const termNo = Number(e.currentTarget.dataset.termNo);
+        if (termNo === 2) {
+          this.isTermin2Invoiced = true;
+        } else if (termNo === 3) {
+          this.isTermin3Invoiced = true;
+        }
+        store.addToast('success', 'Invoice Berhasil Diterbitkan!', `Faktur Termin ${termNo} telah diterbitkan dan dikirimkan ke bagian Finance & Klien.`);
+        this.render();
+      });
+    });
+
+    // Print invoice action
+    this.container.querySelectorAll('.pm-print-invoice-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const inv = e.currentTarget.dataset.inv;
+        store.addToast('info', 'Mencetak Faktur', `Menyiapkan cetakan faktur tagihan [${inv}].`);
+      });
+    });
+
     // Back to Portfolio Button
     const backBtn = this.container.querySelector('#pmBackToPortfolioBtn');
     if (backBtn) {

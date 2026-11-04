@@ -21,7 +21,6 @@ const MP_VIEWS = [
   'list',
   'qa',
   'docs',
-  'time',
   'finance_budget',
   'ai_hub',
   'github',
@@ -36,6 +35,7 @@ const LEGACY_ALIASES = {
   task: 'kanban',
   tickets: 'backlog',
   timesheet: 'team',
+  time: 'project',
   automation: 'ai_hub',
   events: 'timeline',
   handover: 'client'

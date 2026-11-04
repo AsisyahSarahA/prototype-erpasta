@@ -603,17 +603,6 @@ export class CrmDealsView {
               Proyek Aktif: <strong style="color: #0f172a;">[${activeProject.code}] ${activeProject.title}</strong>
             </div>
           </div>
-
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 11px; color: #64748b; font-weight: 700;">Ganti Proyek:</span>
-            <select id="crmQuickSwitchProjectSelect" style="padding: 5px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 600; color: #1e293b; background: #f8fafc; cursor: pointer;">
-              ${this.applications.map(app => `
-                <option value="${app.id}" ${app.id === activeProject.id ? 'selected' : ''}>
-                  [${app.code}] ${app.title.length > 36 ? app.title.substring(0, 36) + '...' : app.title}
-                </option>
-              `).join('')}
-            </select>
-          </div>
         </div>
 
         <!-- 3. KARTU PROYEK AKTIF TERPILIH (PROPORTIONAL & RICH) -->
@@ -1051,7 +1040,7 @@ export class CrmDealsView {
 
             <!-- Lanjut ke Langkah 3 -->
             <button type="button" class="go-to-step-btn" data-target-step="finance_top" style="font-size: 11px; padding: 7px 14px; height: 36px; background: #4338ca; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-              <span>💰 Lanjut ke Invoice Finance ➔</span>
+              <span> Lanjut ke Invoice Finance ➔</span>
             </button>
           </div>
         </div>
@@ -1880,14 +1869,8 @@ export class CrmDealsView {
       }
     });
 
-    // Change listeners for module assignees and quick switch
+    // Change listeners for module assignees
     this.element.addEventListener('change', (e) => {
-      if (e.target.id === 'crmQuickSwitchProjectSelect') {
-        const pId = e.target.value;
-        this.openProject(pId, this.activeStep);
-        store.addToast('info', 'Ganti Proyek', `Beralih ke proyek [${this.getActiveProject().code}].`);
-        return;
-      }
 
       if (e.target.classList.contains('alloc-mod-assignee')) {
         const idx = Number(e.target.dataset.idx);
