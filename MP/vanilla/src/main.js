@@ -249,19 +249,18 @@ class App {
         this.viewportContent.appendChild(this.components.projectModuleView.getElement());
         break;
       case 'time':
-        this.components.projectModuleView.openWorkspaceWithTab('time');
+        this.components.projectModuleView.openWorkspaceWithTab('ringkasan');
         this.viewportContent.appendChild(this.components.projectModuleView.getElement());
         break;
       case 'finance_budget':
-        this.components.projectModuleView.openWorkspaceWithTab('finance_budget');
+      case 'finance':
+        this.components.projectModuleView.openWorkspaceWithTab('finance');
         this.viewportContent.appendChild(this.components.projectModuleView.getElement());
         break;
       case 'ai_hub':
         this.viewportContent.appendChild(this.components.aiAutomationHub.getElement());
         break;
-      case 'finance':
-        store.setActiveTab('crm');
-        break;
+      
       case 'crm':
         this.viewportContent.appendChild(this.components.crmDealsView.getElement());
         break;
