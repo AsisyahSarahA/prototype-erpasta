@@ -1,10 +1,11 @@
 /**
- * KanbanBoard.js — Papan Kanban Proyek
- * Modeled 100% after ASTACODE CRM Pipeline Kanban (crm/js/components/crm/PipelineKanban.js):
- * - Top KPI Summary & Filter Card: Structured KPI Metrics Strip (Total Tiket, Pengerjaan, Selesai %, Sprint Aktif, Bug Kritis S1/S2)
- * - Multi-Filter Row: Quick Search, PIC/Assignee, Tipe Tiket, Prioritas, Epic/Modul (proportional widths)
+ * KanbanBoard.js — Papan Kanban & List Tabel Proyek
+ * Modeled after ASTACODE CRM Pipeline & Jira Software Cloud:
+ * - Dual View Modes: Papan Kanban (Drag & Drop) & List Tabel (Data Terstruktur)
+ * - Top KPI Summary: Total Tiket, Pengerjaan, Selesai %, Sprint Aktif, Bug Kritis S1/S2
+ * - Multi-Filter Row: Dual View Toggle, Quick Search, PIC/Assignee, Tipe Tiket, Prioritas, Epic/Modul
  * - 6 Workflow Columns: Backlog, To Do, In Progress, Review PR, QA Staging, Selesai
- * - Structured Cards: Header Badges, 2-Line Title, Project + Epic Pill, Hours + Subtask Progress Box, Footer Actions
+ * - Structured Cards & High-Density Sortable Data Table
  * - Native Drag & Drop with interactive status updates
  */
 
@@ -18,7 +19,10 @@ const ICONS = {
   chevronRight: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
   arrowRight: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`,
   alertTriangle: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`,
-  checkCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
+  checkCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+  kanban: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/></svg>`,
+  table: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>`,
+  arrowUpDown: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>`
 };
 
 const STAGES = [
@@ -37,6 +41,9 @@ export class KanbanBoard {
     this.stepper = null;
     this.unsubscribe = null;
     this.draggedTaskId = null;
+    this.viewMode = 'kanban'; // 'kanban' | 'table'
+    this.sortField = 'key';
+    this.sortAsc = true;
     this.init();
   }
 
@@ -89,7 +96,7 @@ export class KanbanBoard {
     const activeSprintObj = (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id && s.status === 'active') || (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id);
     const activeSprintName = activeSprintObj ? activeSprintObj.name : `Sprint 1: ${activeProject ? activeProject.name : 'MVP'}`;
 
-    // Columns HTML
+    // Columns HTML for Kanban View
     const columnsHtml = STAGES.map((stage, stageIdx) => {
       const stageTasks = filteredTasks.filter((t) => stage.matchStatuses.includes(t.status));
       const totalHours = stageTasks.reduce((acc, curr) => acc + (Number(curr.estimateHours) || 0), 0);
@@ -319,20 +326,44 @@ export class KanbanBoard {
           `}
         </div>
 
-        <!-- Row 2: Filter Controls Row -->
+        <!-- Row 2: Filter Controls & Dual View Switcher Row -->
         <div class="kanban-filter-row">
-          <!-- Search input -->
-          <div class="kanban-search-wrap">
-            <span class="kanban-search-icon">
-              ${ICONS.search}
-            </span>
-            <input
-              id="kanban-search-box"
-              type="text"
-              class="form-input kanban-search-input"
-              placeholder="Filter cepat judul, key tiket, deskripsi..."
-              value="${state.searchQuery || ''}"
-            />
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;min-width:0;">
+            <!-- View Mode Switcher (Papan Kanban & List Tabel) -->
+            <div class="kanban-view-switcher">
+              <button
+                type="button"
+                class="kanban-view-btn btn-toggle-view ${this.viewMode === 'kanban' ? 'active' : ''}"
+                data-view="kanban"
+                title="Tampilan Papan Kanban (Alur Kerja Kolom & Drag-Drop)"
+              >
+                ${ICONS.kanban}
+                <span>Papan Kanban</span>
+              </button>
+              <button
+                type="button"
+                class="kanban-view-btn btn-toggle-view ${this.viewMode === 'table' ? 'active' : ''}"
+                data-view="table"
+                title="Tampilan List Tabel (Daftar Terstruktur & Pengurutan)"
+              >
+                ${ICONS.table}
+                <span>List Tabel</span>
+              </button>
+            </div>
+
+            <!-- Search input -->
+            <div class="kanban-search-wrap">
+              <span class="kanban-search-icon">
+                ${ICONS.search}
+              </span>
+              <input
+                id="kanban-search-box"
+                type="text"
+                class="form-input kanban-search-input"
+                placeholder="Filter cepat judul, key tiket, deskripsi..."
+                value="${state.searchQuery || ''}"
+              />
+            </div>
           </div>
 
           <!-- Select dropdowns -->
@@ -384,16 +415,402 @@ export class KanbanBoard {
         </div>
       </div>
 
-      <!-- Kanban Columns Board Area -->
-      <div class="kanban-board-scroll">
-        ${columnsHtml}
-      </div>
+      <!-- Main Body: Papan Kanban atau List Tabel Sesuai Mode Aktif -->
+      ${this.viewMode === 'kanban' ? `
+        <!-- Kanban Columns Board Area -->
+        <div class="kanban-board-scroll">
+          ${columnsHtml}
+        </div>
+      ` : `
+        <!-- List Tabel Area -->
+        ${this.renderTableView(filteredTasks, teamMembers, epics, activeProject)}
+      `}
     `;
 
     this.attachEvents();
   }
 
+  renderTableView(filteredTasks, teamMembers, epics, activeProject) {
+    const priorityWeight = {
+      'Hotfix': 5,
+      'Tertinggi': 4,
+      'Tinggi': 3,
+      'Sedang': 2,
+      'Rendah': 1
+    };
+
+    const getStageForTask = (task) => {
+      const stage = STAGES.find((s) => s.matchStatuses.includes(task.status));
+      return stage || STAGES[0];
+    };
+
+    const sortedTasks = [...filteredTasks].sort((a, b) => {
+      let valA, valB;
+      switch (this.sortField) {
+        case 'key':
+          valA = a.key || '';
+          valB = b.key || '';
+          return this.sortAsc ? valA.localeCompare(valB, undefined, { numeric: true }) : valB.localeCompare(valA, undefined, { numeric: true });
+        case 'title':
+          valA = (a.title || '').toLowerCase();
+          valB = (b.title || '').toLowerCase();
+          return this.sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        case 'epic': {
+          const epicA = (epics.find((e) => e.id === a.epicId)?.title || '').toLowerCase();
+          const epicB = (epics.find((e) => e.id === b.epicId)?.title || '').toLowerCase();
+          return this.sortAsc ? epicA.localeCompare(epicB) : epicB.localeCompare(epicA);
+        }
+        case 'type':
+          valA = a.type || '';
+          valB = b.type || '';
+          return this.sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        case 'status': {
+          const idxA = STAGES.indexOf(getStageForTask(a));
+          const idxB = STAGES.indexOf(getStageForTask(b));
+          return this.sortAsc ? idxA - idxB : idxB - idxA;
+        }
+        case 'priority': {
+          const weightA = priorityWeight[a.priority] || 0;
+          const weightB = priorityWeight[b.priority] || 0;
+          return this.sortAsc ? weightA - weightB : weightB - weightA;
+        }
+        case 'assignee': {
+          const nameA = (teamMembers.find((m) => m.id === a.assigneeId)?.name || '').toLowerCase();
+          const nameB = (teamMembers.find((m) => m.id === b.assigneeId)?.name || '').toLowerCase();
+          return this.sortAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+        }
+        case 'estimateHours':
+          valA = Number(a.estimateHours) || 0;
+          valB = Number(b.estimateHours) || 0;
+          return this.sortAsc ? valA - valB : valB - valA;
+        case 'subtasks': {
+          const totalA = (a.subtasks || []).length;
+          const doneA = (a.subtasks || []).filter((s) => s.completed).length;
+          const pctA = totalA > 0 ? doneA / totalA : 0;
+          const totalB = (b.subtasks || []).length;
+          const doneB = (b.subtasks || []).filter((s) => s.completed).length;
+          const pctB = totalB > 0 ? doneB / totalB : 0;
+          return this.sortAsc ? pctA - pctB : pctB - pctA;
+        }
+        default:
+          return 0;
+      }
+    });
+
+    const getSortIndicator = (field) => {
+      if (this.sortField !== field) {
+        return `<span style="opacity:0.35;">${ICONS.arrowUpDown}</span>`;
+      }
+      return `<span style="color:var(--indigo-600);">${this.sortAsc ? '▲' : '▼'}</span>`;
+    };
+
+    const rowsHtml = sortedTasks.length === 0
+      ? `
+        <tr>
+          <td colspan="10" class="kanban-table-empty">
+            <div style="padding: 32px 16px; text-align: center;">
+              <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+                Tidak ada tiket pekerjaan yang cocok
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted);">
+                Ubah kueri pencarian atau reset filter untuk menampilkan pekerjaan.
+              </div>
+            </div>
+          </td>
+        </tr>
+      `
+      : sortedTasks.map((task) => {
+          const assignee = teamMembers.find((m) => m.id === task.assigneeId) || { name: 'Unassigned', avatar: 'UA' };
+          const epic = epics.find((e) => e.id === task.epicId);
+          const stage = getStageForTask(task);
+          const stageIdx = STAGES.indexOf(stage);
+          const totalSubtasks = (task.subtasks || []).length;
+          const completedSubtasks = (task.subtasks || []).filter((s) => s.completed).length;
+          const subtaskPct = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : (stage.id === 'done' ? 100 : 0);
+
+          let typeBadgeClass = 'badge-blue';
+          let typeLabel = task.type || 'Task';
+          if (task.type === 'Bug') {
+            typeBadgeClass = 'badge-red';
+            typeLabel = 'Bug';
+          } else if (task.type === 'Story' || task.type === 'Feature') {
+            typeBadgeClass = 'badge-emerald';
+            typeLabel = task.type;
+          } else if (task.type === 'Epic') {
+            typeBadgeClass = 'badge-purple';
+            typeLabel = 'Epic';
+          }
+
+          let priorityBadgeClass = 'badge-slate';
+          let priorityLabel = task.priority || 'Sedang';
+          if (task.priority === 'Hotfix' || task.priority === 'Tertinggi') {
+            priorityBadgeClass = 'badge-hot';
+            priorityLabel = 'Hotfix';
+          } else if (task.priority === 'Tinggi') {
+            priorityBadgeClass = 'badge-high';
+            priorityLabel = 'Tinggi';
+          } else if (task.priority === 'Sedang') {
+            priorityBadgeClass = 'badge-medium';
+            priorityLabel = 'Sedang';
+          }
+
+          const initials = assignee.name.split(' ').map((n) => n[0]).slice(0, 2).join('');
+
+          return `
+            <tr class="kanban-table-row" data-task-id="${task.id}" title="Klik baris untuk membuka detail pekerjaan">
+              <!-- 1. Kunci Tiket -->
+              <td style="width: 100px;">
+                <span class="kanban-table-key-link" data-task-id="${task.id}" title="Klik untuk membuka detail">
+                  ${task.key}
+                </span>
+              </td>
+
+              <!-- 2. Ringkasan Judul -->
+              <td style="min-width: 260px;">
+                <div style="font-weight: 700; color: var(--text-primary); line-height: 1.35; margin-bottom: 2px;">
+                  ${task.title}
+                </div>
+                ${task.description ? `
+                  <div style="font-size: 11px; color: var(--text-muted); line-height: 1.3; max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${task.description}
+                  </div>
+                ` : ''}
+              </td>
+
+              <!-- 3. Modul / Epic -->
+              <td style="width: 140px;">
+                <span class="kanban-table-epic-tag" title="${epic ? epic.title : 'Modul Umum'}">
+                  ${epic ? epic.title : 'Modul Umum'}
+                </span>
+              </td>
+
+              <!-- 4. Tipe -->
+              <td style="width: 90px;">
+                <span class="badge ${typeBadgeClass}" style="font-size: 10.5px;">
+                  ${typeLabel}
+                </span>
+              </td>
+
+              <!-- 5. Tahap Alur Kerja (Status) -->
+              <td style="width: 130px;">
+                <span
+                  class="kanban-stage-lozenge"
+                  style="background: ${stage.color}1f; color: ${stage.color}; border: 1px solid ${stage.color}3f;"
+                  title="Tahap ${stageIdx + 1}/6: ${stage.name}"
+                >
+                  <span class="kanban-stage-dot" style="background-color: ${stage.color};"></span>
+                  <span>${stage.name}</span>
+                </span>
+              </td>
+
+              <!-- 6. Prioritas -->
+              <td style="width: 95px;">
+                <span class="badge ${priorityBadgeClass}" style="font-size: 10.5px;">
+                  ${priorityLabel}
+                </span>
+              </td>
+
+              <!-- 7. PIC -->
+              <td style="width: 140px;">
+                <div class="kanban-table-assignee" title="PIC: ${assignee.name}">
+                  <div class="kanban-table-avatar">${initials}</div>
+                  <span style="font-size: 11.5px; font-weight: 600; color: var(--text-primary);">${assignee.name}</span>
+                </div>
+              </td>
+
+              <!-- 8. Estimasi Jam -->
+              <td style="width: 105px; font-family: var(--font-mono, monospace); font-size: 11.5px;">
+                <strong style="color: var(--text-primary);">${task.estimateHours || 4}h</strong>
+                <span style="color: var(--text-muted); font-size: 10.5px;">(${task.timeLoggedHours || 0}h log)</span>
+              </td>
+
+              <!-- 9. Subtask Progress -->
+              <td style="width: 120px;">
+                <div class="kanban-table-progress-wrap">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="kanban-table-progress-text">${completedSubtasks}/${totalSubtasks}</span>
+                    <span class="kanban-table-progress-text" style="font-weight:700;">${subtaskPct}%</span>
+                  </div>
+                  <div class="kanban-table-progress-bar-bg">
+                    <div class="kanban-table-progress-bar-fill" style="width: ${subtaskPct}%;"></div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- 10. Aksi Cepat (Shift & Detail) -->
+              <td style="width: 110px; text-align: right;" onclick="event.stopPropagation();">
+                <div class="kanban-card-actions" style="justify-content: flex-end;">
+                  <button
+                    class="btn-shift-prev kanban-shift-btn"
+                    data-task-id="${task.id}"
+                    data-stage-idx="${stageIdx}"
+                    ${stageIdx === 0 ? 'disabled' : ''}
+                    title="Mundurkan ke tahap sebelumnya"
+                  >
+                    ${ICONS.chevronLeft}
+                  </button>
+
+                  <button
+                    class="btn-open-detail kanban-detail-btn"
+                    data-task-id="${task.id}"
+                    title="Lihat detail lengkap pekerjaan"
+                  >
+                    <span>Detail</span>
+                    ${ICONS.arrowRight}
+                  </button>
+
+                  <button
+                    class="btn-shift-next kanban-shift-btn"
+                    data-task-id="${task.id}"
+                    data-stage-idx="${stageIdx}"
+                    ${stageIdx === STAGES.length - 1 ? 'disabled' : ''}
+                    title="Majukan ke tahap berikutnya"
+                  >
+                    ${ICONS.chevronRight}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+    return `
+      <div class="kanban-table-container">
+        <!-- Sub-header bar of table -->
+        <div class="kanban-table-header-info">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-weight:700;color:var(--text-primary);">Daftar Terstruktur Pekerjaan</span>
+            <span class="badge badge-slate" style="font-size:10.5px;">${sortedTasks.length} Tiket</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">
+            Urutan: <strong style="color:var(--indigo-600);">${this.sortField.toUpperCase()}</strong> (${this.sortAsc ? 'Menaik ▲' : 'Menurun ▼'})
+          </div>
+        </div>
+
+        <div class="kanban-table-scroll">
+          <table class="kanban-data-table">
+            <thead>
+              <tr>
+                <th class="sortable kanban-th-sort" data-sort="key" style="width:100px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>KUNCI</span>
+                    ${getSortIndicator('key')}
+                  </div>
+                </th>
+                <th class="sortable kanban-th-sort" data-sort="title" style="min-width:260px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>RINGKASAN PEKERJAAN</span>
+                    ${getSortIndicator('title')}
+                  </div>
+                </th>
+                <th class="sortable kanban-th-sort" data-sort="epic" style="width:140px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>MODUL / EPIC</span>
+                    ${getSortIndicator('epic')}
+                  </div>
+                </th>
+                <th class="sortable kanban-th-sort" data-sort="type" style="width:90px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>TIPE</span>
+                    ${getSortIndicator('type')}
+                  </div>
+                </th>
+                <th class="sortable kanban-th-sort" data-sort="status" style="width:130px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>TAHAP ALUR</span>
+                    ${getSortIndicator('status')}
+                  </div>
+                </th>
+                <th class="sortable kanban-th-sort" data-sort="priority" style="width:95px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>PRIORITAS</span>
+                    ${getSortIndicator('priority')}
+                  </div>
+                </th>
+                <th class="sortable kanban-th-sort" data-sort="assignee" style="width:140px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>PIC / ASSIGNEE</span>
+                    ${getSortIndicator('assignee')}
+                  </div>
+                </th>
+                <th class="sortable kanban-th-sort" data-sort="estimateHours" style="width:105px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>ESTIMASI</span>
+                    ${getSortIndicator('estimateHours')}
+                  </div>
+                </th>
+                <th class="sortable kanban-th-sort" data-sort="subtasks" style="width:120px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span>SUBTASK</span>
+                    ${getSortIndicator('subtasks')}
+                  </div>
+                </th>
+                <th style="width:110px;text-align:right;">AKSI</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
   attachEvents() {
+    // Dual View Mode Toggle buttons
+    this.container.querySelectorAll('.btn-toggle-view').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const view = btn.dataset.view;
+        if (view && view !== this.viewMode) {
+          this.viewMode = view;
+          this.render();
+        }
+      });
+    });
+
+    // Table Header Sort buttons
+    this.container.querySelectorAll('.kanban-th-sort').forEach((th) => {
+      th.addEventListener('click', () => {
+        const sortField = th.dataset.sort;
+        if (sortField) {
+          if (this.sortField === sortField) {
+            this.sortAsc = !this.sortAsc;
+          } else {
+            this.sortField = sortField;
+            this.sortAsc = true;
+          }
+          this.render();
+        }
+      });
+    });
+
+    // Table Row click -> Open Task Detail
+    this.container.querySelectorAll('.kanban-table-row').forEach((row) => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-shift-prev') || e.target.closest('.btn-shift-next') || e.target.closest('.btn-open-detail') || e.target.closest('.kanban-table-key-link')) {
+          return;
+        }
+        const taskId = row.dataset.taskId;
+        const task = store.getState().tasks.find((t) => t.id === taskId);
+        if (task) {
+          store.openTaskDetail(task);
+        }
+      });
+    });
+
+    // Table key link click -> Open Task Detail
+    this.container.querySelectorAll('.kanban-table-key-link').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const taskId = link.dataset.taskId;
+        const task = store.getState().tasks.find((t) => t.id === taskId);
+        if (task) {
+          store.openTaskDetail(task);
+        }
+      });
+    });
+
     // Search input
     const searchInput = this.container.querySelector('#kanban-search-box');
     if (searchInput) {
@@ -438,10 +855,10 @@ export class KanbanBoard {
       });
     }
 
-    // Card click -> Open Task Detail Workspace View
+    // Card click -> Open Task Detail Workspace View (Kanban mode)
     this.container.querySelectorAll('.kanban-card').forEach((card) => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-shift-prev') || e.target.closest('.btn-shift-next')) {
+        if (e.target.closest('.btn-shift-prev') || e.target.closest('.btn-shift-next') || e.target.closest('.btn-open-detail')) {
           return;
         }
         const taskId = card.dataset.taskId;
@@ -452,7 +869,7 @@ export class KanbanBoard {
       });
     });
 
-    // Detail button inside card
+    // Detail button inside card or table row
     this.container.querySelectorAll('.btn-open-detail').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -464,7 +881,7 @@ export class KanbanBoard {
       });
     });
 
-    // Shift previous button
+    // Shift previous button (works for both Kanban cards and Table rows)
     this.container.querySelectorAll('.btn-shift-prev').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -477,7 +894,7 @@ export class KanbanBoard {
       });
     });
 
-    // Shift next button
+    // Shift next button (works for both Kanban cards and Table rows)
     this.container.querySelectorAll('.btn-shift-next').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -490,45 +907,47 @@ export class KanbanBoard {
       });
     });
 
-    // Native Drag and Drop
-    this.container.querySelectorAll('.kanban-card').forEach((card) => {
-      card.addEventListener('dragstart', (e) => {
-        this.draggedTaskId = card.dataset.taskId;
-        card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', this.draggedTaskId);
-      });
+    // Native Drag and Drop (Kanban mode only)
+    if (this.viewMode === 'kanban') {
+      this.container.querySelectorAll('.kanban-card').forEach((card) => {
+        card.addEventListener('dragstart', (e) => {
+          this.draggedTaskId = card.dataset.taskId;
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', this.draggedTaskId);
+        });
 
-      card.addEventListener('dragend', () => {
-        card.classList.remove('dragging');
-        this.container.querySelectorAll('.kanban-cards-scroll').forEach((el) => {
-          el.classList.remove('drag-over');
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          this.container.querySelectorAll('.kanban-cards-scroll').forEach((el) => {
+            el.classList.remove('drag-over');
+          });
         });
       });
-    });
 
-    this.container.querySelectorAll('.kanban-cards-scroll').forEach((dropZone) => {
-      dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        dropZone.classList.add('drag-over');
-      });
+      this.container.querySelectorAll('.kanban-cards-scroll').forEach((dropZone) => {
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          dropZone.classList.add('drag-over');
+        });
 
-      dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('drag-over');
-      });
+        dropZone.addEventListener('dragleave', () => {
+          dropZone.classList.remove('drag-over');
+        });
 
-      dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        const taskId = e.dataTransfer.getData('text/plain') || this.draggedTaskId;
-        const targetStageIdx = Number(dropZone.dataset.stageIdx);
-        const targetStage = STAGES[targetStageIdx];
-        if (taskId && targetStage) {
-          store.updateTaskStatus(taskId, targetStage.primaryStatus, `Drag & drop ke kolom ${targetStage.name}`);
-        }
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('drag-over');
+          const taskId = e.dataTransfer.getData('text/plain') || this.draggedTaskId;
+          const targetStageIdx = Number(dropZone.dataset.stageIdx);
+          const targetStage = STAGES[targetStageIdx];
+          if (taskId && targetStage) {
+            store.updateTaskStatus(taskId, targetStage.primaryStatus, `Drag & drop ke kolom ${targetStage.name}`);
+          }
+        });
       });
-    });
+    }
   }
 
   getElement() {
