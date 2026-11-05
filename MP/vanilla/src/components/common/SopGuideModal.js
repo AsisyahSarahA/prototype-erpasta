@@ -106,7 +106,7 @@ export class SopGuideModal {
         title: '5. Multi-Stage Deployment & QA Sign-Off',
         badge: 'CI/CD & Testing',
         tab: 'kanban',
-        label: 'Buka Kanban Board',
+        label: 'Buka Daftar Pekerjaan',
         desc: 'Verifikasi kualitas ketat di Staging environment sebelum rilis ke Production.',
         points: [
           'Deploy ke Staging memicu automated regression test dan K6 stress testing.',

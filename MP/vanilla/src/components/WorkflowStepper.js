@@ -161,7 +161,7 @@ export class WorkflowStepper {
 
               <div class="workflow-stepper__footnote">
                 <span>Prinsip Utama: <strong>Manusia berwenang penuh.</strong> Tidak ada rilis production tanpa QA sign-off dan Tech Lead approval.</span>
-                <button class="workflow-stepper__footnote-link" id="stepperGoKanban">Buka Board Kanban →</button>
+                <button class="workflow-stepper__footnote-link" id="stepperGoKanban">Buka Daftar Pekerjaan →</button>
               </div>
             ` : `
               <div class="workflow-stepper__expanded-grid">

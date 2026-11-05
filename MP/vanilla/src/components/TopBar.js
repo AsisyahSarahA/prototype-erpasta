@@ -26,10 +26,10 @@ const ICONS = {
 const VIEW_TITLES = {
   project: 'Modul Proyek',
   ringkasan: 'Ringkasan Proyek',
-  kanban: 'Board Kanban',
+  kanban: 'Daftar Pekerjaan',
   backlog: 'Backlog & Sprints',
   timeline: 'Roadmap & Gantt',
-  list: 'Daftar Pekerjaan (JQL)',
+  list: 'Issue List',
   qa: 'QA & Testing',
   docs: 'Docs & Wiki',
   finance: 'Finance',

@@ -271,7 +271,9 @@ export class ProjectModuleView {
   // SHARED MASTER TABS BAR (FIXED / STICKY AT TOP IN ALL MODES)
   // =========================================================================
   renderTabsBar(stats) {
-    const taskStats = stats || this.getProjectStats(store.getProjectTasks());
+    const projectTasks = store.getProjectTasks();
+    const taskStats = stats || this.getProjectStats(projectTasks);
+    const bugCount = projectTasks.filter(t => (t.type || '').toLowerCase() === 'bug' || (t.category || '').toLowerCase() === 'bug').length;
     return `
       <nav class="pm-ws-tabs-bar" aria-label="Sub-Modul Workspace Proyek">
         <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'ringkasan' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="ringkasan">
@@ -280,7 +282,7 @@ export class ProjectModuleView {
         </button>
         <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'kanban' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="kanban">
           <i class="fi fi-rr-chart-kanban"></i>
-          <span>Board Kanban</span>
+          <span>Daftar Pekerjaan</span>
           <span class="pm-ws-tab-badge">${taskStats.total}</span>
         </button>
         <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'backlog' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="backlog">
@@ -293,8 +295,8 @@ export class ProjectModuleView {
         </button>
         <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'list' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="list">
           <i class="fi fi-rr-list"></i>
-          <span>Daftar Pekerjaan (JQL)</span>
-          <span class="pm-ws-tab-badge">${taskStats.total}</span>
+          <span>Issue List</span>
+          <span class="pm-ws-tab-badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; font-weight: 700;">${bugCount}</span>
         </button>
         <button class="pm-ws-tab-btn ${this.activeWorkspaceTab === 'finance' || this.activeWorkspaceTab === 'finance_budget' ? 'pm-ws-tab-btn--active' : ''}" data-ws-tab="finance">
           <i class="fi fi-rr-dollar"></i>
@@ -1501,13 +1503,24 @@ export class ProjectModuleView {
 
     this.container.innerHTML = `
       <div class="pm-ws-wrap">
-        <!-- 1. TOP STRIP -->
+                <!-- 1. TOP STRIP -->
         <div class="pm-ws-top-strip">
-          <div class="pm-ws-top-breadcrumb">
+          <div class="pm-ws-top-breadcrumb" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <button id="pmBackToPortfolioBtn" class="pm-ws-back-link">
               <i class="fi fi-rr-arrow-left"></i>
               <span>Kembali ke Daftar Proyek</span>
             </button>
+            <span style="color: #cbd5e1;">|</span>
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 3px 10px;">
+              <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Proyek:</span>
+              <select id="pmWorkspaceProjectSwitcher" style="border: none; background: transparent; font-size: 12px; font-weight: 700; color: #0f172a; cursor: pointer; outline: none; padding: 2px 0;">
+                ${state.projects.map(p => `
+                  <option value="${p.id}" ${p.id === activeProject.id ? 'selected' : ''}>
+                    [${p.code}] ${p.name}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
           </div>
           <div class="pm-ws-badges-right">
             <span class="pm-ws-pill ${isAtRisk ? 'pm-ws-pill--at-risk' : 'pm-ws-pill--on-track'}">
@@ -1983,7 +1996,7 @@ export class ProjectModuleView {
         <div class="pm-kanban-toolbar">
           <div class="pm-kanban-search">
             <i class="fi fi-rr-search pm-search-icon"></i>
-            <input type="text" id="pmKanbanSearchInput" class="pm-search-input" placeholder="Cari tiket di board kanban..." value="${this.kanbanSearch}" />
+            <input type="text" id="pmKanbanSearchInput" class="pm-search-input" placeholder="Cari tiket di daftar pekerjaan..." value="${this.kanbanSearch}" />
           </div>
 
           <div class="pm-kanban-filters">
@@ -3189,6 +3202,16 @@ export class ProjectModuleView {
     if (backBtn) {
       backBtn.addEventListener('click', () => {
         this.backToPortfolio();
+      });
+    }
+
+    // Workspace Project Switcher
+    const wsProjSwitcher = this.container.querySelector('#pmWorkspaceProjectSwitcher');
+    if (wsProjSwitcher) {
+      wsProjSwitcher.addEventListener('change', (e) => {
+        const newPid = e.target.value;
+        store.setSelectedProjectId(newPid);
+        this.render();
       });
     }
 

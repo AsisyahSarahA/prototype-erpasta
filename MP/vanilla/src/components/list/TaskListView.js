@@ -103,9 +103,15 @@ export class TaskListView {
 
   render() {
     const state = store.getState();
-    const activeProject = store.getActiveProject();
-    const { tasks, selectedProjectId, teamMembers, role } = state;
-    const projectTasks = tasks.filter(t => t.projectId === selectedProjectId);
+    const activeProject = store.getActiveProject() || (state.projects && state.projects[0]) || {};
+    const currentProjectId = activeProject.id || state.selectedProjectId;
+    const { tasks, teamMembers, role } = state;
+    // Filter strictly for Bug category/type issues belonging to the selected project
+    const projectTasks = (tasks || []).filter(t => {
+      if (t.projectId !== currentProjectId) return false;
+      const isBug = (t.type || '').toLowerCase() === 'bug' || (t.category || '').toLowerCase() === 'bug';
+      return isBug;
+    });
 
     // JQL Filter Logic
     const filteredTasks = projectTasks.filter(task => {
@@ -158,18 +164,31 @@ export class TaskListView {
           <!-- Main Title & Action Row -->
           <div class="list-header-main-row">
             <div class="list-header-left">
-              <div class="list-breadcrumbs">
+              <div class="list-breadcrumbs" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <span>Modul Proyek</span>
                 <span>/</span>
-                <span>${this.escapeHtml(activeProject?.name || 'Sistem Perpustakaan Digital Kampus')}</span>
+                <span>${this.escapeHtml(activeProject?.name || 'Proyek')}</span>
                 <span>/</span>
-                <span class="crumb-current">Daftar Pekerjaan (JQL)</span>
+                <span class="crumb-current">Issue List</span>
               </div>
-              <div class="list-title-wrap">
-                <h1 class="list-page-title">Daftar Masalah &amp; Kueri JQL (Issue Navigator)</h1>
+              <div class="list-title-wrap" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px;">
+                <h1 class="list-page-title" style="margin: 0;">Issue List (Daftar Bug &amp; Masalah)</h1>
+
+                <!-- Interactive Project Switcher Dropdown in Issue List Header -->
+                <div style="display: inline-flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 3px 10px;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Proyek:</span>
+                  <select id="issueListProjectSwitcher" style="border: none; background: transparent; font-size: 12px; font-weight: 700; color: #0f172a; cursor: pointer; outline: none; padding: 2px 0;">
+                    ${(state.projects || []).map(p => `
+                      <option value="${p.id}" ${p.id === currentProjectId ? 'selected' : ''}>
+                        [${p.code}] ${p.name}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+
                 <span class="list-status-pill">
                   <span style="font-size: 8px;">●</span>
-                  <span>Total ${projectTasks.length} Masalah</span>
+                  <span>${projectTasks.length} Masalah [${activeProject?.code || 'PROJ'}]</span>
                 </span>
               </div>
             </div>
@@ -181,7 +200,7 @@ export class TaskListView {
               </button>
               <button id="listCreateTaskBtn" class="btn btn-primary" style="font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: var(--radius-lg);">
                 ${Icons.plus('', 14)}
-                <span>+ Buat Masalah</span>
+                <span>+ Lapor Bug Baru</span>
               </button>
             </div>
           </div>
@@ -190,7 +209,7 @@ export class TaskListView {
           <div class="list-kpi-bar">
             <div class="list-kpi-group">
               <div class="list-kpi-item">
-                <span class="list-kpi-label">Total Masalah:</span>
+                <span class="list-kpi-label">Total Tiket Bug:</span>
                 <span class="list-kpi-val">${projectTasks.length} Tiket</span>
               </div>
 
@@ -606,7 +625,7 @@ export class TaskListView {
 
       // Export CSV
       if (e.target.closest('#exportCsvBtn')) {
-        store.addToast('success', 'Ekspor CSV Berhasil', 'Data daftar masalah JQL berhasil diunduh ke format spreadsheet.');
+        store.addToast('success', 'Ekspor CSV Berhasil', 'Data Issue List JQL berhasil diunduh ke format spreadsheet.');
         return;
       }
 
@@ -628,6 +647,16 @@ export class TaskListView {
         }
         this.render();
         return;
+      }
+    });
+
+    // Project Switcher Change Event
+    this.container.addEventListener('change', (e) => {
+      if (e.target.id === 'issueListProjectSwitcher') {
+        const newPid = e.target.value;
+        store.setSelectedProjectId(newPid);
+        this.selectedTaskIds = [];
+        this.render();
       }
     });
 
