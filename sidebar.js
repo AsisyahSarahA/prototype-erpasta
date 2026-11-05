@@ -189,7 +189,7 @@
               </a>
               <a href="${prefix}MP/vanilla/index.html#github" class="nav-sub-btn ${activeModule === "project" && activeSubpage === "github" ? "active" : ""}" data-module="project" data-sub="github" onclick="window.navigateToModuleSubpage('project', 'github', '${prefix}MP/vanilla/index.html#github', event)">
                 <span class="nav-sub-dot"></span>
-                <span>GitHub & Cabang</span>
+                <span>GitHub </span>
               </a>
               <div class="nav-sub-group-title">Operasional & Bisnis</div>
               <a href="${prefix}MP/vanilla/index.html#client" class="nav-sub-btn ${activeModule === "project" && (activeSubpage === "client" || activeSubpage === "handover") ? "active" : ""}" data-module="project" data-sub="client" onclick="window.navigateToModuleSubpage('project', 'client', '${prefix}MP/vanilla/index.html#client', event)">

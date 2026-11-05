@@ -223,46 +223,43 @@ Pusat kendali otomasi rekayasa perangkat lunak berbasis AI Ops & DevOps modern:
 
 ---
 
-### 5.3 Modul GitHub & Cabang (`GithubSettingsView.js`)
-Pusat kontrol Version Control System (VCS) bergaya antarmuka otentik **GitHub Enterprise** namun versi lebih ringkas, proporsional, dan terintegrasi dengan ekosistem ASTACODE ERP:
-* **Header Repositori Otentik GitHub (Sleek & Proportional)**:
-  * Breadcrumb navigasi repositori: `astacode / <nama-repositori>` lengkap dengan badge status `Public`.
-  * **Project Switcher Terintegrasi**: Memungkinkan pergantian konteks repositori, cabang git, dan PR langsung berdasarkan proyek aktif ERP.
-  * **Aksi Repositori Standar**: Tombol counter `👁️ Watch` (3), `⑂ Fork` (5), `⭐ Star` (14).
-  * **Tombol Hijau `Code ▾` (Clone Popover)**: Popover interaktif berisi tab clone `HTTPS`, `SSH`, dan `GitHub CLI`, tombol 1-klik salin URL clone, serta tautan unduh `Download ZIP` dan panduan CLI lokal.
-* **1-Line Lifecycle Workflow Banner (Ringkasan Alur Kerja Singkat)**:
-  * Banner horizontal ramping dan intuitif yang merangkum 5 siklus pengembangan:
-    `[ 🌿 1. Buat Cabang ] ➔ [ 💻 2. Commit & Push ] ➔ [ ⚡ 3. Validasi CI/CD ] ➔ [ 🔀 4. Review & Merge PR ] ➔ [ 🚀 5. Rilis Staging/Prod ]`
-  * Setiap tahapan dapat diklik langsung untuk melompat secara instan ke tab yang relevan.
-* **5 Tab Repositori GitHub Interaktif**:
-  1. **`<> Code` (Struktur Berkas & README)**:
-     * Toolbar cabang aktif (`🌿 main ▾`) dengan ringkasan jumlah branch dan tag.
-     * **Latest Commit Strip**: Avatar pengembang, author, hash commit (`4d19fa2`), pesan conventional commit, dan penanda waktu relatif.
-     * **GitHub File Tree Table**: Struktur folder (`app/`, `config/`, `database/`, `routes/`, `tests/`) dan berkas (`Dockerfile`, `.env.example`, `README.md`) dengan pesan commit terakhir dan waktu update.
-     * **Rendered README.md Card**: Tampilan formatted markdown yang memuat ringkasan proyek, badge tech stack (PHP 8.2, Laravel 11, Docker, PostgreSQL, Redis), serta panduan quick start lokal.
-  2. **`🌿 Branches` (Manajemen Cabang)**:
-     * Filter pencarian instan nama cabang / modul dan dropdown kategori (*Semua, Terproteksi, Fitur & Epics, Hotfix & Bug AI*).
-     * Bagian **Default Branch** (`main` — protected, base rilis resmi).
-     * Bagian **Protected Staging Branch** (`staging` — target merge seluruh PR fitur).
-     * Bagian **Active Feature & Bugfix Branches**: Daftar cabang lengkap dengan kartu nama branch, PIC developer, commit hash, perbandingan visual **Ahead/Behind** (`2 ahead · 0 behind`), tombol *New PR*, salin nama branch, dan tombol hapus cabang.
-  3. **`🔀 Pull Requests` (Review & Merge PR)**:
-     * Kartu PR aktif: `#14 [LIB-116] Implementasi Autentikasi JWT & Sanctum RBAC` dengan target flow `staging ← feature/sanctum-rbac-auth`.
-     * 4 Subtab PR: `Conversation` (diskusi & review tim), `Commits (3)` (riwayat commit bertahap), `Checks (6/6 Pass)` (rincian pengujian automated CI), dan `Files changed (2)` (Diff viewer baris kode hijau `+` dan merah `-`).
-     * **Otentik GitHub Merge Box**: Status *"This branch has no conflicts with the base branch"* dan tombol hijau **`Squash and merge`** yang secara reaktif menggabungkan cabang ke staging, mengubah status menjadi `Merged` (ungu), memicu toast, dan menyiarkan notifikasi ke bot.
-  4. **`⚡ Actions (CI/CD)` (Pipeline Otomasi)**:
-     * Rangkuman 6 tahapan pipeline: *Setup Environment (12s)*, *PHPUnit & PHPStan (24s)*, *Trivy Security Scan (18s)*, *Docker Build (48s)*, *Deploy Staging VPS (15s)*, dan *Telegram Bot Alert*.
-     * Tombol interaktif **`▶ Jalankan Workflow`** dengan simulasi pengujian dan notifikasi passing.
-     * Tabel riwayat proses workflow runs (*success/duration/trigger*).
-  5. **`⚙️ Settings` (Pengaturan & Integrasi)**:
-     * **Autentikasi & PAT**: Pengelolaan GitHub Personal Access Token (dengan toggle show/hide mata), indikator latency API real-time, sisa rate limit, dan checklist cakupan token scopes (*repo*, *workflow*, *admin:org*, *write:packages*).
-     * **Collaborators & Hak Akses**: Daftar tim pengembang dengan badge hak akses (*Admin*, *Write*, *Read*), status 2FA, dan modal undang collaborator.
-     * **Webhooks & Telegram Bot**: URL endpoint webhook dan toggle simulasi alert siaran `@ProjectManjerBot`.
-* **Modals Terpadu**:
-  * **Modal Buat Cabang Baru**: Helper prefix otomatis (`feature/`, `fix/`, `epic/`, `hotfix/`, `ai/`), pemilihan base branch (`staging`/`main`), link modul, dan generator cuplikan Git CLI live.
-  * **Modal Tambah Collaborator**: Nama, GitHub handle, role teknis, dan tingkat permission.
-  * **Modal Panduan Standar CLI Git ASTACODE**: Cheatsheet checkout, conventional commit, dan push pull request.
-
----
+### 5.3 Modul GitHub & Cabang (`GithubSettingsView.js`) — 100% Sesuai GITHUB_PRD.md v1.0
+Pusat kontrol Version Control System (VCS Control Center) terpadu yang memadukan manajemen repository, branching tiket, automated status checks CI/CD, code review Pull Request, deployment rilis, serta tata kelola hak akses dan audit log:
+* **Header Eksekutif, Project Switcher & Koneksi API (PRD Section 4.1 & OV-01/02/05)**:
+  * Breadcrumb navigasi: `ASTACODE PM / [Nama Proyek] / Pengembangan & AI / GitHub & Cabang` lengkap dengan badge status `● Live`.
+  * **Project Switcher Dropdown**: Sinkronisasi konteks proyek ERP dan repository GitHub secara instan.
+  * **Status Koneksi API & Latensi**: Indikator `Connected` (hijau), latensi API (misal `142ms`), sisa rate-limit (`4.988 / 5.000 requests`), data freshness timestamp, dan tombol interaktif *Sync / Refresh*.
+  * **Aksi Cepat Header**: Tombol `+ Buat Cabang Baru` dan `Panduan CLI`.
+* **Master Repository Summary Card (PRD Section 4.1 & OV-01)**:
+  * Nama repository (`perpustakaan-digital-microservices`), visibility (`Private`), default branch (`main`), dan URL repository resmi.
+  * Tombol aksi 1-klik: *Salin Git Clone* (`git clone https://...git`) dan *Buka di GitHub* (tab baru).
+* **4 Actionable KPI Scorecards (PRD Section 4.1 & OV-03)**:
+  * *Open Pull Requests* (`1 Menunggu Review` ➔ klik membuka tab *Pull Requests*).
+  * *Total Cabang* (`5 Cabang: 2 Protected · 3 Fitur` ➔ klik membuka tab *Branches*).
+  * *Status CI/CD & Checks* (`100% Passing 6/6 Lolos` ➔ klik membuka tab *Checks & Deployments*).
+  * *Latest Deployment* (`v1.0.4-staging Live` ➔ klik membuka tab *Checks & Deployments*).
+* **5-Stage Stepper Alur Kerja Git (PRD Section 5)**:
+  * Stepper interaktif terpadu: `[ 🌿 1. Pembuatan Cabang ] ➔ [ 💻 2. Commit & Push ] ➔ [ ⚡ 3. Validasi CI/CD ] ➔ [ 🔀 4. Review PR & Merge ] ➔ [ 🚀 5. Rilis & Audit ]`.
+  * Setiap tahapan berfungsi sebagai navigasi cerdas yang langsung mengarahkan pengguna ke tab dan workbench terkait.
+* **7 Tab Utama Sesuai Spesifikasi PRD (Section 4.1 & Section 6/7)**:
+  1. **`Overview`**: Fokus cabang aktif (`feature/sanctum-rbac-auth`), tautan tiket backlog (`[LIB-116] Centralized JWT Sanctum Authentication & RBAC`), penanggung jawab PIC (*Jaka*), terminal snippet siap salin (`git switch`), guardrails kebijakan proteksi, action items yang membutuhkan tindakan, dan feed aktivitas terkini.
+  2. **`Branches`**: Manajemen cabang lengkap dengan pencarian instan, filter chip (*Semua, Active, Protected/Main, Fitur, Epics, Hotfix, Stale*), toggle tampilan *Grid* vs *Tabel Responsif*, status commit hash, assignee avatar, CI passed, tombol salin perintah CLI, tombol *Buka PR*, dan tombol hapus cabang dengan konfirmasi.
+  3. **`Pull Requests`**: Workbench peninjauan PR (#14) dengan 5 sub-tab internal:
+     * *Files changed (Diff)*: Syntax-highlighted code diff (+348 / -42 baris), switcher berkas (`AuthenticateWithSanctum.php` & `routes/api.php`), tombol *Minta Revisi Kode* dan *Berikan Approval (Review Passed)*.
+     * *Conversation & Task*: Deskripsi PR, acceptance criteria, dan linked issue `LIB-116`.
+     * *Commits*: Rincian 3 commit pada PR beserta SHA dan pengembang.
+     * *Checks*: Status kelulusan 6/6 automated checks.
+     * *Deployments*: Informasi staging preview environment (`pr-14.preview.softwarehouse.dev`).
+     * **Verified Merge Box**: Banner *"This branch has no conflicts with the base branch"*, verifikasi checks & approval, pemilih strategi merge (*Squash and merge, Merge commit, Rebase*), dan tombol eksekusi *Squash and merge*.
+  4. **`Checks & Deployments`**: Rincian 6 automated checks runner Ubuntu Linux (*Linting, Unit & Regression Tests, Security Trivy & CodeQL, Database Migration Dry-Run, Docker Build, Preview Staging*), tombol *Uji Ulang Pipeline*, dan kartu status environments rilis (*Staging QA vs Production Stable*).
+  5. **`People & Access`**: Manajemen tim pengembang dengan informasi username GitHub, peran teknis, level izin (*Admin/Maintainer, Write, Read*), penegakan 2FA (*2FA Enforced*), status sync, dan tombol *Cabut Izin Akses*.
+  6. **`Settings`**: Autentikasi API (PAT / GitHub App OAuth), visibilitas token, uji koneksi API, konvensi prefix otomatis (`epic/`, `feat/`, `fix/`), aturan proteksi branch (*Enforce Protection, Require Reviews, Require Checks, Dismiss Stale*), serta integrasi webhook dan Telegram Bot (`@ProjectManjerBot`).
+  7. **`Audit Log`**: Append-only log audit stream (*Actor, Action, Resource, Result, Timestamp, Correlation ID*) dan feed riwayat Conventional Commits.
+* **4 Modal Dialog Berstandar Software House (PRD Section 8)**:
+  * **Modal Buat Cabang Baru**: Pemilihan base branch (`staging` / `main`), prefix chips, input slug dengan validasi karakter/format otomatis, penautan tiket backlog/epics, penugasan PIC, dan live preview perintah Git CLI.
+  * **Modal Tambah Collaborator**: Nama lengkap, handle GitHub, role spesialisasi, dan tingkat hak akses.
+  * **Modal Konfirmasi Merge PR**: Ringkasan kelulusan checks dan bebas konflik, input squash commit title, opsi hapus cabang fitur setelah merge, dan konfirmasi eksekusi aman.
+  * **Modal Panduan Lengkap CLI Git ASTACODE**: SOP terminal resmi agensi untuk checkout, Conventional Commits, dan rebase sebelum PR.
 
 ### 5.4 Modul Service Desk, Bot Omnichannel & Automasi Klien (`ClientPortalView.js`)
 Jembatan komunikasi real-time antara klien pemesan aplikasi dengan tim rekayasa, dilengkapi sistem bot kustom dan otomasi penuh:

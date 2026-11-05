@@ -190,22 +190,22 @@
   flex-wrap: wrap;
 }
 
-/* 5 Executive Scorecards (KPIs) */
+/* 4 Executive Scorecards (KPIs) */
 .git-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1100px) {
   .git-kpi-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .git-kpi-grid {
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1477,4 +1477,258 @@
 .git-guardrail-item i {
   color: #059669;
   font-size: 12px;
+}
+
+
+/* ==========================================================================
+   GITHUB PRD 1.0 COMPLIANT EXTENSIONS (7 TABS, PR WORKBENCH, CHECKS & AUDIT)
+   ========================================================================== */
+
+/* Clickable KPI Cards */
+.git-kpi-card--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.git-kpi-card--clickable:hover {
+  transform: translateY(-2px);
+  border-color: #a5b4fc;
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.08);
+}
+
+.git-kpi-card--clickable:active {
+  transform: translateY(0);
+}
+
+/* 7-Tab Navigation Bar Enhancements */
+.git-tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: white;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.git-tabs-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.git-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.git-tab-btn:hover {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.git-tab-btn.active {
+  color: #4338ca;
+  background: #eef2ff;
+  font-weight: 700;
+}
+
+.git-tab-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.git-tab-btn.active .git-tab-badge {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+/* Overview Tab Action Items */
+.git-action-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: border-color 0.15s ease;
+}
+
+.git-action-card:hover {
+  border-color: #cbd5e1;
+}
+
+.git-action-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.git-action-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* PR Details & Workbench */
+.git-pr-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.git-pr-header-card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.git-pr-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.git-pr-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.git-pr-status-badge.open {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.git-pr-status-badge.merged {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #d8b4fe;
+}
+
+.git-pr-subtabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 2px;
+}
+
+.git-pr-subtab-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.git-pr-subtab-btn:hover {
+  color: #0f172a;
+}
+
+.git-pr-subtab-btn.active {
+  color: #4338ca;
+  border-bottom-color: #4338ca;
+  font-weight: 700;
+}
+
+/* PR Merge Box */
+.git-merge-box {
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.git-merge-box.is-merged {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+/* Deployments Cards */
+.git-deploy-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.git-deploy-card:hover {
+  border-color: #cbd5e1;
+}
+
+/* Audit Table */
+.git-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.git-audit-table th {
+  background: #f8fafc;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.git-audit-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.git-audit-table tr:hover td {
+  background: #f8fafc;
 }
