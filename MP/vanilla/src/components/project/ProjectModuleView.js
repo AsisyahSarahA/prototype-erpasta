@@ -1508,19 +1508,8 @@ export class ProjectModuleView {
           <div class="pm-ws-top-breadcrumb" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <button id="pmBackToPortfolioBtn" class="pm-ws-back-link">
               <i class="fi fi-rr-arrow-left"></i>
-              <span>Kembali ke Daftar Proyek</span>
+              <span>Kembali</span>
             </button>
-            <span style="color: #cbd5e1;">|</span>
-            <div style="display: inline-flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 3px 10px;">
-              <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Proyek:</span>
-              <select id="pmWorkspaceProjectSwitcher" style="border: none; background: transparent; font-size: 12px; font-weight: 700; color: #0f172a; cursor: pointer; outline: none; padding: 2px 0;">
-                ${state.projects.map(p => `
-                  <option value="${p.id}" ${p.id === activeProject.id ? 'selected' : ''}>
-                    [${p.code}] ${p.name}
-                  </option>
-                `).join('')}
-              </select>
-            </div>
           </div>
           <div class="pm-ws-badges-right">
             <span class="pm-ws-pill ${isAtRisk ? 'pm-ws-pill--at-risk' : 'pm-ws-pill--on-track'}">

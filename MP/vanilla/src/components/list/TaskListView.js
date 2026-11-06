@@ -174,17 +174,7 @@ export class TaskListView {
               <div class="list-title-wrap" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px;">
                 <h1 class="list-page-title" style="margin: 0;">Issue List (Daftar Bug &amp; Masalah)</h1>
 
-                <!-- Interactive Project Switcher Dropdown in Issue List Header -->
-                <div style="display: inline-flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 3px 10px;">
-                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Proyek:</span>
-                  <select id="issueListProjectSwitcher" style="border: none; background: transparent; font-size: 12px; font-weight: 700; color: #0f172a; cursor: pointer; outline: none; padding: 2px 0;">
-                    ${(state.projects || []).map(p => `
-                      <option value="${p.id}" ${p.id === currentProjectId ? 'selected' : ''}>
-                        [${p.code}] ${p.name}
-                      </option>
-                    `).join('')}
-                  </select>
-                </div>
+                
 
                 <span class="list-status-pill">
                   <span style="font-size: 8px;">●</span>
