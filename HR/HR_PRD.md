@@ -38,8 +38,8 @@ Perbedaan utama dari software HR konvensional: presensi tidak lagi berfokus pada
 |---|---|---|
 | **Karyawan Tetap** | Staf developer, designer, QA, PM | Presensi cepat, submit progres, lihat slip gaji |
 | **Freelancer** | Pekerja berbasis jam/proyek | Catat jam kerja dari task, lihat estimasi pembayaran |
-| **Siswa/Mahasiswa PKL** | Peserta magang | Presensi, log harian, lihat nilai & sertifikat |
-| **Pembimbing PKL** | Karyawan senior | Review log, input evaluasi |
+| **Siswa/Mahasiswa PKL** | Peserta magang | Presensi, log harian, **mengajukan evaluasi (penilaian diri + refleksi)**, lihat nilai & sertifikat |
+| **Pembimbing PKL** | Karyawan senior | Review log, **meninjau pengajuan evaluasi, menyetujui atau mengubah nilai** |
 | **HR Admin** | Pengelola operasional HR | Kelola karyawan, rekrutmen, PKL, payroll |
 | **Manajer / Team Lead** | Atasan langsung | Approve lembur/Workload Malam, pantau progres tim |
 | **Pelamar & Instansi Pendidikan** | Pihak eksternal (portal publik) | Melamar kerja, mengajukan PKL, cek status |
@@ -54,6 +54,8 @@ Perbedaan utama dari software HR konvensional: presensi tidak lagi berfokus pada
 | Lihat slip gaji sendiri | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Kelola rekrutmen | ❌ | ❌ | ❌ | ❌ | 👁️ | ✅ | ❌ |
 | Kelola PKL | ❌ | ❌ | ❌ | ✅ (evaluasi) | 👁️ | ✅ | ❌ |
+| Ajukan evaluasi PKL (penilaian diri + refleksi) | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Setujui / ubah nilai evaluasi PKL | ❌ | ❌ | ❌ | ✅ (peserta bimbingannya) | 👁️ | ✅ | ❌ |
 | Jalankan payroll | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ (draft) | ✅ (final) |
 | Konfigurasi sistem | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 
@@ -156,7 +158,12 @@ Asta HR
         ▼
 [ Masa PKL: presensi + log harian + pembimbing ]
         ▼
-[ Evaluasi Pembimbing ] ──► [ Sertifikat Dinamis (Nilai: ON/OFF) ]
+[ Peserta PKL mengajukan evaluasi: penilaian diri + refleksi ]
+        ▼  (status: Diajukan, baru muncul di antrean pembimbing)
+[ Pembimbing meninjau ]
+   ├── Setujui nilai apa adanya ──────────┐
+   ├── Ubah nilai lalu setujui ───────────┼─► [ Evaluasi Disetujui ] ──► [ Sertifikat Dinamis (Nilai: ON/OFF) ]
+   └── Minta revisi ──► kembali ke peserta ┘ (status: Revisi, peserta mengajukan ulang)
 ```
 
 #### Requirement
@@ -167,18 +174,24 @@ Asta HR
 | PKL-02 | Validasi file (PDF, maks 5 MB), pencegahan spam (captcha) | P0 |
 | PKL-03 | **Matriks kapasitas kuota**: kuota maksimal peserta simultan (misal 5), dikonfigurasi per periode/divisi | P0 |
 | PKL-04 | **Auto-check overlap tanggal**: sistem menghitung jumlah peserta aktif pada setiap hari dalam rentang yang diajukan; status **Available** hanya jika kuota cukup di *semua* hari | P0 |
-| PKL-05 | **Kalender kuota** dengan filter Tahun/Bulan/Tanggal (heatmap hijau/kuning/merah) | P1 |
+| PKL-05 | **Kalender kuota per bulan**: 12 kartu bulan per tahun terpilih (filter Tahun), tiap kartu menampilkan **puncak okupansi** bulan itu (misal "Puncak 4/5"), heatmap hijau/kuning/merah, dan jumlah peserta aktif. Klik bulan membuka panel daftar peserta beserta rentang tanggalnya. Tidak ada tampilan per hari | P1 |
 | PKL-06 | Auto-reject untuk kuota penuh dengan surat penolakan, **atau** mode "tinjau manual" (konfigurasi HR) | P1 |
 | PKL-07 | **Surat balasan otomatis** dalam PDF: template rich-text dinamis (variabel nama, sekolah, tanggal, nomor surat), **nomor surat otomatis**, **tanda tangan digital** | P0 |
 | PKL-08 | Editor template surat (rich-text) dengan variabel `{{nama_siswa}}`, `{{sekolah}}`, `{{tanggal_mulai}}`, `{{tanggal_selesai}}`, `{{nomor_surat}}` | P1 |
 | PKL-09 | Notifikasi email ke instansi/siswa dengan surat terlampir dan link status | P0 |
 | PKL-10 | Penugasan **pembimbing** & divisi ke peserta | P1 |
 | PKL-11 | Peserta PKL memakai presensi & log harian (dapat disederhanakan) | P1 |
-| PKL-12 | **Form evaluasi** pembimbing (Code Quality, Teamwork, Punctuality, Communication, Problem Solving, dst.; skala & bobot dapat dikonfigurasi) | P0 |
+| PKL-12 | **Form evaluasi** dengan kriteria Code Quality, Teamwork, Punctuality, Communication, Problem Solving, dst. (skala 0-100 & bobot dapat dikonfigurasi). Form diisi **dua tahap**: penilaian diri oleh peserta (PKL-17), lalu penilaian final oleh pembimbing (PKL-18) | P0 |
 | PKL-13 | **Generator sertifikat** otomatis berbasis template resmi perusahaan | P0 |
 | PKL-14 | **Toggle Transkrip Nilai:** **ON**: sertifikat depan-belakang (belakang berisi nilai kompetensi); **OFF**: hanya keterangan menyelesaikan PKL | P0 |
 | PKL-15 | Nomor sertifikat unik + **QR verifikasi publik** | P1 |
 | PKL-16 | Pratinjau sertifikat sebelum terbit dan riwayat dokumen yang terbit | P1 |
+| PKL-17 | **Pengajuan evaluasi oleh peserta**: halaman "Evaluasi Saya" berisi penilaian diri per kriteria (skala 0-100) dan **refleksi** teks. Tombol "Ajukan Evaluasi" aktif jika progres periode PKL ≥ ambang (default 80%, dapat dikonfigurasi di Pengaturan); sebelum itu tombol nonaktif disertai penjelasan | P0 |
+| PKL-18 | **Antrean evaluasi pembimbing**: hanya peserta yang sudah mengajukan yang muncul di menu Evaluasi (tab Menunggu / Disetujui / Revisi, filter sekolah/instansi). Peserta yang belum mengajukan tidak dapat dinilai dan hanya ditampilkan sebagai jumlah informasi | P0 |
+| PKL-19 | **Tinjau & putuskan**: panel detail menampilkan nilai peserta berdampingan dengan nilai pembimbing (slider awal terisi nilai peserta). Aksi: **Setujui**, **Ubah nilai lalu setujui**, atau **Minta revisi** (dengan catatan). **Nilai final = nilai pembimbing**; nilai diri peserta tersimpan sebagai pembanding | P0 |
+| PKL-20 | **Status evaluasi**: Belum Diajukan → Diajukan → Disetujui / Revisi. Peserta dapat melihat status, catatan revisi, dan nilai final setelah Disetujui. Peserta dapat mengajukan ulang setelah status Revisi | P0 |
+| PKL-21 | **Gerbang sertifikat**: sertifikat dengan Transkrip Nilai ON hanya dapat diterbitkan jika evaluasi berstatus Disetujui. Mode OFF tetap dapat diterbitkan tanpa evaluasi | P0 |
+| PKL-22 | Notifikasi & audit: pembimbing diberi notifikasi saat ada pengajuan baru (+ badge jumlah menunggu di menu Evaluasi); peserta diberi notifikasi saat disetujui/direvisi; seluruh aksi (ajukan, setujui, ubah nilai, minta revisi) tercatat di audit log | P1 |
 
 #### Logika Kuota (pseudo-query)
 
@@ -191,6 +204,18 @@ WHERE status IN ('approved','active')
 GROUP BY d;
 -- Available jika MAX(terisi) < kuota_maks untuk seluruh rentang
 ```
+
+**Tampilan kalender per bulan (PKL-05):** angka per bulan = **nilai tertinggi `terisi` di antara semua hari dalam bulan itu** (puncak okupansi). Status warna memakai aturan yang sama (hijau tersedia, kuning hampir penuh, merah penuh).
+
+> ⚠️ Kalender bulanan hanya **informasi**. Keputusan Available/Penuh pada pengajuan (PKL-04) **tetap dihitung per hari**, karena bulan berstatus penuh bisa tetap memiliki tanggal yang kosong. Pesan hasil cek pada form publik dan analisis pengajuan boleh disebut per bulan (misal "kuota penuh pada November 2026"), tetapi perhitungannya tidak berubah.
+
+#### Acceptance Criteria (PKL-17 s/d PKL-21)
+- **Given** peserta PKL belum mengajukan evaluasi, **When** pembimbing membuka menu Evaluasi, **Then** peserta tersebut tidak muncul di antrean.
+- **Given** progres periode peserta di bawah ambang, **When** peserta membuka "Evaluasi Saya", **Then** tombol "Ajukan Evaluasi" nonaktif dan menampilkan syarat yang belum terpenuhi.
+- **Given** peserta mengisi penilaian diri dan refleksi lalu menekan "Ajukan Evaluasi", **Then** status menjadi Diajukan, entri masuk antrean pembimbing, dan notifikasi terkirim.
+- **Given** pembimbing mengubah nilai lalu menyetujui, **Then** nilai final tersimpan sebagai nilai pembimbing, nilai diri tetap tersimpan sebagai pembanding, dan status menjadi Disetujui.
+- **Given** pembimbing memilih "Minta revisi" dengan catatan, **Then** status menjadi Revisi dan peserta dapat mengajukan ulang.
+- **Given** evaluasi belum Disetujui, **When** HR menerbitkan sertifikat dengan Transkrip Nilai ON, **Then** penerbitan ditolak dengan pesan yang jelas.
 
 ---
 
@@ -221,7 +246,7 @@ GROUP BY d;
 | ID | Requirement | Prioritas |
 |---|---|:-:|
 | SET-01 | Manajemen role & permission (RBAC) | P0 |
-| SET-02 | Konfigurasi lokasi kantor (SSID/BSSID/IP), radius WFH, ambang jam malam | P0 |
+| SET-02 | Konfigurasi lokasi kantor (SSID/BSSID/IP), radius WFH, ambang jam malam, **ambang progres untuk pengajuan evaluasi PKL** (default 80%) | P0 |
 | SET-03 | Template dokumen (surat, sertifikat, slip gaji) | P1 |
 | SET-04 | Audit log seluruh aksi sensitif | P0 |
 | SET-05 | Integrasi (Jira/Trello/ClickUp, GitHub/GitLab, Slack, LinkedIn, Email) | P1 |
@@ -236,7 +261,7 @@ GROUP BY d;
 | 1 | **Presensi & Progres Harian** | Buka app → validasi Wifi/Geolocation → isi deskripsi task/link commit → (opsional) aktifkan Workload Malam |
 | 2 | **Kalkulasi Payroll** | Sistem menarik rekap presensi/progres bulanan → hitung sesuai tipe pekerja → slip PDF otomatis |
 | 3 | **Validasi Kuota PKL** | Instansi mengisi form → sistem query kuota pada rentang tanggal → hasil Available/Penuh |
-| 4 | **Respon Otomatis & Sertifikat** | Surat balasan PDF otomatis → akhir periode pembimbing input evaluasi → sertifikat digital terbit (nilai ON/OFF) |
+| 4 | **Respon Otomatis, Evaluasi & Sertifikat** | Surat balasan PDF otomatis → mendekati akhir periode peserta mengajukan evaluasi (penilaian diri + refleksi) → pembimbing menyetujui atau mengubah nilai → sertifikat digital terbit (nilai ON/OFF) |
 
 ---
 
@@ -343,7 +368,7 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 | **Kanban board** | Drag & drop kartu antar kolom (pipeline rekrutmen), WIP counter, avatar & label |
 | **Detail drawer / panel samping** | Klik baris membuka panel kanan (tanpa pindah halaman) |
 | **Status lozenge** | Pil kecil berwarna: Hadir, WFH, Pending, Approved, Rejected, Full, Available |
-| **Kalender kuota** | Heatmap hijau/kuning/merah per hari + tooltip "3/5 terisi" |
+| **Kalender kuota** | Grid 12 kartu bulan; heatmap hijau/kuning/merah per bulan + tooltip "Puncak 3/5 terisi"; klik bulan membuka panel peserta |
 | **Form** | Label di atas, validasi inline, bagian dapat dilipat, autosave draft |
 | **Toast & banner** | Konfirmasi aksi, peringatan kuota/anomali |
 | **Empty state & skeleton loading** | Ilustrasi ringan + CTA, skeleton alih-alih spinner penuh |
@@ -356,7 +381,7 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 | **Beranda** | Kartu "Presensi Hari Ini" (tombol Hadir Onsite / WFH), ringkasan progres, tugas menunggu approval, pengumuman |
 | **Absensi** | Presensi Saya (peta + status validasi), Daily Log (editor + tautan task/commit), Workload Malam, Rekap Tim (tabel/kalender), Dashboard Workload |
 | **Rekrutmen** | Daftar lowongan, detail lowongan, **Kanban pipeline**, profil pelamar (resume viewer + scorecard) |
-| **PKL** | Daftar pengajuan, detail pengajuan (surat PDF + hasil cek kuota), **Kalender Kuota**, peserta aktif, form evaluasi, generator sertifikat (pratinjau + **toggle Transkrip Nilai**) |
+| **PKL** | Daftar pengajuan, detail pengajuan (surat PDF + hasil cek kuota), **Kalender Kuota (per bulan)**, peserta aktif, **Evaluasi (antrean pengajuan + panel tinjau/setujui/ubah nilai)**, **Evaluasi Saya (khusus peserta PKL: penilaian diri, refleksi, status)**, generator sertifikat (pratinjau + **toggle Transkrip Nilai**) |
 | **Payroll** | Siklus payroll, rincian per karyawan, pratinjau slip gaji |
 | **Portal Publik** | Career page, **Form Pengajuan PKL**, halaman cek status, verifikasi sertifikat via QR |
 | **Pengaturan** | Lokasi & jaringan, role, template, integrasi, kebijakan lembur |
@@ -383,7 +408,7 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 | `applicants` | job_id, data_parsed, resume_url, stage, skor |
 | `pkl_requests` | nama, instansi, surat_url, tgl_mulai, tgl_selesai, status, nomor_surat |
 | `pkl_quota_rules` | periode_mulai, periode_selesai, kuota_maks, divisi |
-| `pkl_evaluations` | placement_id, kriteria, nilai, pembimbing_id |
+| `pkl_evaluations` | placement_id, status (belum_diajukan/diajukan/revisi/disetujui), nilai_diri (per kriteria), refleksi, nilai_final (per kriteria), catatan_pembimbing, diajukan_at, pembimbing_id, disetujui_at |
 | `certificates` | placement_id, nomor, tampil_nilai (bool), pdf_url, qr_token |
 | `payroll_runs` / `payslips` | periode, status, komponen, total, pdf_url |
 | `document_templates` | tipe, konten_richtext, variabel |
@@ -425,7 +450,7 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 | Fase | Cakupan | Estimasi |
 |---|---|---|
 | **MVP (Fase 1)** | Design system & layout, auth/RBAC, profil karyawan, presensi (IP + Geolocation), Daily Log, Workload Malam | 8–10 minggu |
-| **Fase 2** | Modul PKL lengkap (form publik, kuota, surat otomatis, evaluasi, sertifikat + toggle nilai) | 6–8 minggu |
+| **Fase 2** | Modul PKL lengkap (form publik, kalender kuota per bulan, surat otomatis, pengajuan & persetujuan evaluasi, sertifikat + toggle nilai) | 6–8 minggu |
 | **Fase 3** | Payroll Engine (tetap + freelance), slip gaji PDF | 6–8 minggu |
 | **Fase 4** | Rekrutmen (pipeline, career page, ATS parsing), integrasi task/Git | 6–8 minggu |
 | **Fase 5** | Integrasi LinkedIn, mobile app native (BSSID), mode gelap, laporan lanjutan | 6+ minggu |
@@ -444,6 +469,8 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 | Kesalahan hitung payroll | Dampak finansial & kepercayaan | Mode Draft + review Finance + audit trail + uji dengan data nyata paralel |
 | Data lokasi & pribadi sensitif | Risiko hukum (UU PDP) | Persetujuan eksplisit, minimisasi data, enkripsi, retensi |
 | Kuota PKL salah hitung (overlap) | Peserta melebihi kapasitas | Unit test logika overlap & pengecekan ulang saat approval (hindari race condition) |
+| Kalender bulanan dikira menentukan kuota | Pengajuan ditolak/diterima keliru | Beri label "Puncak okupansi" + catatan bahwa keputusan tetap per hari |
+| Peserta menilai diri terlalu tinggi atau terlalu rendah | Nilai final bias | Nilai final selalu milik pembimbing; nilai diri hanya pembanding |
 
 ---
 
@@ -458,6 +485,9 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 7. Aturan pajak PPh 21: dihitung di sistem atau hanya input manual?
 8. Siapa penandatangan digital surat & sertifikat, dan apakah perlu tanda tangan tersertifikasi (TTE)?
 9. Stack teknologi pilihan (frontend/backend/DB) dan tim pengembang yang tersedia?
+10. Kapan peserta boleh mengajukan evaluasi: apakah ambang default **80% progres periode** sudah sesuai, atau memakai H-minus tertentu sebelum tanggal selesai?
+11. Siapa penyetuju final evaluasi: pembimbing saja, atau perlu persetujuan HR juga?
+12. Apakah ada batas jumlah revisi, atau peserta boleh mengajukan ulang tanpa batas?
 
 ---
 
@@ -466,3 +496,12 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 - **P0:** wajib untuk rilis fase terkait
 - **P1:** penting, dikerjakan bila kapasitas memungkinkan
 - **P2:** nilai tambah, dapat ditunda
+
+---
+
+## 16. Riwayat Revisi
+
+| Tanggal | Perubahan |
+|---|---|
+| 2026-10-28 | **Kalender kuota** diubah dari per hari menjadi **per bulan** (PKL-05, §6.3 logika kuota, §8.5, §8.6); perhitungan kuota pengajuan tetap per hari. |
+| 2026-10-28 | **Evaluasi PKL** diubah menjadi berbasis **pengajuan peserta**: penilaian diri + refleksi → pembimbing menyetujui/mengubah nilai/meminta revisi (PKL-12, PKL-17 s/d PKL-22, alur §6.3 & §7, persona, matriks role, model data, SET-02, risiko, roadmap Fase 2, pertanyaan terbuka 10-12). |
