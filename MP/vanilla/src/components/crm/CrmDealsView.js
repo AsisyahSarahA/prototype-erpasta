@@ -1033,11 +1033,6 @@ export class CrmDealsView {
               </span>
             </div>
 
-            <button type="button" id="addAllocationModuleBtn" class="crm-btn-secondary" style="font-size: 11px; padding: 7px 14px; height: 36px; border-radius: 10px;">
-              ${Icons.plus('', 12)}
-              <span>+ Tambah Modul (Epic)</span>
-            </button>
-
             <!-- Lanjut ke Langkah 3 -->
             <button type="button" class="go-to-step-btn" data-target-step="finance_top" style="font-size: 11px; padding: 7px 14px; height: 36px; background: #4338ca; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
               <span> Lanjut ke Invoice Finance ➔</span>
@@ -1162,7 +1157,7 @@ export class CrmDealsView {
           <div style="display: flex; align-items: center; gap: 10px;">
             <button type="button" id="executeAllocationBtn" class="finance-btn-primary" style="font-size: 12px; padding: 8px 18px; background: #059669; border-color: #059669; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
               ${Icons.sparkles('', 14)}
-              <span>🚀 Terbitkan ke Backlog Kanban</span>
+              <span>Lanjutkan ke project</span>
             </button>
           </div>
         </div>
