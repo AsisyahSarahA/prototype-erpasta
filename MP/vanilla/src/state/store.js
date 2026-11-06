@@ -2137,7 +2137,7 @@ class Store {
             estimateHours: assignedHours,
             timeLoggedHours: 0,
             startDate: new Date().toISOString().split("T")[0],
-            dueDate: new Date(Date.now() + (7 + idx * 4) * 86400000).toISOString().split("T")[0],
+            dueDate: activeModules[idx]?.dueDate || new Date(Date.now() + (7 + idx * 4) * 86400000).toISOString().split("T")[0],
             sprintId: idx < 3 ? newSprintId : undefined,
             visibility: "internal",
             branchName: assignedBranch,
