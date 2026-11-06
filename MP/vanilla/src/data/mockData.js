@@ -130,7 +130,7 @@ const INITIAL_PROJECTS = [
     usedHours: 210,
     totalIssues: 7,
     doneIssues: 2,
-    targetDeadline: "2027-10-31",
+    targetDeadline: "2026-11-30",
     color: "#6366f1",
     repoUrl: "github.com/softwarehouse/perpustakaan-digital-microservices",
     sentryDsn: "https://o4508.ingest.sentry.io/api/4508999/envelope/",
@@ -256,7 +256,10 @@ const INITIAL_EPICS = [
     key: "LIB-EPIC-1",
     title: "Microservice Katalog Buku, Pengarang & ISBN (Laravel Backend)",
     description: "REST API microservice buku dengan Laravel 11, skema PostgreSQL, Redis caching, dan validasi ISBN-13.",
-    color: "#0284c7"
+    color: "#0284c7",
+    startDate: "2026-10-18",
+    dueDate: "2026-11-02",
+    status: "Done"
   },
   {
     id: "epic-lib-2",
@@ -264,7 +267,10 @@ const INITIAL_EPICS = [
     key: "LIB-EPIC-2",
     title: "Portal Katalog Pencarian OPAC & Detail Buku (React Frontend)",
     description: "Antarmuka pencarian cepat full-text judul/penulis, filter kategori buku, dan status ketersediaan rak.",
-    color: "#0d9488"
+    color: "#0d9488",
+    startDate: "2026-10-22",
+    dueDate: "2026-11-06",
+    status: "In Progress"
   },
   {
     id: "epic-lib-3",
@@ -272,7 +278,10 @@ const INITIAL_EPICS = [
     key: "LIB-EPIC-3",
     title: "Microservice Sirkulasi Peminjaman & Perhitungan Denda (Laravel Backend)",
     description: "Logika transaksi peminjaman, batas durasi pinjam 7 hari, denda otomatis Rp 2.000/hari, dan atomic lock.",
-    color: "#d97706"
+    color: "#d97706",
+    startDate: "2026-10-27",
+    dueDate: "2026-11-12",
+    status: "In Progress"
   },
   {
     id: "epic-lib-4",
@@ -280,7 +289,10 @@ const INITIAL_EPICS = [
     key: "LIB-EPIC-4",
     title: "Meja Sirkulasi Petugas & Dashboard Mahasiswa (React Frontend)",
     description: "UI kasir peminjaman barcode scanner kartu mahasiswa & buku, riwayat aktif pinjaman, dan struk digital.",
-    color: "#7c3aed"
+    color: "#7c3aed",
+    startDate: "2026-11-01",
+    dueDate: "2026-11-17",
+    status: "To Do"
   },
   {
     id: "epic-lib-5",
@@ -288,7 +300,10 @@ const INITIAL_EPICS = [
     key: "LIB-EPIC-5",
     title: "API Gateway, Docker Containerization & WhatsApp Reminder (Fullstack)",
     description: "Reverse proxy Traefik/Nginx, orchestrator Docker Compose, dan bot WhatsApp notifikasi pengembalian H-1.",
-    color: "#2563eb"
+    color: "#2563eb",
+    startDate: "2026-11-05",
+    dueDate: "2026-11-22",
+    status: "In Progress"
   },
   {
     id: "epic-lib-6",
@@ -296,7 +311,10 @@ const INITIAL_EPICS = [
     key: "LIB-EPIC-6",
     title: "Matrix Test Case Sirkulasi, K6 Load Test & Staging QA Sign-Off (QA)",
     description: "Rangkaian pengujian integrasi sirkulasi buku, stress test 2.000 concurrent RPS via K6, dan sign-off UAT.",
-    color: "#e11d48"
+    color: "#e11d48",
+    startDate: "2026-11-10",
+    dueDate: "2026-11-27",
+    status: "To Do"
   },
   {
     id: "epic-lib-7",
@@ -304,7 +322,10 @@ const INITIAL_EPICS = [
     key: "LIB-EPIC-7",
     title: "Sprint Backlog, UAT Stakeholder & Tata Kelola Proyek (PM)",
     description: "Dokumentasi user story, koordinasi kickoff meeting kepala perpustakaan, dan verifikasi termin tagihan.",
-    color: "#059669"
+    color: "#059669",
+    startDate: "2026-11-15",
+    dueDate: "2026-12-04",
+    status: "In Progress"
   },
   {
     id: "epic-1",

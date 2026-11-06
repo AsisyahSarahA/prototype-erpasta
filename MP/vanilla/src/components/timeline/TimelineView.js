@@ -1,54 +1,186 @@
 /**
  * TimelineView.js — Vanilla ES Module
- * Atlassian Jira Software Cloud Roadmap & Gantt Timeline
+ * ASTACODE PM — GANTT & ROADMAP VISUAL REDESIGN
  * 
- * Fitur & Penyesuaian:
- * - Sinkronisasi 100% dinamis dengan proyek aktif (store.getActiveProject)
- * - Header Track 'Sprints' berdasarkan sprint asli proyek (Status Aktif / Future)
- * - Penghapusan baris 'Official' dan 'Beta' sesuai permintaan user
- * - Tanggal batas kanvas dinamis (menyesuaikan rentang tanggal tugas, sprint, dan target proyek)
- * - Kolom Kiri 'Tiket / Epik Pengerjaan (${projectCode})':
- *   - Chevron expand/collapse untuk membuka daftar task asli per epik
- *   - Ikon Epik Ungu (⚡ Jira Lightning Style)
- *   - Segmented Mini Progress Bar di bawah judul (Hijau=Done, Biru=In-Progress, Abu=To-Do)
- *   - Child Task asli terindentasi dengan checkbox ☑️ dan status badge (IN PROGRESS, SELESAI, TO DO)
- *   - Tombol '+ Create Epic' untuk menambah epik baru langsung ke store
- * - Gantt Canvas:
- *   - Posisi bar epik dan task dihitung langsung dari tanggal awal & akhir tugas riil
- *   - Live Running Progress: Garis diagonal animasi mengalir (flowing stripes) pada task/epik In-Progress
- *   - Live ticker persentase dinamis ("ketika prosesnya berjalan maka bar-nya juga berjalan")
- *   - Garis dependensi melengkung (SVG S-Curve / Bezier Connectors) antar epik bertingkat
- * - Floating Control Toolbar di kanan bawah (‹ ›, Today, Weeks | Months | Quarters, Info, Fullscreen)
+ * Spesifikasi & Kesesuaian Desain (Sesuai REDESAIN_ROADMAP&GANT.MD):
+ * 1. Struktur Layout Utama:
+ *    - Left Panel: Work Item List (320px desktop), Nama Epic (text truncation + tooltip), Kode Epic,
+ *      Flat Lucide icons, Expand/Collapse, Actual Progress Indicator, Child Tasks berindentasi, Status Badge,
+ *      dan Tombol '+ Create Epic' di bagian bawah.
+ *    - Right Panel: Sticky Calendar Header (Bulan & Tahun), Baris Sprints, Baris Releases (milestones marker),
+ *      Gantt Bars, Curved SVG Dependency Lines, Today Indicator, serta horizontal scroll mandiri dengan vertical scroll sinkron.
+ * 2. Baris Sprint & Releases Terpisah:
+ *    - Sprints: Menampilkan nama Sprint, tanggal mulai/selesai, status, dan indikator ACTIVE.
+ *    - Releases: Menampilkan milestone Official Release, Beta Release, dan UAT sebagai marker pada tanggal tertentu. Klik marker membuka detail Release.
+ * 3. Status Color System (WAJIB):
+ *    - Backlog: #94A3B8 | To Do: #3B82F6 | In Progress: #F59E0B | In Review: #8B5CF6 | Testing / QA: #06B6D4
+ *    - Blocked: #EF4444 | On Hold: #64748B | Reopened: #F97316 | Done: #22C55E | Cancelled: #6B7280
+ *    - Nol gradient (flat enterprise), border radius 5-6px, warning indicator pada pekerjaan terlambat/Blocked.
+ *    - Warna ungu #4F46E5 hanya untuk identitas brand dan navigasi aktif.
+ * 4. Dependency Lines:
+ *    - SVG curved cubic bezier connector (#94A3B8, stroke-width 1.8px). Highlight #4F46E5 saat hover/pilih item.
+ * 5. Controls Toolbar:
+ *    - Previous, Next, Today, Weeks, Months (default), Quarters, Zoom In, Zoom Out, Fullscreen, Info.
+ * 6. Interaksi Lengkap & localStorage:
+ *    - Create, Edit, Delete Epic dengan modal interaktif ASTACODE PM.
+ *    - Sinkronisasi dan penyimpanan perubahan ke localStorage.
+ * 7. Nol Emoji — 100% Menggunakan Lucide Flat SVG Icons.
  */
 
 import { store } from '../../state/store.js';
 import { Icons } from '../../utils/icons.js';
+
+// =============================================================================
+// SISTEM WARNA STATUS WAJIB (SESUAI DOKUMEN REDESAIN_ROADMAP&GANT.MD)
+// =============================================================================
+export const STATUS_CONFIG = {
+  'Backlog': { label: 'Backlog', barColor: '#94A3B8', softBg: '#F1F5F9', textColor: '#334155', className: 'tl-status--backlog' },
+  'To Do': { label: 'To Do', barColor: '#3B82F6', softBg: '#EFF6FF', textColor: '#1E40AF', className: 'tl-status--todo' },
+  'In Progress': { label: 'In Progress', barColor: '#F59E0B', softBg: '#FFFBEB', textColor: '#92400E', className: 'tl-status--in-progress' },
+  'In Review': { label: 'In Review', barColor: '#8B5CF6', softBg: '#F5F3FF', textColor: '#5B21B6', className: 'tl-status--in-review' },
+  'Testing / QA': { label: 'Testing / QA', barColor: '#06B6D4', softBg: '#ECFEFF', textColor: '#155E75', className: 'tl-status--testing-qa' },
+  'Blocked': { label: 'Blocked', barColor: '#EF4444', softBg: '#FEF2F2', textColor: '#991B1B', className: 'tl-status--blocked' },
+  'On Hold': { label: 'On Hold', barColor: '#64748B', softBg: '#F1F5F9', textColor: '#334155', className: 'tl-status--on-hold' },
+  'Reopened': { label: 'Reopened', barColor: '#F97316', softBg: '#FFF7ED', textColor: '#9A3412', className: 'tl-status--reopened' },
+  'Done': { label: 'Done', barColor: '#22C55E', softBg: '#F0FDF4', textColor: '#166534', className: 'tl-status--done' },
+  'Cancelled': { label: 'Cancelled', barColor: '#6B7280', softBg: '#F3F4F6', textColor: '#374151', className: 'tl-status--cancelled' }
+};
+
+export function normalizeStatus(rawStatus) {
+  if (!rawStatus) return 'Backlog';
+  const s = String(rawStatus).trim().toLowerCase();
+  if (s === 'done' || s === 'selesai' || s === 'completed') return 'Done';
+  if (s === 'in progress' || s === 'sedang dikerjakan' || s === 'dianalisis') return 'In Progress';
+  if (s === 'in review' || s === 'review pr' || s === 'menunggu persetujuan') return 'In Review';
+  if (s === 'testing / qa' || s === 'testing' || s === 'qa' || s === 'qa/testing') return 'Testing / QA';
+  if (s === 'blocked' || s === 'kendala' || s === 'terkendala') return 'Blocked';
+  if (s === 'on hold' || s === 'tertunda') return 'On Hold';
+  if (s === 'reopened' || s === 'dibuka kembali') return 'Reopened';
+  if (s === 'to do' || s === 'todo' || s === 'baru') return 'To Do';
+  if (s === 'cancelled' || s === 'dibatalkan') return 'Cancelled';
+  return 'Backlog';
+}
+
+const LOCAL_STORAGE_RELEASES_KEY = 'astacode_pm_timeline_releases';
+const LOCAL_STORAGE_EPICS_KEY = 'astacode_pm_timeline_epics';
 
 export class TimelineView {
   constructor() {
     this.container = document.createElement('div');
     this.container.className = 'timeline-view';
 
-    this.groupingMode = 'epic'; // 'epic' | 'assignee' | 'status'
     this.searchQuery = '';
     this.statusFilter = 'all';
 
-    // State expand/collapse per epik (default buka epik ke-2 atau epik yang memiliki task aktif)
+    // State expand/collapse per epik
     this.expandedEpics = {};
 
     // Zoom level ('weeks' | 'months' | 'quarters')
     this.zoomMode = 'months';
+    this.zoomLevel = 1.0; // 0.8 to 1.5
 
-    // Simulated live progress ticker for active In-Progress items
-    this.liveProgress = 64;
+    // Simulated smooth live progress ticker for active In-Progress items (tanpa gradient)
+    this.liveProgress = 62;
     this.liveTimer = null;
     this.unsubscribe = null;
+
+    // Active Modal State ('create_epic' | 'edit_epic' | 'release_detail' | 'delete_epic' | null)
+    this.activeModal = null;
+    this.modalData = null;
+
+    // Load releases from localStorage or initialize defaults
+    this.releases = this.loadReleases();
+
+    // Hydrate epics from localStorage if available
+    this.hydrateEpicsFromStorage();
 
     this.init();
   }
 
+  loadReleases() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(LOCAL_STORAGE_RELEASES_KEY);
+        if (saved) return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Gagal memuat releases dari localStorage:', e);
+    }
+
+    // Default releases untuk proyek awal
+    return [
+      {
+        id: 'rel-lib-beta',
+        projectId: 'proj-perpustakaan',
+        name: 'Beta 03',
+        type: 'beta',
+        targetDate: '2026-10-28',
+        status: 'Done',
+        deliverables: ['Microservice Katalog Buku (LIB-DIG-EPIC-1)', 'Portal OPAC React (LIB-DIG-EPIC-2)'],
+        description: 'Rilis versi Beta untuk internal testing staf perpustakaan dan validasi skema database katalog.'
+      },
+      {
+        id: 'rel-lib-official',
+        projectId: 'proj-perpustakaan',
+        name: 'Official 01',
+        type: 'official',
+        targetDate: '2026-11-10',
+        status: 'In Progress',
+        deliverables: ['Sirkulasi Peminjaman (LIB-DIG-EPIC-3)', 'Meja Kasir & Barcode (LIB-DIG-EPIC-4)', 'Docker Traefik Gateway (LIB-DIG-EPIC-5)'],
+        description: 'Rilis resmi modul transaksi sirkulasi dan meja layanan kasir perpustakaan digital.'
+      },
+      {
+        id: 'rel-lib-uat',
+        projectId: 'proj-perpustakaan',
+        name: 'UAT Sign-Off',
+        type: 'uat',
+        targetDate: '2026-11-20',
+        status: 'To Do',
+        deliverables: ['Stress Test K6 2000 RPS (LIB-DIG-EPIC-6)', 'Berita Acara UAT Stakeholder (LIB-DIG-EPIC-7)'],
+        description: 'Sign-off final pengujian UAT bersama Kepala Perpustakaan Universitas Nusantara Cendekia.'
+      }
+    ];
+  }
+
+  saveReleases() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(LOCAL_STORAGE_RELEASES_KEY, JSON.stringify(this.releases));
+      }
+    } catch (e) {
+      console.warn('Gagal menyimpan releases ke localStorage:', e);
+    }
+  }
+
+  hydrateEpicsFromStorage() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(LOCAL_STORAGE_EPICS_KEY);
+        if (saved) {
+          const epics = JSON.parse(saved);
+          if (Array.isArray(epics) && epics.length > 0) {
+            store.setState({ epics });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Gagal memuat epics dari localStorage:', e);
+    }
+  }
+
+  saveEpicsToStorage() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const { epics } = store.getState();
+        localStorage.setItem(LOCAL_STORAGE_EPICS_KEY, JSON.stringify(epics));
+      }
+    } catch (e) {
+      console.warn('Gagal menyimpan epics ke localStorage:', e);
+    }
+  }
+
   init() {
-    // Default expand the epic that has in-progress tasks or the 2nd epic
+    // Default expand the 2nd epic or the first epic with in-progress tasks
     const activeProj = store.getActiveProject();
     const epics = store.getState().epics.filter(e => e.projectId === activeProj?.id);
     if (epics.length > 1) {
@@ -70,16 +202,21 @@ export class TimelineView {
     return this.container;
   }
 
+  destroy() {
+    if (this.liveTimer) clearInterval(this.liveTimer);
+    if (this.unsubscribe) this.unsubscribe();
+  }
+
   /**
    * Menggerakkan progress bar secara real-time untuk task/epik yang berstatus 'In Progress'
-   * Memberikan efek visual "ketika prosesnya berjalan maka bar-nya juga berjalan"
+   * Memberikan efek visual dinamis tanpa menggunakan gradient
    */
   startLiveTicker() {
     if (this.liveTimer) clearInterval(this.liveTimer);
 
     this.liveTimer = setInterval(() => {
-      this.liveProgress += 0.5;
-      if (this.liveProgress > 88) {
+      this.liveProgress += 0.4;
+      if (this.liveProgress > 85) {
         this.liveProgress = 55;
       }
 
@@ -94,20 +231,20 @@ export class TimelineView {
         badge.textContent = `${Math.round(this.liveProgress)}%`;
       });
 
-      // Update segmen biru di mini progress bar kolom kiri
-      const runningSegs = this.container.querySelectorAll('.tl-seg-fill.in-progress.running-active');
+      // Update segmen In Progress pada progress bar di work item list
+      const runningSegs = this.container.querySelectorAll('.tl-epic-progress-fill.in-progress-running');
       runningSegs.forEach(seg => {
-        seg.style.width = `${Math.round(this.liveProgress * 0.45)}%`;
+        seg.style.width = `${this.liveProgress}%`;
       });
-    }, 1200);
+    }, 1400);
   }
 
   /**
    * Menghitung posisi left (%) dan width (%) bar berdasarkan rentang tanggal
    */
-  calculateBarPosition(startDateStr, dueDateStr, fallbackStart = 5, fallbackSpan = 12) {
-    const timelineStart = this.timelineStart || new Date(2026, 9, 10);
-    const totalDays = this.totalDays || 45;
+  calculateBarPosition(startDateStr, dueDateStr, fallbackStart = 5, fallbackSpan = 14) {
+    const timelineStart = this.timelineStart || new Date(2026, 9, 1);
+    const totalDays = this.totalDays || 90;
 
     const parseToDayIdx = (dStr, fallback) => {
       if (!dStr) return fallback;
@@ -119,14 +256,15 @@ export class TimelineView {
 
     const startIdx = parseToDayIdx(startDateStr, fallbackStart);
     const endIdx = parseToDayIdx(dueDateStr, Math.min(totalDays - 1, startIdx + fallbackSpan));
-    const spanDays = Math.max(2, endIdx - startIdx + 1);
+    const spanDays = Math.max(3, endIdx - startIdx + 1);
 
     const leftPercent = (startIdx / totalDays) * 100;
-    const widthPercent = (spanDays / totalDays) * 100;
+    // Berikan lebar minimum 8.5% agar bar selalu proporsional dan teks dapat dibaca dengan jelas
+    const widthPercent = Math.max(8.5, (spanDays / totalDays) * 100);
 
     return {
-      left: `${Math.min(94, Math.max(0, leftPercent))}%`,
-      width: `${Math.max(4.5, Math.min(98 - leftPercent, widthPercent))}%`,
+      left: `${Math.min(90, Math.max(0, leftPercent))}%`,
+      width: `${Math.min(98 - leftPercent, widthPercent)}%`,
       spanDays,
       startIdx,
       endIdx
@@ -142,15 +280,18 @@ export class TimelineView {
     const projectTasks = tasks.filter(t => t.projectId === currentProjectId);
     const currentEpics = epics.filter(e => e.projectId === currentProjectId);
     const projectSprints = (sprints || []).filter(s => s.projectId === currentProjectId);
+    const projectReleases = this.releases.filter(r => r.projectId === currentProjectId);
     const projectCode = activeProject?.code || 'PRJ';
 
     // 1. Filter tasks berdasarkan pencarian dan status
     const filteredTasks = projectTasks.filter(task => {
       if (this.statusFilter !== 'all') {
-        if (this.statusFilter === 'in_progress' && task.status !== 'In Progress' && task.status !== 'Dianalisis') return false;
-        if (this.statusFilter === 'done' && task.status !== 'Selesai') return false;
-        if (this.statusFilter === 'qa' && task.status !== 'QA/Testing' && task.status !== 'In Review' && task.status !== 'Menunggu Persetujuan') return false;
-        if (this.statusFilter === 'backlog' && task.status !== 'Backlog' && task.status !== 'To Do' && task.status !== 'Baru') return false;
+        const norm = normalizeStatus(task.status);
+        if (this.statusFilter === 'in_progress' && norm !== 'In Progress') return false;
+        if (this.statusFilter === 'done' && norm !== 'Done') return false;
+        if (this.statusFilter === 'qa' && norm !== 'Testing / QA' && norm !== 'In Review') return false;
+        if (this.statusFilter === 'backlog' && norm !== 'Backlog' && norm !== 'To Do') return false;
+        if (this.statusFilter === 'blocked' && norm !== 'Blocked') return false;
       }
       if (this.searchQuery.trim()) {
         const q = this.searchQuery.toLowerCase();
@@ -162,40 +303,60 @@ export class TimelineView {
     });
 
     // 2. Perhitungan Statistik KPI
-    const totalTasksCount = filteredTasks.length;
-    const completedTasksCount = filteredTasks.filter(t => t.status === 'Selesai').length;
-    const inProgressCount = filteredTasks.filter(t => t.status === 'In Progress' || t.status === 'Dianalisis').length;
-    const totalEstimatedHours = filteredTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
-    const totalLoggedHours = filteredTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
+    const totalTasksCount = projectTasks.length;
+    const completedTasksCount = projectTasks.filter(t => normalizeStatus(t.status) === 'Done').length;
+    const inProgressCount = projectTasks.filter(t => normalizeStatus(t.status) === 'In Progress').length;
+    const totalEstimatedHours = projectTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+    const totalLoggedHours = projectTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
     const completionPercentage = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
 
     // 3. Menghitung Rentang Tanggal Kalender Kanvas secara Dinamis dari Data Proyek Riil
-    const collectedDates = [];
-    if (activeProject?.startDate) collectedDates.push(activeProject.startDate);
-    if (activeProject?.targetDeadline) collectedDates.push(activeProject.targetDeadline);
-    projectSprints.forEach(s => {
-      if (s.startDate) collectedDates.push(s.startDate);
-      if (s.endDate) collectedDates.push(s.endDate);
-    });
+    // Fokus pada jendela pengerjaan aktif (Active Work Window: 2-3 bulan) agar lebar bar proporsional dan enak dilihat
+    const workTimestamps = [];
+
+    // Kumpulkan tanggal dari tasks, epics, sprints, dan releases
     projectTasks.forEach(t => {
-      if (t.startDate) collectedDates.push(t.startDate);
-      if (t.dueDate) collectedDates.push(t.dueDate);
+      if (t.startDate) workTimestamps.push(new Date(t.startDate).getTime());
+      if (t.dueDate) workTimestamps.push(new Date(t.dueDate).getTime());
+    });
+    currentEpics.forEach(e => {
+      if (e.startDate) workTimestamps.push(new Date(e.startDate).getTime());
+      if (e.dueDate) workTimestamps.push(new Date(e.dueDate).getTime());
+    });
+    projectSprints.forEach(s => {
+      if (s.startDate) workTimestamps.push(new Date(s.startDate).getTime());
+      if (s.endDate) workTimestamps.push(new Date(s.endDate).getTime());
+    });
+    projectReleases.forEach(r => {
+      if (r.targetDate) workTimestamps.push(new Date(r.targetDate).getTime());
     });
 
-    const validTimestamps = collectedDates.map(ds => new Date(ds).getTime()).filter(ts => !isNaN(ts));
-    let minTimestamp = validTimestamps.length > 0 ? Math.min(...validTimestamps) : new Date(2026, 9, 15).getTime();
-    let maxTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : new Date(2026, 10, 30).getTime();
+    const validWorkTs = workTimestamps.filter(ts => !isNaN(ts));
+    const earliestWorkTs = validWorkTs.length > 0 ? Math.min(...validWorkTs) : new Date(2026, 9, 15).getTime();
+    const latestWorkTs = validWorkTs.length > 0 ? Math.max(...validWorkTs) : new Date(2026, 11, 10).getTime();
 
-    // Berikan bantalan margin tanggal di awal dan di akhir
-    minTimestamp -= 3 * 86400000;
-    maxTimestamp += 7 * 86400000;
+    // Mulai kalender dari tanggal 1 di bulan dimulainya pekerjaan (misal 1 Oktober 2026)
+    const dStart = new Date(earliestWorkTs);
+    const timelineStart = new Date(dStart.getFullYear(), dStart.getMonth(), 1, 0, 0, 0);
 
-    const timelineStart = new Date(minTimestamp);
-    timelineStart.setHours(0, 0, 0, 0);
+    // Selesai kalender di akhir bulan setelah pekerjaan terakhir selesai (misal 31 Desember 2026)
+    const dEnd = new Date(latestWorkTs);
+    const timelineEnd = new Date(dEnd.getFullYear(), dEnd.getMonth() + 1, 0, 23, 59, 59);
 
-    const totalDays = Math.max(30, Math.ceil((maxTimestamp - timelineStart.getTime()) / 86400000));
+    // Hitung total hari kalender yang proporsional (ideal 60-95 hari untuk 2-3 bulan)
+    let baseDays = Math.ceil((timelineEnd.getTime() - timelineStart.getTime()) / 86400000);
+    baseDays = Math.max(60, Math.min(95, baseDays));
+
+    // Sesuaikan totalDays berdasarkan zoomMode
+    const totalDays = Math.round(baseDays / (this.zoomMode === 'weeks' ? 1.4 : this.zoomMode === 'quarters' ? 0.7 : 1.0));
     this.timelineStart = timelineStart;
     this.totalDays = totalDays;
+
+    // Menghitung Posisi Garis Hari Ini (Today Indicator)
+    const today = new Date();
+    const todayDiff = Math.round((today.getTime() - timelineStart.getTime()) / 86400000);
+    const todayValid = todayDiff >= 0 && todayDiff < totalDays;
+    const todayLeftPercent = todayValid ? (todayDiff / totalDays) * 100 : 45;
 
     // Menghasilkan Kolom Header Bulan (OKT, NOV, DES, dll)
     const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
@@ -220,7 +381,7 @@ export class TimelineView {
       }
     }
 
-    // 4. Data Sprints Asli Proyek (Menghitung posisi bar pada timeline)
+    // 4. Data Sprints Asli Proyek
     const sprintMarkers = projectSprints.map((sp, sIdx) => {
       const sPos = this.calculateBarPosition(sp.startDate, sp.endDate, 5 + sIdx * 14, 14);
       return {
@@ -235,11 +396,13 @@ export class TimelineView {
       };
     });
 
-    // Jika proyek belum memiliki data sprint, buat sprint default proporsional
     if (sprintMarkers.length === 0) {
       sprintMarkers.push({
         id: 'sp-default-1',
         name: 'Sprint 1: Fondasi Arsitektur & Fitur Utama',
+        startDate: '2026-10-18',
+        endDate: '2026-11-01',
+        status: 'active',
         active: true,
         left: '12%',
         width: '28%'
@@ -247,11 +410,25 @@ export class TimelineView {
       sprintMarkers.push({
         id: 'sp-default-2',
         name: 'Sprint 2: Integrasi Sistem & UAT Client',
+        startDate: '2026-11-02',
+        endDate: '2026-11-16',
+        status: 'future',
         active: false,
         left: '42%',
         width: '28%'
       });
     }
+
+    // 5. Data Releases Asli Proyek (Milestone Markers)
+    const releaseMarkers = projectReleases.map(rel => {
+      const rPos = this.calculateBarPosition(rel.targetDate, rel.targetDate, 20, 2);
+      const norm = normalizeStatus(rel.status);
+      return {
+        ...rel,
+        normStatus: norm,
+        left: rPos.left
+      };
+    });
 
     this.container.innerHTML = `
       <div class="timeline-container">
@@ -273,11 +450,12 @@ export class TimelineView {
 
           <div class="timeline-project-pills" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span class="tl-proj-pill tl-proj-pill--active" style="cursor:default;display:inline-flex;align-items:center;gap:6px;">
-              <span style="width:8px;height:8px;border-radius:50%;background:#6366f1;display:inline-block;"></span>
+              <span style="width:8px;height:8px;border-radius:50%;background:#4f46e5;display:inline-block;"></span>
               <span>${this.escapeHtml(projectCode)} · ${this.escapeHtml(activeProject?.clientName || 'Klien')}</span>
             </span>
-            <span class="tl-proj-pill" style="cursor:default;background:#f8fafc;color:#334155;border:1px solid #e2e8f0;">
-              📦 ${currentEpics.length} Epik · ${projectTasks.length} Tiket
+            <span class="tl-proj-pill" style="cursor:default;background:#f8fafc;color:#334155;border:1px solid #e2e8f0;display:inline-flex;align-items:center;gap:6px;">
+              ${Icons.layers('', 13)}
+              <span>${currentEpics.length} Epik · ${projectTasks.length} Tiket</span>
             </span>
           </div>
         </div>
@@ -302,27 +480,36 @@ export class TimelineView {
                 <label for="tlStatusFilter" class="timeline-filter-label">Status:</label>
                 <select id="tlStatusFilter" class="timeline-status-select">
                   <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>Semua Status (${projectTasks.length})</option>
-                  <option value="in_progress" ${this.statusFilter === 'in_progress' ? 'selected' : ''}>Sedang Dikerjakan</option>
-                  <option value="qa" ${this.statusFilter === 'qa' ? 'selected' : ''}>QA / Review Approval</option>
-                  <option value="done" ${this.statusFilter === 'done' ? 'selected' : ''}>Selesai</option>
+                  <option value="in_progress" ${this.statusFilter === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                  <option value="qa" ${this.statusFilter === 'qa' ? 'selected' : ''}>Testing / QA &amp; Review</option>
+                  <option value="done" ${this.statusFilter === 'done' ? 'selected' : ''}>Done / Selesai</option>
                   <option value="backlog" ${this.statusFilter === 'backlog' ? 'selected' : ''}>Backlog / To Do</option>
+                  <option value="blocked" ${this.statusFilter === 'blocked' ? 'selected' : ''}>Blocked (Kendala)</option>
                 </select>
               </div>
             </div>
 
-            <!-- Legend Status -->
+            <!-- Legend Status Sesuai Sistem Warna Wajib -->
             <div class="timeline-legend">
               <div class="timeline-legend-item">
-                <span class="timeline-legend-dot timeline-legend-dot--done"></span>
-                <span>Selesai</span>
+                <span class="timeline-legend-dot" style="background:#22c55e;"></span>
+                <span>Done</span>
               </div>
               <div class="timeline-legend-item">
-                <span class="timeline-legend-dot timeline-legend-dot--progress"></span>
-                <span style="font-weight:700;color:#2563eb;">In Progress</span>
+                <span class="timeline-legend-dot" style="background:#f59e0b;"></span>
+                <span>In Progress</span>
               </div>
               <div class="timeline-legend-item">
-                <span style="font-size:12px;">⚠️</span>
-                <span>Perlu Perhatian</span>
+                <span class="timeline-legend-dot" style="background:#3b82f6;"></span>
+                <span>To Do</span>
+              </div>
+              <div class="timeline-legend-item">
+                <span class="timeline-legend-dot" style="background:#8b5cf6;"></span>
+                <span>In Review</span>
+              </div>
+              <div class="timeline-legend-item">
+                <span class="timeline-legend-dot" style="background:#ef4444;"></span>
+                <span>Blocked</span>
               </div>
               <div class="timeline-legend-today">
                 <span class="timeline-legend-today-indicator"></span>
@@ -332,12 +519,12 @@ export class TimelineView {
           </div>
         </div>
 
-        <!-- 3. Metric Summary Cards -->
+        <!-- 3. Metric Summary Cards (4 KPI Minimalis) -->
         <div class="timeline-metrics-grid">
           <div class="timeline-metric-card">
             <div>
               <div class="timeline-metric-card__header">
-                <span class="timeline-metric-card__label">Progres Penyelesaian</span>
+                <span class="timeline-metric-card__label">Progress Penyelesaian</span>
               </div>
               <div class="timeline-metric-card__body">
                 <div class="timeline-metric-card__value-row">
@@ -345,7 +532,7 @@ export class TimelineView {
                   <span class="timeline-metric-card__subvalue">(${completedTasksCount}/${totalTasksCount} tiket)</span>
                 </div>
                 <div class="timeline-metric-card__progress-track">
-                  <div class="timeline-metric-card__progress-bar" style="width: ${completionPercentage}%;"></div>
+                  <div class="timeline-metric-card__progress-bar" style="width: ${completionPercentage}%; background-color:#22c55e;"></div>
                 </div>
               </div>
             </div>
@@ -359,12 +546,12 @@ export class TimelineView {
               </div>
               <div class="timeline-metric-card__body">
                 <div class="timeline-metric-card__value-row">
-                  <span class="timeline-metric-card__value timeline-metric-card__value--primary">${inProgressCount}</span>
+                  <span class="timeline-metric-card__value" style="color:#f59e0b;">${inProgressCount}</span>
                   <span class="timeline-metric-card__subvalue">tiket sedang berjalan</span>
                 </div>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Proses pengerjaan live mengalir dinamis pada sprint aktif.</p>
+            <p class="timeline-metric-card__desc">Pekerjaan berjalan pada sprint aktif dengan alokasi tim teknis.</p>
           </div>
 
           <div class="timeline-metric-card">
@@ -379,7 +566,7 @@ export class TimelineView {
                 </div>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Akumulasi estimasi jam pengerjaan modul arsitektur proyek.</p>
+            <p class="timeline-metric-card__desc">Total estimasi jam pengerjaan seluruh lingkup arsitektur.</p>
           </div>
 
           <div class="timeline-metric-card">
@@ -389,24 +576,24 @@ export class TimelineView {
               </div>
               <div class="timeline-metric-card__body">
                 <div class="timeline-metric-card__value-row">
-                  <span class="timeline-metric-card__value timeline-metric-card__value--purple">${this.escapeHtml(activeProject?.targetDeadline || '2026-11-20')}</span>
-                  <span class="timeline-metric-card__badge">Target Rilis</span>
+                  <span class="timeline-metric-card__value" style="color:#4f46e5;">${this.escapeHtml((activeProject?.targetDeadline && activeProject.targetDeadline < '2027-01-01') ? activeProject.targetDeadline : '2026-11-30')}</span>
+                  <span class="timeline-metric-card__badge" style="background:#eef2ff; color:#4f46e5; border-color:#c7d2fe;">Target Rilis</span>
                 </div>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Target penyelesaian proyek sesuai kontrak kesepakatan client.</p>
+            <p class="timeline-metric-card__desc">Target penyelesaian proyek sesuai kontrak kesepakatan klien.</p>
           </div>
         </div>
 
-        <!-- 4. GANTT ROADMAP CANVAS 1:1 JIRA SOFTWARE -->
+        <!-- 4. GANTT ROADMAP CANVAS SESUAI STRUKTUR REFERENSI -->
         <div class="timeline-canvas" style="position: relative;">
           <div class="timeline-canvas__inner" id="ganttScrollContainer">
             
-            <!-- Sticky Month / Time Header Row -->
-            <div class="timeline-header-row" style="border-bottom: 1px solid #cbd5e1;">
-              <div class="timeline-col-ticket" style="background:#fafbfc;border-right:1px solid #e2e8f0;padding:12px 16px;">
+            <!-- Sticky Month / Calendar Header Row -->
+            <div class="timeline-header-row" style="border-bottom: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 25; background: #ffffff;">
+              <div class="timeline-col-ticket" style="background:#fafbfc;border-right:1px solid #e2e8f0;padding:12px 16px;width:320px;min-width:320px;max-width:320px;position:sticky;left:0;z-index:30;">
                 <span class="timeline-col-ticket__header-title" style="font-size:11.5px;font-weight:800;color:#0f172a;">
-                  Tiket / Epik Pengerjaan (${this.escapeHtml(projectCode)})
+                  Work Item List (${this.escapeHtml(projectCode)})
                 </span>
               </div>
 
@@ -419,77 +606,162 @@ export class TimelineView {
               </div>
             </div>
 
-            <!-- Track Row: SPRINTS (Hanya Sprints, Tanpa Official / Beta) -->
+            <!-- Track Row 1: SPRINTS -->
             <div class="tl-meta-track-row">
-              <div class="timeline-col-ticket tl-track-label">
-                <span>Sprints</span>
+              <div class="timeline-col-ticket tl-track-label" style="width:320px;min-width:320px;max-width:320px;position:sticky;left:0;z-index:20;background:#fafbfc;">
+                <span style="font-weight:700;">Sprints</span>
+                <span style="font-size:10px; color:#64748b; margin-left:auto; font-weight:600;">${sprintMarkers.length} Sprint</span>
               </div>
               <div class="tl-meta-track-content">
                 ${sprintMarkers.map(sp => `
-                  <div class="tl-sprint-marker ${sp.active ? 'tl-sprint-marker--active' : ''}" style="left: ${sp.left}; width: ${sp.width};">
+                  <div
+                    class="tl-sprint-marker ${sp.active ? 'tl-sprint-marker--active' : ''}"
+                    style="left: ${sp.left}; width: ${sp.width};"
+                    title="${this.escapeHtml(sp.name)} (${sp.startDate} s/d ${sp.endDate})"
+                  >
                     <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                      ${sp.active ? '⚡ ' : ''}${this.escapeHtml(sp.name)}
+                      ${this.escapeHtml(sp.name)}
                     </span>
-                    ${sp.active ? '<span class="tl-sprint-active-badge">AKTIF</span>' : ''}
+                    ${sp.active ? '<span class="tl-sprint-active-badge">ACTIVE</span>' : ''}
                   </div>
                 `).join('')}
               </div>
             </div>
 
+            <!-- Track Row 2: RELEASES (Milestone Markers) -->
+            <div class="tl-meta-track-row" style="background:#fafbfc;">
+              <div class="timeline-col-ticket tl-track-label" style="width:320px;min-width:320px;max-width:320px;position:sticky;left:0;z-index:20;background:#f8fafc;">
+                <span style="font-weight:700;">Releases</span>
+                <span style="font-size:10px; color:#64748b; margin-left:auto; font-weight:600;">${releaseMarkers.length} Milestone</span>
+              </div>
+              <div class="tl-meta-track-content">
+                ${releaseMarkers.map(rel => {
+                  const isDone = rel.normStatus === 'Done';
+                  const isInProg = rel.normStatus === 'In Progress';
+                  const relClass = isDone ? 'tl-release-marker--done' : isInProg ? 'tl-release-marker--in-progress' : 'tl-release-marker--todo';
+                  const iconSvg = isDone
+                    ? Icons.checkCircle('', 12)
+                    : rel.type === 'official'
+                      ? Icons.flag('', 12)
+                      : Icons.shieldCheck('', 12);
+
+                  return `
+                    <div
+                      class="tl-release-marker ${relClass}"
+                      data-release-id="${rel.id}"
+                      style="left: ${rel.left};"
+                      title="Milestone ${this.escapeHtml(rel.name)} (${rel.targetDate})&#10;Klik untuk membuka detail release"
+                    >
+                      <span class="tl-release-icon">${iconSvg}</span>
+                      <span>${this.escapeHtml(rel.name)}</span>
+                      <span style="font-size:9.5px; opacity:0.8; font-family:var(--font-mono);">${rel.targetDate.slice(5)}</span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
             <!-- Gantt Body: Epics & Hierarchical Tasks with SVG Bezier Connectors -->
-            <div style="position: relative; min-width: 1200px;" id="ganttRowsCanvas">
+            <div style="position: relative; min-width: 1400px; width: 100%;" id="ganttRowsCanvas">
               
               <!-- SVG Bezier Curves Overlay Layer (Cascading S-Curve Connectors) -->
-              <svg class="tl-dependency-svg" id="ganttDependencySvg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 8;">
+              <svg class="tl-dependency-svg" id="ganttDependencySvg">
                 <!-- Paths will be drawn dynamically by drawDependencyLines() -->
               </svg>
+
+              <!-- Today Indicator Line -->
+              ${todayValid ? `
+                <div class="tl-today-line" style="left: ${todayLeftPercent}%;" title="Hari Ini: ${today.toLocaleDateString('id-ID')}">
+                  <span class="tl-today-pill">TODAY</span>
+                </div>
+              ` : ''}
 
               <!-- Epics Iteration (100% Mengacu pada Epik & Task Riil Proyek Ini) -->
               ${currentEpics.map((epic, epicIdx) => {
                 const epicTasks = filteredTasks.filter(t => t.epicId === epic.id);
                 const isExpanded = !!this.expandedEpics[epic.id];
 
-                // Hitung rentang tanggal epik dari child task aslinya
+                // Default staggered dates per epik agar alur pengerjaan berurutan alami
+                const defaultStarts = ['2026-10-18', '2026-10-22', '2026-10-27', '2026-11-01', '2026-11-05', '2026-11-10', '2026-11-15'];
+                const defaultDues = ['2026-11-02', '2026-11-06', '2026-11-12', '2026-11-17', '2026-11-22', '2026-11-27', '2026-12-04'];
+                const fallbackStart = defaultStarts[epicIdx % defaultStarts.length];
+                const fallbackDue = defaultDues[epicIdx % defaultDues.length];
+
+                // Hitung rentang tanggal epik dari child task aslinya atau fallback staggered
                 const taskStarts = epicTasks.map(t => t.startDate).filter(Boolean).sort();
                 const taskDues = epicTasks.map(t => t.dueDate).filter(Boolean).sort();
-                const epicStartDate = taskStarts.length > 0 ? taskStarts[0] : (epic.startDate || '2026-10-18');
-                const epicDueDate = taskDues.length > 0 ? taskDues[taskDues.length - 1] : (epic.dueDate || '2026-11-20');
+                const epicStartDate = epic.startDate || (taskStarts.length > 0 ? taskStarts[0] : fallbackStart);
+                const epicDueDate = epic.dueDate || (taskDues.length > 0 ? taskDues[taskDues.length - 1] : fallbackDue);
 
-                const barPos = this.calculateBarPosition(epicStartDate, epicDueDate, 5 + epicIdx * 5, 12);
+                const barPos = this.calculateBarPosition(epicStartDate, epicDueDate, 5 + epicIdx * 6, 15);
 
-                const doneCount = epicTasks.filter(t => t.status === 'Selesai').length;
-                const inProgCount = epicTasks.filter(t => t.status === 'In Progress' || t.status === 'Dianalisis').length;
-                const todoCount = Math.max(0, epicTasks.length - doneCount - inProgCount);
+                const doneCount = epicTasks.filter(t => normalizeStatus(t.status) === 'Done').length;
+                const inProgCount = epicTasks.filter(t => normalizeStatus(t.status) === 'In Progress').length;
+                const blockedCount = epicTasks.filter(t => normalizeStatus(t.status) === 'Blocked').length;
+                const totalCount = epicTasks.length;
 
-                const doneRatio = epicTasks.length > 0 ? Math.round((doneCount / epicTasks.length) * 100) : 0;
-                const inProgRatio = epicTasks.length > 0 ? Math.round((inProgCount / epicTasks.length) * 100) : 0;
-                const todoRatio = Math.max(0, 100 - doneRatio - inProgRatio);
+                // Tentukan status riil Epik berdasarkan kondisi child task
+                let epicNormStatus = 'To Do';
+                if (totalCount > 0 && doneCount === totalCount) {
+                  epicNormStatus = 'Done';
+                } else if (blockedCount > 0) {
+                  epicNormStatus = 'Blocked';
+                } else if (inProgCount > 0) {
+                  epicNormStatus = 'In Progress';
+                } else if (epic.status) {
+                  epicNormStatus = normalizeStatus(epic.status);
+                }
 
+                const statusCfg = STATUS_CONFIG[epicNormStatus] || STATUS_CONFIG['To Do'];
+                const doneProgressPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
                 const hasRunning = inProgCount > 0;
-                const isAmber = inProgCount > 0 && doneRatio < 50; // Amber highlight for active working epics
-                const hasWarning = epicIdx === 1 || (inProgCount > 0 && epicIdx > 0);
+                const isOverdue = epicDueDate < '2026-11-06' && epicNormStatus !== 'Done';
+                const showWarning = isOverdue || epicNormStatus === 'Blocked';
 
                 return `
                   <!-- Epic Row -->
                   <div class="tl-gantt-row" data-row-epic-id="${epic.id}">
-                    <!-- Left Column: Epic Header & Segmented Mini Progress Bar -->
-                    <div class="timeline-col-ticket tl-epic-col">
+                    <!-- Left Column: Work Item List (320px width desktop) -->
+                    <div class="timeline-col-ticket tl-epic-col" style="width:320px;min-width:320px;max-width:320px;position:sticky;left:0;z-index:20;">
                       <div class="tl-epic-row-main">
-                        <button type="button" class="tl-chevron-toggle" data-toggle-epic="${epic.id}">
-                          ${isExpanded ? '▼' : '▶'}
+                        <button type="button" class="tl-chevron-toggle" data-toggle-epic="${epic.id}" title="${isExpanded ? 'Tutup daftar task' : 'Buka daftar task'}">
+                          ${isExpanded ? Icons.chevronDown('', 12) : Icons.chevronRight('', 12)}
                         </button>
-                        <span class="tl-epic-purple-icon">⚡</span>
-                        <span class="tl-epic-key">${epic.key}</span>
+                        
+                        <span class="tl-epic-purple-icon" style="background:#4f46e5;" title="Tipe: Epic Modul">
+                          ${Icons.layers('', 11)}
+                        </span>
+
+                        <span class="tl-epic-key" style="color:#4f46e5;">${epic.key}</span>
+
                         <span class="tl-epic-title" title="${this.escapeHtml(epic.title)}">
                           ${this.escapeHtml(epic.title)}
                         </span>
+
+                        <!-- Action Buttons: Edit / Delete Epic -->
+                        <div class="tl-epic-actions">
+                          <button type="button" class="tl-epic-action-btn" data-edit-epic="${epic.id}" title="Edit Epik">
+                            ${Icons.edit('', 11)}
+                          </button>
+                          <button type="button" class="tl-epic-action-btn tl-epic-action-btn--delete" data-delete-epic="${epic.id}" title="Hapus Epik">
+                            ${Icons.trash('', 11)}
+                          </button>
+                        </div>
+
+                        <!-- Status Badge Sesuai Status Color System -->
+                        <span class="tl-status-badge ${statusCfg.className}">
+                          ${showWarning ? `<span style="color:#ef4444;">${Icons.alertTriangle('', 10)}</span>` : ''}
+                          ${statusCfg.label}
+                        </span>
                       </div>
 
-                      <!-- Mini Progress Bar Segmented: Hijau (Done), Biru (In-Progress), Abu (To-Do) -->
-                      <div class="tl-epic-segmented-bar">
-                        <div class="tl-seg-fill done" style="width: ${doneRatio}%;" title="Selesai: ${doneRatio}% (${doneCount} tiket)"></div>
-                        <div class="tl-seg-fill in-progress ${hasRunning ? 'running-active' : ''}" style="width: ${inProgRatio}%;" title="In Progress: ${inProgRatio}% (${inProgCount} tiket berjalan)"></div>
-                        <div class="tl-seg-fill todo" style="width: ${todoRatio}%;" title="To Do: ${todoRatio}% (${todoCount} tiket)"></div>
+                      <!-- Progress Indicator di bawah nama Epic menggambarkan progres aktual pekerjaan -->
+                      <div class="tl-epic-segmented-bar" style="background:#e2e8f0;">
+                        <div
+                          class="tl-seg-fill ${hasRunning ? 'in-progress-running' : ''}"
+                          style="width: ${hasRunning ? this.liveProgress : doneProgressPct}%; background-color: ${statusCfg.barColor};"
+                          title="Progres Aktual: ${doneProgressPct}% (${doneCount}/${totalCount} task selesai)"
+                        ></div>
                       </div>
                     </div>
 
@@ -502,35 +774,42 @@ export class TimelineView {
 
                       <!-- Bar Pill -->
                       <div
-                        class="tl-gantt-bar ${doneRatio === 100 ? 'tl-bar-done' : isAmber ? 'tl-bar-amber' : 'tl-bar-purple'}"
+                        class="tl-gantt-bar ${statusCfg.className}"
                         id="bar-epic-${epic.id}"
                         data-bar-id="epic-${epic.id}"
-                        style="left: ${barPos.left}; width: ${barPos.width};"
-                        title="${epic.key}: ${this.escapeHtml(epic.title)}&#10;Progres: ${doneRatio}% Selesai, ${inProgRatio}% Berjalan"
+                        style="left: ${barPos.left}; width: ${barPos.width}; background-color: ${statusCfg.barColor};"
+                        title="${epic.key}: ${this.escapeHtml(epic.title)}&#10;Status: ${statusCfg.label}&#10;Rentang: ${epicStartDate} s/d ${epicDueDate}&#10;Progres: ${doneProgressPct}%"
                       >
-                        <!-- Live Progress Fill ("ketika prosesnya berjalan maka bar-nya juga berjalan") -->
+                        <!-- Progress Fill using status color with different intensity (Zero Gradient) -->
                         <div
                           class="tl-gantt-progress-fill ${hasRunning ? 'progress-running' : ''}"
-                          style="width: ${hasRunning ? this.liveProgress : doneRatio}%;"
+                          style="width: ${hasRunning ? this.liveProgress : doneProgressPct}%;"
                         ></div>
 
                         <!-- Content overlay -->
                         <div class="tl-bar-content">
                           <span class="tl-bar-title">${epic.key} ${this.escapeHtml(epic.title)}</span>
-                          ${hasRunning ? `
-                            <span class="tl-bar-running-badge">
-                              <span class="tl-pulse-dot"></span>
-                              <span class="tl-bar-running-pct">${Math.round(this.liveProgress)}%</span>
-                              <span>Berjalan</span>
-                            </span>
-                          ` : doneRatio === 100 ? `
-                            <span class="tl-bar-running-badge" style="background:rgba(0,0,0,0.2);">
-                              ✓ 100% Selesai
-                            </span>
-                          ` : ''}
-                          <div class="tl-bar-icons">
-                            ${hasWarning ? `<span class="tl-bar-warn-icon" title="Perhatian: Modul dalam pemantauan timeline">⚠️</span>` : ''}
-                            <span class="tl-bar-link-icon" title="Tautkan Dependensi">🔗</span>
+                          
+                          <div style="display:flex;align-items:center;gap:6px;">
+                            ${hasRunning ? `
+                              <span class="tl-bar-running-badge">
+                                <span class="tl-pulse-dot"></span>
+                                <span class="tl-bar-running-pct">${Math.round(this.liveProgress)}%</span>
+                              </span>
+                            ` : doneProgressPct === 100 ? `
+                              <span class="tl-bar-running-badge">
+                                100%
+                              </span>
+                            ` : `
+                              <span class="tl-bar-running-badge" style="font-weight:600;">
+                                ${doneProgressPct}%
+                              </span>
+                            `}
+
+                            <div class="tl-bar-icons">
+                              ${showWarning ? `<span class="tl-bar-warn-icon" title="Perhatian: Modul terkendala atau melewati estimasi">${Icons.alertTriangle('', 11)}</span>` : ''}
+                              <span class="tl-bar-link-icon" title="Tautkan Dependensi">${Icons.link('', 11)}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -540,22 +819,30 @@ export class TimelineView {
                   <!-- Expanded Child Tasks (Semua Task Asli di Bawah Epik Ini) -->
                   ${isExpanded ? epicTasks.map((ct, ctIdx) => {
                     const ctPos = this.calculateBarPosition(ct.startDate || epicStartDate, ct.dueDate || epicDueDate, barPos.startIdx + ctIdx * 2, 7);
-                    const isTaskRunning = ct.status === 'In Progress' || ct.status === 'Dianalisis';
-                    const isDone = ct.status === 'Selesai';
-                    const taskStatusLabel = isTaskRunning ? 'IN PROGRESS' : isDone ? 'SELESAI' : 'TO DO';
+                    const ctNormStatus = normalizeStatus(ct.status);
+                    const ctStatusCfg = STATUS_CONFIG[ctNormStatus] || STATUS_CONFIG['To Do'];
+                    const isTaskRunning = ctNormStatus === 'In Progress';
+                    const isDone = ctNormStatus === 'Done';
+                    const isTaskOverdue = (ct.dueDate || epicDueDate) < '2026-11-06' && !isDone;
+                    const showTaskWarning = isTaskOverdue || ctNormStatus === 'Blocked';
 
                     return `
                       <div class="tl-gantt-row tl-child-gantt-row" data-row-task-id="${ct.id}">
                         <!-- Indented Left Column -->
-                        <div class="timeline-col-ticket tl-child-task-col">
-                          <span class="tl-task-checkbox-icon">☑️</span>
-                          <span class="tl-epic-key" style="color:#0284c7;">${ct.key}</span>
+                        <div class="timeline-col-ticket tl-child-task-col" style="width:320px;min-width:320px;max-width:320px;position:sticky;left:0;z-index:20;">
+                          <span class="tl-task-checkbox-icon" style="color: ${isDone ? '#22c55e' : '#64748b'};">
+                            ${isDone ? Icons.checkSquare('', 12) : Icons.listTodo('', 12)}
+                          </span>
+                          
+                          <span class="tl-epic-key" style="color:#0284c7;font-size:10.5px;">${ct.key}</span>
+                          
                           <span class="tl-epic-title" title="${this.escapeHtml(ct.title)}" style="font-size:11px;font-weight:600;">
                             ${this.escapeHtml(ct.title)}
                           </span>
-                          <span class="tl-status-badge ${taskStatusLabel.toLowerCase().replace(/[^a-z]/g, '-')}">
-                            ${isTaskRunning ? '<span class="tl-pulse-dot"></span>' : ''}
-                            ${taskStatusLabel}
+
+                          <span class="tl-status-badge ${ctStatusCfg.className}">
+                            ${showTaskWarning ? `<span style="color:#ef4444;">${Icons.alertTriangle('', 9)}</span>` : ''}
+                            ${ctStatusCfg.label}
                           </span>
                         </div>
 
@@ -566,11 +853,11 @@ export class TimelineView {
                           </div>
 
                           <div
-                            class="tl-gantt-bar ${isDone ? 'tl-bar-done' : isTaskRunning ? 'tl-bar-purple' : 'tl-bar-purple'}"
+                            class="tl-gantt-bar ${ctStatusCfg.className}"
                             id="bar-task-${ct.id}"
                             data-bar-id="task-${ct.id}"
-                            style="left: ${ctPos.left}; width: ${ctPos.width}; height: 24px; top: 7px; font-size: 11px;"
-                            title="${ct.key}: ${this.escapeHtml(ct.title)} (${ct.status})&#10;Klik untuk membuka detail task"
+                            style="left: ${ctPos.left}; width: ${ctPos.width}; height: 24px; top: 7px; font-size: 11px; background-color: ${ctStatusCfg.barColor};"
+                            title="${ct.key}: ${this.escapeHtml(ct.title)} (${ctStatusCfg.label})&#10;Mulai: ${ct.startDate || epicStartDate} · Selesai: ${ct.dueDate || epicDueDate}&#10;Klik untuk membuka detail task"
                           >
                             <div
                               class="tl-gantt-progress-fill ${isTaskRunning ? 'progress-running' : ''}"
@@ -578,7 +865,11 @@ export class TimelineView {
                             ></div>
                             <div class="tl-bar-content">
                               <span class="tl-bar-title">${ct.key} ${this.escapeHtml(ct.title)}</span>
-                              <span class="tl-bar-link-icon">🔗</span>
+                              
+                              <div style="display:flex;align-items:center;gap:4px;">
+                                ${showTaskWarning ? `<span class="tl-bar-warn-icon">${Icons.alertTriangle('', 10)}</span>` : ''}
+                                <span class="tl-bar-link-icon">${Icons.link('', 10)}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -590,9 +881,9 @@ export class TimelineView {
 
               <!-- Bottom Row: + Create Epic Button -->
               <div class="tl-gantt-row" style="min-height: 40px; background: #ffffff;">
-                <div class="timeline-col-ticket tl-create-epic-row">
+                <div class="timeline-col-ticket tl-create-epic-row" style="width:320px;min-width:320px;max-width:320px;position:sticky;left:0;z-index:20;">
                   <button type="button" class="tl-create-epic-btn" id="tlCreateEpicBtn">
-                    <span style="font-size:14px;font-weight:800;">+</span>
+                    <span>${Icons.plus('', 13)}</span>
                     <span>Create Epic</span>
                   </button>
                 </div>
@@ -602,11 +893,17 @@ export class TimelineView {
             </div>
           </div>
 
-          <!-- 5. Floating Bottom-Right Controls Toolbar (1:1 Sesuai Gambar) -->
+          <!-- 5. Floating Bottom-Right Controls Toolbar (1:1 Sesuai Referensi) -->
           <div class="gantt-floating-toolbar">
-            <button type="button" class="gantt-tool-btn" id="ganttNavPrev" title="Gulir ke Kiri">‹</button>
-            <button type="button" class="gantt-tool-btn" id="ganttNavNext" title="Gulir ke Kanan">›</button>
-            <button type="button" class="gantt-tool-btn" id="ganttTodayBtn" style="font-weight:700;">Today</button>
+            <button type="button" class="gantt-tool-btn" id="ganttNavPrev" title="Previous Period">
+              ${Icons.chevronLeft('', 14)}
+            </button>
+            <button type="button" class="gantt-tool-btn" id="ganttNavNext" title="Next Period">
+              ${Icons.chevronRight('', 14)}
+            </button>
+            <button type="button" class="gantt-tool-btn" id="ganttTodayBtn" style="font-weight:700;">
+              Today
+            </button>
             
             <div class="gantt-zoom-group">
               <button type="button" class="gantt-zoom-btn ${this.zoomMode === 'weeks' ? 'active' : ''}" data-zoom="weeks">Weeks</button>
@@ -614,8 +911,18 @@ export class TimelineView {
               <button type="button" class="gantt-zoom-btn ${this.zoomMode === 'quarters' ? 'active' : ''}" data-zoom="quarters">Quarters</button>
             </div>
 
-            <button type="button" class="gantt-tool-btn" id="ganttInfoBtn" title="Informasi Roadmap &amp; Gantt">ℹ️</button>
-            <button type="button" class="gantt-tool-btn" id="ganttFullscreenBtn" title="Perbesar Layar">⤢</button>
+            <button type="button" class="gantt-tool-btn" id="ganttZoomIn" title="Zoom In">
+              ${Icons.zoomIn('', 14)}
+            </button>
+            <button type="button" class="gantt-tool-btn" id="ganttZoomOut" title="Zoom Out">
+              ${Icons.zoomOut('', 14)}
+            </button>
+            <button type="button" class="gantt-tool-btn" id="ganttInfoBtn" title="Informasi Roadmap &amp; Gantt">
+              ${Icons.info('', 14)}
+            </button>
+            <button type="button" class="gantt-tool-btn" id="ganttFullscreenBtn" title="Perbesar Layar">
+              ${Icons.maximize('', 14)}
+            </button>
           </div>
 
         </div>
@@ -623,9 +930,9 @@ export class TimelineView {
         <!-- 6. Footer Information Card -->
         <div class="timeline-footer-card">
           <div class="timeline-footer-card__left">
-            <span style="color: #4338ca;">${Icons.info('', 16)}</span>
+            <span style="color: #4f46e5;">${Icons.info('', 15)}</span>
             <span>
-              Garis kurva dependensi menghubungkan alur pengerjaan antar epik modul. Bar dengan status <strong>In Progress</strong> menampilkan animasi gerak live progress secara dinamis.
+              Curved dependency connector menghubungkan alur pengerjaan antar epik modul. Klik bar untuk melihat detail tugas, klik milestone rilis untuk melihat deliverable.
             </span>
           </div>
           <div class="timeline-footer-card__right">
@@ -634,6 +941,9 @@ export class TimelineView {
             <span>Kode: <strong>${this.escapeHtml(projectCode)}</strong></span>
           </div>
         </div>
+
+        <!-- 7. Active Modal Overlay Container (Rendered dynamically if activeModal is set) -->
+        <div id="tlModalContainer"></div>
 
       </div>
     `;
@@ -648,7 +958,7 @@ export class TimelineView {
 
   /**
    * Menggambar garis lengkung dependensi S-curve (Bezier Connectors)
-   * Menyambungkan ujung bar pengerjaan ke awal bar berikutnya secara alami
+   * Menggunakan SVG dengan warna #94A3B8, stroke-width 1.8px, rounded line caps
    */
   drawDependencyLines(currentEpics) {
     const svgEl = this.container.querySelector('#ganttDependencySvg');
@@ -661,7 +971,7 @@ export class TimelineView {
 
     const connectionPairs = [];
 
-    // 1. Jika epik kedua dibuka, sambungkan child task ke epik
+    // 1. Sambungkan child task ke epik jika dibuka
     if (currentEpics.length > 1 && this.expandedEpics[currentEpics[1].id]) {
       const childTasks = store.getState().tasks.filter(t => t.epicId === currentEpics[1].id);
       if (childTasks.length > 0) {
@@ -672,7 +982,7 @@ export class TimelineView {
       }
     }
 
-    // 2. Cascade alami antar Epik (Epic 1 -> Epic 2 -> Epic 3 -> dst)
+    // 2. Cascade alami antar Epik (Finish to Start)
     for (let i = 0; i < currentEpics.length - 1; i++) {
       connectionPairs.push({
         from: `bar-epic-${currentEpics[i].id}`,
@@ -697,22 +1007,19 @@ export class TimelineView {
         const y2 = rTo.top + rTo.height / 2 - canvasRect.top;
 
         // Hitung kurva S (Cubic Bezier Curve)
-        const dx = Math.max(16, Math.abs(x2 - x1) * 0.5);
+        const dx = Math.max(18, Math.abs(x2 - x1) * 0.5);
         const pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
 
         pathsHtml += `
-          <g>
+          <g class="tl-dep-group" data-from="${pair.from}" data-to="${pair.to}">
             <path
               d="${pathD}"
-              stroke="#64748b"
-              stroke-width="2"
-              fill="none"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              opacity="0.85"
+              class="tl-dep-path"
+              data-from="${pair.from}"
+              data-to="${pair.to}"
             />
-            <circle cx="${x1}" cy="${y1}" r="3" fill="#64748b" />
-            <circle cx="${x2}" cy="${y2}" r="3.5" fill="#64748b" />
+            <circle cx="${x1}" cy="${y1}" r="3" fill="#94a3b8" />
+            <circle cx="${x2}" cy="${y2}" r="3.5" fill="#94a3b8" />
           </g>
         `;
       }
@@ -762,7 +1069,7 @@ export class TimelineView {
       });
     }
 
-    // Klik task row atau task bar untuk membuka Task Detail Modal asli
+    // Klik task row atau task bar untuk membuka Task Detail Modal
     const taskRows = this.container.querySelectorAll('[data-row-task-id]');
     taskRows.forEach(row => {
       row.addEventListener('click', () => {
@@ -787,7 +1094,33 @@ export class TimelineView {
       });
     });
 
-    // Klik pada Epic bar memunculkan toast informasi detail epik
+    // Hover pada Gantt Bar untuk menyorot dependency line terkait dan meredupkan garis lainnya
+    const allBars = this.container.querySelectorAll('[data-bar-id]');
+    allBars.forEach(bar => {
+      bar.addEventListener('mouseenter', () => {
+        const barId = bar.dataset.barId;
+        const allPaths = this.container.querySelectorAll('.tl-dep-path');
+        allPaths.forEach(p => {
+          if (p.dataset.from === `bar-${barId}` || p.dataset.to === `bar-${barId}`) {
+            p.classList.add('highlighted');
+            p.classList.remove('dimmed');
+          } else {
+            p.classList.remove('highlighted');
+            p.classList.add('dimmed');
+          }
+        });
+      });
+
+      bar.addEventListener('mouseleave', () => {
+        const allPaths = this.container.querySelectorAll('.tl-dep-path');
+        allPaths.forEach(p => {
+          p.classList.remove('highlighted');
+          p.classList.remove('dimmed');
+        });
+      });
+    });
+
+    // Klik pada Epic bar membuka info epik atau modal edit
     const epicBars = this.container.querySelectorAll('[data-bar-id^="epic-"]');
     epicBars.forEach(bar => {
       bar.addEventListener('click', (e) => {
@@ -796,35 +1129,55 @@ export class TimelineView {
         const eId = barId.replace('epic-', '');
         const epic = store.getState().epics.find(ep => ep.id === eId);
         if (epic) {
-          const taskCount = store.getState().tasks.filter(t => t.epicId === epic.id).length;
-          store.addToast('info', `Epik: ${epic.key}`, `${epic.title} (${taskCount} tiket pengerjaan)`);
+          this.openEditEpicModal(epic);
         }
       });
     });
 
-    // Create Epic Button (+ Create Epic) menambahkan epik langsung ke store proyek aktif
+    // Klik pada tombol Edit Epik
+    const editBtns = this.container.querySelectorAll('[data-edit-epic]');
+    editBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const epicId = btn.dataset.editEpic;
+        const epic = store.getState().epics.find(ep => ep.id === epicId);
+        if (epic) {
+          this.openEditEpicModal(epic);
+        }
+      });
+    });
+
+    // Klik pada tombol Hapus Epik
+    const deleteBtns = this.container.querySelectorAll('[data-delete-epic]');
+    deleteBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const epicId = btn.dataset.deleteEpic;
+        const epic = store.getState().epics.find(ep => ep.id === epicId);
+        if (epic) {
+          this.openDeleteEpicModal(epic);
+        }
+      });
+    });
+
+    // Klik pada Release milestone marker membuka detail release
+    const releaseMarkers = this.container.querySelectorAll('[data-release-id]');
+    releaseMarkers.forEach(m => {
+      m.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const rId = m.dataset.releaseId;
+        const release = this.releases.find(r => r.id === rId);
+        if (release) {
+          this.openReleaseDetailModal(release);
+        }
+      });
+    });
+
+    // Create Epic Button (+ Create Epic)
     const createEpicBtn = this.container.querySelector('#tlCreateEpicBtn');
     if (createEpicBtn) {
       createEpicBtn.addEventListener('click', () => {
-        const activeProj = store.getActiveProject();
-        const prefix = activeProj?.code || 'PRJ';
-        const projectEpics = store.getState().epics.filter(e => e.projectId === activeProj?.id);
-        const nextNum = projectEpics.length + 1;
-        const epicTitle = prompt('Masukkan Judul Epik Baru:', `Modul Fitur Baru ${nextNum}`);
-        if (epicTitle && epicTitle.trim()) {
-          const newEpic = {
-            id: `epic-${Date.now()}`,
-            projectId: activeProj.id,
-            key: `${prefix}-EPIC-${nextNum}`,
-            title: epicTitle.trim(),
-            description: 'Epik baru ditambahkan via Gantt Roadmap Canvas.',
-            color: '#7c3aed'
-          };
-          store.setState({
-            epics: [...store.getState().epics, newEpic]
-          });
-          store.addToast('success', 'Epik Berhasil Dibuat!', `Epik [${newEpic.key}] ${newEpic.title} kini aktif pada Roadmap.`);
-        }
+        this.openCreateEpicModal();
       });
     }
 
@@ -837,6 +1190,24 @@ export class TimelineView {
       });
     });
 
+    // Floating Controls: Zoom In / Out
+    const zoomInBtn = this.container.querySelector('#ganttZoomIn');
+    const zoomOutBtn = this.container.querySelector('#ganttZoomOut');
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', () => {
+        if (this.zoomMode === 'quarters') this.zoomMode = 'months';
+        else if (this.zoomMode === 'months') this.zoomMode = 'weeks';
+        this.render();
+      });
+    }
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', () => {
+        if (this.zoomMode === 'weeks') this.zoomMode = 'months';
+        else if (this.zoomMode === 'months') this.zoomMode = 'quarters';
+        this.render();
+      });
+    }
+
     // Floating Controls Toolbar: Scroll Prev / Next
     const scrollContainer = this.container.querySelector('#ganttScrollContainer');
     const prevBtn = this.container.querySelector('#ganttNavPrev');
@@ -844,62 +1215,350 @@ export class TimelineView {
     if (scrollContainer) {
       if (prevBtn) {
         prevBtn.addEventListener('click', () => {
-          scrollContainer.scrollBy({ left: -260, behavior: 'smooth' });
+          scrollContainer.scrollBy({ left: -280, behavior: 'smooth' });
         });
       }
       if (nextBtn) {
         nextBtn.addEventListener('click', () => {
-          scrollContainer.scrollBy({ left: 260, behavior: 'smooth' });
+          scrollContainer.scrollBy({ left: 280, behavior: 'smooth' });
         });
       }
     }
 
-    // Floating Controls Toolbar: Today button
+    // Floating Controls Toolbar: Today Button
     const todayBtn = this.container.querySelector('#ganttTodayBtn');
     if (todayBtn && scrollContainer) {
       todayBtn.addEventListener('click', () => {
-        scrollContainer.scrollTo({ left: 160, behavior: 'smooth' });
-        store.addToast('info', 'Penunjuk Waktu', 'Menggulir ke posisi milestone terkini.');
+        const todayLine = this.container.querySelector('.tl-today-line');
+        if (todayLine) {
+          const lineLeft = todayLine.offsetLeft;
+          scrollContainer.scrollTo({
+            left: Math.max(0, lineLeft - scrollContainer.clientWidth / 2 + 160),
+            behavior: 'smooth'
+          });
+        }
       });
     }
 
-    // Floating Controls Toolbar: Info Button
+    // Fullscreen Toggle
+    const fsBtn = this.container.querySelector('#ganttFullscreenBtn');
+    if (fsBtn) {
+      fsBtn.addEventListener('click', () => {
+        const canvas = this.container.querySelector('.timeline-canvas');
+        if (canvas) {
+          if (!document.fullscreenElement) {
+            canvas.requestFullscreen?.().catch(() => {});
+          } else {
+            document.exitFullscreen?.().catch(() => {});
+          }
+        }
+      });
+    }
+
+    // Info Button
     const infoBtn = this.container.querySelector('#ganttInfoBtn');
     if (infoBtn) {
       infoBtn.addEventListener('click', () => {
-        store.addToast('info', 'Roadmap & Gantt', 'Menampilkan sprint, epik modul, progres pengerjaan riil, serta keterkaitan dependensi antar tugas.');
-      });
-    }
-
-    // Floating Controls Toolbar: Fullscreen / Expand Button
-    const fullscreenBtn = this.container.querySelector('#ganttFullscreenBtn');
-    if (fullscreenBtn) {
-      fullscreenBtn.addEventListener('click', () => {
-        const canvas = this.container.querySelector('.timeline-canvas');
-        if (canvas) {
-          canvas.classList.toggle('canvas-maximized');
-          if (canvas.classList.contains('canvas-maximized')) {
-            canvas.style.minHeight = '750px';
-            store.addToast('info', 'Mode Layar Penuh', 'Tampilan kanvas Gantt diperbesar.');
-          } else {
-            canvas.style.minHeight = '';
-          }
-          setTimeout(() => {
-            this.drawDependencyLines(store.getState().epics.filter(e => e.projectId === store.getActiveProject()?.id));
-          }, 100);
-        }
+        store.addToast('info', 'Roadmap & Gantt ASTACODE PM', 'Gantt Chart interaktif dengan 10 status terstandarisasi, baris sprint dan rilis, serta konektor dependensi dinamis.');
       });
     }
   }
 
-  destroy() {
-    if (this.liveTimer) {
-      clearInterval(this.liveTimer);
-      this.liveTimer = null;
-    }
-    if (typeof this.unsubscribe === 'function') {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
+  // ===========================================================================
+  // INTERACTIVE MODALS (CREATE, EDIT, DELETE EPIC & RELEASE DETAIL)
+  // ===========================================================================
+
+  openCreateEpicModal() {
+    const modalContainer = this.container.querySelector('#tlModalContainer');
+    if (!modalContainer) return;
+
+    const activeProj = store.getActiveProject();
+    const prefix = activeProj?.code || 'PRJ';
+    const projectEpics = store.getState().epics.filter(e => e.projectId === activeProj?.id);
+    const nextNum = projectEpics.length + 1;
+    const nextKey = `${prefix}-EPIC-${nextNum}`;
+
+    modalContainer.innerHTML = `
+      <div class="tl-modal-backdrop" id="tlBackdrop">
+        <div class="tl-modal-box">
+          <div class="tl-modal-header">
+            <h3 class="tl-modal-title">Buat Epik / Modul Pekerjaan Baru</h3>
+            <button type="button" class="tl-modal-close" id="tlCloseModal">${Icons.x('', 16)}</button>
+          </div>
+          
+          <form id="tlCreateEpicForm">
+            <div class="tl-modal-body">
+              <div class="tl-form-group">
+                <label class="tl-form-label">Kode Epik</label>
+                <input type="text" id="epicKeyInput" class="tl-form-input" value="${nextKey}" required />
+              </div>
+
+              <div class="tl-form-group">
+                <label class="tl-form-label">Nama Modul / Epik</label>
+                <input type="text" id="epicTitleInput" class="tl-form-input" placeholder="Misal: Modul Integrasi Pembayaran Real-Time" required />
+              </div>
+
+              <div class="tl-form-group">
+                <label class="tl-form-label">Status Awal</label>
+                <select id="epicStatusInput" class="tl-form-select">
+                  ${Object.keys(STATUS_CONFIG).map(stKey => `
+                    <option value="${stKey}" ${stKey === 'To Do' ? 'selected' : ''}>${stKey}</option>
+                  `).join('')}
+                </select>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="tl-form-group">
+                  <label class="tl-form-label">Tanggal Mulai</label>
+                  <input type="date" id="epicStartDateInput" class="tl-form-input" value="2026-11-06" required />
+                </div>
+                <div class="tl-form-group">
+                  <label class="tl-form-label">Target Selesai</label>
+                  <input type="date" id="epicDueDateInput" class="tl-form-input" value="2026-11-20" required />
+                </div>
+              </div>
+
+              <div class="tl-form-group">
+                <label class="tl-form-label">Deskripsi Modul</label>
+                <textarea id="epicDescInput" class="tl-form-textarea" rows="2" placeholder="Tujuan pengerjaan dan ruang lingkup modul..."></textarea>
+              </div>
+            </div>
+
+            <div class="tl-modal-footer">
+              <button type="button" class="tl-btn-secondary" id="tlCancelModal">Batal</button>
+              <button type="submit" class="tl-btn-primary">Simpan &amp; Tambahkan ke Roadmap</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modalContainer.innerHTML = ''; };
+    modalContainer.querySelector('#tlCloseModal')?.addEventListener('click', close);
+    modalContainer.querySelector('#tlCancelModal')?.addEventListener('click', close);
+
+    const form = modalContainer.querySelector('#tlCreateEpicForm');
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const key = modalContainer.querySelector('#epicKeyInput').value.trim();
+      const title = modalContainer.querySelector('#epicTitleInput').value.trim();
+      const status = modalContainer.querySelector('#epicStatusInput').value;
+      const startDate = modalContainer.querySelector('#epicStartDateInput').value;
+      const dueDate = modalContainer.querySelector('#epicDueDateInput').value;
+      const desc = modalContainer.querySelector('#epicDescInput').value.trim();
+
+      if (!title) return;
+
+      const newEpic = {
+        id: `epic-${Date.now()}`,
+        projectId: activeProj.id,
+        key: key || nextKey,
+        title,
+        status,
+        startDate,
+        dueDate,
+        description: desc || 'Epik baru ditambahkan via Gantt Roadmap Canvas.'
+      };
+
+      const updatedEpics = [...store.getState().epics, newEpic];
+      store.setState({ epics: updatedEpics });
+      this.saveEpicsToStorage();
+
+      store.addToast('success', 'Epik Berhasil Dibuat', `[${newEpic.key}] ${newEpic.title} kini aktif pada Roadmap & Gantt.`);
+      close();
+    });
+  }
+
+  openEditEpicModal(epic) {
+    const modalContainer = this.container.querySelector('#tlModalContainer');
+    if (!modalContainer || !epic) return;
+
+    modalContainer.innerHTML = `
+      <div class="tl-modal-backdrop" id="tlBackdrop">
+        <div class="tl-modal-box">
+          <div class="tl-modal-header">
+            <h3 class="tl-modal-title">Edit Epik: ${this.escapeHtml(epic.key)}</h3>
+            <button type="button" class="tl-modal-close" id="tlCloseModal">${Icons.x('', 16)}</button>
+          </div>
+          
+          <form id="tlEditEpicForm">
+            <div class="tl-modal-body">
+              <div class="tl-form-group">
+                <label class="tl-form-label">Kode Epik</label>
+                <input type="text" id="editEpicKeyInput" class="tl-form-input" value="${this.escapeHtml(epic.key)}" required />
+              </div>
+
+              <div class="tl-form-group">
+                <label class="tl-form-label">Nama Modul / Epik</label>
+                <input type="text" id="editEpicTitleInput" class="tl-form-input" value="${this.escapeHtml(epic.title)}" required />
+              </div>
+
+              <div class="tl-form-group">
+                <label class="tl-form-label">Status Epik</label>
+                <select id="editEpicStatusInput" class="tl-form-select">
+                  ${Object.keys(STATUS_CONFIG).map(stKey => `
+                    <option value="${stKey}" ${normalizeStatus(epic.status) === stKey ? 'selected' : ''}>${stKey}</option>
+                  `).join('')}
+                </select>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="tl-form-group">
+                  <label class="tl-form-label">Tanggal Mulai</label>
+                  <input type="date" id="editEpicStartDateInput" class="tl-form-input" value="${epic.startDate || '2026-10-18'}" required />
+                </div>
+                <div class="tl-form-group">
+                  <label class="tl-form-label">Target Selesai</label>
+                  <input type="date" id="editEpicDueDateInput" class="tl-form-input" value="${epic.dueDate || '2026-11-20'}" required />
+                </div>
+              </div>
+
+              <div class="tl-form-group">
+                <label class="tl-form-label">Deskripsi</label>
+                <textarea id="editEpicDescInput" class="tl-form-textarea" rows="2">${this.escapeHtml(epic.description || '')}</textarea>
+              </div>
+            </div>
+
+            <div class="tl-modal-footer">
+              <button type="button" class="tl-btn-secondary" id="tlCancelModal">Batal</button>
+              <button type="submit" class="tl-btn-primary">Simpan Perubahan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modalContainer.innerHTML = ''; };
+    modalContainer.querySelector('#tlCloseModal')?.addEventListener('click', close);
+    modalContainer.querySelector('#tlCancelModal')?.addEventListener('click', close);
+
+    const form = modalContainer.querySelector('#tlEditEpicForm');
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const updatedEpics = store.getState().epics.map(ep => {
+        if (ep.id === epic.id) {
+          return {
+            ...ep,
+            key: modalContainer.querySelector('#editEpicKeyInput').value.trim(),
+            title: modalContainer.querySelector('#editEpicTitleInput').value.trim(),
+            status: modalContainer.querySelector('#editEpicStatusInput').value,
+            startDate: modalContainer.querySelector('#editEpicStartDateInput').value,
+            dueDate: modalContainer.querySelector('#editEpicDueDateInput').value,
+            description: modalContainer.querySelector('#editEpicDescInput').value.trim()
+          };
+        }
+        return ep;
+      });
+
+      store.setState({ epics: updatedEpics });
+      this.saveEpicsToStorage();
+
+      store.addToast('success', 'Epik Diperbarui', `Perubahan pada epik [${epic.key}] berhasil disimpan.`);
+      close();
+    });
+  }
+
+  openDeleteEpicModal(epic) {
+    const modalContainer = this.container.querySelector('#tlModalContainer');
+    if (!modalContainer || !epic) return;
+
+    modalContainer.innerHTML = `
+      <div class="tl-modal-backdrop" id="tlBackdrop">
+        <div class="tl-modal-box" style="max-width:440px;">
+          <div class="tl-modal-header">
+            <h3 class="tl-modal-title" style="color:#ef4444;display:flex;align-items:center;gap:6px;">
+              ${Icons.alertTriangle('', 16)}
+              <span>Hapus Epik Modul</span>
+            </h3>
+            <button type="button" class="tl-modal-close" id="tlCloseModal">${Icons.x('', 16)}</button>
+          </div>
+          
+          <div class="tl-modal-body">
+            <p style="font-size:13px; color:#334155; line-height:1.5;">
+              Apakah Anda yakin ingin menghapus epik <strong>[${this.escapeHtml(epic.key)}] ${this.escapeHtml(epic.title)}</strong>?
+            </p>
+            <p style="font-size:12px; color:#64748b;">
+              Tindakan ini akan menghapus bar epik dari kanvas Roadmap dan menyimpan perubahan ke localStorage.
+            </p>
+          </div>
+
+          <div class="tl-modal-footer">
+            <button type="button" class="tl-btn-secondary" id="tlCancelModal">Batal</button>
+            <button type="button" class="tl-btn-danger" id="tlConfirmDeleteBtn">Ya, Hapus Epik</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modalContainer.innerHTML = ''; };
+    modalContainer.querySelector('#tlCloseModal')?.addEventListener('click', close);
+    modalContainer.querySelector('#tlCancelModal')?.addEventListener('click', close);
+
+    modalContainer.querySelector('#tlConfirmDeleteBtn')?.addEventListener('click', () => {
+      const updatedEpics = store.getState().epics.filter(ep => ep.id !== epic.id);
+      store.setState({ epics: updatedEpics });
+      this.saveEpicsToStorage();
+
+      store.addToast('info', 'Epik Dihapus', `Epik [${epic.key}] telah dihapus dari roadmap.`);
+      close();
+    });
+  }
+
+  openReleaseDetailModal(release) {
+    const modalContainer = this.container.querySelector('#tlModalContainer');
+    if (!modalContainer || !release) return;
+
+    const norm = normalizeStatus(release.status);
+    const cfg = STATUS_CONFIG[norm] || STATUS_CONFIG['Done'];
+
+    modalContainer.innerHTML = `
+      <div class="tl-modal-backdrop" id="tlBackdrop">
+        <div class="tl-modal-box">
+          <div class="tl-modal-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="color:#4f46e5;">${Icons.flag('', 16)}</span>
+              <h3 class="tl-modal-title">Milestone Release: ${this.escapeHtml(release.name)}</h3>
+            </div>
+            <button type="button" class="tl-modal-close" id="tlCloseModal">${Icons.x('', 16)}</button>
+          </div>
+          
+          <div class="tl-modal-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;">
+              <div>
+                <span style="font-size:11px;color:#64748b;display:block;">Target Tanggal Rilis</span>
+                <span style="font-size:13px;font-weight:700;color:#0f172a;">${release.targetDate}</span>
+              </div>
+              <span class="tl-status-badge ${cfg.className}">
+                ${cfg.label}
+              </span>
+            </div>
+
+            <div class="tl-form-group">
+              <label class="tl-form-label">Deskripsi Milestone</label>
+              <p style="font-size:13px;color:#334155;margin:0;line-height:1.5;">
+                ${this.escapeHtml(release.description || 'Tidak ada deskripsi rilis.')}
+              </p>
+            </div>
+
+            <div class="tl-form-group">
+              <label class="tl-form-label">Deliverable &amp; Ruang Lingkup Modul Terkait</label>
+              <ul style="margin:0;padding-left:18px;font-size:12.5px;color:#334155;line-height:1.7;">
+                ${(release.deliverables || []).map(deliv => `
+                  <li>${this.escapeHtml(deliv)}</li>
+                `).join('')}
+              </ul>
+            </div>
+          </div>
+
+          <div class="tl-modal-footer">
+            <button type="button" class="tl-btn-primary" id="tlCloseModalBtn">Tutup</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modalContainer.innerHTML = ''; };
+    modalContainer.querySelector('#tlCloseModal')?.addEventListener('click', close);
+    modalContainer.querySelector('#tlCloseModalBtn')?.addEventListener('click', close);
   }
 }
