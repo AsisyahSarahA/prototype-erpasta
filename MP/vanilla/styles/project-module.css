@@ -3558,28 +3558,152 @@
    WORKSPACE EMBEDDED SUB-MODULE VIEWS (FIXED SUB-TABS & NO DUPLICATE HEADERS)
    ========================================================================== */
 #pmWorkspaceContentArea {
-  padding: 16px 24px 32px 24px;
-  flex: 1 0 auto;
+  padding: 14px 24px 20px 24px;
+  flex: 1 1 auto;
+}
+
+/* ==========================================================================
+   KANBAN FIXED HEADER & INDEPENDENT TASK CARDS SCROLLING (ATLASSIAN / JIRA STANDARD)
+   - Top KPI Summary & Filter Card: Fixed / Stationary (Tetap Diam)
+   - Column Stage Headers (Backlog, To Do, In Progress, etc.): Fixed / Sticky (Tetap Diam)
+   - Task Cards Container: Independently Scrollable (Hanya Daftar Tugas yang Bisa Di-Scroll)
+   ========================================================================== */
+.pm-ws-wrap--kanban,
+.pm-project-module:has(.kanban-page-wrapper) {
+  overflow: hidden !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.pm-ws-wrap--kanban #pmWorkspaceContentArea,
+#pmWorkspaceContentArea:has(.kanban-page-wrapper) {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: calc(100vh - 146px) !important;
+  max-height: calc(100vh - 146px) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 12px 24px 10px 24px !important;
 }
 
 #pmWorkspaceContentArea .kanban-page-wrapper {
-  padding: 0;
-  background: transparent;
-  height: auto !important;
-  min-height: 560px;
-  overflow: visible !important;
+  padding: 0 !important;
+  background: transparent !important;
+  height: calc(100vh - 165px) !important;
+  max-height: calc(100vh - 165px) !important;
+  flex: 1 1 0 !important;
+  min-height: 480px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
+/* 1. Card Tiket & Filter Bar Tetap Diam */
+#pmWorkspaceContentArea .kanban-summary-card {
+  flex-shrink: 0 !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 2. Board Horizontal Canvas */
 #pmWorkspaceContentArea .kanban-board-scroll {
-  height: auto !important;
-  min-height: 480px;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
   overflow-x: auto !important;
-  overflow-y: visible !important;
+  overflow-y: hidden !important;
+  display: flex !important;
+  gap: 14px !important;
+  align-items: stretch !important;
+  padding: 12px 0 6px 0 !important;
 }
 
+/* 3. Tiap Kolom Kanban Mengisi 100% Tinggi Board */
 #pmWorkspaceContentArea .kanban-column {
-  height: auto !important;
-  max-height: none !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  width: 290px !important;
+  min-width: 290px !important;
+  flex-shrink: 0 !important;
+  background: var(--bg-secondary, #f8fafc) !important;
+  border-radius: var(--radius-xl, 12px) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+}
+
+/* 4. Status Backlog dan Header Kolom Lainnya Tetap Diam di Atas Kolom */
+#pmWorkspaceContentArea .kanban-column-header {
+  flex-shrink: 0 !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
+  background: var(--bg-card, #ffffff) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
+  padding: 12px 14px !important;
+}
+
+/* 5. HANYA Daftar Tugas (Cards List) yang Bisa Di-Scroll */
+#pmWorkspaceContentArea .kanban-cards-scroll {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  padding: 10px !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Sleek Scrollbar untuk Daftar Tugas */
+#pmWorkspaceContentArea .kanban-cards-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+#pmWorkspaceContentArea .kanban-cards-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+#pmWorkspaceContentArea .kanban-cards-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+#pmWorkspaceContentArea .kanban-cards-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 6. Mode List Tabel */
+#pmWorkspaceContentArea .kanban-table-container {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  margin-top: 10px !important;
+}
+
+#pmWorkspaceContentArea .kanban-table-header-info {
+  flex-shrink: 0 !important;
+}
+
+#pmWorkspaceContentArea .kanban-table-scroll {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+}
+
+#pmWorkspaceContentArea .kanban-data-table th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
 }
 
 #pmWorkspaceContentArea .backlog-view-container,

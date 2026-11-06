@@ -1502,7 +1502,7 @@ export class ProjectModuleView {
     const isAtRisk = health === 'At Risk';
 
     this.container.innerHTML = `
-      <div class="pm-ws-wrap">
+      <div class="pm-ws-wrap pm-ws-wrap--${this.activeWorkspaceTab}">
                 <!-- 1. TOP STRIP -->
         <div class="pm-ws-top-strip">
           <div class="pm-ws-top-breadcrumb" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
