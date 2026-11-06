@@ -265,13 +265,25 @@ export class BacklogView {
           <!-- Baris 3: Controls Bar (Epics Toggle, Search Input & Quick Filters) -->
           <div class="backlog-controls-row">
             <div class="backlog-controls-left">
+              <!-- Tombol Toggle Epik Proyek (Hide / Show & Full-Width Sprint) -->
+              <button
+                id="toggleEpicsDrawerBtn"
+                type="button"
+                class="backlog-epic-toggle-btn ${this.isEpicsPanelOpen ? "active" : ""}"
+                title="${this.isEpicsPanelOpen ? "Sembunyikan Panel Epik Proyek (Lebarkan Tampilan Sprint Jadi Full)" : "Tampilkan Panel Epik Proyek"}"
+              >
+                ${Icons.layers("", 13)}
+                <span>${this.isEpicsPanelOpen ? `Epik Proyek (${projectEpics.length})` : `Tampilkan Epik (${projectEpics.length})`}</span>
+                <span class="epic-toggle-arrow">${this.isEpicsPanelOpen ? "◀" : "▶"}</span>
+              </button>
+
               <div class="backlog-search-box">
                 <span class="backlog-search-icon">${Icons.search("", 13)}</span>
                 <input
                   id="backlogSearchInput"
                   class="backlog-search-input"
                   type="text"
-                  placeholder="Cari berdasarkan judul atau ID (${(activeProject?.code || 'PRJ').split('-')[0]}-xxx)..."
+                  placeholder="Cari berdasarkan judul atau ID (${(activeProject?.code || "PRJ").split("-")[0]}-xxx)..."
                   value="${this.escapeHtml(this.searchQuery)}"
                 />
               </div>
@@ -328,6 +340,15 @@ export class BacklogView {
                 ${Icons.layers("", 13)}
                 <span>EPIK PROYEK (${projectEpics.length})</span>
               </span>
+              <button
+                id="closeEpicsPanelBtn"
+                type="button"
+                class="epics-drawer-hide-btn"
+                title="Sembunyikan Panel Epik Proyek (Lebarkan Tampilan Sprint Jadi Full)"
+              >
+                ${Icons.chevronLeft("", 12)}
+                <span>Sembunyikan</span>
+              </button>
             </div>
 
             <div class="epics-drawer-list">
@@ -394,7 +415,7 @@ export class BacklogView {
           </aside>
 
           <!-- Sisi Kanan: Area Scrollable Workspace -->
-          <main class="backlog-scroll-area" id="backlogScrollArea">
+          <main class="backlog-scroll-area ${!this.isEpicsPanelOpen ? "backlog-scroll-area--full" : ""}" id="backlogScrollArea">
             
             <!-- 1. Matriks Kapasitas 5 Role Developer (Jira/CRM Resource Allocation) -->
             <section class="workload-matrix-card">
@@ -697,15 +718,11 @@ export class BacklogView {
                       type="button"
                       class="sprint-duration-btn"
                       data-days="${d.days}"
-                      style="padding:8px 6px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid ${
-                        this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--border, #cbd5e1)"
-                      };background:${
-                        this.sprintDurationDays === d.days ? "rgba(79,70,229,0.1)" : "var(--bg-secondary, #f8fafc)"
-                      };color:${this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--text-secondary, #475569)"};"
+                      style="padding:8px 6px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid ${this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--border, #cbd5e1)"};background:${this.sprintDurationDays === d.days ? "rgba(79,70,229,0.1)" : "var(--bg-secondary, #f8fafc)"};color:${this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--text-secondary, #475569)"};"
                     >
                       ${d.label}
                     </button>
-                  `
+                  `,
                     )
                     .join("")}
                 </div>
@@ -810,7 +827,7 @@ export class BacklogView {
                       </div>
                       <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0;">${t.estimateHours || 4}h</span>
                     </label>
-                  `
+                  `,
                     )
                     .join("")}
                 </div>
@@ -979,7 +996,7 @@ export class BacklogView {
                     .map(
                       (m) => `
                     <option value="${m.id}">${this.escapeHtml(m.name)} (${this.escapeHtml(m.role)})</option>
-                  `
+                  `,
                     )
                     .join("")}
                 </select>
@@ -1014,14 +1031,12 @@ export class BacklogView {
                     type="button"
                     class="epic-color-swatch"
                     data-color="${c.hex}"
-                    style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;cursor:pointer;font-size:11.5px;font-weight:700;border:2px solid ${
-                      this.selectedEpicColor === c.hex ? c.hex : "var(--border, #e2e8f0)"
-                    };background:${this.selectedEpicColor === c.hex ? `${c.hex}15` : "var(--bg-secondary, #f8fafc)"};color:var(--text-primary);"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;cursor:pointer;font-size:11.5px;font-weight:700;border:2px solid ${this.selectedEpicColor === c.hex ? c.hex : "var(--border, #e2e8f0)"};background:${this.selectedEpicColor === c.hex ? `${c.hex}15` : "var(--bg-secondary, #f8fafc)"};color:var(--text-primary);"
                   >
                     <span style="width:12px;height:12px;border-radius:50%;background:${c.hex};display:inline-block;"></span>
                     <span>${c.name}</span>
                   </button>
-                `
+                `,
                   )
                   .join("")}
               </div>
@@ -1229,11 +1244,7 @@ export class BacklogView {
       }
 
       // Close Create Epic Modal
-      if (
-        e.target.closest("#closeCreateEpicModalBtn") ||
-        e.target.closest("#cancelCreateEpicModalBtn") ||
-        e.target.id === "backlogCreateEpicBackdrop"
-      ) {
+      if (e.target.closest("#closeCreateEpicModalBtn") || e.target.closest("#cancelCreateEpicModalBtn") || e.target.id === "backlogCreateEpicBackdrop") {
         this.isCreateEpicModalOpen = false;
         this.render();
         return;
@@ -1295,11 +1306,7 @@ export class BacklogView {
       }
 
       // Close Create Sprint Modal
-      if (
-        e.target.closest("#closeCreateSprintModalBtn") ||
-        e.target.closest("#cancelCreateSprintModalBtn") ||
-        e.target.id === "backlogCreateSprintBackdrop"
-      ) {
+      if (e.target.closest("#closeCreateSprintModalBtn") || e.target.closest("#cancelCreateSprintModalBtn") || e.target.id === "backlogCreateSprintBackdrop") {
         this.isCreateSprintModalOpen = false;
         this.render();
         return;
@@ -1484,9 +1491,7 @@ export class BacklogView {
           return s;
         });
 
-        const selectedTaskIds = Array.from(this.element.querySelectorAll(".sprint-backlog-task-chk:checked")).map(
-          (chk) => chk.value
-        );
+        const selectedTaskIds = Array.from(this.element.querySelectorAll(".sprint-backlog-task-chk:checked")).map((chk) => chk.value);
 
         const updatedTasks = (state.tasks || []).map((t) => {
           if (selectedTaskIds.includes(t.id)) {
@@ -1500,13 +1505,7 @@ export class BacklogView {
           sprints: [...updatedSprints, newSprint],
           tasks: updatedTasks,
         });
-        store.addToast(
-          "success",
-          "Sprint Berhasil Dibuat",
-          `Sprint "${nameVal}" (${startVal} s/d ${endVal})${
-            selectedTaskIds.length > 0 ? ` beserta ${selectedTaskIds.length} tiket` : ""
-          } berhasil ditambahkan.`
-        );
+        store.addToast("success", "Sprint Berhasil Dibuat", `Sprint "${nameVal}" (${startVal} s/d ${endVal})${selectedTaskIds.length > 0 ? ` beserta ${selectedTaskIds.length} tiket` : ""} berhasil ditambahkan.`);
         return;
       }
 
