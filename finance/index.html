@@ -71,11 +71,11 @@
           <button type="button" class="finance-subnav-item" data-target="pengeluaran" onclick="window.switchFinancePage('pengeluaran')">
             <i class="fa-solid fa-money-bill-wave"></i>
             <span>Pengeluaran</span>
-
+          </button>
           <button type="button" class="finance-subnav-item" data-target="messages" onclick="window.switchFinancePage('messages')">
             <i class="fa-solid fa-comments"></i>
             <span>Pusat Pesan</span>
-          </button>
+            <span class="finance-subnav-badge" id="nav-badge-messages">2</span>
           </button>
           <button type="button" class="finance-subnav-item" data-target="opex" onclick="window.switchFinancePage('opex')">
             <i class="fa-solid fa-building"></i>
@@ -155,10 +155,10 @@
           <!-- KPI Cards Grid -->
           <div class="kpi-grid">
             <div class="kpi-card">
-              <div class="kpi-accent-bar" style="background: linear-gradient(90deg, #305BA3, #38BDF8);"></div>
+              <div class="kpi-accent-bar" style="background: linear-gradient(90deg, #4F46E5, #818CF8);"></div>
               <div class="kpi-top">
                 <span class="kpi-label">Total Kas & Bank</span>
-                <div class="kpi-icon" style="background:#EFF6FF; color:#305BA3;"><i class="fa-solid fa-vault"></i></div>
+                <div class="kpi-icon" style="background:#EEF2FF; color:#4F46E5;"><i class="fa-solid fa-vault"></i></div>
               </div>
               <div class="kpi-val">Rp 485.250.000</div>
               <div class="kpi-sub" style="color:#10B981;"><i class="fa-solid fa-circle-check"></i> 4 Rekening Aktif & Likuid</div>
@@ -389,15 +389,15 @@
               </div>
               <div class="hero-title">
                 <h2>Penagihan & Termin Proyek (Accounts Receivable)</h2>
-                <p>Termin penagihan otomatis tersinkronisasi dari kesepakatan MoU/Quotation di Modul CRM. Tim Finance dapat mengedit tanggal & menghapus termin, serta menyetujui invoice per-proyek dari PM.</p>
+                <p>Penerimaan skema termin dari kesepakatan MoU/Quotation Modul CRM & verifikasi pengiriman invoice otomatis berdasarkan milestone selesai dari Manajemen Proyek (MP).</p>
               </div>
             </div>
             <div class="hero-actions">
-              <button class="btn outline-white" onclick="syncTerminsFromCrm()">
-                <i class="fa-solid fa-arrows-rotate"></i> Sinkron Ulang dari CRM
+              <button class="btn outline-white" onclick="openCrmSimulationModal()">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Simulasi Terima Termin CRM
               </button>
               <button class="btn primary" onclick="simulatePmTaskDoneTrigger()">
-                <i class="fa-solid fa-bolt"></i> Simulasikan Milestone PM Selesai
+                <i class="fa-solid fa-bolt"></i> Simulasi Kiriman Invoice MP
               </button>
             </div>
           </div>
@@ -407,20 +407,89 @@
             <div class="kpi-card">
               <div class="kpi-accent-bar" style="background:#10B981;"></div>
               <div class="kpi-top"><span class="kpi-label">Total Termin Lunas</span><i class="fa-solid fa-circle-check" style="color:#10B981;"></i></div>
-              <div class="kpi-val" style="color:#10B981;">Rp 125.000.000</div>
+              <div class="kpi-val" style="color:#10B981;" id="ar-kpi-paid">Rp 125.000.000</div>
               <div class="kpi-sub">Masuk ke kas pool perusahaan</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-accent-bar" style="background:#F59E0B;"></div>
               <div class="kpi-top"><span class="kpi-label">Menunggu Pembayaran</span><i class="fa-solid fa-clock" style="color:#F59E0B;"></i></div>
-              <div class="kpi-val" style="color:#D97706;">Rp 19.500.000</div>
+              <div class="kpi-val" style="color:#D97706;" id="ar-kpi-waiting">Rp 19.500.000</div>
               <div class="kpi-sub">Invoice aktif di tangan klien</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-accent-bar" style="background:#64748B;"></div>
               <div class="kpi-top"><span class="kpi-label">Draft / Jadwal Mendatang</span><i class="fa-solid fa-calendar-days" style="color:#64748B;"></i></div>
-              <div class="kpi-val">Rp 55.500.000</div>
-              <div class="kpi-sub">Terkait milestone sprint PM</div>
+              <div class="kpi-val" id="ar-kpi-draft">Rp 55.500.000</div>
+              <div class="kpi-sub">Terkait milestone sprint MP & CRM</div>
+            </div>
+          </div>
+
+          <!-- HUB TRANSMISI INTEGRASI LIVE: CRM & MANAJEMEN PROYEK (MP) -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:18px;">
+            <!-- Panel 1: Transmisi Masuk Termin dari CRM -->
+            <div id="crmIncomingNotice" style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:12px; padding:16px 18px; display:flex; flex-direction:column; justify-content:space-between; gap:12px;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+                <div style="display:flex; align-items:flex-start; gap:12px;">
+                  <div style="width:38px; height:38px; border-radius:10px; background:#DBEAFE; color:#1D4ED8; display:grid; place-items:center; font-size:16px; flex-shrink:0;">
+                    <i class="fa-solid fa-handshake"></i>
+                  </div>
+                  <div>
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                      <strong style="font-size:12.5px; color:#3730A3;">Kiriman Termin Baru dari Modul CRM</strong>
+                      <span class="badge info" style="font-size:10px;" id="crmIncomingBadge">1 Deal Siap Impor</span>
+                    </div>
+                    <span style="font-size:11.5px; color:#1E40AF; display:block; margin-top:3px;" id="crmIncomingDesc">
+                      Deal Won: <strong>Samudera Logistik Tracking System</strong> (Klien: <strong>Samudera Logistik Nusantara</strong>) • Kontrak DPP Rp 140.000.000 (3 Termin TOP).
+                    </span>
+                    <div style="font-size:10.5px; color:#3B82F6; margin-top:4px; display:flex; gap:12px; flex-wrap:wrap;">
+                      <span><i class="fa-solid fa-user-tie"></i> Pengirim CRM: <strong>Nadia Putri (AE)</strong></span>
+                      <span><i class="fa-solid fa-file-contract"></i> Doc: <strong>MoU/ASTA/X/2026/108</strong></span>
+                      <span><i class="fa-regular fa-clock"></i> 12 Okt 2026, 09:42 WIB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px dashed #BFDBFE; padding-top:10px;">
+                <button class="btn btn-xs" style="border-color:#93C5FD; color:#1D4ED8;" onclick="openCrmSimulationModal('samudera')">
+                  <i class="fa-solid fa-eye"></i> Detail Pengiriman CRM
+                </button>
+                <button class="btn btn-xs primary" id="btnQuickAcceptCrm" onclick="acceptIncomingCrmDeal('samudera')">
+                  <i class="fa-solid fa-download"></i> Terima & Impor Termin
+                </button>
+              </div>
+            </div>
+
+            <!-- Panel 2: Transmisi Masuk Invoice dari Manajemen Proyek (MP) -->
+            <div id="pmDraftNotice" style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:12px; padding:16px 18px; display:flex; flex-direction:column; justify-content:space-between; gap:12px;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+                <div style="display:flex; align-items:flex-start; gap:12px;">
+                  <div style="width:38px; height:38px; border-radius:10px; background:#FEF3C7; color:#D97706; display:grid; place-items:center; font-size:16px; flex-shrink:0;">
+                    <i class="fa-solid fa-diagram-project"></i>
+                  </div>
+                  <div>
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                      <strong style="font-size:12.5px; color:#92400E;" id="pmDraftNoticeTitle">Kiriman Draft Invoice dari Manajemen Proyek (MP)</strong>
+                      <span class="badge amber-draft" style="font-size:10px;" id="pmDraftNoticeBadge">Menunggu Approval</span>
+                    </div>
+                    <span style="font-size:11.5px; color:#B45309; display:block; margin-top:3px;" id="pmDraftNoticeDesc">
+                      Milestone <strong>"Termin 2: UAT Selesai (40%)"</strong> pada proyek <strong>Aplikasi Kasir RS Medika</strong> ditandai 100% selesai oleh PM.
+                    </span>
+                    <div style="font-size:10.5px; color:#D97706; margin-top:4px; display:flex; gap:12px; flex-wrap:wrap;" id="pmDraftNoticeMeta">
+                      <span><i class="fa-solid fa-user-check"></i> PM: <strong>Andi Setiawan (Forge PM)</strong></span>
+                      <span><i class="fa-solid fa-file-shield"></i> Bukti: <strong>BAST_UAT_RSMedika.pdf</strong></span>
+                      <span><i class="fa-regular fa-clock"></i> 12 Okt 2026, 10:15 WIB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px dashed #FDE68A; padding-top:10px;" id="pmDraftNoticeActions">
+                <button class="btn btn-xs" style="border-color:#FCD34D; color:#92400E;" onclick="openMpDeliveryDetailModal('INV-2610-002')">
+                  <i class="fa-solid fa-magnifying-glass-chart"></i> Detail Pengiriman MP
+                </button>
+                <button class="btn btn-xs success" onclick="approveDraftInvoice('INV-2610-002')">
+                  <i class="fa-solid fa-check"></i> Approve & Terbitkan
+                </button>
+              </div>
             </div>
           </div>
 
@@ -451,54 +520,38 @@
 
           <!-- Tab View: Per Proyek -->
           <div id="invoice-view-project" style="display:block;">
-            
-            <!-- Alert Integrasi Otomatis PM -> Finance -->
-            <div id="pmDraftNotice" style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:12px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:16px;">
-              <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:36px; height:36px; border-radius:50%; background:#FEF3C7; color:#D97706; display:grid; place-items:center; font-size:16px;">
-                  <i class="fa-solid fa-bell-concierge"></i>
-                </div>
-                <div>
-                  <strong style="font-size:12.5px; color:#92400E; display:block;">Invoice Masuk dari Project Management (Status: DRAFT)</strong>
-                  <span style="font-size:11px; color:#B45309;" id="pmDraftNoticeDesc">Project Manager telah menandai milestone "UAT Selesai (Termin 2)" tuntas. Invoice otomatis masuk ke Finance untuk diapprove.</span>
-                </div>
-              </div>
-              <div style="display:flex; gap:8px;">
-                <button class="btn btn-xs success" onclick="approveDraftInvoice('INV-2610-002')"><i class="fa-solid fa-check"></i> Approve & Terbitkan</button>
-              </div>
-            </div>
 
             <!-- Project Card 1 -->
             <div class="card-panel invoice-project-card" id="card-proj-medika" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-10-01" data-amount="33300000">
-              <div class="card-header" style="background:#F8FAFC;">
+              <div class="card-header" style="background:#F8FAFC; flex-wrap:wrap; gap:10px;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:36px; height:36px; border-radius:8px; background:#305BA3; color:#fff; display:grid; place-items:center;">
+                  <div style="width:36px; height:36px; border-radius:8px; background:#4F46E5; color:#fff; display:grid; place-items:center;">
                     <i class="fa-solid fa-hospital"></i>
                   </div>
                   <div>
                     <h4 style="font-size:14px; font-weight:800; color:var(--text-primary);">PROYEK: APLIKASI KASIR RS MEDIKA</h4>
                     <span style="font-size:11.5px; color:var(--text-muted);">
-                      Total Kontrak: <strong style="color:var(--text-primary);">Rp 33.300.000</strong> (DPP: Rp 30.000.000 + PPN 11%: Rp 3.300.000 | PPh 23: Rp 600.000) • Klien: <strong style="color:var(--text-primary);">RS Medika Utama</strong> (MoU CRM)
+                      Total Kontrak: <strong style="color:var(--text-primary);">Rp 33.300.000</strong> (DPP: Rp 30.000.000 + PPN 11%: Rp 3.300.000 | PPh 23: Rp 600.000) • Klien: <strong style="color:var(--text-primary);">RS Medika Utama</strong> (PIC: Heru Prasetyo)
                     </span>
                   </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                   <span class="tax-tag ppn"><i class="fa-solid fa-percent"></i> PPN 11% Aktif</span>
                   <span class="tax-tag pph"><i class="fa-solid fa-shield-halved"></i> PPh 23 (2%)</span>
-                  <span class="badge info"><i class="fa-solid fa-link"></i> Jadwal dari CRM</span>
+                  <button class="btn btn-xs" onclick="openCrmSimulationModal('medika')" title="Lihat Detail Pengiriman Termin dari CRM"><i class="fa-solid fa-link" style="color:var(--primary);"></i> Detail Kiriman CRM</button>
                 </div>
               </div>
               <div class="card-body" style="padding:0;">
                 <table class="data-table">
                   <thead>
                     <tr>
-                      <th style="width:28%;">Termin / Kesepakatan CRM</th>
+                      <th style="width:27%;">Termin / Kesepakatan CRM & MP</th>
                       <th>DPP (Dasar Pajak)</th>
                       <th>PPN (11%)</th>
                       <th>PPh 23 (2%)</th>
                       <th style="text-align:right;">Total Tagihan</th>
                       <th>Status & Approval</th>
-                      <th style="text-align:right;">Aksi & Kelola</th>
+                      <th style="text-align:right;">Aksi, Detail & Chat Klien</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -506,39 +559,7 @@
                     <tr id="termin-row-1" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-08-01" data-amount="9990000">
                       <td>
                         <strong style="color:var(--text-primary);"><i class="fa-solid fa-file-invoice text-muted" style="margin-right:6px;"></i><span id="tname-1">Termin 1: DP Awal (30%)</span></strong>
-                        <div style="font-size:10.5px; color:var(--text-muted);">Ref: INV-2608-001</div>
-                      </td>
-                      <td>Rp 9.000.000</td>
-                      <td>Rp 990.000</td>
-                      <td style="font-weight:700; text-align:right;">Rp 9.990.000</td>
-                      <td><span class="badge success">✅ LUNAS</span></td>
-                      <td><span style="font-size:11px; color:var(--text-muted);">Selesai</span></td>
-                      <td style="text-align:right;">
-                        <button class="btn btn-xs" onclick="window.openPreviewInvoice('Aplikasi Kasir RS Medika', 'RS Medika Utama', 'Termin 1: DP Awal (30%)', 9990000)" title="Kirim ke Klien"><i class="fa-brands fa-whatsapp"></i></button>
-                      </td>
-                    </tr>
-
-                    <!-- Termin 2 (Otomatis masuk dari PM - Butuh Approval Spesifik Proyek RS Medika) -->
-                    <tr id="rowTermin2" style="background:#FFFBEB;" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-10-01" data-amount="13320000">
-                      <td>
-                        <strong style="color:#B45309;"><i class="fa-solid fa-code-compare" style="margin-right:6px;"></i><span id="tname-2">Termin 2: UAT Selesai (40%)</span></strong>
-                        <div style="font-size:10.5px; color:#B45309;">Ref: INV-2610-002</div>
-                      </td>
-                      <td>Rp 12.000.000</td>
-                      <td>Rp 1.320.000</td>
-                      <td style="font-weight:700; text-align:right;">Rp 13.320.000</td>
-                      <td><span class="badge amber-draft" id="badgeTermin2">🟡 DRAFT (Verifikasi)</span></td>
-                      <td><span style="font-size:11px; color:var(--text-muted);">-</span></td>
-                      <td style="text-align:right;">
-                        <button class="btn btn-xs success" id="btnApproveTermin2" onclick="approveSpecificProjectInvoice('INV-2610-002', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')"><i class="fa-solid fa-check"></i> Approve</button>
-                      </td>
-                    </tr>
-
-                    <!-- Termin 3 -->
-                    <tr id="rowTermin3" style="opacity:0.85;" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-12-01" data-amount="9990000">
-                      <td>
-                        <strong><i class="fa-solid fa-hourglass-start text-muted" style="margin-right:6px;"></i><span id="tname-3">Termin 3: Pelunasan & BAST (30%)</span></strong>
-                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-3">01 Des 2026</span> • Menunggu Milestone PM Selesai</div>
+                        <div style="font-size:10.5px; color:var(--text-muted);">Ref: INV-2608-001 • Cair: 05 Agu 2026 (CRM MoU)</div>
                       </td>
                       <td>Rp 9.000.000</td>
                       <td style="color:#1D4ED8; font-weight:600;">+ Rp 990.000</td>
@@ -547,10 +568,55 @@
                         Rp 9.990.000
                         <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 9.810.000</div>
                       </td>
-                      <td><span class="badge neutral" id="badgeTermin3">🗓️ MENUNGGU PM</span></td>
+                      <td><span class="badge success" id="badgeTermin1">✅ LUNAS</span></td>
                       <td style="text-align:right;">
                         <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
-                          <button class="btn btn-xs" id="btnTriggerTermin3" onclick="simulatePmApprovalTermin3('Aplikasi Kasir RS Medika', 'RS Medika Utama')"><i class="fa-solid fa-wand-magic-sparkles"></i> Trigger PM Selesai</button>
+                          <button class="btn btn-xs" onclick="showInvoiceTaxDetail('Termin 1: DP Awal (30%) - RS Medika', 9000000, 990000, 180000, 'Lunas')" title="Rincian Pajak"><i class="fa-solid fa-receipt"></i></button>
+                          <button class="btn btn-xs success" onclick="window.openPreviewInvoice('Aplikasi Kasir RS Medika', 'RS Medika Utama', 'Termin 1: DP Awal (30%)', 9990000, 'INV-2608-001', 9000000, 990000, 180000, 'Lunas')" title="Simulasi Chat WA ke Klien"><i class="fa-brands fa-whatsapp"></i> Chat Klien</button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <!-- Termin 2 (Otomatis masuk dari MP - Butuh Approval Spesifik Proyek RS Medika) -->
+                    <tr id="rowTermin2" style="background:#FFFBEB;" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-10-01" data-amount="13320000">
+                      <td>
+                        <strong style="color:#B45309;"><i class="fa-solid fa-code-compare" style="margin-right:6px;"></i><span id="tname-2">Termin 2: UAT Selesai (40%)</span></strong>
+                        <div style="font-size:10.5px; color:#B45309;">Ref: INV-2610-002 • Kiriman MP: Andi Setiawan (BAST UAT)</div>
+                      </td>
+                      <td>Rp 12.000.000</td>
+                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 1.320.000</td>
+                      <td style="color:#B45309; font-weight:600;">- Rp 240.000</td>
+                      <td style="font-weight:700; text-align:right;">
+                        Rp 13.320.000
+                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 13.080.000</div>
+                      </td>
+                      <td><span class="badge amber-draft" id="badgeTermin2">🟡 DRAFT MP (Verifikasi)</span></td>
+                      <td style="text-align:right;">
+                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
+                          <button class="btn btn-xs" onclick="openMpDeliveryDetailModal('INV-2610-002')" title="Lihat Detail Kiriman dari Manajemen Proyek"><i class="fa-solid fa-file-waveform"></i> Detail MP</button>
+                          <button class="btn btn-xs success" id="btnApproveTermin2" onclick="approveSpecificProjectInvoice('INV-2610-002', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')"><i class="fa-solid fa-check"></i> Approve</button>
+                          <button class="btn btn-xs" onclick="window.openPreviewInvoice('Aplikasi Kasir RS Medika', 'RS Medika Utama', 'Termin 2: UAT Selesai (40%)', 13320000, 'INV-2610-002', 12000000, 1320000, 240000, 'Menunggu Bayar')" title="Preview & Chat WA"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <!-- Termin 3 -->
+                    <tr id="rowTermin3" style="opacity:0.9;" data-project="Aplikasi Kasir RS Medika" data-client="RS Medika Utama" data-due="2026-12-01" data-amount="9990000">
+                      <td>
+                        <strong><i class="fa-solid fa-hourglass-start text-muted" style="margin-right:6px;"></i><span id="tname-3">Termin 3: Pelunasan & BAST (30%)</span></strong>
+                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-3">01 Des 2026</span> • Menunggu Milestone MP Selesai</div>
+                      </td>
+                      <td>Rp 9.000.000</td>
+                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 990.000</td>
+                      <td style="color:#B45309; font-weight:600;">- Rp 180.000</td>
+                      <td style="font-weight:700; text-align:right;">
+                        Rp 9.990.000
+                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 9.810.000</div>
+                      </td>
+                      <td><span class="badge neutral" id="badgeTermin3">🗓️ MENUNGGU MP</span></td>
+                      <td style="text-align:right;">
+                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
+                          <button class="btn btn-xs" id="btnTriggerTermin3" onclick="simulatePmApprovalTermin3('Aplikasi Kasir RS Medika', 'RS Medika Utama')"><i class="fa-solid fa-wand-magic-sparkles"></i> Simulasi Kirim dari MP</button>
                           <button class="btn btn-xs" onclick="openEditTerminModal('3', 'Termin 3: Pelunasan & BAST (30%)', 9000000, '2026-12-01', 'Aplikasi Kasir RS Medika', 'RS Medika Utama')" title="Edit Termin"><i class="fa-solid fa-pen-to-square"></i></button>
                           <button class="btn btn-xs danger" onclick="deleteTerminRow('rowTermin3', 'Termin 3 (Pelunasan)')" title="Hapus Termin"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
@@ -563,50 +629,74 @@
 
             <!-- Project Card 2 -->
             <div class="card-panel invoice-project-card" id="card-proj-alpha" data-project="Web Company Profile X" data-client="PT Alpha Global" data-due="2026-10-10" data-amount="16650000">
-              <div class="card-header" style="background:#F8FAFC;">
+              <div class="card-header" style="background:#F8FAFC; flex-wrap:wrap; gap:10px;">
                 <div style="display:flex; align-items:center; gap:12px;">
                   <div style="width:36px; height:36px; border-radius:8px; background:#8B5CF6; color:#fff; display:grid; place-items:center;">
                     <i class="fa-solid fa-globe"></i>
                   </div>
                   <div>
                     <h4 style="font-size:14px; font-weight:800; color:var(--text-primary);">PROYEK: WEB COMPANY PROFILE X</h4>
-                    <span style="font-size:11.5px; color:var(--text-muted);">Total Nilai Kontrak: <strong style="color:var(--text-primary);">Rp 16.650.000</strong> (DPP: Rp 15.000.000 + PPN 11%: Rp 1.650.000) • Klien: <strong style="color:var(--text-primary);">PT Alpha Global</strong> (MoU CRM)</span>
+                    <span style="font-size:11.5px; color:var(--text-muted);">Total Nilai Kontrak: <strong style="color:var(--text-primary);">Rp 16.650.000</strong> (DPP: Rp 15.000.000 + PPN 11%: Rp 1.650.000) • Klien: <strong style="color:var(--text-primary);">PT Alpha Global</strong> (PIC: Sari Wijaya)</span>
                   </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <span class="tax-tag ppn">PPN 11%</span>
-                  <span class="badge info"><i class="fa-solid fa-link"></i> Jadwal dari CRM</span>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="tax-tag ppn"><i class="fa-solid fa-percent"></i> PPN 11% Aktif</span>
+                  <span class="tax-tag pph"><i class="fa-solid fa-shield-halved"></i> PPh 23 (2%)</span>
+                  <button class="btn btn-xs" onclick="openCrmSimulationModal('alpha')" title="Lihat Detail Pengiriman Termin dari CRM"><i class="fa-solid fa-link" style="color:var(--primary);"></i> Detail Kiriman CRM</button>
                 </div>
               </div>
               <div class="card-body" style="padding:0;">
                 <table class="data-table">
                   <thead>
                     <tr>
-                      <th style="width:28%;">Termin / Kesepakatan CRM</th>
+                      <th style="width:27%;">Termin / Kesepakatan CRM & MP</th>
                       <th>DPP (Dasar Pajak)</th>
                       <th>PPN (11%)</th>
                       <th>PPh 23 (2%)</th>
                       <th style="text-align:right;">Total Tagihan</th>
                       <th>Status & Approval</th>
-                      <th style="text-align:right;">Aksi & Kelola</th>
+                      <th style="text-align:right;">Aksi, Detail & Chat Klien</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr id="termin-row-alpha-1" data-project="Web Company Profile X" data-client="PT Alpha Global" data-due="2026-10-10" data-amount="8325000">
                       <td>
                         <strong style="color:var(--text-primary);"><i class="fa-solid fa-file-invoice text-muted" style="margin-right:6px;"></i><span id="tname-alpha-1">Termin 1: DP Awal (50%)</span></strong>
-                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-alpha-1">10 Okt 2026</span> • Ref: INV-2610-003</div>
+                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-alpha-1">10 Okt 2026</span> • Ref: INV-2610-003 (MoU CRM)</div>
                       </td>
                       <td>Rp 7.500.000</td>
                       <td style="color:#1D4ED8; font-weight:600;">+ Rp 825.000</td>
                       <td style="color:#B45309; font-weight:600;">- Rp 150.000</td>
-                      <td style="font-weight:800; color:var(--text-primary); text-align:right;">Rp 8.325.000</td>
-                      <td><span class="badge warning">🟡 MENUNGGU BAYAR</span></td>
+                      <td style="font-weight:800; color:var(--text-primary); text-align:right;">
+                        Rp 8.325.000
+                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 8.175.000</div>
+                      </td>
+                      <td><span class="badge warning" id="badgeAlpha1">🟡 MENUNGGU BAYAR</span></td>
                       <td style="text-align:right;">
                         <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
-                          <button class="btn btn-xs primary" onclick="showFinanceToast('Invoice INV-2610-003 dikirimkan ke PT Alpha Global!', 'success')" title="Kirim ke Klien"><i class="fa-solid fa-paper-plane"></i></button>
+                          <button class="btn btn-xs primary" onclick="window.openPreviewInvoice('Web Company Profile X', 'PT Alpha Global', 'Termin 1: DP Awal (50%)', 8325000, 'INV-2610-003', 7500000, 825000, 150000, 'Menunggu Bayar')" title="Kirim Invoice & Simulasi Chat WA"><i class="fa-brands fa-whatsapp"></i> Kirim WA</button>
                           <button class="btn btn-xs" onclick="openEditTerminModal('alpha-1', 'Termin 1: DP Awal (50%)', 7500000, '2026-10-10', 'Web Company Profile X', 'PT Alpha Global')" title="Edit Termin"><i class="fa-solid fa-pen-to-square"></i></button>
                           <button class="btn btn-xs danger" onclick="deleteTerminRow('termin-row-alpha-1', 'Termin 1 (DP Alpha Global)')" title="Hapus Termin"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr id="termin-row-alpha-2" style="opacity:0.9;" data-project="Web Company Profile X" data-client="PT Alpha Global" data-due="2026-11-15" data-amount="8325000">
+                      <td>
+                        <strong><i class="fa-solid fa-hourglass-start text-muted" style="margin-right:6px;"></i><span id="tname-alpha-2">Termin 2: Pelunasan & Go-Live (50%)</span></strong>
+                        <div style="font-size:10.5px; color:var(--text-muted);">Jatuh Tempo: <span id="tdue-alpha-2">15 Nov 2026</span> • Menunggu Milestone MP Selesai</div>
+                      </td>
+                      <td>Rp 7.500.000</td>
+                      <td style="color:#1D4ED8; font-weight:600;">+ Rp 825.000</td>
+                      <td style="color:#B45309; font-weight:600;">- Rp 150.000</td>
+                      <td style="font-weight:700; text-align:right;">
+                        Rp 8.325.000
+                        <div style="font-size:10px; color:#10B981; font-weight:600;">Net: Rp 8.175.000</div>
+                      </td>
+                      <td><span class="badge neutral" id="badgeAlpha2">🗓️ MENUNGGU MP</span></td>
+                      <td style="text-align:right;">
+                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px;">
+                          <button class="btn btn-xs" id="btnTriggerAlpha2" onclick="openMpDeliveryDetailModal('INV-2611-004')"><i class="fa-solid fa-wand-magic-sparkles"></i> Simulasi Kirim dari MP</button>
+                          <button class="btn btn-xs" onclick="openEditTerminModal('alpha-2', 'Termin 2: Pelunasan & Go-Live (50%)', 7500000, '2026-11-15', 'Web Company Profile X', 'PT Alpha Global')" title="Edit Termin"><i class="fa-solid fa-pen-to-square"></i></button>
                         </div>
                       </td>
                     </tr>
@@ -876,9 +966,9 @@
               <div class="kpi-sub" id="pengeluaran-kpi-sub">5 Transaksi tercatat</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-accent-bar" style="background:#305BA3;"></div>
-              <div class="kpi-top"><span class="kpi-label">HPP Proyek Terbesar</span><i class="fa-solid fa-cubes" style="color:#305BA3;"></i></div>
-              <div class="kpi-val" style="color:#305BA3;">Rp 15.350.000</div>
+              <div class="kpi-accent-bar" style="background:#4F46E5;"></div>
+              <div class="kpi-top"><span class="kpi-label">HPP Proyek Terbesar</span><i class="fa-solid fa-cubes" style="color:#4F46E5;"></i></div>
+              <div class="kpi-val" style="color:#4F46E5;">Rp 15.350.000</div>
               <div class="kpi-sub">Cloud & Database Cluster AWS</div>
             </div>
             <div class="kpi-card">
@@ -1078,8 +1168,8 @@
 
           <div class="kpi-grid cols-3">
             <div class="kpi-card">
-              <div class="kpi-accent-bar" style="background:#305BA3;"></div>
-              <div class="kpi-top"><span class="kpi-label">Total OPEX Bulan Ini</span><i class="fa-solid fa-wallet" style="color:#305BA3;"></i></div>
+              <div class="kpi-accent-bar" style="background:#4F46E5;"></div>
+              <div class="kpi-top"><span class="kpi-label">Total OPEX Bulan Ini</span><i class="fa-solid fa-wallet" style="color:#4F46E5;"></i></div>
               <div class="kpi-val">Rp 24.850.000</div>
               <div class="kpi-sub">14 transaksi terbayar</div>
             </div>
@@ -1098,47 +1188,40 @@
           </div>
 
           <div class="card-panel">
-            <div class="card-header">
-              <h4 class="card-title">Daftar Transaksi Operasional Kantor</h4>
-              <button class="btn btn-sm" onclick="showFinanceToast('Filter diterapkan.', 'info')"><i class="fa-solid fa-filter"></i> Filter Kategori</button>
+            <div class="card-header" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h4 class="card-title"><i class="fa-solid fa-list-check" style="color:var(--primary); margin-right:6px;"></i> Daftar Transaksi Operasional Kantor (OPEX)</h4>
+                <p class="card-subtitle">Pengeluaran rutin kantor dengan opsi bayar transfer langsung dari rekening bank</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <select class="form-select" id="filterOpexCategory" onchange="window.filterOpexTable()" style="font-size:12px; padding:6px 10px; width:auto;">
+                  <option value="all">Semua Kategori OPEX</option>
+                  <option value="Utilitas">Utilitas (Internet/Listrik/Air)</option>
+                  <option value="Sewa">Sewa Gedung & Kantor</option>
+                  <option value="Pantry">Pantry & Konsumsi</option>
+                  <option value="Peralatan">Peralatan & ATK</option>
+                </select>
+                <div class="filter-search" style="max-width:200px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="searchOpexInput" placeholder="Cari OPEX..." oninput="window.filterOpexTable()">
+                </div>
+              </div>
             </div>
             <div class="table-wrap">
-              <table class="data-table">
+              <table class="data-table" id="tableOpex">
                 <thead>
                   <tr>
                     <th>ID / Tanggal</th>
-                    <th>Nama Pengeluaran</th>
+                    <th>Nama Pengeluaran & Penerima</th>
                     <th>Kategori OPEX</th>
-                    <th>Metode Pembayaran</th>
+                    <th>Rekening Pembayaran</th>
                     <th style="text-align:right;">Nominal (IDR)</th>
                     <th>Status</th>
+                    <th style="text-align:center; width:170px;">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td><span class="badge neutral">OPX-2610-01</span><div style="font-size:10.5px; color:var(--text-muted);">02 Okt 2026</div></td>
-                    <td><strong>Langganan Internet Biznet Dedicated 100Mbps</strong></td>
-                    <td><span class="badge info">Utilitas (Internet)</span></td>
-                    <td>BCA Operasional</td>
-                    <td style="text-align:right; font-weight:800;">Rp 2.750.000</td>
-                    <td><span class="badge success">✅ LUNAS</span></td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge neutral">OPX-2610-02</span><div style="font-size:10.5px; color:var(--text-muted);">01 Okt 2026</div></td>
-                    <td><strong>Token Listrik PLN Kantor Utama</strong></td>
-                    <td><span class="badge info">Utilitas (Listrik)</span></td>
-                    <td>Kas Kecil</td>
-                    <td style="text-align:right; font-weight:800;">Rp 1.500.000</td>
-                    <td><span class="badge success">✅ LUNAS</span></td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge neutral">OPX-2610-03</span><div style="font-size:10.5px; color:var(--text-muted);">28 Sep 2026</div></td>
-                    <td><strong>Belanja Bulanan Pantry, Kopi & Snack</strong></td>
-                    <td><span class="badge purple">Pantry & Konsumsi</span></td>
-                    <td>Kas Kecil</td>
-                    <td style="text-align:right; font-weight:800;">Rp 850.000</td>
-                    <td><span class="badge success">✅ LUNAS</span></td>
-                  </tr>
+                <tbody id="opexTableBody">
+                  <!-- Dynamically rendered by renderOpexTable() -->
                 </tbody>
               </table>
             </div>
@@ -1150,14 +1233,51 @@
             <div class="hero-left">
               <div class="hero-icon"><i class="fa-solid fa-comments"></i></div>
               <div class="hero-title">
-                <h2>Pusat Pesan (Komunikasi Klien)</h2>
-                <p>Riwayat percakapan WhatsApp terkait penagihan invoice & termin proyek.</p>
+                <h2>Pusat Pesan & Simulasi Chat Konsumen (WhatsApp AR)</h2>
+                <p>Log komunikasi pengiriman invoice, pengingat jatuh tempo, diskusi pajak PPh 23, & konfirmasi bukti bayar dari klien (terintegrasi kontak CRM).</p>
               </div>
             </div>
+            <div class="hero-actions">
+              <button class="btn outline-white" onclick="resetChatHistorySimulation()">
+                <i class="fa-solid fa-rotate-left"></i> Reset Simulasi Chat
+              </button>
+              <button class="btn primary" onclick="window.switchFinancePage('invoices')">
+                <i class="fa-brands fa-whatsapp"></i> Kirim Invoice Baru dari AR
+              </button>
+            </div>
           </div>
+
+          <div class="kpi-grid cols-3">
+            <div class="kpi-card">
+              <div class="kpi-accent-bar" style="background:#25D366;"></div>
+              <div class="kpi-top"><span class="kpi-label">Ruang Chat Klien Aktif</span><i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:16px;"></i></div>
+              <div class="kpi-val" id="msg-kpi-rooms">2 Klien</div>
+              <div class="kpi-sub">Tersinkron nomor WA PIC CRM</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-accent-bar" style="background:#4F46E5;"></div>
+              <div class="kpi-top"><span class="kpi-label">Invoice & Dokumen Terkirim</span><i class="fa-solid fa-paper-plane" style="color:#4F46E5;"></i></div>
+              <div class="kpi-val" id="msg-kpi-total">6 Pesan</div>
+              <div class="kpi-sub">PDF Invoice & Faktur Pajak</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-accent-bar" style="background:#10B981;"></div>
+              <div class="kpi-top"><span class="kpi-label">Status Respon Konsumen</span><i class="fa-solid fa-check-double" style="color:#10B981;"></i></div>
+              <div class="kpi-val" style="color:#10B981;">100% Terbaca</div>
+              <div class="kpi-sub">End-to-End WhatsApp Business API</div>
+            </div>
+          </div>
+
           <div class="card-panel">
-            <div id="message-list-content">
-               <p style="padding: 20px; color: var(--text-muted);">Belum ada riwayat percakapan. Mulai simulasi WA dari modul Penagihan (AR).</p>
+            <div class="card-header">
+              <div>
+                <h4 class="card-title"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> Riwayat Percakapan & Pengiriman Invoice ke Konsumen</h4>
+                <p class="card-subtitle">Klik tombol "Buka Chat WA" pada salah satu klien untuk melanjutkan simulasi percakapan interaktif</p>
+              </div>
+              <span class="badge success"><i class="fa-solid fa-plug-circle-check"></i> CRM Contact Sync Active</span>
+            </div>
+            <div class="card-body" id="message-list-content">
+               <p style="padding: 20px; color: var(--text-muted);">Memuat riwayat percakapan...</p>
             </div>
           </div>
         </section>
@@ -1167,13 +1287,13 @@
         <!-- ================================================================
              5. PENGGAJIAN KARYAWAN (PAYROLL OPEX - SYNC HR)
              ================================================================ -->
-        <section id="view-payroll" class="view-section">
+                <section id="view-payroll" class="view-section">
           <div class="hero-banner">
             <div class="hero-left">
               <div class="hero-icon"><i class="fa-solid fa-users"></i></div>
               <div class="hero-title">
                 <h2>Penggajian Karyawan Tetap (Payroll Terintegrasi Modul HR)</h2>
-                <p>Master data karyawan dan besaran gaji pokok mengikuti data resmi jabatan dari Modul HR Astacode.</p>
+                <p>Master data karyawan, golongan grade jabatan, presensi, potongan pajak PPh 21, BPJS, & pencairan gaji via Rekening Perusahaan.</p>
               </div>
             </div>
             <div class="hero-actions">
@@ -1183,179 +1303,75 @@
               <button class="btn primary" onclick="openFinanceModal('modalCreatePayroll')">
                 <i class="fa-solid fa-plus"></i> Tambah Data Gaji
               </button>
+              <button class="btn success" onclick="transferMassalPayroll()">
+                <i class="fa-solid fa-money-bill-transfer"></i> Transfer Gaji Massal
+              </button>
             </div>
           </div>
 
           <div class="kpi-grid">
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Total Beban Gaji</span><i class="fa-solid fa-money-bill-wave" style="color:#305BA3;"></i></div>
-              <div class="kpi-val" id="payroll-kpi-total">Rp 75.000.000</div>
-              <div class="kpi-sub">Oktober 2026 • 6 Karyawan Tetap</div>
+              <div class="kpi-accent-bar" style="background:#4F46E5;"></div>
+              <div class="kpi-top"><span class="kpi-label">Total Beban Gaji (THP)</span><i class="fa-solid fa-money-bill-wave" style="color:#4F46E5;"></i></div>
+              <div class="kpi-val" id="payroll-kpi-total">Rp 0</div>
+              <div class="kpi-sub" id="payroll-kpi-count">Oktober 2026 • 6 Karyawan Tetap</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Total Tunjangan Jabatan</span><i class="fa-solid fa-gift" style="color:#8B5CF6;"></i></div>
-              <div class="kpi-val">Rp 10.700.000</div>
-              <div class="kpi-sub">Standar Grade HR Astacode</div>
+              <div class="kpi-accent-bar" style="background:#F59E0B;"></div>
+              <div class="kpi-top"><span class="kpi-label">Menunggu Review HR</span><i class="fa-solid fa-hourglass-half" style="color:#F59E0B;"></i></div>
+              <div class="kpi-val" id="payroll-kpi-pending-hr" style="color:#D97706;">Rp 0</div>
+              <div class="kpi-sub">Verifikasi cuti/presensi modul HR</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Karyawan Tetap (HR)</span><i class="fa-solid fa-user-check" style="color:#10B981;"></i></div>
-              <div class="kpi-val">6 Orang</div>
-              <div class="kpi-sub"><span class="badge success" style="font-size:10px;"><i class="fa-solid fa-check"></i> 100% Terverifikasi HR</span></div>
+              <div class="kpi-accent-bar" style="background:#10B981;"></div>
+              <div class="kpi-top"><span class="kpi-label">Disetujui HR • Siap Transfer</span><i class="fa-solid fa-circle-check" style="color:#10B981;"></i></div>
+              <div class="kpi-val" id="payroll-kpi-ready-transfer" style="color:#10B981;">Rp 0</div>
+              <div class="kpi-sub">Siap dicairkan via Bank Mandiri Payroll</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Status Payroll</span><i class="fa-solid fa-calendar-check" style="color:#F59E0B;"></i></div>
-              <div class="kpi-val" style="font-size:18px; color:#10B981;">Draft Payrun PR-2026-10</div>
-              <div class="kpi-sub">Cut-off 25 Okt 2026</div>
+              <div class="kpi-accent-bar" style="background:#059669;"></div>
+              <div class="kpi-top"><span class="kpi-label">Sudah Ditransfer (LUNAS)</span><i class="fa-solid fa-receipt" style="color:#059669;"></i></div>
+              <div class="kpi-val" id="payroll-kpi-paid" style="color:#059669;">Rp 0</div>
+              <div class="kpi-sub">Gaji terdistribusi ke rekening karyawan</div>
             </div>
           </div>
 
           <div class="card-panel">
-            <div class="card-header">
+            <div class="card-header" style="flex-wrap:wrap; gap:10px;">
               <div>
-                <h4 class="card-title">Daftar Payroll Karyawan Astacode (Data Master HR)</h4>
-                <p class="card-subtitle">Gaji pokok tersinkron otomatis berdasarkan jabatan dan level di Modul HR</p>
+                <h4 class="card-title"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--primary); margin-right:6px;"></i> Daftar Payroll Karyawan Astacode (Data Master HR)</h4>
+                <p class="card-subtitle">Penggajian terverifikasi HR, sinkron potongan BPJS & PPh 21, transfer bank langsung, dan penerbitan slip digital</p>
               </div>
-              <button class="btn btn-sm success" onclick="showFinanceToast('Slip gaji massal di-generate dari master HR & dikirim ke email karyawan!', 'success')"><i class="fa-solid fa-envelope"></i> Kirim Slip Gaji Massal</button>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <select class="form-select" id="filterPayrollStatus" onchange="window.filterPayrollTable()" style="font-size:12px; padding:6px 10px; width:auto;">
+                  <option value="all">Semua Status Approval HR & Gaji</option>
+                  <option value="APPROVED HR">Disetujui HR (Siap Transfer)</option>
+                  <option value="MENUNGGU HR">Menunggu Review HR</option>
+                  <option value="LUNAS">Sudah Ditransfer (LUNAS)</option>
+                </select>
+                <div class="filter-search" style="max-width:200px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="searchPayrollInput" placeholder="Cari nama / NIP / jabatan..." oninput="window.filterPayrollTable()">
+                </div>
+                <button class="btn btn-sm outline" onclick="window.sendMassalSlipEmail()"><i class="fa-solid fa-envelope"></i> Kirim Slip Gaji Massal</button>
+              </div>
             </div>
             <div class="table-wrap">
-              <table class="data-table">
+              <table class="data-table" id="tablePayroll">
                 <thead>
                   <tr>
-                    <th>Karyawan & Jabatan (HR)</th>
+                    <th>Karyawan & NIP/Grade (HR)</th>
                     <th>Divisi / Tim</th>
-                    <th style="text-align:right;">Gaji Pokok (Standar HR)</th>
-                    <th style="text-align:right;">Tunjangan Jabatan</th>
-                    <th style="text-align:center;">Presensi & Log HR</th>
-                    <th style="text-align:right;">Gaji Bersih (Take Home Pay)</th>
+                    <th style="text-align:right;">Gaji Pokok & Tunjangan</th>
+                    <th style="text-align:right;">Potongan BPJS & PPh</th>
+                    <th style="text-align:right;">Take Home Pay (THP)</th>
+                    <th style="text-align:center;">Status HR & Pembayaran</th>
+                    <th>Rekening Transfer Karyawan</th>
                     <th style="text-align:right;">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="payrollTableBody">
-                  <!-- Bagas Prakoso - Tech Lead -->
-                  <tr>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#EFF6FF; color:#305BA3; font-weight:700; display:grid; place-items:center;">BP</div>
-                        <div>
-                          <strong style="display:block; color:var(--text-primary);">Bagas Prakoso</strong>
-                          <span style="font-size:10.5px; color:var(--primary); font-weight:600;"><i class="fa-solid fa-id-badge"></i> Tech Lead (Grade Tech Lead)</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge info">Engineering</span></td>
-                    <td style="text-align:right; font-weight:600;">Rp 18.000.000</td>
-                    <td style="text-align:right; color:var(--text-muted);">Rp 3.000.000</td>
-                    <td style="text-align:center;"><span class="badge success">100% Hadir</span></td>
-                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 21.000.000</td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showSlipGajiModal('Bagas Prakoso', 'Tech Lead', 18000000, 3000000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
-                    </td>
-                  </tr>
-
-                  <!-- Rina Anggraini - HR Manager -->
-                  <tr>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#FDF2F8; color:#DB2777; font-weight:700; display:grid; place-items:center;">RA</div>
-                        <div>
-                          <strong style="display:block; color:var(--text-primary);">Rina Anggraini</strong>
-                          <span style="font-size:10.5px; color:#DB2777; font-weight:600;"><i class="fa-solid fa-id-badge"></i> HR Manager (Grade Manager)</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge purple">People Ops</span></td>
-                    <td style="text-align:right; font-weight:600;">Rp 14.000.000</td>
-                    <td style="text-align:right; color:var(--text-muted);">Rp 2.500.000</td>
-                    <td style="text-align:center;"><span class="badge success">100% Hadir</span></td>
-                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 16.500.000</td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showSlipGajiModal('Rina Anggraini', 'HR Manager', 14000000, 2500000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
-                    </td>
-                  </tr>
-
-                  <!-- Fajar Nugroho - Backend Developer -->
-                  <tr>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#EFF6FF; color:#1D4ED8; font-weight:700; display:grid; place-items:center;">FN</div>
-                        <div>
-                          <strong style="display:block; color:var(--text-primary);">Fajar Nugroho</strong>
-                          <span style="font-size:10.5px; color:var(--text-muted);"><i class="fa-solid fa-id-badge"></i> Backend Developer</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge info">Engineering</span></td>
-                    <td style="text-align:right; font-weight:600;">Rp 12.000.000</td>
-                    <td style="text-align:right; color:var(--text-muted);">Rp 1.500.000</td>
-                    <td style="text-align:center;"><span class="badge success">98% Hadir</span></td>
-                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 13.500.000</td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showSlipGajiModal('Fajar Nugroho', 'Backend Developer', 12000000, 1500000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
-                    </td>
-                  </tr>
-
-                  <!-- Dewi Lestari - Frontend Developer -->
-                  <tr>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#ECFDF5; color:#059669; font-weight:700; display:grid; place-items:center;">DL</div>
-                        <div>
-                          <strong style="display:block; color:var(--text-primary);">Dewi Lestari</strong>
-                          <span style="font-size:10.5px; color:var(--text-muted);"><i class="fa-solid fa-id-badge"></i> Frontend Developer</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge info">Engineering</span></td>
-                    <td style="text-align:right; font-weight:600;">Rp 11.000.000</td>
-                    <td style="text-align:right; color:var(--text-muted);">Rp 1.500.000</td>
-                    <td style="text-align:center;"><span class="badge success">100% Hadir</span></td>
-                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 12.500.000</td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showSlipGajiModal('Dewi Lestari', 'Frontend Developer', 11000000, 1500000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
-                    </td>
-                  </tr>
-
-                  <!-- Citra Maharani - UI/UX Designer -->
-                  <tr>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#F5F3FF; color:#8B5CF6; font-weight:700; display:grid; place-items:center;">CM</div>
-                        <div>
-                          <strong style="display:block; color:var(--text-primary);">Citra Maharani</strong>
-                          <span style="font-size:10.5px; color:var(--text-muted);"><i class="fa-solid fa-id-badge"></i> UI/UX Designer</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge purple">Design</span></td>
-                    <td style="text-align:right; font-weight:600;">Rp 10.500.000</td>
-                    <td style="text-align:right; color:var(--text-muted);">Rp 1.200.000</td>
-                    <td style="text-align:center;"><span class="badge success">96% Hadir</span></td>
-                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 11.700.000</td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showSlipGajiModal('Citra Maharani', 'UI/UX Designer', 10500000, 1200000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
-                    </td>
-                  </tr>
-
-                  <!-- Galih Pratama - QA Engineer -->
-                  <tr>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#FEF3C7; color:#D97706; font-weight:700; display:grid; place-items:center;">GP</div>
-                        <div>
-                          <strong style="display:block; color:var(--text-primary);">Galih Pratama</strong>
-                          <span style="font-size:10.5px; color:var(--text-muted);"><i class="fa-solid fa-id-badge"></i> QA Engineer</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge warning">QA</span></td>
-                    <td style="text-align:right; font-weight:600;">Rp 9.500.000</td>
-                    <td style="text-align:right; color:var(--text-muted);">Rp 1.000.000</td>
-                    <td style="text-align:center;"><span class="badge success">95% Hadir</span></td>
-                    <td style="text-align:right; font-weight:800; color:#10B981;">Rp 10.500.000</td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showSlipGajiModal('Galih Pratama', 'QA Engineer', 9500000, 1000000)"><i class="fa-solid fa-file-invoice"></i> Slip</button>
-                    </td>
-                  </tr>
+                  <!-- Dynamic rows generated by renderPayrollTable() -->
                 </tbody>
               </table>
             </div>
@@ -1404,45 +1420,38 @@
           </div>
 
           <div class="card-panel">
-            <div class="card-header">
-              <h4 class="card-title">Daftar Tagihan Vendor Eksternal</h4>
+            <div class="card-header" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h4 class="card-title"><i class="fa-solid fa-file-invoice" style="color:var(--primary); margin-right:6px;"></i> Daftar Tagihan Vendor Eksternal (AP)</h4>
+                <p class="card-subtitle">Pengelolaan utang vendor IT, cloud infra, & software dengan transfer bank langsung</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <select class="form-select" id="filterVendorStatus" onchange="window.filterVendorTable()" style="font-size:12px; padding:6px 10px; width:auto;">
+                  <option value="all">Semua Status</option>
+                  <option value="menunggu">Menunggu Pembayaran</option>
+                  <option value="lunas">Sudah Dibayar (Lunas)</option>
+                </select>
+                <div class="filter-search" style="max-width:200px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="searchVendorInput" placeholder="Cari vendor / invoice..." oninput="window.filterVendorTable()">
+                </div>
+              </div>
             </div>
             <div class="table-wrap">
-              <table class="data-table">
+              <table class="data-table" id="tableVendor">
                 <thead>
                   <tr>
-                    <th>Vendor</th>
-                    <th>Nomor Tagihan</th>
-                    <th>Kategori</th>
+                    <th>Vendor & No. Tagihan</th>
+                    <th>Proyek / Kategori</th>
                     <th>Jatuh Tempo</th>
                     <th style="text-align:right;">Nominal Tagihan</th>
                     <th>Status</th>
-                    <th style="text-align:right;">Aksi</th>
+                    <th>Rekening Pembayaran</th>
+                    <th style="text-align:center; width:170px;">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Amazon Web Services Inc.</strong></td>
-                    <td><span class="badge neutral">INV-AWS-2026-09</span></td>
-                    <td>Infrastruktur Cloud & Server</td>
-                    <td style="color:#EF4444; font-weight:700;">10 Okt 2026</td>
-                    <td style="text-align:right; font-weight:800;">$ 1.500 USD (~Rp 23.250.000)</td>
-                    <td><span class="badge warning">🟡 MENUNGGU</span></td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs success" onclick="showFinanceToast('Tagihan AWS telah dibayar via Wise USD!', 'success')">Bayar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><strong>Figma Enterprise Subscription</strong></td>
-                    <td><span class="badge neutral">FIG-88190-26</span></td>
-                    <td>Lisensi Software Design</td>
-                    <td>15 Okt 2026</td>
-                    <td style="text-align:right; font-weight:800;">$ 800 USD (~Rp 12.400.000)</td>
-                    <td><span class="badge warning">🟡 MENUNGGU</span></td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs success" onclick="showFinanceToast('Tagihan Figma telah dibayar!', 'success')">Bayar</button>
-                    </td>
-                  </tr>
+                <tbody id="vendorTableBody">
+                  <!-- Dynamically rendered by renderVendorTable() -->
                 </tbody>
               </table>
             </div>
@@ -1483,86 +1492,48 @@
               <div class="kpi-sub">Siap ditransfer oleh Tim Finance</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-accent-bar" style="background:#305BA3;"></div>
-              <div class="kpi-top"><span class="kpi-label">Total Realisasi Kontrak HPP</span><i class="fa-solid fa-circle-check" style="color:#305BA3;"></i></div>
+              <div class="kpi-accent-bar" style="background:#4F46E5;"></div>
+              <div class="kpi-top"><span class="kpi-label">Total Realisasi Kontrak HPP</span><i class="fa-solid fa-circle-check" style="color:#4F46E5;"></i></div>
               <div class="kpi-val">Rp 23.500.000</div>
               <div class="kpi-sub">Beban HPP terlunasi</div>
             </div>
           </div>
 
           <div class="card-panel">
-            <div class="card-header">
+            <div class="card-header" style="flex-wrap:wrap; gap:10px;">
               <div>
-                <h4 class="card-title">Daftar Kontrak Kerja & Penagihan Freelancer</h4>
-                <p class="card-subtitle">Setiap freelancer terikat dokumen SPK resmi dengan skema termin bertahap</p>
+                <h4 class="card-title"><i class="fa-solid fa-file-signature" style="color:var(--primary); margin-right:6px;"></i> Daftar Kontrak Kerja & Penagihan Freelancer (SPK)</h4>
+                <p class="card-subtitle">Setiap freelancer terikat dokumen SPK resmi dengan verifikasi milestone PM & pencairan fee via transfer bank</p>
               </div>
-              <span class="badge info"><i class="fa-solid fa-shield-halved"></i> Terikat Dokumen SPK</span>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <select class="form-select" id="filterFreelancerPmStatus" onchange="window.filterFreelancerTable()" style="font-size:12px; padding:6px 10px; width:auto;">
+                  <option value="all">Semua Status Milestone PM</option>
+                  <option value="APPROVED PM">Disetujui PM (Siap Cair)</option>
+                  <option value="MENUNGGU PM">Menunggu Verifikasi PM</option>
+                  <option value="LUNAS">Sudah Ditransfer (LUNAS)</option>
+                </select>
+                <div class="filter-search" style="max-width:200px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="searchFreelancerInput" placeholder="Cari nama / SPK..." oninput="window.filterFreelancerTable()">
+                </div>
+              </div>
             </div>
             <div class="table-wrap">
-              <table class="data-table">
+              <table class="data-table" id="tableFreelancer">
                 <thead>
                   <tr>
-                    <th>No. Kontrak (SPK) & Freelancer</th>
+                    <th>No. SPK & Freelancer</th>
                     <th>Proyek Terkait</th>
                     <th>Deliverables / Milestone PM</th>
-                    <th style="text-align:center;">Termin Kontrak</th>
-                    <th style="text-align:right;">Nominal Fee Termin</th>
-                    <th>Status Verifikasi</th>
-                    <th style="text-align:right;">Aksi</th>
+                    <th style="text-align:center;">Termin</th>
+                    <th style="text-align:right;">Fee Termin</th>
+                    <th>Status PM / Pembayaran</th>
+                    <th>Rekening Freelancer</th>
+                    <th style="text-align:center; width:180px;">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div>
-                        <strong style="color:var(--text-primary);">Rian Pratama</strong>
-                        <span class="tax-tag ppn" style="margin-left:6px; font-size:10px;"><i class="fa-solid fa-file-signature"></i> SPK-2026/FL-014</span>
-                      </div>
-                      <div style="font-size:10.5px; color:var(--text-muted);">Mobile Developer Flutter • Durasi: 2 Bulan</div>
-                    </td>
-                    <td><span class="badge info">Aplikasi Kasir RS Medika</span></td>
-                    <td>Slicing UI & Integrasi API POS</td>
-                    <td style="text-align:center;"><span class="badge success" style="font-weight:700;">Termin 2 dari 3</span></td>
-                    <td style="text-align:right; font-weight:800; color:var(--text-primary);">Rp 5.000.000</td>
-                    <td><span class="badge success">✅ APPROVED PM</span></td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs success" onclick="showFinanceToast('Dana termin kontrak Rian Pratama berhasil ditransfer via BCA!', 'success')"><i class="fa-solid fa-money-bill-transfer"></i> Cairkan Fee</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div>
-                        <strong style="color:var(--text-primary);">Siti Rahma</strong>
-                        <span class="tax-tag ppn" style="margin-left:6px; font-size:10px;"><i class="fa-solid fa-file-signature"></i> SPK-2026/FL-015</span>
-                      </div>
-                      <div style="font-size:10.5px; color:var(--text-muted);">QA Automation Tester • Durasi: 1 Bulan</div>
-                    </td>
-                    <td><span class="badge info">Aplikasi Kasir RS Medika</span></td>
-                    <td>Automation Testing Sprint 2</td>
-                    <td style="text-align:center;"><span class="badge warning" style="font-weight:700;">Termin 1 dari 2</span></td>
-                    <td style="text-align:right; font-weight:800; color:var(--text-primary);">Rp 3.500.000</td>
-                    <td><span class="badge warning">🟡 MENUNGGU PM</span></td>
-                    <td style="text-align:right;">
-                      <button class="btn btn-xs" onclick="showFinanceToast('Dokumen kontrak SPK-2026/FL-015 & deliverables dibuka', 'info')"><i class="fa-solid fa-eye"></i> Cek Kontrak</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div>
-                        <strong style="color:var(--text-primary);">Hana Putri</strong>
-                        <span class="tax-tag ppn" style="margin-left:6px; font-size:10px;"><i class="fa-solid fa-file-signature"></i> SPK-2026/FL-011</span>
-                      </div>
-                      <div style="font-size:10.5px; color:var(--text-muted);">Mobile Developer (Rate: Rp 95.000/jam di HR)</div>
-                    </td>
-                    <td><span class="badge purple">Web Company Profile</span></td>
-                    <td>Penyelesaian Modul Katalog & Checkout</td>
-                    <td style="text-align:center;"><span class="badge success" style="font-weight:700;">Termin 3 (Pelunasan)</span></td>
-                    <td style="text-align:right; font-weight:800; color:var(--text-primary);">Rp 4.750.000</td>
-                    <td><span class="badge success">✅ LUNAS</span></td>
-                    <td style="text-align:right;">
-                      <span class="badge success"><i class="fa-solid fa-check"></i> Sudah Ditransfer</span>
-                    </td>
-                  </tr>
+                <tbody id="freelancerTableBody">
+                  <!-- Dynamically rendered by renderFreelancerTable() -->
                 </tbody>
               </table>
             </div>
@@ -1591,8 +1562,8 @@
 
           <div class="kpi-grid cols-3">
             <div class="kpi-card">
-              <div class="kpi-accent-bar" style="background:#305BA3;"></div>
-              <div class="kpi-top"><span class="kpi-label">Total Likuiditas IDR</span><i class="fa-solid fa-coins" style="color:#305BA3;"></i></div>
+              <div class="kpi-accent-bar" style="background:#4F46E5;"></div>
+              <div class="kpi-top"><span class="kpi-label">Total Likuiditas IDR</span><i class="fa-solid fa-coins" style="color:#4F46E5;"></i></div>
               <div class="kpi-val">Rp 485.250.000</div>
               <div class="kpi-sub">Di 3 Akun IDR</div>
             </div>
@@ -1625,7 +1596,7 @@
               </div>
               <div class="card-body">
                 <div style="font-size:22px; font-weight:800; color:var(--text-primary); margin-bottom:12px;">Rp 350.000.000</div>
-                <button class="btn btn-sm" style="width:100%;" onclick="window.switchFinancePage('reconciliation')"><i class="fa-solid fa-arrows-split-up-and-left"></i> Rekonsiliasi Bank</button>
+                <button class="btn btn-sm" style="width:100%;" onclick="window.switchFinancePage('journal')"><i class="fa-solid fa-book"></i> Cek Mutasi Jurnal</button>
               </div>
             </div>
 
@@ -1672,7 +1643,7 @@
                     <span style="font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);">ASTA-USD-8891</span>
                   </div>
                 </div>
-                <span class="badge" style="background:#EBF2FA; color:#305BA3;">Valas</span>
+                <span class="badge" style="background:#EEF2FF; color:#4F46E5;">Valas</span>
               </div>
               <div class="card-body">
                 <div style="font-size:22px; font-weight:800; color:var(--text-primary); margin-bottom:12px;">$ 12.450 <span style="font-size:12px; font-weight:500; color:var(--text-muted);">USD</span></div>
@@ -2045,360 +2016,71 @@
 
           <div class="kpi-grid cols-3">
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Total Debit</span><i class="fa-solid fa-arrow-trend-up" style="color:#10B981;"></i></div>
-              <div class="kpi-val" style="color:#10B981;">Rp 640.500.000</div>
+              <div class="kpi-top"><span class="kpi-label">Total Debit (Periode Aktif)</span><i class="fa-solid fa-arrow-trend-up" style="color:#10B981;"></i></div>
+              <div class="kpi-val" id="journal-total-debit" style="color:#10B981;">Rp 685.850.000</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-top"><span class="kpi-label">Total Kredit</span><i class="fa-solid fa-arrow-trend-down" style="color:#8B5CF6;"></i></div>
-              <div class="kpi-val" style="color:#8B5CF6;">Rp 640.500.000</div>
+              <div class="kpi-top"><span class="kpi-label">Total Kredit (Periode Aktif)</span><i class="fa-solid fa-arrow-trend-down" style="color:#8B5CF6;"></i></div>
+              <div class="kpi-val" id="journal-total-kredit" style="color:#8B5CF6;">Rp 685.850.000</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-top"><span class="kpi-label">Selisih (Variance)</span><i class="fa-solid fa-equals" style="color:var(--text-muted);"></i></div>
-              <div class="kpi-val" style="color:#10B981;">Rp 0 (0%)</div>
+              <div class="kpi-val" id="journal-variance" style="color:#10B981;">Rp 0 (0%)</div>
             </div>
           </div>
 
           <div class="card-panel">
             <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-              <h4 class="card-title">Daftar Transaksi Jurnal Berpasangan (Double-Entry Log)</h4>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <select class="form-select" id="journalFilterType" onchange="filterJournalEntries(this.value)" style="font-size:12px; padding:4px 8px; width:auto;">
+              <div>
+                <h4 class="card-title"><i class="fa-solid fa-book-journal-whills" style="color:var(--primary); margin-right:6px;"></i> Jurnal Umum Sederhana (Double-Entry Log)</h4>
+                <p class="card-subtitle">Format standar akuntansi: Tanggal, Ref, Keterangan Transaksi & Akun Berpasangan, Modul, dan Posisi Saldo</p>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <!-- Date Range Filter -->
+                <div style="display:flex; align-items:center; gap:6px; background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:3px 10px;">
+                  <span style="font-size:11px; font-weight:700; color:var(--text-muted);"><i class="fa-solid fa-calendar-days" style="color:var(--primary); margin-right:3px;"></i> Rentang Tanggal:</span>
+                  <input type="date" id="journalStartDate" class="form-input" style="padding:3px 6px; font-size:11px; width:125px; height:28px;" value="2026-10-01" onchange="window.filterJournalEntries()">
+                  <span style="font-size:11px; color:var(--text-muted); font-weight:600;">s/d</span>
+                  <input type="date" id="journalEndDate" class="form-input" style="padding:3px 6px; font-size:11px; width:125px; height:28px;" value="2026-10-31" onchange="window.filterJournalEntries()">
+                  <button type="button" class="btn btn-xs" onclick="window.resetJournalFilters()" title="Reset Filter" style="padding:2px 8px; font-size:11px; height:28px;">
+                    <i class="fa-solid fa-rotate-left"></i>
+                  </button>
+                </div>
+
+                <!-- Module Filter -->
+                <select class="form-select" id="journalFilterType" onchange="window.filterJournalEntries(this.value)" style="font-size:12px; padding:6px 10px; width:auto; height:36px;">
                   <option value="all">Semua Modul Sumber</option>
                   <option value="ar">AR (Invoice & Penagihan)</option>
                   <option value="ap">AP (Tagihan Vendor & Freelance)</option>
                   <option value="hr">HR & Payroll (Gaji)</option>
-                  <option value="opex">OPEX (Operasional & Struk)</option>
+                  <option value="opex">OPEX (Operasional Kantor)</option>
                   <option value="trf">Mutasi Internal (Kas/Bank)</option>
                 </select>
-                <button class="btn btn-sm outline" onclick="showFinanceToast('Log jurnal berhasil diekspor ke format Excel/CSV.', 'success')"><i class="fa-solid fa-file-excel"></i> Ekspor</button>
+
+                <!-- Search Input -->
+                <div class="filter-search" style="max-width:180px; height:36px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="journalSearchInput" placeholder="Cari ref / akun..." oninput="window.filterJournalEntries()">
+                </div>
+                <button class="btn btn-sm outline" onclick="showFinanceToast('Log jurnal berhasil diekspor ke Excel.', 'success')"><i class="fa-solid fa-file-excel"></i> Ekspor</button>
               </div>
             </div>
-            <div class="card-body" style="padding:0;" id="journalEntriesContainer">
-              
-              <!-- Entry 1: Pelunasan AR Termin -->
-              <div class="journal-entry-card" data-source="ar" style="border-bottom:1px solid var(--border-light);">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-001</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Pelunasan Termin 1 RS Medika (Aplikasi Kasir RS)</strong>
-                    <span class="badge success" style="font-size:10.5px;">Auto-Generated (AR)</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 04 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1102</span></td>
-                      <td><strong>Bank BCA Operasional</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 30.000.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1103</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Piutang Usaha (AR Invoice)</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 30.000.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <!-- Entry 2: Tagihan Vendor AWS Cloud -->
-              <div class="journal-entry-card" data-source="ap" style="border-bottom:1px solid var(--border-light);">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-002</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Pembayaran Tagihan Vendor AWS Cloud Hosting</strong>
-                    <span class="badge purple" style="font-size:10.5px;">Auto-Generated (AP)</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 03 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">5102</span></td>
-                      <td><strong>HPP - Sewa Server & Cloud Hosting</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 23.250.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1102</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Bank BCA Operasional</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 23.250.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Entry 3: Pembayaran Freelance Subkon -->
-              <div class="journal-entry-card" data-source="ap" style="border-bottom:1px solid var(--border-light);">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-003</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Pembayaran Freelance Subkon (Rian Pratama - UI Design RS Medika)</strong>
-                    <span class="badge warning" style="font-size:10.5px;">Auto-Generated (SPK Freelance)</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 02 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">5101</span></td>
-                      <td><strong>Beban Tenaga Lepas (Freelancer HPP)</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 15.000.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1102</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Bank BCA Operasional</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 15.000.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-
-              <!-- Entry 4: Payroll Gaji Karyawan Tetap -->
-              <div class="journal-entry-card" data-source="hr" style="border-bottom:1px solid var(--border-light);">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-004</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Distribusi Payroll Gaji 6 Karyawan Tetap (Modul HR)</strong>
-                    <span class="badge neutral" style="font-size:10.5px;">Auto-Generated (HR/Payroll)</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 01 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">6101</span></td>
-                      <td><strong>Beban Gaji & Tunjangan Karyawan (OPEX)</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 89.850.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1104</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Bank Mandiri Payroll</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 89.850.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Entry 5: Mutasi Internal Pindah Dana -->
-              <div class="journal-entry-card" data-source="trf" style="border-bottom:1px solid var(--border-light);">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-005</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Mutasi Internal: Transfer Operasional ke Petty Cash</strong>
-                    <span class="badge info" style="font-size:10.5px;">Mutasi Internal Kas</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 01 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1101</span></td>
-                      <td><strong>Kas Kecil (Petty Cash Kantor)</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 5.000.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1102</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Bank BCA Operasional</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 5.000.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Entry 6: Penerimaan Termin DP Samudera Logistik -->
-              <div class="journal-entry-card" data-source="ar" style="border-bottom:1px solid var(--border-light);">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-006</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Penerimaan Termin DP Samudera Logistik (Tracking System)</strong>
-                    <span class="badge success" style="font-size:10.5px;">Auto-Generated (AR)</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 08 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1102</span></td>
-                      <td><strong>Bank BCA Operasional</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 70.000.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">4101</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Pendapatan Termin Software House</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 70.000.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Entry 7: Beban Sewa Kantor & Internet Dedicated -->
-              <div class="journal-entry-card" data-source="opex" style="border-bottom:1px solid var(--border-light);">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-007</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Pembayaran Beban Sewa Kantor & Internet Dedicated HQ</strong>
-                    <span class="badge danger" style="font-size:10.5px;">Auto-Generated (OPEX)</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 10 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">6102</span></td>
-                      <td><strong>Beban Sewa Kantor & Internet</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 12.500.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1102</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Bank BCA Operasional</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 12.500.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Entry 8: Klaim Struk AI OCR Tiket & Perjalanan Dinas -->
-              <div class="journal-entry-card" data-source="ap" style="border-bottom:1px solid var(--border-light);">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-008</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Klaim Struk AI OCR: Transport Tiket Pesawat Konsultasi Klien</strong>
-                    <span class="badge warning" style="font-size:10.5px;">Auto-Generated (Klaim Struk)</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 11 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">6104</span></td>
-                      <td><strong>Beban Perjalanan Dinas & Transport</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 3.000.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1101</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Kas Kecil (Petty Cash Kantor)</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 3.000.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Entry 9: Pelunasan Termin Akhir Web Company Profile X -->
-              <div class="journal-entry-card" data-source="ar">
-                <div style="padding:14px 20px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge info" style="font-family:var(--font-mono); font-weight:700;">JRN-2026-009</span>
-                    <strong style="font-size:13px; color:var(--text-primary);">Pelunasan Termin Akhir Proyek Web Company Profile X (PT Alpha)</strong>
-                    <span class="badge success" style="font-size:10.5px;">Auto-Generated (AR)</span>
-                  </div>
-                  <span style="font-size:11.5px; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-calendar"></i> 12 Okt 2026</span>
-                </div>
-                <table class="data-table" style="margin:0;">
-                  <thead>
-                    <tr style="background:#fff;">
-                      <th style="width:120px;">Kode Akun</th>
-                      <th>Nama Akun Akuntansi</th>
-                      <th style="text-align:right; width:160px;">Debit</th>
-                      <th style="text-align:right; width:160px;">Kredit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1102</span></td>
-                      <td><strong>Bank BCA Operasional</strong></td>
-                      <td style="text-align:right; font-weight:800; color:#10B981;">Rp 35.000.000</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">1103</span></td>
-                      <td style="padding-left:28px; color:var(--text-secondary);">└ Piutang Usaha (AR Invoice)</td>
-                      <td style="text-align:right; color:var(--text-muted);">-</td>
-                      <td style="text-align:right; font-weight:800; color:#8B5CF6;">Rp 35.000.000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
+            <div class="table-wrap">
+              <table class="data-table" id="tableGeneralJournal">
+                <thead>
+                  <tr>
+                    <th style="width:130px;">Tanggal & Ref</th>
+                    <th>Keterangan Transaksi & Akun Berpasangan</th>
+                    <th style="width:120px; text-align:center;">Modul</th>
+                    <th style="text-align:right; width:160px;">Debit (Rp)</th>
+                    <th style="text-align:right; width:160px;">Kredit (Rp)</th>
+                    <th style="text-align:center; width:100px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="generalJournalTableBody">
+                  <!-- Dynamically rendered by renderJournalTable() -->
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -2999,36 +2681,59 @@
         <button class="icon-btn" onclick="closeFinanceModal('modalCreateOpex')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <form onsubmit="event.preventDefault(); showFinanceToast('Biaya operasional berhasil dicatat di buku kas!', 'success'); closeFinanceModal('modalCreateOpex');">
+        <form onsubmit="window.submitOpexForm(event);">
           <div class="form-group">
             <label class="form-label">Nama / Deskripsi Biaya</label>
-            <input type="text" class="form-input" placeholder="Contoh: Tagihan Internet Biznet Oktober" required>
+            <input type="text" id="opex-add-name" class="form-input" placeholder="Contoh: Tagihan Internet Biznet Dedicated" required>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
-              <label class="form-label">Kategori OPEX</label>
-              <select class="form-select">
-                <option>Utilitas (Internet/Listrik/Air)</option>
-                <option>Sewa Gedung & Kantor</option>
-                <option>Pantry & Konsumsi</option>
-                <option>Peralatan & ATK</option>
-              </select>
+              <label class="form-label">Nama Penerima / Merchant</label>
+              <input type="text" id="opex-add-recipient" class="form-input" placeholder="Contoh: PT Biznet Networks" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Nominal (Rp)</label>
-              <input type="number" class="form-input" placeholder="0" required>
+              <label class="form-label">Kategori OPEX</label>
+              <select class="form-select" id="opex-add-category">
+                <option value="Utilitas (Internet)">Utilitas (Internet/Komunikasi)</option>
+                <option value="Utilitas (Listrik)">Utilitas (Listrik PLN)</option>
+                <option value="Sewa Gedung & Kantor">Sewa Gedung & Kantor</option>
+                <option value="Pantry & Konsumsi">Pantry & Konsumsi</option>
+                <option value="Peralatan & ATK">Peralatan & ATK Kantor</option>
+                <option value="Perjalanan Dinas">Perjalanan Dinas & Transport</option>
+              </select>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Dibayar Melalui Rekening</label>
-            <select class="form-select">
-              <option>BCA Utama Operasional</option>
-              <option>Kas Kecil Kantor</option>
-            </select>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Nominal (Rp)</label>
+              <input type="number" id="opex-add-amount" class="form-input" placeholder="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Dibayar Melalui Rekening</label>
+              <select class="form-select" id="opex-add-bank">
+                <option value="BCA">BCA Utama Operasional (8830-192-8391)</option>
+                <option value="MANDIRI">Bank Mandiri Payroll (132-00-19283-91)</option>
+                <option value="KAS_KECIL">Kas Kecil / Petty Cash (Brankas)</option>
+                <option value="WISE">Wise Multi-Currency (USD)</option>
+              </select>
+            </div>
           </div>
-          <div class="modal-footer">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Tanggal Transaksi</label>
+              <input type="date" id="opex-add-date" class="form-input" value="2026-10-12" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status Awal</label>
+              <select class="form-select" id="opex-add-status">
+                <option value="Terbayar">✅ Langsung Terbayar (Lunas)</option>
+                <option value="Menunggu Bayar">🟡 Menunggu Transfer Bank</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer" style="margin-top:14px;">
             <button type="button" class="btn" onclick="closeFinanceModal('modalCreateOpex')">Batal</button>
-            <button type="submit" class="btn primary">Simpan Biaya</button>
+            <button type="submit" class="btn primary">Simpan Biaya OPEX</button>
           </div>
         </form>
       </div>
@@ -3036,61 +2741,116 @@
   </div>
 
   <!-- Modal: Tambah Payroll (Terhubung Master Jabatan HR) -->
+    <!-- Modal: Input Payroll Karyawan Baru -->
   <div class="modal-backdrop" id="modalCreatePayroll">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width:680px;">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-users" style="color:var(--primary); margin-right:8px;"></i> Input Payroll Karyawan (Sinkron Jabatan HR)</h3>
+        <h3><i class="fa-solid fa-users" style="color:var(--primary); margin-right:8px;"></i> Tambah Data Payroll Karyawan (Sinkron HR)</h3>
         <button class="icon-btn" onclick="closeFinanceModal('modalCreatePayroll')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <form onsubmit="event.preventDefault(); submitPayrollHrForm();">
+        <form onsubmit="submitPayrollHrForm(event);">
           <div class="form-group">
-            <label class="form-label">Pilih Karyawan Tetap (Master HR)</label>
+            <label class="form-label">Pilih Pegawai dari Master HR atau Manual</label>
             <select class="form-select" id="pay-emp-select" onchange="onHrEmployeeSelected(this.value)">
-              <option value="custom">-- Pilih Staf HR atau Input Baru --</option>
-              <option value="Bagas Prakoso" data-jabatan="Tech Lead" data-tim="Engineering" data-gaji="18000000" data-tunj="3000000">Bagas Prakoso — Tech Lead (Engineering)</option>
-              <option value="Rina Anggraini" data-jabatan="HR Manager" data-tim="People Ops" data-gaji="14000000" data-tunj="2500000">Rina Anggraini — HR Manager (People Ops)</option>
-              <option value="Fajar Nugroho" data-jabatan="Backend Developer" data-tim="Engineering" data-gaji="12000000" data-tunj="1500000">Fajar Nugroho — Backend Developer (Engineering)</option>
-              <option value="Dewi Lestari" data-jabatan="Frontend Developer" data-tim="Engineering" data-gaji="11000000" data-tunj="1500000">Dewi Lestari — Frontend Developer (Engineering)</option>
-              <option value="Citra Maharani" data-jabatan="UI/UX Designer" data-tim="Design" data-gaji="10500000" data-tunj="1200000">Citra Maharani — UI/UX Designer (Design)</option>
-              <option value="Galih Pratama" data-jabatan="QA Engineer" data-tim="QA" data-gaji="9500000" data-tunj="1000000">Galih Pratama — QA Engineer (QA)</option>
+              <option value="custom">-- Input Manual / Karyawan Baru --</option>
+              <option value="Bagas Prakoso" data-nip="EMP-2026-001" data-jabatan="Tech Lead" data-grade="Grade Tech Lead (L4)" data-tim="Engineering" data-gaji="18000000" data-tunj="3000000" data-bank="MANDIRI" data-acc="132-00-5541-892">Bagas Prakoso — Tech Lead (Engineering)</option>
+              <option value="Rina Anggraini" data-nip="EMP-2026-002" data-jabatan="HR Manager" data-grade="Grade Manager (L4)" data-tim="People Ops" data-gaji="14000000" data-tunj="2500000" data-bank="MANDIRI" data-acc="132-00-8812-304">Rina Anggraini — HR Manager (People Ops)</option>
+              <option value="Fajar Nugroho" data-nip="EMP-2026-003" data-jabatan="Backend Developer" data-grade="Senior Engineer (L3)" data-tim="Engineering" data-gaji="12000000" data-tunj="1500000" data-bank="BCA" data-acc="5410-992-114">Fajar Nugroho — Backend Developer (Engineering)</option>
+              <option value="Dewi Lestari" data-nip="EMP-2026-004" data-jabatan="Frontend Developer" data-grade="Senior Engineer (L3)" data-tim="Engineering" data-gaji="11000000" data-tunj="1500000" data-bank="MANDIRI" data-acc="132-00-7719-021">Dewi Lestari — Frontend Developer (Engineering)</option>
+              <option value="Citra Maharani" data-nip="EMP-2026-005" data-jabatan="UI/UX Designer" data-grade="Mid Specialist (L2)" data-tim="Design" data-gaji="10500000" data-tunj="1200000" data-bank="BNI" data-acc="0812-4491-03">Citra Maharani — UI/UX Designer (Design)</option>
+              <option value="Galih Pratama" data-nip="EMP-2026-006" data-jabatan="QA Engineer" data-grade="Mid Specialist (L2)" data-tim="QA" data-gaji="9500000" data-tunj="1000000" data-bank="MANDIRI" data-acc="132-00-3341-998">Galih Pratama — QA Engineer (QA)</option>
             </select>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">NIP / ID Karyawan</label>
+              <input type="text" id="pay-nip" class="form-input" placeholder="EMP-2026-XXX" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nama Lengkap Karyawan</label>
+              <input type="text" id="pay-name" class="form-input" placeholder="Nama Karyawan" required>
+            </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
-              <label class="form-label">Nama Karyawan</label>
-              <input type="text" id="pay-name" class="form-input" placeholder="Nama Karyawan" required>
+              <label class="form-label">Jabatan (HR)</label>
+              <input type="text" id="pay-jabatan" class="form-input" placeholder="Contoh: Senior Backend Dev" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Jabatan (Mengikuti Modul HR)</label>
-              <select class="form-select" id="pay-jabatan" onchange="onHrJabatanChanged(this.value)">
-                <option value="Tech Lead" data-gaji="18000000" data-tunj="3000000">Tech Lead</option>
-                <option value="HR Manager" data-gaji="14000000" data-tunj="2500000">HR Manager</option>
-                <option value="Backend Developer" data-gaji="12000000" data-tunj="1500000">Backend Developer</option>
-                <option value="Frontend Developer" data-gaji="11000000" data-tunj="1500000">Frontend Developer</option>
-                <option value="UI/UX Designer" data-gaji="10500000" data-tunj="1200000">UI/UX Designer</option>
-                <option value="QA Engineer" data-gaji="9500000" data-tunj="1000000">QA Engineer</option>
-                <option value="Junior Developer" data-gaji="7000000" data-tunj="800000">Junior Developer</option>
+              <label class="form-label">Divisi / Departemen</label>
+              <select class="form-select" id="pay-divisi">
+                <option value="Engineering">Engineering</option>
+                <option value="People Ops">People Ops / HR</option>
+                <option value="Design">Product & Design</option>
+                <option value="QA">Quality Assurance</option>
+                <option value="PMO">Project Management (PMO)</option>
+                <option value="Sales & Marketing">Sales & Marketing</option>
+                <option value="Finance & Ops">Finance & Ops</option>
               </select>
             </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
-              <label class="form-label">Gaji Pokok Sesuai Jabatan (Rp)</label>
+              <label class="form-label">Gaji Pokok (Rp)</label>
               <input type="number" id="pay-gaji" class="form-input" placeholder="0" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Tunjangan Jabatan (Rp)</label>
+              <label class="form-label">Tunjangan Jabatan & Kehadiran (Rp)</label>
               <input type="number" id="pay-tunj" class="form-input" placeholder="0" value="1500000">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Potongan BPJS Ketenagakerjaan & Kesehatan (Rp)</label>
+              <input type="number" id="pay-bpjs" class="form-input" placeholder="0" value="250000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Potongan PPh 21 Karyawan (Rp)</label>
+              <input type="number" id="pay-pph" class="form-input" placeholder="0" value="250000">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Bank Penerima (Karyawan)</label>
+              <select class="form-select" id="pay-bank">
+                <option value="MANDIRI">Bank Mandiri</option>
+                <option value="BCA">Bank Central Asia (BCA)</option>
+                <option value="BNI">Bank BNI</option>
+                <option value="BRI">Bank BRI</option>
+                <option value="BSI">Bank Syariah Indonesia (BSI)</option>
+                <option value="Permata">Bank Permata</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Rekening</label>
+              <input type="text" id="pay-acc-num" class="form-input" placeholder="132-00-xxxx" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Atas Nama Rekening</label>
+              <input type="text" id="pay-acc-holder" class="form-input" placeholder="Nama di Buku Tabungan" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Status Verifikasi HR</label>
+              <select class="form-select" id="pay-hr-status">
+                <option value="APPROVED HR">Disetujui HR (Siap Transfer)</option>
+                <option value="MENUNGGU HR">Menunggu Review HR</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Catatan Tambahan</label>
+              <input type="text" id="pay-notes" class="form-input" placeholder="Payroll periode berjalan...">
             </div>
           </div>
           <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; font-size:11.5px; color:#166534; display:flex; gap:8px;">
             <i class="fa-solid fa-circle-check" style="margin-top:2px;"></i>
-            <span>Besaran gaji pokok terkunci dan diselaraskan secara otomatis dengan standar golongan gaji pada database Modul HR Astacode.</span>
+            <span>Data payroll terhubung dengan modul HR & Kas/Bank. Saat transfer disetujui, dana akan dipotong langsung dari Rekening Bank Mandiri Payroll ASTACODE beserta pencatatan jurnal otomatis.</span>
           </div>
           <div class="modal-footer" style="margin-top:14px;">
             <button type="button" class="btn" onclick="closeFinanceModal('modalCreatePayroll')">Batal</button>
-            <button type="submit" class="btn primary">Simpan Payroll HR</button>
+            <button type="submit" class="btn primary"><i class="fa-solid fa-check"></i> Simpan Data Payroll</button>
           </div>
         </form>
       </div>
@@ -3099,58 +2859,97 @@
 
   <!-- Modal: Input Kontrak Kerja Freelancer (Sistem SPK & Termin) -->
   <div class="modal-backdrop" id="modalCreateFreelancer">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width:680px;">
       <div class="modal-header">
         <h3><i class="fa-solid fa-file-contract" style="color:var(--primary); margin-right:8px;"></i> Buat Kontrak Kerja Freelance (SPK)</h3>
         <button class="icon-btn" onclick="closeFinanceModal('modalCreateFreelancer')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <form onsubmit="event.preventDefault(); submitFreelanceContract();">
+        <form onsubmit="window.submitFreelanceContract(event);">
           <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:12px;">
             <div class="form-group">
               <label class="form-label">Nomor Kontrak (SPK Resmi)</label>
-              <input type="text" id="fl-spk" class="form-input" value="SPK-2026/FL-016" required>
+              <input type="text" id="fl-spk" class="form-input" value="SPK-2026/FL-018" required>
             </div>
             <div class="form-group">
               <label class="form-label">Pilih Proyek (HPP)</label>
               <select class="form-select" id="fl-project">
-                <option>Aplikasi Kasir RS Medika</option>
-                <option>Web Company Profile X</option>
-                <option>Sistem HRIS Terintegrasi</option>
+                <option value="Aplikasi Kasir RS Medika">Aplikasi Kasir RS Medika</option>
+                <option value="Web Company Profile X">Web Company Profile X</option>
+                <option value="Samudera Logistik Tracking System">Samudera Logistik Tracking System</option>
+                <option value="PT Mitra Perkasa HRIS">PT Mitra Perkasa HRIS</option>
               </select>
             </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
               <label class="form-label">Nama Freelancer</label>
-              <input type="text" id="fl-name" class="form-input" placeholder="Contoh: Hana Putri" required>
+              <input type="text" id="fl-name" class="form-input" placeholder="Contoh: Deni Kurniawan" required>
             </div>
             <div class="form-group">
               <label class="form-label">Keahlian / Posisi Kontrak</label>
-              <input type="text" id="fl-role" class="form-input" placeholder="Contoh: Flutter Developer / UI Designer" required>
+              <input type="text" id="fl-role" class="form-input" placeholder="Contoh: Golang Specialist / UI Designer" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Durasi Kontrak</label>
+              <input type="text" id="fl-duration" class="form-input" placeholder="Contoh: 2 Bulan" value="2 Bulan" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total Nilai Kontrak (Rp)</label>
+              <input type="number" id="fl-total-contract" class="form-input" placeholder="Total Nilai SPK" value="12000000" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fee Termin Ini (Rp)</label>
+              <input type="number" id="fl-amount" class="form-input" placeholder="Nominal Termin Ini" value="6000000" required>
             </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
               <label class="form-label">Skema Termin Kontrak</label>
               <select class="form-select" id="fl-termin">
-                <option>Termin 1 dari 3 (DP Awal)</option>
-                <option>Termin 2 dari 3 (Deliverables Slicing)</option>
-                <option>Termin 3 dari 3 (Pelunasan & UAT)</option>
+                <option value="Termin 1 dari 2 (DP Awal 50%)">Termin 1 dari 2 (DP Awal 50%)</option>
+                <option value="Termin 2 dari 2 (Pelunasan 50%)">Termin 2 dari 2 (Pelunasan 50%)</option>
+                <option value="Termin 1 dari 3 (DP 30%)">Termin 1 dari 3 (DP 30%)</option>
+                <option value="Termin 2 dari 3 (Deliverables 40%)">Termin 2 dari 3 (Deliverables 40%)</option>
+                <option value="Termin 3 dari 3 (Pelunasan 30%)">Termin 3 dari 3 (Pelunasan 30%)</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Nilai Kontrak Termin Ini (Rp)</label>
-              <input type="number" id="fl-amount" class="form-input" placeholder="0" required>
+              <label class="form-label">Status Verifikasi PM</label>
+              <select class="form-select" id="fl-pm-status">
+                <option value="APPROVED PM">✅ APPROVED PM (Disetujui Siap Cair)</option>
+                <option value="MENUNGGU PM">🟡 MENUNGGU PM (Dalam Review)</option>
+              </select>
+            </div>
+          </div>
+          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+            <strong style="font-size:12px; color:var(--text-primary); display:block; margin-bottom:8px;">
+              <i class="fa-solid fa-building-columns" style="color:var(--primary); margin-right:4px;"></i> Data Rekening Tujuan Transfer Freelancer:
+            </strong>
+            <div style="display:grid; grid-template-columns: 1fr 1.2fr 1fr; gap:10px;">
+              <div>
+                <label class="form-label">Nama Bank</label>
+                <input type="text" id="fl-bank" class="form-input" placeholder="BCA / Mandiri / BNI" value="BCA" required>
+              </div>
+              <div>
+                <label class="form-label">No. Rekening</label>
+                <input type="text" id="fl-acc-number" class="form-input" placeholder="Nomor Rekening" value="5410-092-881" required>
+              </div>
+              <div>
+                <label class="form-label">Atas Nama</label>
+                <input type="text" id="fl-acc-holder" class="form-input" placeholder="Nama Pemilik Rekening" value="Deni Kurniawan" required>
+              </div>
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">Deliverable / Milestone Acuan PM</label>
-            <input type="text" id="fl-milestone" class="form-input" placeholder="Contoh: Slicing UI dan Integrasi API Selesai Di-review PM" required>
+            <input type="text" id="fl-milestone" class="form-input" placeholder="Contoh: Slicing UI dan Integrasi API Selesai Di-review PM" value="Setup REST API Microservice & Database Schema" required>
           </div>
           <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:10px 14px; font-size:11.5px; color:#92400E; display:flex; gap:8px;">
             <i class="fa-solid fa-triangle-exclamation" style="margin-top:2px;"></i>
-            <span>Sesuai SOP Astacode, pembayaran termin kontrak freelancer hanya dicairkan oleh Finance setelah task/milestone disetujui tuntas oleh PM.</span>
+            <span>Sesuai SOP Astacode, pencairan fee freelancer ditransfer langsung ke rekening yang bersangkutan dengan pilihan Bank perusahaan.</span>
           </div>
           <div class="modal-footer" style="margin-top:14px;">
             <button type="button" class="btn" onclick="closeFinanceModal('modalCreateFreelancer')">Batal</button>
@@ -3341,40 +3140,231 @@
   </div>
 
   <!-- Modal: Slip Gaji Karyawan (Data HR) -->
+    <!-- Modal: Slip Gaji Digital Resmi Karyawan -->
   <div class="modal-backdrop" id="modalSlipGaji">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width:650px;">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-file-invoice-dollar" style="color:var(--primary); margin-right:8px;"></i> Slip Gaji Karyawan (Modul HR)</h3>
+        <h3><i class="fa-solid fa-file-invoice-dollar" style="color:var(--primary); margin-right:8px;"></i> Slip Gaji Karyawan Tetap Astacode</h3>
         <button class="icon-btn" onclick="closeFinanceModal('modalSlipGaji')"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="modal-body">
-        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Periode: Oktober 2026</span>
-            <span class="badge success">PR-2026-10</span>
+      <div class="modal-body" id="slipGajiPrintArea">
+        <!-- Kop Surat -->
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:12px; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:40px; height:40px; background:linear-gradient(135deg, #4F46E5, #3730A3); border-radius:8px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:18px;">A</div>
+            <div>
+              <div style="font-weight:800; font-size:15px; color:var(--text-primary);">PT ASTACODE SOLUSINDO MANDIRI</div>
+              <div style="font-size:10.5px; color:var(--text-muted);">Sovereign Plaza Lt. 12, Jl. TB Simatupang No. 36, Jakarta Selatan</div>
+              <div style="font-size:10px; color:var(--text-muted);">NPWP: 01.345.678.9-012.000 • Email: finance@astacode.id</div>
+            </div>
           </div>
-          <h4 id="slip-emp-name" style="font-size:16px; font-weight:800; color:var(--text-primary); margin-top:4px;">Bagas Prakoso</h4>
-          <span id="slip-emp-role" style="font-size:11.5px; color:var(--primary); font-weight:600;">Tech Lead • Divisi Engineering</span>
+          <div style="text-align:right;">
+            <span class="badge info" style="font-size:11px; font-weight:700;">SLIP GAJI RESMI</span>
+            <div id="slip-periode-badge" style="font-size:11px; font-weight:600; color:var(--text-primary); margin-top:4px;">Periode: Okt 2026</div>
+          </div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px;">
-          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
-            <span style="color:var(--text-muted);">Gaji Pokok (Standar Jabatan HR):</span>
-            <strong id="slip-base" style="color:var(--text-primary);">Rp 18.000.000</strong>
+
+        <!-- Detail Karyawan -->
+        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px;">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px;">
+            <div>
+              <span style="color:var(--text-muted); display:block; font-size:10.5px;">NAMA KARYAWAN</span>
+              <strong id="slip-emp-name" style="font-size:14px; color:var(--text-primary);">Bagas Prakoso</strong>
+              <div id="slip-emp-nip" style="font-size:11px; color:var(--primary); font-family:var(--font-mono); font-weight:600;">EMP-2026-001</div>
+            </div>
+            <div>
+              <span style="color:var(--text-muted); display:block; font-size:10.5px;">JABATAN & DIVISI</span>
+              <strong id="slip-emp-role" style="font-size:13px; color:var(--text-primary);">Tech Lead</strong>
+              <div id="slip-emp-dept" style="font-size:11px; color:var(--text-muted);">Engineering • Full Time</div>
+            </div>
           </div>
-          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
-            <span style="color:var(--text-muted);">Tunjangan Jabatan:</span>
-            <strong id="slip-tunj" style="color:#1D4ED8;">+ Rp 3.000.000</strong>
+        </div>
+
+        <!-- Rincian Penghasilan & Potongan -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:14px;">
+          <!-- Kolom Penerimaan -->
+          <div style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:12px;">
+            <div style="font-weight:700; font-size:12px; color:#10B981; margin-bottom:8px; border-bottom:1px solid var(--border-light); padding-bottom:4px;">
+              <i class="fa-solid fa-plus-circle"></i> PENGHASILAN (EARNINGS)
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:6px;">
+              <span style="color:var(--text-muted);">Gaji Pokok</span>
+              <span id="slip-base" style="font-weight:600;">Rp 18.000.000</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:6px;">
+              <span style="color:var(--text-muted);">Tunjangan Jabatan</span>
+              <span id="slip-tunj" style="font-weight:600;">Rp 3.000.000</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:6px;">
+              <span style="color:var(--text-muted);">Tunjangan Transport</span>
+              <span style="font-weight:600;">Termasuk</span>
+            </div>
+            <div style="border-top:1px dashed var(--border); padding-top:6px; display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>Total Bruto</span>
+              <span id="slip-gross" style="color:#10B981;">Rp 21.000.000</span>
+            </div>
           </div>
-          <div style="display:flex; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
-            <span style="color:var(--text-muted);">Potongan Presensi / Keterlambatan:</span>
-            <strong style="color:#10B981;">Rp 0 (Kehadiran 100%)</strong>
+
+          <!-- Kolom Potongan -->
+          <div style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:12px;">
+            <div style="font-weight:700; font-size:12px; color:#EF4444; margin-bottom:8px; border-bottom:1px solid var(--border-light); padding-bottom:4px;">
+              <i class="fa-solid fa-minus-circle"></i> POTONGAN (DEDUCTIONS)
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:6px;">
+              <span style="color:var(--text-muted);">BPJS Ketenagakerjaan & Kes</span>
+              <span id="slip-bpjs" style="font-weight:600; color:#EF4444;">- Rp 350.000</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:6px;">
+              <span style="color:var(--text-muted);">PPh 21 Karyawan</span>
+              <span id="slip-pph" style="font-weight:600; color:#EF4444;">- Rp 450.000</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:6px;">
+              <span style="color:var(--text-muted);">Presensi / Alpha</span>
+              <span style="font-weight:600; color:#10B981;">Rp 0 (100%)</span>
+            </div>
+            <div style="border-top:1px dashed var(--border); padding-top:6px; display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>Total Potongan</span>
+              <span id="slip-total-pot" style="color:#EF4444;">- Rp 800.000</span>
+            </div>
           </div>
-          <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px dashed var(--border); font-size:13.5px; font-weight:800;">
-            <span>Total Take Home Pay (Net):</span>
-            <strong id="slip-net" style="color:#10B981; font-size:15px;">Rp 21.000.000</strong>
+        </div>
+
+        <!-- Net Take Home Pay Highlight -->
+        <div style="background:linear-gradient(135deg, #EEF2FF, #E0E7FF); border:1px solid #C7D2FE; border-radius:10px; padding:14px; display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div>
+            <span style="font-size:11px; text-transform:uppercase; color:var(--primary); font-weight:700;">TOTAL TAKE HOME PAY (DITERIMA BERSIH)</span>
+            <div id="slip-net" style="font-size:20px; font-weight:900; color:var(--primary-dark);">Rp 20.200.000</div>
+          </div>
+          <div style="text-align:right;">
+            <div id="slip-status-badge"><span class="badge success"><i class="fa-solid fa-circle-check"></i> LUNAS (Disbursed)</span></div>
+            <div id="slip-bank-info" style="font-size:11px; font-family:var(--font-mono); color:var(--text-muted); margin-top:3px;">Mandiri 132-00-5541-892</div>
+          </div>
+        </div>
+
+        <!-- Footer Tanda Tangan -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; text-align:center; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border-light); padding-top:12px;">
+          <div>
+            <div>Penerima,</div>
+            <div style="height:35px;"></div>
+            <strong id="slip-sign-emp" style="color:var(--text-primary); text-decoration:underline;">Bagas Prakoso</strong>
+          </div>
+          <div>
+            <div>Finance & HR Astacode,</div>
+            <div style="height:35px;"></div>
+            <strong style="color:var(--text-primary); text-decoration:underline;">Rina Anggraini, S.Psi</strong>
           </div>
         </div>
       </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button type="button" class="btn" onclick="closeFinanceModal('modalSlipGaji')">Tutup</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn outline" onclick="window.printSlipGaji()"><i class="fa-solid fa-print"></i> Cetak Slip</button>
+          <button type="button" class="btn success" id="slipBtnWa" onclick="window.sendSlipGajiWa()"><i class="fa-brands fa-whatsapp"></i> Kirim WhatsApp</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Data Payroll Karyawan -->
+  <div class="modal-backdrop" id="modalEditPayroll">
+    <div class="modal-card" style="max-width:680px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-pen" style="color:var(--primary); margin-right:8px;"></i> Edit Data Payroll Pegawai</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalEditPayroll')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitEditPayrollForm(event);">
+          <input type="hidden" id="pay-edit-id">
+          <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">NIP / ID Karyawan</label>
+              <input type="text" id="pay-edit-nip" class="form-input" readonly style="background:#F8FAFC;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nama Pegawai</label>
+              <input type="text" id="pay-edit-name" class="form-input" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Jabatan (HR)</label>
+              <input type="text" id="pay-edit-role" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Divisi / Tim</label>
+              <select class="form-select" id="pay-edit-dept">
+                <option value="Engineering">Engineering</option>
+                <option value="People Ops">People Ops</option>
+                <option value="Design">Design</option>
+                <option value="QA">QA</option>
+                <option value="PMO">PMO</option>
+                <option value="Sales & Marketing">Sales & Marketing</option>
+                <option value="Finance & Ops">Finance & Ops</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Gaji Pokok (Rp)</label>
+              <input type="number" id="pay-edit-base" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tunjangan Jabatan (Rp)</label>
+              <input type="number" id="pay-edit-allowance" class="form-input" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Potongan BPJS (Rp)</label>
+              <input type="number" id="pay-edit-bpjs" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Potongan PPh 21 (Rp)</label>
+              <input type="number" id="pay-edit-pph" class="form-input" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Bank Penerima</label>
+              <select class="form-select" id="pay-edit-bank">
+                <option value="MANDIRI">Bank Mandiri</option>
+                <option value="BCA">Bank BCA</option>
+                <option value="BNI">Bank BNI</option>
+                <option value="BRI">Bank BRI</option>
+                <option value="BSI">Bank BSI</option>
+                <option value="Permata">Bank Permata</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Rekening</label>
+              <input type="text" id="pay-edit-acc-num" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Atas Nama Rekening</label>
+              <input type="text" id="pay-edit-acc-holder" class="form-input" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Status Verifikasi HR</label>
+              <select class="form-select" id="pay-edit-hr-status">
+                <option value="APPROVED HR">Disetujui HR (Siap Transfer)</option>
+                <option value="MENUNGGU HR">Menunggu Review HR</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Catatan Tambahan</label>
+              <input type="text" id="pay-edit-notes" class="form-input">
+            </div>
+          </div>
+          <div class="modal-footer" style="margin-top:14px;">
+            <button type="button" class="btn" onclick="closeFinanceModal('modalEditPayroll')">Batal</button>
+            <button type="submit" class="btn primary"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
       <div class="modal-footer">
         <button type="button" class="btn" onclick="closeFinanceModal('modalSlipGaji')">Tutup</button>
         <button type="button" class="btn primary" onclick="showFinanceToast('Slip gaji dikirimkan ke email karyawan!', 'success'); closeFinanceModal('modalSlipGaji');"><i class="fa-solid fa-paper-plane"></i> Kirim ke Karyawan</button>
@@ -3383,50 +3373,66 @@
   </div>
   <!-- Modal: Input Tagihan Vendor (AP) -->
   <div class="modal-backdrop" id="modalCreateVendor">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width:640px;">
       <div class="modal-header">
         <h3><i class="fa-solid fa-file-invoice" style="color:var(--primary); margin-right:8px;"></i> Input Tagihan Vendor Baru (AP)</h3>
         <button class="icon-btn" onclick="closeFinanceModal('modalCreateVendor')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <form onsubmit="event.preventDefault(); showFinanceToast('Tagihan vendor berhasil dicatat di Hutang Usaha (AP)!', 'success'); closeFinanceModal('modalCreateVendor');">
+        <form onsubmit="window.submitVendorForm(event);">
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
               <label class="form-label">Nama Vendor / Penyedia</label>
-              <input type="text" class="form-input" placeholder="Contoh: Amazon Web Services / Telkom" required>
+              <input type="text" id="vnd-add-name" class="form-input" placeholder="Contoh: Amazon Web Services / Telkom" required>
             </div>
             <div class="form-group">
               <label class="form-label">Nomor Invoice Vendor</label>
-              <input type="text" class="form-input" placeholder="Misal: INV-AWS-2026-10" required>
+              <input type="text" id="vnd-add-inv" class="form-input" placeholder="Misal: INV-AWS-2026-10" required>
             </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Proyek Terkait</label>
+              <select class="form-select" id="vnd-add-project">
+                <option value="Aplikasi Kasir RS Medika">Aplikasi Kasir RS Medika</option>
+                <option value="Web Company Profile X">Web Company Profile X</option>
+                <option value="Samudera Logistik Tracking System">Samudera Logistik Tracking System</option>
+                <option value="PT Mitra Perkasa HRIS">PT Mitra Perkasa HRIS</option>
+                <option value="Overhead IT Dev & Operasional">Overhead IT Dev & Operasional</option>
+              </select>
+            </div>
             <div class="form-group">
               <label class="form-label">Kategori Tagihan</label>
-              <select class="form-select">
-                <option>Cloud Server & Infrastruktur (HPP Proyek)</option>
-                <option>Software Tools & License API (HPP Proyek)</option>
-                <option>Internet Dedicated & Network (OPEX Kantor)</option>
-                <option>Perlengkapan Hardware IT (Aset/Inventaris)</option>
+              <select class="form-select" id="vnd-add-category">
+                <option value="Infrastruktur Cloud & Server">Infrastruktur Cloud & Server (HPP)</option>
+                <option value="Lisensi Software Design">Lisensi Software Design (HPP)</option>
+                <option value="Software Tools & License API">Software Tools & License API</option>
+                <option value="Internet Dedicated & Network">Internet Dedicated & Network</option>
               </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Nominal Tagihan (Rp)</label>
-              <input type="number" class="form-input" placeholder="0" required>
             </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
-              <label class="form-label">Tanggal Jatuh Tempo</label>
-              <input type="date" class="form-input" value="2026-10-25" required>
+              <label class="form-label">Nominal Tagihan (Rp)</label>
+              <input type="number" id="vnd-add-amount" class="form-input" placeholder="0" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Metode Pembayaran Rencana</label>
-              <select class="form-select">
-                <option>Bank BCA Operasional (IDR)</option>
-                <option>Wise Corporate (USD)</option>
-                <option>Kartu Kredit Korporat</option>
+              <label class="form-label">Tanggal Jatuh Tempo</label>
+              <input type="date" id="vnd-add-due" class="form-input" value="2026-10-25" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Rencana Rekening Pembayaran</label>
+              <select class="form-select" id="vnd-add-bank">
+                <option value="BCA">Bank BCA Operasional (IDR)</option>
+                <option value="WISE">Wise Multi-Currency (USD)</option>
+                <option value="MANDIRI">Bank Mandiri Payroll</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Rekening Tujuan Vendor</label>
+              <input type="text" id="vnd-add-target" class="form-input" placeholder="Bank & No. Rek Vendor" value="BCA 001-9921-88 a/n Vendor" required>
             </div>
           </div>
           <div class="modal-footer" style="margin-top:14px;">
@@ -3434,6 +3440,339 @@
             <button type="submit" class="btn primary">Simpan Tagihan Vendor</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit OPEX -->
+  <div class="modal-backdrop" id="modalEditOpex">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-to-square" style="color:var(--primary); margin-right:8px;"></i> Edit Biaya Operasional (OPEX)</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalEditOpex')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="window.submitEditOpexForm(event);">
+          <input type="hidden" id="opex-edit-id">
+          <div class="form-group">
+            <label class="form-label">Nama / Deskripsi Biaya</label>
+            <input type="text" id="opex-edit-name" class="form-input" required>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Penerima / Merchant</label>
+              <input type="text" id="opex-edit-recipient" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kategori OPEX</label>
+              <select class="form-select" id="opex-edit-category">
+                <option value="Utilitas (Internet)">Utilitas (Internet)</option>
+                <option value="Utilitas (Listrik)">Utilitas (Listrik)</option>
+                <option value="Sewa Gedung & Kantor">Sewa Gedung & Kantor</option>
+                <option value="Pantry & Konsumsi">Pantry & Konsumsi</option>
+                <option value="Peralatan & ATK">Peralatan & ATK</option>
+                <option value="Perjalanan Dinas">Perjalanan Dinas</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Nominal (Rp)</label>
+              <input type="number" id="opex-edit-amount" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Rekening Sumber</label>
+              <select class="form-select" id="opex-edit-bank">
+                <option value="BCA">BCA Utama Operasional</option>
+                <option value="MANDIRI">Bank Mandiri Payroll</option>
+                <option value="KAS_KECIL">Kas Kecil / Petty Cash</option>
+                <option value="WISE">Wise Multi-Currency</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer" style="margin-top:14px;">
+            <button type="button" class="btn" onclick="closeFinanceModal('modalEditOpex')">Batal</button>
+            <button type="submit" class="btn primary">Perbarui OPEX</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Vendor -->
+  <div class="modal-backdrop" id="modalEditVendor">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-to-square" style="color:var(--primary); margin-right:8px;"></i> Edit Tagihan Vendor (AP)</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalEditVendor')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="window.submitEditVendorForm(event);">
+          <input type="hidden" id="vnd-edit-id">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Nama Vendor</label>
+              <input type="text" id="vnd-edit-name" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Invoice</label>
+              <input type="text" id="vnd-edit-inv" class="form-input" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Kategori</label>
+              <input type="text" id="vnd-edit-category" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nominal Tagihan (Rp)</label>
+              <input type="number" id="vnd-edit-amount" class="form-input" required>
+            </div>
+          </div>
+          <div class="modal-footer" style="margin-top:14px;">
+            <button type="button" class="btn" onclick="closeFinanceModal('modalEditVendor')">Batal</button>
+            <button type="submit" class="btn primary">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Freelancer SPK -->
+  <div class="modal-backdrop" id="modalEditFreelancer">
+    <div class="modal-card" style="max-width:640px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-signature" style="color:var(--primary); margin-right:8px;"></i> Edit Kontrak Kerja Freelancer (SPK)</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalEditFreelancer')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="window.submitEditFreelanceContract(event);">
+          <input type="hidden" id="fl-edit-id">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Nama Freelancer</label>
+              <input type="text" id="fl-edit-name" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Keahlian / Posisi</label>
+              <input type="text" id="fl-edit-role" class="form-input" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Fee Termin Ini (Rp)</label>
+              <input type="number" id="fl-edit-amount" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status Verifikasi PM</label>
+              <select class="form-select" id="fl-edit-pm-status">
+                <option value="APPROVED PM">✅ APPROVED PM (Disetujui Siap Cair)</option>
+                <option value="MENUNGGU PM">🟡 MENUNGGU PM (Dalam Review)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deliverable / Milestone PM</label>
+            <input type="text" id="fl-edit-milestone" class="form-input" required>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Bank Freelancer</label>
+              <input type="text" id="fl-edit-bank" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">No. Rekening & A/N</label>
+              <input type="text" id="fl-edit-acc" class="form-input" required>
+            </div>
+          </div>
+          <div class="modal-footer" style="margin-top:14px;">
+            <button type="button" class="btn" onclick="closeFinanceModal('modalEditFreelancer')">Batal</button>
+            <button type="submit" class="btn primary">Perbarui SPK</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Detail SPK Freelancer -->
+  <div class="modal-backdrop" id="modalDetailFreelancer">
+    <div class="modal-card" style="max-width:680px;">
+      <div class="modal-header" style="background:linear-gradient(135deg, #1E1B4B, #4F46E5); color:#fff;">
+        <h3 style="color:#fff;"><i class="fa-solid fa-file-contract" style="color:#818CF8; margin-right:8px;"></i> Dokumen Surat Perjanjian Kontrak (SPK)</h3>
+        <button class="icon-btn" style="color:#fff; background:rgba(255,255,255,0.12);" onclick="closeFinanceModal('modalDetailFreelancer')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="freelancerDetailBody">
+        <!-- Dynamic content injected by viewFreelancerContractDetail -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeFinanceModal('modalDetailFreelancer')">Tutup</button>
+        <button type="button" class="btn primary" onclick="showFinanceToast('Dokumen SPK resmi diunduh dalam format PDF!', 'success')"><i class="fa-solid fa-file-pdf"></i> Unduh PDF SPK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Transfer Kas / Bank Universal (Bayar OPEX, Vendor, & Fee Freelancer) -->
+  <div class="modal-backdrop" id="modalTransferKasBank">
+    <div class="modal-card" style="max-width:620px;">
+      <div class="modal-header" style="background:linear-gradient(135deg, #0F172A, #3730A3); color:#fff;">
+        <h3 style="color:#fff;"><i class="fa-solid fa-money-bill-transfer" style="color:#818CF8; margin-right:8px;"></i> Eksekusi Transfer Bank / Kas Perusahaan</h3>
+        <button class="icon-btn" style="color:#fff; background:rgba(255,255,255,0.12);" onclick="closeFinanceModal('modalTransferKasBank')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="window.confirmAndExecuteBankTransfer(event);">
+          <!-- Info Penerima & Keperluan -->
+          <div style="background:#EEF2FF; border:1px solid #C7D2FE; border-radius:10px; padding:12px 16px; margin-bottom:14px;">
+            <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:#4338CA; letter-spacing:0.04em;">
+              <i class="fa-solid fa-receipt"></i> Keperluan Pembayaran:
+            </span>
+            <h4 id="trf-title" style="font-size:14px; font-weight:800; color:#1E1B4B; margin-top:2px;">-</h4>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px; font-size:12px;">
+              <div>
+                <span style="color:#64748B; font-size:11px;">Penerima Dana:</span>
+                <strong id="trf-recipient" style="display:block; color:#0F172A;">-</strong>
+              </div>
+              <div>
+                <span style="color:#64748B; font-size:11px;">Rekening Tujuan Penerima:</span>
+                <strong id="trf-target-account" style="display:block; color:#059669;">-</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pilihan Rekening Kas/Bank ASTACODE -->
+          <div class="form-group">
+            <label class="form-label" style="font-weight:700; color:var(--text-primary);">
+              <i class="fa-solid fa-building-columns" style="color:var(--primary); margin-right:4px;"></i> Pilih Rekening Bank Pembayar (Data Bank ASTACODE):
+            </label>
+            <select class="form-select" id="trf-source-bank-select" onchange="window.onTransferSourceBankChange(this.value)" style="padding:10px 14px; font-size:13px; font-weight:600;">
+              <!-- Dynamically populated from BANK_ACCOUNTS_MASTER -->
+            </select>
+            <div id="trf-source-bank-notice" style="margin-top:6px; font-size:11.5px; color:#4338CA; font-weight:600;">
+              Saldo saat ini: <span id="trf-current-balance">Rp 350.000.000</span>
+            </div>
+          </div>
+
+          <!-- Rincian Nominal & Pajak -->
+          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:14px;">
+            <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:12px; align-items:center;">
+              <div>
+                <label class="form-label">Nominal Bruto (Gross)</label>
+                <input type="text" id="trf-gross-display" class="form-input" style="font-size:14px; font-weight:800; background:#fff;" readonly>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Opsi Potongan Pajak</label>
+                <select class="form-select" id="trf-tax-option" onchange="window.recalculateTransferNet()">
+                  <option value="none">Tanpa Potongan Pajak (0%)</option>
+                  <option value="pph21">PPh 21 (2.5%) - Tenaga Ahli Freelancer</option>
+                  <option value="pph23">PPh 23 (2.0%) - Jasa Vendor Eksternal</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
+              <div>
+                <span style="font-size:11px; color:var(--text-muted); display:block;">Potongan Pajak:</span>
+                <strong id="trf-tax-deduction-display" style="color:#D97706; font-size:12px;">- Rp 0</strong>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:11px; color:var(--text-muted); display:block;">Total Dana yang Ditransfer (Net):</span>
+                <strong id="trf-net-transfer-display" style="font-size:18px; font-weight:800; color:#059669;">Rp 0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Berita Transfer / Catatan Transaksi</label>
+            <input type="text" id="trf-notes-input" class="form-input" placeholder="Contoh: Pembayaran Termin 2 Slicing UI POS - SPK FL-014" required>
+          </div>
+
+          <div class="modal-footer" style="margin-top:14px;">
+            <button type="button" class="btn" onclick="closeFinanceModal('modalTransferKasBank')">Batal</button>
+            <button type="submit" class="btn success" style="box-shadow:0 4px 12px rgba(16,185,129,0.35);">
+              <i class="fa-solid fa-paper-plane"></i> Konfirmasi & Transfer Sekarang
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Detail Transaksi / Resi Bukti Transfer Bank Resmi -->
+  <div class="modal-backdrop" id="modalDetailTransaksiBank">
+    <div class="modal-card" style="max-width:560px; padding:0; overflow:hidden;">
+      <div class="receipt-card">
+        <!-- Kop Surat Perusahaan -->
+        <div style="padding:16px 24px 12px; background:#fff; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg, #4F46E5, #7C3AED); color:#fff; display:grid; place-items:center; font-weight:800; font-size:14px;">A</div>
+            <div>
+              <strong style="font-size:13px; color:var(--text-primary); display:block;">PT ASTACODE DIGITAL NUSANTARA</strong>
+              <span style="font-size:10.5px; color:var(--text-muted);">Sistem ERP Terpadu • Bukti Pengeluaran Kas/Bank Resmi</span>
+            </div>
+          </div>
+          <span class="badge info" style="font-size:10px;"><i class="fa-solid fa-certificate"></i> Verified System</span>
+        </div>
+
+        <div class="receipt-header">
+          <div class="receipt-badge-stamp"><i class="fa-solid fa-circle-check"></i> TRANSFER BERHASIL</div>
+          <div style="font-size:12px; opacity:0.9; margin-bottom:4px;">Total Dana Ditransfer (Net)</div>
+          <div class="receipt-amount" id="receipt-nominal">Rp 4.875.000</div>
+          <div style="font-size:11px; opacity:0.8; margin-top:6px;" id="receipt-timestamp">12 Oktober 2026, 14:30 WIB</div>
+        </div>
+
+        <div class="receipt-meta-grid">
+          <div class="receipt-row">
+            <span class="receipt-row-label">No. Referensi Transaksi Bank:</span>
+            <span class="receipt-row-val" id="receipt-ref" style="font-family:var(--font-mono); color:var(--primary);">TRX-ASTA-20261012-0082</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Kategori Beban:</span>
+            <span class="receipt-row-val" id="receipt-category">HPP Proyek / Freelance</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Nominal Bruto (Gross):</span>
+            <span class="receipt-row-val" id="receipt-gross">Rp 5.000.000</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Potongan Pajak (PPh):</span>
+            <span class="receipt-row-val" id="receipt-tax" style="color:#D97706;">- Rp 125.000 (PPh 21 2.5%)</span>
+          </div>
+        </div>
+
+        <div class="receipt-account-box">
+          <div class="receipt-acc">
+            <span style="font-size:10.5px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Rekening Sumber (ASTACODE)</span>
+            <strong id="receipt-source-acc" style="display:block; font-size:12.5px; color:var(--text-primary); margin-top:2px;">BCA Utama Operasional</strong>
+            <span id="receipt-source-num" style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">8830-192-8391</span>
+          </div>
+          <div class="receipt-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+          <div class="receipt-acc" style="text-align:right;">
+            <span style="font-size:10.5px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Penerima Dana</span>
+            <strong id="receipt-target-name" style="display:block; font-size:12.5px; color:var(--text-primary); margin-top:2px;">Rian Pratama</strong>
+            <span id="receipt-target-acc" style="font-size:11px; color:#059669; font-weight:700; font-family:var(--font-mono);">BCA 5410-889-221</span>
+          </div>
+        </div>
+
+        <div style="padding:14px 24px; background:#F8FAFC; border-bottom:1px solid var(--border-light); font-size:12px;">
+          <span style="font-size:11px; color:var(--text-muted);">Berita Transfer:</span>
+          <div id="receipt-notes" style="font-weight:600; color:var(--text-primary); margin-top:2px;">Pencairan Fee Termin 2 Slicing UI POS - SPK FL-014</div>
+          <div style="margin-top:8px; font-size:11.5px; color:#4338CA;">
+            Sisa Saldo Rekening Pengirim: <strong id="receipt-remaining-balance">Rp 345.125.000</strong>
+          </div>
+        </div>
+
+        <div style="padding:14px 24px; display:flex; justify-content:space-between; align-items:center; background:#fff; flex-wrap:wrap; gap:10px;">
+          <div style="font-size:11px; color:#64748B;">
+            <i class="fa-solid fa-shield-halved" style="color:#10B981;"></i> Terverifikasi Sistem ERP ASTACODE • Ref: <span id="receipt-ref-footer" style="font-weight:700;">-</span>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm success" onclick="window.shareTransferReceiptViaWhatsApp()" title="Kirim notifikasi bukti transfer ke WhatsApp penerima">
+              <i class="fa-brands fa-whatsapp"></i> Kirim ke WhatsApp Penerima
+            </button>
+            <button type="button" class="btn btn-sm outline" onclick="window.downloadTransferReceiptPdf()"><i class="fa-solid fa-file-pdf"></i> Unduh PDF</button>
+            <button type="button" class="btn btn-sm outline" onclick="window.printTransferReceipt()"><i class="fa-solid fa-print"></i> Cetak</button>
+            <button type="button" class="btn btn-sm primary" onclick="closeFinanceModal('modalDetailTransaksiBank')">Selesai & Tutup</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -3492,63 +3831,199 @@
 
 
 
-  <!-- Modal: WhatsApp Simulation -->
-  <div class="modal-backdrop" id="modalWhatsAppSim">
-    <div class="modal-card" style="max-width: 650px;">
-      <div class="modal-header" style="background:#075E54; color:#fff;">
-        <h3 style="color:#fff;"><i class="fa-brands fa-whatsapp" style="color:#25D366; margin-right:8px;"></i> Simulasi WhatsApp: Notifikasi Penagihan Termin</h3>
-        <button class="icon-btn" style="color:#fff;" onclick="closeFinanceModal('modalWhatsAppSim')"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body" style="background:#E5DDD5; padding:16px;">
-        <div style="background:#128C7E; color:#fff; padding:8px 12px; border-radius:8px; margin-bottom:12px; font-size:12px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <strong>Penerima: <span id="waSimPicName">Budi Santoso (PIC)</span></strong>
-            <div style="font-size:10.5px; opacity:0.9;">No. WhatsApp: <span id="waSimPhone">+62 812-9876-5432</span> (CRM Data)</div>
-          </div>
-          <span class="badge success" id="waSimProjectBadge" style="background:#25D366; color:#fff;">Proyek: Aplikasi Kasir</span>
-        </div>
-        <div id="wa-chat-messages" style="height:280px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:10px; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-attachment: local;">
-          <!-- Chat bubbles will be injected here -->
-        </div>
-        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-          <div style="flex:1; background:#fff; border-radius:24px; padding:8px 16px; display:flex; align-items:center; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">
-            <i class="fa-regular fa-face-smile" style="color:#8696a0; margin-right:12px; font-size:20px;"></i>
-            <input type="text" id="wa-message-input" placeholder="Ketik pesan..." style="border:none; outline:none; flex:1; font-size:14px;" onkeydown="if(event.key==='Enter') window.sendWaSimMessage()">
-            <i class="fa-solid fa-paperclip" style="color:#8696a0; margin-left:12px; font-size:18px;"></i>
-          </div>
-          <button type="button" onclick="window.sendWaSimMessage()" style="width:45px; height:45px; border-radius:50%; background:#00a884; color:#fff; border:none; display:grid; place-items:center; cursor:pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </div>
-      </div>
-      <div class="modal-footer" style="padding:10px 16px; background:#f0f2f5;">
-        <div style="font-size:11px; color:#667781; flex:1;">
-          <i class="fa-solid fa-lock" style="font-size:9px;"></i> Pesan terenkripsi secara end-to-end. Data PIC ditarik otomatis dari CRM.
-        </div>
-        <button type="button" class="btn" onclick="closeFinanceModal('modalWhatsAppSim')">Selesai</button>
-      </div>
-    </div>
-
-  <!-- Modal: Preview Invoice -->
-  <div class="modal-backdrop" id="modalInvoicePreview">
-    <div class="modal-card" style="max-width: 600px;">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-file-invoice"></i> Pratinjau Invoice</h3>
-        <button class="icon-btn" onclick="closeFinanceModal('modalInvoicePreview')"><i class="fa-solid fa-xmark"></i></button>
+  <!-- Modal: Simulasi & Detail Pengiriman Termin dari CRM -->
+  <div class="modal-backdrop" id="modalCrmSyncDetail">
+    <div class="modal-card" style="max-width: 720px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #3730A3, #4F46E5); color:#fff;">
+        <h3 style="color:#fff;"><i class="fa-solid fa-handshake" style="color:#93C5FD; margin-right:8px;"></i> Simulasi & Detail Pengiriman Termin dari Modul CRM</h3>
+        <button class="icon-btn" style="color:#fff; background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.2);" onclick="closeFinanceModal('modalCrmSyncDetail')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <div id="invoice-preview-content" style="padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-           <!-- Data akan diisi via JS -->
-           <p>Memuat pratinjau...</p>
+        <!-- Selector Paket Deal CRM -->
+        <div style="margin-bottom:16px; background:#F8FAFC; border:1px solid var(--border); border-radius:10px; padding:12px 14px;">
+          <label class="form-label" style="margin-bottom:6px;"><i class="fa-solid fa-sliders" style="color:var(--primary);"></i> Pilih Paket Pengiriman Kontrak/MoU dari Modul CRM:</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-xs primary" id="crm-deal-btn-samudera" onclick="selectCrmDealScenario('samudera')">
+              <i class="fa-solid fa-ship"></i> Deal Baru: Samudera Logistik (Rp 140 Jt)
+            </button>
+            <button type="button" class="btn btn-xs" id="crm-deal-btn-mitra" onclick="selectCrmDealScenario('mitra')">
+              <i class="fa-solid fa-users-gear"></i> Deal Baru: PT Mitra Perkasa HRIS (Rp 250 Jt)
+            </button>
+            <button type="button" class="btn btn-xs" id="crm-deal-btn-medika" onclick="selectCrmDealScenario('medika')">
+              <i class="fa-solid fa-hospital"></i> Histori CRM: RS Medika Utama (Rp 30 Jt)
+            </button>
+            <button type="button" class="btn btn-xs" id="crm-deal-btn-alpha" onclick="selectCrmDealScenario('alpha')">
+              <i class="fa-solid fa-globe"></i> Histori CRM: PT Alpha Global (Rp 15 Jt)
+            </button>
+          </div>
+        </div>
+
+        <!-- Detail Payload Pengiriman CRM -->
+        <div id="crm-delivery-detail-box">
+          <!-- Diisi dinamis oleh JS -->
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn" onclick="closeFinanceModal('modalInvoicePreview')">Batal</button>
-        <button class="btn primary" id="btnConfirmSendWa">Konfirmasi & Kirim via WhatsApp</button>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <div style="font-size:11px; color:var(--text-muted);">
+          <i class="fa-solid fa-shield-halved" style="color:var(--primary);"></i> Webhook CRM &rarr; Finance AR Sync v3.2
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn" onclick="closeFinanceModal('modalCrmSyncDetail')">Tutup</button>
+          <button type="button" class="btn primary" id="btnConfirmImportCrm" onclick="confirmImportSelectedCrmDeal()">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Terima & Impor Jadwal Termin ke Finance
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Modal: Simulasi & Detail Pengiriman Invoice dari Manajemen Proyek (MP) -->
+  <div class="modal-backdrop" id="modalMpInvoiceDetail">
+    <div class="modal-card" style="max-width: 720px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #78350F, #D97706); color:#fff;">
+        <h3 style="color:#fff;"><i class="fa-solid fa-diagram-project" style="color:#FDE68A; margin-right:8px;"></i> Simulasi & Detail Pengiriman Invoice dari Manajemen Proyek (MP)</h3>
+        <button class="icon-btn" style="color:#fff; background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.2);" onclick="closeFinanceModal('modalMpInvoiceDetail')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <!-- Pilihan Milestone MP untuk Disimulasikan -->
+        <div style="margin-bottom:16px; background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; padding:12px 14px;">
+          <label class="form-label" style="color:#92400E; margin-bottom:6px;"><i class="fa-solid fa-bolt"></i> Pilih Tiket Pengiriman Milestone dari Modul Manajemen Proyek (Forge PM):</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-xs primary" id="mp-scen-btn-INV-2610-002" onclick="selectMpDeliveryScenario('INV-2610-002')">
+              RS Medika — Termin 2 (UAT 40%)
+            </button>
+            <button type="button" class="btn btn-xs" id="mp-scen-btn-INV-2612-003" onclick="selectMpDeliveryScenario('INV-2612-003')">
+              RS Medika — Termin 3 (BAST 30%)
+            </button>
+            <button type="button" class="btn btn-xs" id="mp-scen-btn-INV-2611-004" onclick="selectMpDeliveryScenario('INV-2611-004')">
+              PT Alpha Global — Termin 2 (Go-Live 50%)
+            </button>
+          </div>
+        </div>
+
+        <!-- Konten Detail Pengiriman MP -->
+        <div id="mp-delivery-detail-box">
+          <!-- Diisi dinamis oleh JS -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <div style="font-size:11px; color:var(--text-muted);">
+          <i class="fa-solid fa-code-commit" style="color:#D97706;"></i> Forge PM Milestone Trigger &rarr; Finance Invoicing
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn" onclick="closeFinanceModal('modalMpInvoiceDetail')">Tutup</button>
+          <button type="button" class="btn success" id="btnMpModalApprove" onclick="executeMpScenarioApproval(false)">
+            <i class="fa-solid fa-check"></i> Approve & Terbitkan Invoice
+          </button>
+          <button type="button" class="btn primary" id="btnMpModalApproveAndWa" onclick="executeMpScenarioApproval(true)">
+            <i class="fa-brands fa-whatsapp"></i> Approve & Kirim Chat ke Klien
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Preview Invoice & Detail Pengiriman ke Konsumen -->
+  <div class="modal-backdrop" id="modalInvoicePreview">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-invoice-dollar" style="color:var(--primary); margin-right:8px;"></i> Pratinjau Resmi Invoice & Pengiriman ke Konsumen</h3>
+        <button class="icon-btn" onclick="closeFinanceModal('modalInvoicePreview')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="invoice-preview-content">
+           <p>Memuat pratinjau...</p>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button class="btn" onclick="showFinanceToast('File PDF Invoice berhasil diunduh ke perangkat!', 'info')"><i class="fa-solid fa-file-pdf" style="color:#EF4444;"></i> Download PDF</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" onclick="closeFinanceModal('modalInvoicePreview')">Batal</button>
+          <button class="btn success" id="btnConfirmSendWa"><i class="fa-brands fa-whatsapp"></i> Buka Simulasi Chat Konsumen (WA)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: WhatsApp Simulation (Interactive Customer Chat) -->
+  <div class="modal-backdrop" id="modalWhatsAppSim">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header" style="background:#075E54; color:#fff;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:#25D366; color:#fff; display:grid; place-items:center; font-size:18px;">
+            <i class="fa-brands fa-whatsapp"></i>
+          </div>
+          <div>
+            <h3 style="color:#fff; font-size:14.5px;">Simulasi Chat WhatsApp Konsumen (Customer Invoicing)</h3>
+            <div style="font-size:11px; color:#A7F3D0; display:flex; align-items:center; gap:6px;">
+              <span style="width:7px; height:7px; border-radius:50%; background:#34D399; display:inline-block;"></span>
+              <span id="waSimOnlineStatus">Terhubung ke WhatsApp Business API • Kontak CRM</span>
+            </div>
+          </div>
+        </div>
+        <button class="icon-btn" style="color:#fff; background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.2);" onclick="closeFinanceModal('modalWhatsAppSim')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="background:#E5DDD5; padding:14px 16px;">
+        <!-- Info Bar Penerima Klien -->
+        <div style="background:#128C7E; color:#fff; padding:10px 14px; border-radius:10px; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.12);">
+          <div>
+            <strong style="font-size:13px;"><i class="fa-solid fa-user-tie" style="margin-right:5px;"></i>Penerima: <span id="waSimPicName">Heru Prasetyo (Finance Manager)</span></strong>
+            <div style="font-size:11px; opacity:0.92; margin-top:2px;">
+              No. WA: <strong id="waSimPhone">+62 817-6543-2100</strong> • Email: <span id="waSimEmail">finance@rsmedika.co.id</span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="badge success" id="waSimProjectBadge" style="background:#25D366; color:#fff; border:none;">Proyek: Aplikasi Kasir</span>
+            <div style="font-size:10px; color:#D1FAE5; margin-top:3px;" id="waSimInvoiceRef">Ref: INV-2610-002</div>
+          </div>
+        </div>
+
+        <!-- Area Bubble Chat -->
+        <div id="wa-chat-messages" style="height:310px; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; border-radius:8px; background-color:#EFEAE2; background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 0); background-size: 16px 16px;">
+          <!-- Chat bubbles will be injected here -->
+        </div>
+
+        <!-- Quick Simulation Chips (Skenario Interaksi Konsumen) -->
+        <div style="margin-top:10px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; background:rgba(255,255,255,0.75); padding:8px 10px; border-radius:8px;">
+          <span style="font-size:10.5px; font-weight:700; color:#075E54;"><i class="fa-solid fa-wand-magic-sparkles"></i> Simulasi Cepat:</span>
+          <button type="button" class="btn btn-xs" style="background:#fff; border-color:#CBD5E1; font-size:10.5px;" onclick="triggerWaQuickScenario('rekening')">
+            🏦 Info Rekening & NPWP
+          </button>
+          <button type="button" class="btn btn-xs" style="background:#fff; border-color:#CBD5E1; font-size:10.5px;" onclick="triggerWaQuickScenario('reminder')">
+            ⏰ Reminder Jatuh Tempo
+          </button>
+          <button type="button" class="btn btn-xs" style="background:#fff; border-color:#CBD5E1; font-size:10.5px;" onclick="triggerWaQuickScenario('tanya_pajak')">
+            💬 Klien Tanya PPh 23
+          </button>
+          <button type="button" class="btn btn-xs success" style="font-size:10.5px;" onclick="triggerWaQuickScenario('klien_bayar')">
+            💸 Simulasikan Klien Kirim Bukti Transfer
+          </button>
+        </div>
+
+        <!-- Input Box -->
+        <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+          <div style="flex:1; background:#fff; border-radius:24px; padding:8px 16px; display:flex; align-items:center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+            <i class="fa-regular fa-face-smile" style="color:#8696a0; margin-right:10px; font-size:18px;"></i>
+            <input type="text" id="wa-message-input" placeholder="Ketik pesan balasan ke konsumen..." style="border:none; outline:none; flex:1; font-size:13px;" onkeydown="if(event.key==='Enter') window.sendWaSimMessage()">
+            <i class="fa-solid fa-paperclip" style="color:#8696a0; margin-left:10px; font-size:16px; cursor:pointer;" title="Lampirkan Dokumen Pendukung" onclick="triggerWaQuickScenario('lampiran_faktur')"></i>
+          </div>
+          <button type="button" onclick="window.sendWaSimMessage()" style="width:42px; height:42px; border-radius:50%; background:#00a884; color:#fff; border:none; display:grid; place-items:center; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding:10px 16px; background:#f0f2f5; justify-content:space-between;">
+        <div style="font-size:11px; color:#667781;">
+          <i class="fa-solid fa-lock" style="font-size:10px; color:#10B981;"></i> Seluruh riwayat chat otomatis tersimpan di menu <strong>Pusat Pesan</strong>.
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-sm" onclick="closeFinanceModal('modalWhatsAppSim'); window.switchFinancePage('messages');">
+            <i class="fa-solid fa-comments"></i> Lihat di Pusat Pesan
+          </button>
+          <button type="button" class="btn btn-sm primary" onclick="closeFinanceModal('modalWhatsAppSim')">Selesai</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Scripts -->
