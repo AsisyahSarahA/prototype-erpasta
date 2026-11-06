@@ -92,7 +92,14 @@ const rawIcons = {
   wrench: (cls = '', sz = 16) => createSvg('<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>', cls, sz),
   filter: (cls = '', sz = 16) => createSvg('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>', cls, sz),
   folder: (cls = '', sz = 16) => createSvg('<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>', cls, sz),
-  telegram: (cls = '', sz = 16) => createSvg('<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>', cls, sz)
+  telegram: (cls = '', sz = 16) => createSvg('<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>', cls, sz),
+  flag: (cls = '', sz = 16) => createSvg('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>', cls, sz),
+  maximize: (cls = '', sz = 16) => createSvg('<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>', cls, sz),
+  minimize: (cls = '', sz = 16) => createSvg('<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>', cls, sz),
+  zoomIn: (cls = '', sz = 16) => createSvg('<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/>', cls, sz),
+  zoomOut: (cls = '', sz = 16) => createSvg('<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="8" x2="14" y1="11" y2="11"/>', cls, sz),
+  edit: (cls = '', sz = 16) => createSvg('<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>', cls, sz),
+  moreHorizontal: (cls = '', sz = 16) => createSvg('<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>', cls, sz)
 };
 
 // Safe Proxy Export: Never crashes even if an icon is unknown

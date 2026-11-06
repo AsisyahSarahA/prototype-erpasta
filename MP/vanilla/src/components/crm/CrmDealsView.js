@@ -461,8 +461,26 @@ export class CrmDealsView {
       description: m.description,
       assigneeId: m.defaultAssigneeId || "user-dev-1",
       estimateHours: m.estimateHours || 24,
+      dueDate: m.dueDate || this.getDefaultDueDate(project, idx, (project.modules || []).length),
       category: m.category || "Core",
     }));
+  }
+
+  getDefaultDueDate(project, idx, total) {
+    if (!project || !project.end_date) {
+      const d = new Date();
+      d.setDate(d.getDate() + (idx + 1) * 4);
+      return d.toISOString().split("T")[0];
+    }
+    const end = new Date(project.end_date);
+    if (isNaN(end.getTime())) {
+      const d = new Date();
+      d.setDate(d.getDate() + (idx + 1) * 4);
+      return d.toISOString().split("T")[0];
+    }
+    const daysBefore = Math.max(0, (total - 1 - idx) * 3);
+    const target = new Date(end.getTime() - daysBefore * 86400000);
+    return target.toISOString().split("T")[0];
   }
 
   render() {
@@ -601,6 +619,12 @@ export class CrmDealsView {
               Proyek Aktif: <strong style="color: #0f172a;">[${activeProject.code}] ${activeProject.title}</strong>
             </div>
           </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 11px; font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 4px 12px; border-radius: 8px;">
+              ${this.activeStep === "allocation" ? "Langkah 2: Pembagian Modul" : this.activeStep === "finance_top" ? "Langkah 3: Finance" : "Langkah 1: Penerimaan Aplikasi"}
+            </span>
+          </div>
         </div>
 
         <!-- 3. KARTU PROYEK AKTIF TERPILIH (PROPORTIONAL & RICH) -->
@@ -664,63 +688,7 @@ export class CrmDealsView {
 
         </div>
 
-        <!-- 4. STEPPER 3 TAHAPAN ALUR (MUDAH DIPAHAMI & LANGSUNG TERIKAT KE PROYEK INI) -->
-        <div class="crm-flow-banner">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 10.5px; font-weight: 800; color: #4338ca; background: #e0e7ff; padding: 3px 8px; border-radius: 6px;">
-              TAHAPAN PROSES
-            </span>
-            <span style="font-size: 12px; color: #475569; font-weight: 600;">
-              Alur Eksekusi Proyek [${activeProject.code}]:
-            </span>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <button
-              type="button"
-              class="crm-flow-step-btn ${this.activeStep === "intake" ? "active" : ""}"
-              data-step="intake"
-            >
-              <span class="step-badge">1</span>
-              <span>1. Penerimaan Aplikasi &amp; List Modul</span>
-            </button>
-
-            <span style="color: #cbd5e1; font-weight: 700;">➔</span>
-
-            <button
-              type="button"
-              class="crm-flow-step-btn ${this.activeStep === "allocation" ? "active" : ""}"
-              data-step="allocation"
-            >
-              <span class="step-badge">2</span>
-              <span>2. Pembagian Modul ke Developer</span>
-            </button>
-
-            <span style="color: #cbd5e1; font-weight: 700;">➔</span>
-
-            <button
-              type="button"
-              class="crm-flow-step-btn ${this.activeStep === "finance_top" ? "active" : ""}"
-              data-step="finance_top"
-            >
-              <span class="step-badge">3</span>
-              <span>3. Pengiriman Invoice ke Finance</span>
-            </button>
-
-            <span style="color: #cbd5e1; font-weight: 700;">|</span>
-
-            <button
-              type="button"
-              class="crm-flow-step-btn ${this.activeStep === "portfolio_dashboard" ? "active" : ""}"
-              data-step="portfolio_dashboard"
-              style="background: #f8fafc;"
-            >
-              <span>📊 Dashboard Portofolio &amp; SLA</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 5. KONTEN DARI TAHAP YANG AKTIF -->
+        <!-- 4. KONTEN DARI TAHAP YANG AKTIF -->
         ${this.renderCurrentStepContent(activeProject, teamMembers, totalAllocatedHours, totalAllocatedMandays)}
 
       </div>
@@ -1003,34 +971,24 @@ export class CrmDealsView {
     return `
       <div style="display: flex; flex-direction: column; gap: 20px;">
         
-        <!-- Context Banner Proyek Ini (TANPA SELECT DROPDOWN PROYEK) -->
+        <!-- Step 2 Section Header -->
         <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="font-size: 11px; font-weight: 800; color: #4338ca; background: #e0e7ff; padding: 4px 8px; border-radius: 6px;">
-              PROYEK AKTIF
-            </span>
-            <div>
-              <strong style="font-size: 13.5px; color: #0f172a;">[${activeProject.code}] ${activeProject.title}</strong>
-              <span style="font-size: 11.5px; color: #64748b; display: block;">
-                Template Arsitektur: <strong>${activeProject.templateType}</strong>
-              </span>
-            </div>
+          <div>
+            <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span>👥 Langkah 2: Pembagian Modul ke Developer</span>
+            </h3>
+            <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
+              Template Arsitektur: <strong>${activeProject.templateType}</strong> • Tentukan penugasan PIC developer dan estimasi target tanggal selesai per modul.
+            </p>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11.5px; font-weight: 700;">
-              <span style="padding: 6px 12px; border-radius: 8px; background: #e0e7ff; color: #4338ca;">
-                ${this.allocationModules.length} Epics
-              </span>
-              <span style="padding: 6px 12px; border-radius: 8px; background: #ecfdf5; color: #059669;">
-                ${totalAllocatedHours} Jam (~${totalAllocatedMandays} MD)
-              </span>
-            </div>
-
-            <!-- Lanjut ke Langkah 3 -->
-            <button type="button" class="go-to-step-btn" data-target-step="finance_top" style="font-size: 11px; padding: 7px 14px; height: 36px; background: #4338ca; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-              <span> Lanjut ke Invoice Finance ➔</span>
-            </button>
+          <div style="display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11.5px; font-weight: 700;">
+            <span style="padding: 6px 12px; border-radius: 8px; background: #e0e7ff; color: #4338ca;">
+              ${this.allocationModules.length} Epics
+            </span>
+            <span style="padding: 6px 12px; border-radius: 8px; background: #ecfdf5; color: #059669;">
+              ${totalAllocatedHours} Jam (~${totalAllocatedMandays} MD)
+            </span>
           </div>
         </div>
 
@@ -1097,7 +1055,7 @@ export class CrmDealsView {
               Alokasi Modul Proyek &amp; Penugasan Developer (${this.allocationModules.length} Epics)
             </h3>
             <span style="font-size: 11.5px; color: #64748b;">
-              Pilih PIC Developer &amp; sesuaikan estimasi jam kerja.
+              Pilih PIC Developer &amp; tentukan estimasi target selesai.
             </span>
           </div>
 
@@ -1138,11 +1096,18 @@ export class CrmDealsView {
                     </select>
                   </div>
 
-                  <div style="width: 100px;">
+                  <div style="width: 145px;">
                     <label style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">
-                      Estimasi (Jam):
+                      Estimasi Selesai:
                     </label>
-                    <input type="number" class="alloc-mod-hours crm-form-input" data-idx="${idx}" value="${mod.estimateHours}" min="1" max="200" style="font-size: 11px; font-weight: 700; font-family: var(--font-mono); height: 28px; width: 100%; text-align: center; border-radius: 6px;" />
+                    <input
+                      type="date"
+                      class="alloc-mod-duedate crm-form-input"
+                      data-idx="${idx}"
+                      value="${mod.dueDate || ""}"
+                      onclick="try { this.showPicker(); } catch (e) {}"
+                      style="font-size: 11.5px; font-weight: 600; font-family: var(--font-mono); height: 28px; width: 100%; border-radius: 6px; cursor: pointer; padding: 0 8px; color: #0f172a; background: #ffffff;"
+                    />
                   </div>
                 </div>
               </div>
@@ -1159,10 +1124,10 @@ export class CrmDealsView {
           </div>
           
           <div style="display: flex; align-items: center; gap: 10px;">
-            <button type="button" id="executeAllocationBtn" class="finance-btn-primary" style="font-size: 12px; padding: 8px 18px; background: #059669; border-color: #059669; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
-              ${Icons.sparkles("", 14)}
-              <span>Lanjutkan ke project</span>
-            </button>
+           <button type="button" id="executeAllocationBtn" class="finance-btn-primary" style="font-size: 12px; padding: 8px 18px; background-color: #059669; border: 1px solid #059669; color: #ffffff; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
+            ${Icons.sparkles("", 14)}
+            <span style="color: #ffffff;">Lanjutkan ke project</span>
+          </button>
           </div>
         </div>
 
@@ -1654,6 +1619,14 @@ export class CrmDealsView {
   // =========================================================================
   attachEvents() {
     this.element.addEventListener("click", (e) => {
+      // Trigger native date calendar picker when clicking date input
+      const dateInput = e.target.closest(".alloc-mod-duedate");
+      if (dateInput && typeof dateInput.showPicker === "function") {
+        try {
+          dateInput.showPicker();
+        } catch (err) {}
+      }
+
       // 0a. Sequential Back Button (Kembali Sesuai Tahapan)
       if (e.target.closest("#crmBackBtn")) {
         this.handleBackStep();
@@ -1826,6 +1799,7 @@ export class CrmDealsView {
           description: "Spesifikasi pengerjaan deliverable modul baru.",
           assigneeId: "user-dev-1",
           estimateHours: 20,
+          dueDate: activeProj.end_date || new Date().toISOString().split("T")[0],
           category: "Custom Feature",
         });
         this.render();
@@ -1890,15 +1864,30 @@ export class CrmDealsView {
           this.allocationModules[idx].estimateHours = Number(e.target.value) || 0;
         }
       }
+
+      if (e.target.classList.contains("alloc-mod-duedate")) {
+        const idx = Number(e.target.dataset.idx);
+        if (this.allocationModules[idx]) {
+          this.allocationModules[idx].dueDate = e.target.value;
+        }
+      }
     });
 
-    // Change listeners for module assignees
+    // Change listeners for module assignees & date
     this.element.addEventListener("change", (e) => {
       if (e.target.classList.contains("alloc-mod-assignee")) {
         const idx = Number(e.target.dataset.idx);
         if (this.allocationModules[idx]) {
           this.allocationModules[idx].assigneeId = e.target.value;
           this.render(); // update capacity gauge immediately
+        }
+        return;
+      }
+
+      if (e.target.classList.contains("alloc-mod-duedate")) {
+        const idx = Number(e.target.dataset.idx);
+        if (this.allocationModules[idx]) {
+          this.allocationModules[idx].dueDate = e.target.value;
         }
         return;
       }
