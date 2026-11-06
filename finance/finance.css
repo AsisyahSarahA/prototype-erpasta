@@ -1,16 +1,18 @@
 /* ==========================================================================
-   ASTACODE ERP - FINANCE MODULE UNIFIED STYLESHEET (FORGEFLOW DESIGN SYSTEM)
-   Harmonized with ForgeFlow tokens: Primary #305BA3, Clean Canvas #F8FAFC
+   ASTACODE ERP - FINANCE MODULE UNIFIED STYLESHEET (CRM HARMONIZED DESIGN SYSTEM)
+   Harmonized with Astacode CRM tokens: Primary Indigo #4F46E5, Clean Canvas #F8FAFC
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-  --primary: #305BA3;
-  --primary-2: #244B8B;
-  --primary-dark: #1E3A8A;
-  --primary-soft: #EBF2FA;
-  --primary-glow: rgba(48, 91, 163, 0.15);
+  --primary: #4F46E5;
+  --primary-2: #4338CA;
+  --primary-dark: #3730A3;
+  --primary-light: #6366F1;
+  --primary-soft: #EEF2FF;
+  --primary-glow: rgba(99, 102, 241, 0.18);
+  --primary-gradient: linear-gradient(135deg, #6366F1, #4F46E5);
   
   --bg-app: #F8FAFC;
   --surface: #FFFFFF;
@@ -213,13 +215,13 @@ a {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #38BDF8, #305BA3);
+  background: linear-gradient(135deg, #6366F1, #4F46E5);
   color: #fff;
   font-weight: 700;
   display: grid;
   place-items: center;
   font-size: 12px;
-  box-shadow: 0 2px 8px rgba(48, 91, 163, 0.3);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 .user-info {
   display: flex;
@@ -853,3 +855,194 @@ a {
   .kpi-grid, .kpi-grid.cols-3 { grid-template-columns: 1fr; }
   .finance-subnav-bar { padding: 0 16px; top: 68px; }
 }
+
+/* ==========================================================================
+   PAGINATION DESIGN SYSTEM (MATCHING CRM)
+   ========================================================================== */
+.table-pagination-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  background: #FFFFFF;
+  border-top: 1px solid var(--border-light);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.table-pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.table-pagination-info strong {
+  color: var(--text-primary);
+}
+.table-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.page-btn {
+  height: 30px;
+  min-width: 30px;
+  padding: 0 9px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: #FFFFFF;
+  color: var(--text-primary);
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.page-btn.active {
+  background: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px var(--primary-glow);
+}
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #F8FAFC;
+  border-color: var(--border-light);
+}
+
+/* ==========================================================================
+   DETAIL TRANSAKSI / RESI TRANSFER BANK
+   ========================================================================== */
+.receipt-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+.receipt-header {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+  padding: 20px 24px;
+  text-align: center;
+  position: relative;
+}
+.receipt-badge-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+.receipt-amount {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.receipt-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 18px 24px;
+  background: #F8FAFC;
+  border-bottom: 1px dashed var(--border);
+  font-size: 12px;
+}
+.receipt-row {
+  display: flex;
+  flex-direction: column;
+}
+.receipt-row-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.receipt-row-val {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.receipt-account-box {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+.receipt-acc {
+  flex: 1;
+}
+.receipt-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   SIMPLIFIED GENERAL JOURNAL (JURNAL UMUM)
+   ========================================================================== */
+.journal-unified-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.journal-unified-table th {
+  background: #F8FAFC;
+  padding: 10px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.journal-group-header {
+  background: #F1F5F9;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-light);
+}
+.journal-row-debit {
+  background: #FFFFFF;
+}
+.journal-row-credit {
+  background: #FAFAFC;
+}
+.journal-row-debit td, .journal-row-credit td {
+  padding: 8px 14px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+.journal-credit-indent {
+  padding-left: 28px !important;
+  color: var(--text-secondary);
+}
+
