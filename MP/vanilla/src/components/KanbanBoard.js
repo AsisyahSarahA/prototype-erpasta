@@ -2,14 +2,20 @@
  * KanbanBoard.js — Papan Kanban & List Tabel Proyek
  * Modeled after ASTACODE CRM Pipeline & Jira Software Cloud:
  * - Dual View Modes: Papan Kanban (Drag & Drop) & List Tabel (Data Terstruktur)
- * - Top KPI Summary: Total Tiket, Pengerjaan, Selesai %, Sprint Aktif, Bug Kritis S1/S2
+ * - Top KPI Summary: Total Tiket, Pengerjaan (In Development), Selesai (Done), Sprint Aktif, Bug Kritis S1/S2
  * - Multi-Filter Row: Dual View Toggle, Quick Search, PIC/Assignee, Tipe Tiket, Prioritas, Epic/Modul
- * - 6 Workflow Columns: Backlog, To Do, In Progress, Review PR, QA Staging, Selesai
- * - Structured Cards & High-Density Sortable Data Table
- * - Native Drag & Drop with interactive status updates
+ * - 6 Workflow Columns: Backlog, To Do, In Development, Review & Testing, Done, Rejected
+ * - Strict Transition Validation with visual drag-and-drop feedback (Allowed vs Forbidden Targets)
+ * - Terminal State controls (Done locks card with Reopen; Rejected allows Restore to Backlog)
  */
 
 import { store } from '../state/store.js';
+import {
+  KANBAN_STAGES,
+  WORKFLOW_TRANSITION_RULES,
+  getCanonicalStatus,
+  validateStatusTransition
+} from '../utils/workflow.js';
 
 const ICONS = {
   search: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
@@ -22,17 +28,11 @@ const ICONS = {
   checkCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
   kanban: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/></svg>`,
   table: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>`,
-  arrowUpDown: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>`
+  arrowUpDown: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>`,
+  xCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`,
+  rotateCcw: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
+  info: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`
 };
-
-const STAGES = [
-  { id: 'backlog', name: 'Backlog', color: '#94a3b8', primaryStatus: 'Backlog', matchStatuses: ['Backlog', 'Baru'] },
-  { id: 'todo', name: 'To Do', color: '#3b82f6', primaryStatus: 'To Do', matchStatuses: ['To Do', 'Dianalisis'] },
-  { id: 'in_progress', name: 'In Progress', color: '#6366f1', primaryStatus: 'In Progress', matchStatuses: ['In Progress', 'Diperbaiki Agen', 'Perlu Manual'] },
-  { id: 'code_review', name: 'Review PR', color: '#f59e0b', primaryStatus: 'In Review', matchStatuses: ['In Review', 'Menunggu Persetujuan'] },
-  { id: 'qa_staging', name: 'QA Staging', color: '#8b5cf6', primaryStatus: 'QA/Testing', matchStatuses: ['QA/Testing', 'Deploy Staging', 'Disetujui'] },
-  { id: 'done', name: 'Selesai', color: '#10b981', primaryStatus: 'Selesai', matchStatuses: ['Selesai', 'Deploy Production', 'Dipantau'] }
-];
 
 export class KanbanBoard {
   constructor() {
@@ -87,18 +87,24 @@ export class KanbanBoard {
       return true;
     });
 
-    // KPI Metrics calculation
+    // KPI Metrics calculation (Canonical Workflow Aware)
     const totalCount = filteredTasks.length;
-    const inProgressCount = filteredTasks.filter((t) => ['In Progress', 'Diperbaiki Agen', 'Perlu Manual'].includes(t.status)).length;
-    const doneCount = filteredTasks.filter((t) => ['Selesai', 'Deploy Production', 'Dipantau'].includes(t.status)).length;
+    const inDevelopmentCount = filteredTasks.filter(
+      (t) => getCanonicalStatus(t.status) === 'In Development'
+    ).length;
+    const doneCount = filteredTasks.filter(
+      (t) => getCanonicalStatus(t.status) === 'Done'
+    ).length;
     const completionPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-    const criticalBugs = filteredTasks.filter((t) => t.type === 'Bug' && (t.severity?.startsWith('S1') || t.severity?.startsWith('S2') || t.priority === 'Hotfix'));
+    const criticalBugs = filteredTasks.filter(
+      (t) => t.type === 'Bug' && (t.severity?.startsWith('S1') || t.severity?.startsWith('S2') || t.priority === 'Hotfix')
+    );
     const activeSprintObj = (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id && s.status === 'active') || (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id);
     const activeSprintName = activeSprintObj ? activeSprintObj.name : `Sprint 1: ${activeProject ? activeProject.name : 'MVP'}`;
 
-    // Columns HTML for Kanban View
-    const columnsHtml = STAGES.map((stage, stageIdx) => {
-      const stageTasks = filteredTasks.filter((t) => stage.matchStatuses.includes(t.status));
+    // Columns HTML for 6 Kanban Stages
+    const columnsHtml = KANBAN_STAGES.map((stage, stageIdx) => {
+      const stageTasks = filteredTasks.filter((t) => getCanonicalStatus(t.status) === stage.primaryStatus);
       const totalHours = stageTasks.reduce((acc, curr) => acc + (Number(curr.estimateHours) || 0), 0);
 
       const cardsHtml = stageTasks.length === 0
@@ -108,11 +114,12 @@ export class KanbanBoard {
           </div>
         `
         : stageTasks.map((task) => {
+            const canonicalStatus = getCanonicalStatus(task.status);
             const assignee = teamMembers.find((m) => m.id === task.assigneeId) || { name: 'Unassigned', avatar: 'UA' };
             const epic = epics.find((e) => e.id === task.epicId);
             const totalSubtasks = (task.subtasks || []).length;
             const completedSubtasks = (task.subtasks || []).filter((s) => s.completed).length;
-            const subtaskPct = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : (stage.id === 'done' ? 100 : 0);
+            const subtaskPct = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : (canonicalStatus === 'Done' ? 100 : 0);
 
             let typeBadgeClass = 'badge-blue';
             let typeLabel = task.type || 'Task';
@@ -147,13 +154,123 @@ export class KanbanBoard {
                 </span>`
               : '';
 
+            // Workflow transitions buttons based on user rules
+            let actionsHtml = '';
+            if (canonicalStatus === 'Rejected') {
+              actionsHtml = `
+                <button
+                  class="btn-restore-task kanban-restore-btn"
+                  data-task-id="${task.id}"
+                  data-target-status="Backlog"
+                  title="Pulihkan tiket kembali ke Backlog"
+                >
+                  ${ICONS.rotateCcw}
+                  <span>Pulihkan</span>
+                </button>
+                <button
+                  class="btn-open-detail kanban-detail-btn"
+                  data-task-id="${task.id}"
+                  title="Buka detail tiket"
+                >
+                  <span>Detail</span>
+                  ${ICONS.arrowRight}
+                </button>
+              `;
+            } else if (canonicalStatus === 'Done') {
+              actionsHtml = `
+                <button
+                  class="btn-reopen-task kanban-reopen-btn"
+                  data-task-id="${task.id}"
+                  data-target-status="In Development"
+                  title="Buka kembali (Reopen) jika ditemukan bug kritis mendadak"
+                >
+                  ${ICONS.rotateCcw}
+                  <span>Reopen</span>
+                </button>
+                <button
+                  class="btn-open-detail kanban-detail-btn"
+                  data-task-id="${task.id}"
+                  title="Buka detail tiket"
+                >
+                  <span>Detail</span>
+                  ${ICONS.arrowRight}
+                </button>
+              `;
+            } else {
+              let prevTarget = null;
+              let prevTooltip = 'Tidak dapat mundur';
+              let nextTarget = null;
+              let nextTooltip = 'Tidak dapat maju';
+
+              if (canonicalStatus === 'Backlog') {
+                nextTarget = 'To Do';
+                nextTooltip = 'Setujui tiket dan pindahkan ke To Do (Siap Dikerjakan)';
+              } else if (canonicalStatus === 'To Do') {
+                prevTarget = 'Backlog';
+                prevTooltip = 'Kembalikan ke Backlog (jika ditunda/spesifikasi belum jelas)';
+                nextTarget = 'In Development';
+                nextTooltip = 'Ambil tiket dan mulai koding (Pindah ke In Development)';
+              } else if (canonicalStatus === 'In Development') {
+                prevTarget = 'To Do';
+                prevTooltip = 'Hentikan / alihkan pengerjaan (Kembali ke To Do)';
+                nextTarget = 'Review & Testing';
+                nextTooltip = 'Selesai koding & ajukan PR (Pindah ke Review & Testing)';
+              } else if (canonicalStatus === 'Review & Testing') {
+                prevTarget = 'In Development';
+                prevTooltip = 'Ada bug atau catatan perbaikan (Kembalikan ke In Development)';
+                nextTarget = 'Done';
+                nextTooltip = 'Lolos pengujian dan verifikasi (Pindah ke Done)';
+              }
+
+              actionsHtml = `
+                <button
+                  class="btn-shift-prev kanban-shift-btn"
+                  data-task-id="${task.id}"
+                  data-target-status="${prevTarget || ''}"
+                  ${!prevTarget ? 'disabled' : ''}
+                  title="${prevTooltip}"
+                >
+                  ${ICONS.chevronLeft}
+                </button>
+
+                <button
+                  class="btn-open-detail kanban-detail-btn"
+                  data-task-id="${task.id}"
+                  title="Buka detail tiket"
+                >
+                  <span>Detail</span>
+                  ${ICONS.arrowRight}
+                </button>
+
+                <button
+                  class="btn-shift-next kanban-shift-btn"
+                  data-task-id="${task.id}"
+                  data-target-status="${nextTarget || ''}"
+                  ${!nextTarget ? 'disabled' : ''}
+                  title="${nextTooltip}"
+                >
+                  ${ICONS.chevronRight}
+                </button>
+
+                <button
+                  class="btn-quick-reject kanban-reject-btn"
+                  data-task-id="${task.id}"
+                  data-target-status="Rejected"
+                  title="Tolak atau batalkan tiket (Pindah ke Rejected)"
+                >
+                  ${ICONS.xCircle}
+                </button>
+              `;
+            }
+
             return `
               <div
-                class="kanban-card"
+                class="kanban-card ${canonicalStatus === 'Rejected' ? 'kanban-card--rejected' : ''} ${canonicalStatus === 'Done' ? 'kanban-card--done' : ''}"
                 draggable="true"
                 data-task-id="${task.id}"
+                data-canonical-status="${canonicalStatus}"
                 data-stage-idx="${stageIdx}"
-                title="Klik untuk melihat detail tiket atau drag ke kolom lain"
+                title="Klik untuk membuka detail tiket atau drag ke kolom tujuan yang diizinkan"
               >
                 <!-- 1. Card Header: Grip, Key, Type on Left | Priority & SLA on Right -->
                 <div class="kanban-card-top">
@@ -217,33 +334,7 @@ export class KanbanBoard {
                   </div>
 
                   <div class="kanban-card-actions">
-                    <button
-                      class="btn-shift-prev kanban-shift-btn"
-                      data-task-id="${task.id}"
-                      data-stage-idx="${stageIdx}"
-                      ${stageIdx === 0 ? 'disabled' : ''}
-                      title="Kembalikan ke tahap sebelumnya"
-                    >
-                      ${ICONS.chevronLeft}
-                    </button>
-
-                    <button
-                      class="btn-open-detail kanban-detail-btn"
-                      data-task-id="${task.id}"
-                    >
-                      <span>Detail</span>
-                      ${ICONS.arrowRight}
-                    </button>
-
-                    <button
-                      class="btn-shift-next kanban-shift-btn"
-                      data-task-id="${task.id}"
-                      data-stage-idx="${stageIdx}"
-                      ${stageIdx === STAGES.length - 1 ? 'disabled' : ''}
-                      title="Pindahkan ke tahap berikutnya"
-                    >
-                      ${ICONS.chevronRight}
-                    </button>
+                    ${actionsHtml}
                   </div>
                 </div>
               </div>
@@ -251,7 +342,12 @@ export class KanbanBoard {
           }).join('');
 
       return `
-        <div class="kanban-column" data-stage-id="${stage.id}" data-stage-idx="${stageIdx}">
+        <div
+          class="kanban-column"
+          data-stage-id="${stage.id}"
+          data-primary-status="${stage.primaryStatus}"
+          data-stage-idx="${stageIdx}"
+        >
           <!-- Column Sticky Header -->
           <div class="kanban-column-header">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
@@ -259,6 +355,9 @@ export class KanbanBoard {
                 <span class="kanban-column-dot" style="background-color:${stage.color};"></span>
                 <span style="font-size:12.5px;font-weight:800;color:var(--text-primary);letter-spacing:-.01em;">
                   ${stage.name}
+                </span>
+                <span class="kanban-col-info-icon" title="${stage.description}">
+                  ${ICONS.info}
                 </span>
               </div>
               <span class="badge badge-slate" style="font-size:10px;font-weight:700;">
@@ -268,12 +367,17 @@ export class KanbanBoard {
 
             <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">
               <span>${totalHours} Jam Estimasi</span>
-              <span style="font-size:10px;font-weight:600;color:var(--indigo-600);">Tahap ${stageIdx + 1}/6</span>
+              <span style="font-size:10px;font-weight:600;color:${stage.color};">Tahap ${stageIdx + 1}/6</span>
             </div>
           </div>
 
-          <!-- Column Cards Scroll Container -->
-          <div class="kanban-cards-scroll" data-stage-id="${stage.id}" data-stage-idx="${stageIdx}">
+          <!-- Column Cards Scroll Container (Drop Zone) -->
+          <div
+            class="kanban-cards-scroll"
+            data-stage-id="${stage.id}"
+            data-primary-status="${stage.primaryStatus}"
+            data-stage-idx="${stageIdx}"
+          >
             ${cardsHtml}
           </div>
         </div>
@@ -295,7 +399,7 @@ export class KanbanBoard {
 
             <div class="kanban-kpi-stat">
               <span class="kanban-kpi-label">Pengerjaan</span>
-              <strong class="kanban-kpi-val kanban-kpi-val--indigo">${inProgressCount} Tiket</strong>
+              <strong class="kanban-kpi-val kanban-kpi-val--indigo">${inDevelopmentCount} Tiket</strong>
             </div>
 
             <div class="kanban-kpi-divider"></div>
@@ -335,7 +439,7 @@ export class KanbanBoard {
                 type="button"
                 class="kanban-view-btn btn-toggle-view ${this.viewMode === 'kanban' ? 'active' : ''}"
                 data-view="kanban"
-                title="Tampilan Papan Kanban (Alur Kerja Kolom & Drag-Drop)"
+                title="Tampilan Papan Kanban (6 Kolom Workflow Sesuai SOP & Drag-Drop)"
               >
                 ${ICONS.kanban}
                 <span>Papan Kanban</span>
@@ -440,8 +544,9 @@ export class KanbanBoard {
     };
 
     const getStageForTask = (task) => {
-      const stage = STAGES.find((s) => s.matchStatuses.includes(task.status));
-      return stage || STAGES[0];
+      const canonical = getCanonicalStatus(task.status);
+      const stage = KANBAN_STAGES.find((s) => s.primaryStatus === canonical);
+      return stage || KANBAN_STAGES[0];
     };
 
     const sortedTasks = [...filteredTasks].sort((a, b) => {
@@ -465,8 +570,8 @@ export class KanbanBoard {
           valB = b.type || '';
           return this.sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
         case 'status': {
-          const idxA = STAGES.indexOf(getStageForTask(a));
-          const idxB = STAGES.indexOf(getStageForTask(b));
+          const idxA = KANBAN_STAGES.indexOf(getStageForTask(a));
+          const idxB = KANBAN_STAGES.indexOf(getStageForTask(b));
           return this.sortAsc ? idxA - idxB : idxB - idxA;
         }
         case 'priority': {
@@ -523,10 +628,11 @@ export class KanbanBoard {
           const assignee = teamMembers.find((m) => m.id === task.assigneeId) || { name: 'Unassigned', avatar: 'UA' };
           const epic = epics.find((e) => e.id === task.epicId);
           const stage = getStageForTask(task);
-          const stageIdx = STAGES.indexOf(stage);
+          const stageIdx = KANBAN_STAGES.indexOf(stage);
+          const canonicalStatus = getCanonicalStatus(task.status);
           const totalSubtasks = (task.subtasks || []).length;
           const completedSubtasks = (task.subtasks || []).filter((s) => s.completed).length;
-          const subtaskPct = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : (stage.id === 'done' ? 100 : 0);
+          const subtaskPct = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : (canonicalStatus === 'Done' ? 100 : 0);
 
           let typeBadgeClass = 'badge-blue';
           let typeLabel = task.type || 'Task';
@@ -555,6 +661,105 @@ export class KanbanBoard {
           }
 
           const initials = assignee.name.split(' ').map((n) => n[0]).slice(0, 2).join('');
+
+          // Table action buttons
+          let actionsHtml = '';
+          if (canonicalStatus === 'Rejected') {
+            actionsHtml = `
+              <button
+                class="btn-restore-task kanban-restore-btn"
+                data-task-id="${task.id}"
+                data-target-status="Backlog"
+                title="Pulihkan tiket kembali ke Backlog"
+              >
+                ${ICONS.rotateCcw}
+                <span>Pulihkan</span>
+              </button>
+              <button
+                class="btn-open-detail kanban-detail-btn"
+                data-task-id="${task.id}"
+                title="Lihat detail lengkap pekerjaan"
+              >
+                <span>Detail</span>
+                ${ICONS.arrowRight}
+              </button>
+            `;
+          } else if (canonicalStatus === 'Done') {
+            actionsHtml = `
+              <button
+                class="btn-reopen-task kanban-reopen-btn"
+                data-task-id="${task.id}"
+                data-target-status="In Development"
+                title="Buka kembali (Reopen) jika ditemukan bug kritis mendadak"
+              >
+                ${ICONS.rotateCcw}
+                <span>Reopen</span>
+              </button>
+              <button
+                class="btn-open-detail kanban-detail-btn"
+                data-task-id="${task.id}"
+                title="Lihat detail lengkap pekerjaan"
+              >
+                <span>Detail</span>
+                ${ICONS.arrowRight}
+              </button>
+            `;
+          } else {
+            let prevTarget = null;
+            let nextTarget = null;
+            if (canonicalStatus === 'Backlog') {
+              nextTarget = 'To Do';
+            } else if (canonicalStatus === 'To Do') {
+              prevTarget = 'Backlog';
+              nextTarget = 'In Development';
+            } else if (canonicalStatus === 'In Development') {
+              prevTarget = 'To Do';
+              nextTarget = 'Review & Testing';
+            } else if (canonicalStatus === 'Review & Testing') {
+              prevTarget = 'In Development';
+              nextTarget = 'Done';
+            }
+
+            actionsHtml = `
+              <button
+                class="btn-shift-prev kanban-shift-btn"
+                data-task-id="${task.id}"
+                data-target-status="${prevTarget || ''}"
+                ${!prevTarget ? 'disabled' : ''}
+                title="${prevTarget ? `Kembalikan ke ${prevTarget}` : 'Tidak dapat mundur'}"
+              >
+                ${ICONS.chevronLeft}
+              </button>
+
+              <button
+                class="btn-open-detail kanban-detail-btn"
+                data-task-id="${task.id}"
+                title="Lihat detail lengkap pekerjaan"
+              >
+                <span>Detail</span>
+                ${ICONS.arrowRight}
+              </button>
+
+              <button
+                class="btn-shift-next kanban-shift-btn"
+                data-task-id="${task.id}"
+                data-target-status="${nextTarget || ''}"
+                ${!nextTarget ? 'disabled' : ''}
+                title="${nextTarget ? `Lanjut ke ${nextTarget}` : 'Tidak dapat maju'}"
+              >
+                ${ICONS.chevronRight}
+              </button>
+
+              <button
+                class="btn-quick-reject kanban-reject-btn"
+                data-task-id="${task.id}"
+                data-target-status="Rejected"
+                title="Tolak / batalkan tiket"
+              >
+                ${ICONS.xCircle}
+              </button>
+            `;
+          }
 
           return `
             <tr class="kanban-table-row" data-task-id="${task.id}" title="Klik baris untuk membuka detail pekerjaan">
@@ -592,11 +797,11 @@ export class KanbanBoard {
               </td>
 
               <!-- 5. Tahap Alur Kerja (Status) -->
-              <td style="width: 130px;">
+              <td style="width: 140px;">
                 <span
                   class="kanban-stage-lozenge"
                   style="background: ${stage.color}1f; color: ${stage.color}; border: 1px solid ${stage.color}3f;"
-                  title="Tahap ${stageIdx + 1}/6: ${stage.name}"
+                  title="Tahap ${stageIdx + 1}/6: ${stage.name} - ${stage.description}"
                 >
                   <span class="kanban-stage-dot" style="background-color: ${stage.color};"></span>
                   <span>${stage.name}</span>
@@ -638,36 +843,9 @@ export class KanbanBoard {
               </td>
 
               <!-- 10. Aksi Cepat (Shift & Detail) -->
-              <td style="width: 110px; text-align: right;" onclick="event.stopPropagation();">
+              <td style="width: 140px; text-align: right;" onclick="event.stopPropagation();">
                 <div class="kanban-card-actions" style="justify-content: flex-end;">
-                  <button
-                    class="btn-shift-prev kanban-shift-btn"
-                    data-task-id="${task.id}"
-                    data-stage-idx="${stageIdx}"
-                    ${stageIdx === 0 ? 'disabled' : ''}
-                    title="Mundurkan ke tahap sebelumnya"
-                  >
-                    ${ICONS.chevronLeft}
-                  </button>
-
-                  <button
-                    class="btn-open-detail kanban-detail-btn"
-                    data-task-id="${task.id}"
-                    title="Lihat detail lengkap pekerjaan"
-                  >
-                    <span>Detail</span>
-                    ${ICONS.arrowRight}
-                  </button>
-
-                  <button
-                    class="btn-shift-next kanban-shift-btn"
-                    data-task-id="${task.id}"
-                    data-stage-idx="${stageIdx}"
-                    ${stageIdx === STAGES.length - 1 ? 'disabled' : ''}
-                    title="Majukan ke tahap berikutnya"
-                  >
-                    ${ICONS.chevronRight}
-                  </button>
+                  ${actionsHtml}
                 </div>
               </td>
             </tr>
@@ -715,7 +893,7 @@ export class KanbanBoard {
                     ${getSortIndicator('type')}
                   </div>
                 </th>
-                <th class="sortable kanban-th-sort" data-sort="status" style="width:130px;">
+                <th class="sortable kanban-th-sort" data-sort="status" style="width:140px;">
                   <div style="display:flex;align-items:center;gap:4px;">
                     <span>TAHAP ALUR</span>
                     ${getSortIndicator('status')}
@@ -745,7 +923,7 @@ export class KanbanBoard {
                     ${getSortIndicator('subtasks')}
                   </div>
                 </th>
-                <th style="width:110px;text-align:right;">AKSI</th>
+                <th style="width:140px;text-align:right;">AKSI</th>
               </tr>
             </thead>
             <tbody>
@@ -788,7 +966,15 @@ export class KanbanBoard {
     // Table Row click -> Open Task Detail
     this.container.querySelectorAll('.kanban-table-row').forEach((row) => {
       row.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-shift-prev') || e.target.closest('.btn-shift-next') || e.target.closest('.btn-open-detail') || e.target.closest('.kanban-table-key-link')) {
+        if (
+          e.target.closest('.btn-shift-prev') ||
+          e.target.closest('.btn-shift-next') ||
+          e.target.closest('.btn-open-detail') ||
+          e.target.closest('.btn-quick-reject') ||
+          e.target.closest('.btn-restore-task') ||
+          e.target.closest('.btn-reopen-task') ||
+          e.target.closest('.kanban-table-key-link')
+        ) {
           return;
         }
         const taskId = row.dataset.taskId;
@@ -858,7 +1044,14 @@ export class KanbanBoard {
     // Card click -> Open Task Detail Workspace View (Kanban mode)
     this.container.querySelectorAll('.kanban-card').forEach((card) => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-shift-prev') || e.target.closest('.btn-shift-next') || e.target.closest('.btn-open-detail')) {
+        if (
+          e.target.closest('.btn-shift-prev') ||
+          e.target.closest('.btn-shift-next') ||
+          e.target.closest('.btn-open-detail') ||
+          e.target.closest('.btn-quick-reject') ||
+          e.target.closest('.btn-restore-task') ||
+          e.target.closest('.btn-reopen-task')
+        ) {
           return;
         }
         const taskId = card.dataset.taskId;
@@ -886,10 +1079,9 @@ export class KanbanBoard {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const taskId = btn.dataset.taskId;
-        const currentStageIdx = Number(btn.dataset.stageIdx);
-        if (currentStageIdx > 0) {
-          const targetStage = STAGES[currentStageIdx - 1];
-          store.updateTaskStatus(taskId, targetStage.primaryStatus, `Dipindahkan mundur ke tahap ${targetStage.name}`);
+        const targetStatus = btn.dataset.targetStatus;
+        if (taskId && targetStatus) {
+          store.updateTaskStatus(taskId, targetStatus, `Dipindahkan mundur ke ${targetStatus}`);
         }
       });
     });
@@ -899,10 +1091,54 @@ export class KanbanBoard {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const taskId = btn.dataset.taskId;
-        const currentStageIdx = Number(btn.dataset.stageIdx);
-        if (currentStageIdx < STAGES.length - 1) {
-          const targetStage = STAGES[currentStageIdx + 1];
-          store.updateTaskStatus(taskId, targetStage.primaryStatus, `Dipindahkan maju ke tahap ${targetStage.name}`);
+        const targetStatus = btn.dataset.targetStatus;
+        if (taskId && targetStatus) {
+          store.updateTaskStatus(taskId, targetStatus, `Dipindahkan maju ke ${targetStatus}`);
+        }
+      });
+    });
+
+    // Quick reject button (Backlog, To Do, In Development, Review & Testing -> Rejected)
+    this.container.querySelectorAll('.btn-quick-reject').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const taskId = btn.dataset.taskId;
+        const task = store.getState().tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        const confirmed = window.confirm(
+          `Apakah Anda yakin ingin menolak / membatalkan tiket [${task.key}] "${task.title}"?\nTiket akan dipindahkan ke status Rejected.`
+        );
+        if (confirmed) {
+          store.updateTaskStatus(taskId, 'Rejected', 'Ditolak / Dibatalkan oleh pengguna via Aksi Cepat');
+        }
+      });
+    });
+
+    // Restore button (Rejected -> Backlog)
+    this.container.querySelectorAll('.btn-restore-task').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const taskId = btn.dataset.taskId;
+        if (taskId) {
+          store.updateTaskStatus(taskId, 'Backlog', 'Klien/PM membatalkan penolakan (Restored to Backlog)');
+        }
+      });
+    });
+
+    // Reopen button (Done -> In Development)
+    this.container.querySelectorAll('.btn-reopen-task').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const taskId = btn.dataset.taskId;
+        const task = store.getState().tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        const confirmed = window.confirm(
+          `Buka kembali (Reopen) tiket [${task.key}] ke status "In Development" untuk perbaikan pengerjaan?`
+        );
+        if (confirmed) {
+          store.updateTaskStatus(taskId, 'In Development', 'Tiket dibuka kembali (Reopened by user)');
         }
       });
     });
@@ -912,15 +1148,35 @@ export class KanbanBoard {
       this.container.querySelectorAll('.kanban-card').forEach((card) => {
         card.addEventListener('dragstart', (e) => {
           this.draggedTaskId = card.dataset.taskId;
+          const draggedTask = store.getState().tasks.find((t) => t.id === this.draggedTaskId);
+          const sourceStatus = getCanonicalStatus(draggedTask ? draggedTask.status : 'Backlog');
+          const rule = WORKFLOW_TRANSITION_RULES[sourceStatus] || { allowed: [] };
+          const allowedTargets = rule.allowed || [];
+
           card.classList.add('dragging');
           e.dataTransfer.effectAllowed = 'move';
           e.dataTransfer.setData('text/plain', this.draggedTaskId);
+
+          // Highlight target columns
+          this.container.querySelectorAll('.kanban-column').forEach((col) => {
+            const primaryStatus = col.dataset.primaryStatus;
+            if (primaryStatus === sourceStatus) {
+              col.classList.add('col-target-current');
+            } else if (allowedTargets.includes(primaryStatus)) {
+              col.classList.add('col-target-allowed');
+            } else {
+              col.classList.add('col-target-forbidden');
+            }
+          });
         });
 
         card.addEventListener('dragend', () => {
           card.classList.remove('dragging');
+          this.container.querySelectorAll('.kanban-column').forEach((col) => {
+            col.classList.remove('col-target-current', 'col-target-allowed', 'col-target-forbidden');
+          });
           this.container.querySelectorAll('.kanban-cards-scroll').forEach((el) => {
-            el.classList.remove('drag-over');
+            el.classList.remove('drag-over', 'drag-over-allowed', 'drag-over-forbidden');
           });
         });
       });
@@ -928,22 +1184,47 @@ export class KanbanBoard {
       this.container.querySelectorAll('.kanban-cards-scroll').forEach((dropZone) => {
         dropZone.addEventListener('dragover', (e) => {
           e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          dropZone.classList.add('drag-over');
+          const targetStatus = dropZone.dataset.primaryStatus;
+          const draggedTask = store.getState().tasks.find((t) => t.id === this.draggedTaskId);
+          const sourceStatus = getCanonicalStatus(draggedTask ? draggedTask.status : 'Backlog');
+          const validation = validateStatusTransition(sourceStatus, targetStatus);
+
+          if (validation.allowed) {
+            e.dataTransfer.dropEffect = 'move';
+            dropZone.classList.add('drag-over-allowed');
+            dropZone.classList.remove('drag-over-forbidden');
+          } else {
+            e.dataTransfer.dropEffect = 'none';
+            dropZone.classList.add('drag-over-forbidden');
+            dropZone.classList.remove('drag-over-allowed');
+          }
         });
 
         dropZone.addEventListener('dragleave', () => {
-          dropZone.classList.remove('drag-over');
+          dropZone.classList.remove('drag-over', 'drag-over-allowed', 'drag-over-forbidden');
         });
 
         dropZone.addEventListener('drop', (e) => {
           e.preventDefault();
-          dropZone.classList.remove('drag-over');
+          dropZone.classList.remove('drag-over', 'drag-over-allowed', 'drag-over-forbidden');
           const taskId = e.dataTransfer.getData('text/plain') || this.draggedTaskId;
-          const targetStageIdx = Number(dropZone.dataset.stageIdx);
-          const targetStage = STAGES[targetStageIdx];
-          if (taskId && targetStage) {
-            store.updateTaskStatus(taskId, targetStage.primaryStatus, `Drag & drop ke kolom ${targetStage.name}`);
+          const targetStatus = dropZone.dataset.primaryStatus;
+
+          if (taskId && targetStatus) {
+            const success = store.updateTaskStatus(
+              taskId,
+              targetStatus,
+              `Drag & drop ke kolom ${targetStatus}`
+            );
+
+            if (!success) {
+              // Trigger visual error shake on the card
+              const cardEl = this.container.querySelector(`.kanban-card[data-task-id="${taskId}"]`);
+              if (cardEl) {
+                cardEl.classList.add('card-shake-error');
+                setTimeout(() => cardEl.classList.remove('card-shake-error'), 800);
+              }
+            }
           }
         });
       });

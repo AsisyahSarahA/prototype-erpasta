@@ -11,6 +11,7 @@
 
 import { store } from '../../state/store.js';
 import { Icons } from '../../utils/icons.js';
+import { getCanonicalStatus } from '../../utils/workflow.js';
 
 export class TaskListView {
   constructor() {
@@ -59,25 +60,21 @@ export class TaskListView {
   }
 
   getStatusBadge(status) {
-    switch (status) {
-      case 'Selesai':
-      case 'Deploy Production':
-      case 'Dipantau':
-        return { label: 'SELESAI', bg: 'rgba(16, 185, 129, 0.12)', color: '#059669' };
-      case 'In Progress':
-      case 'Diperbaiki Agen':
-        return { label: 'IN PROGRESS', bg: 'rgba(99, 102, 241, 0.12)', color: '#4f46e5' };
-      case 'In Review':
-      case 'Menunggu Persetujuan':
-        return { label: 'IN REVIEW', bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706' };
-      case 'QA/Testing':
-      case 'Deploy Staging':
-        return { label: 'QA STAGING', bg: 'rgba(139, 92, 246, 0.12)', color: '#7c3aed' };
-      case 'Perlu Manual':
-      case 'Ditolak':
-        return { label: 'PERLU MANUAL', bg: 'rgba(239, 68, 68, 0.12)', color: '#dc2626' };
+    const canonical = getCanonicalStatus(status);
+    switch (canonical) {
+      case 'Done':
+        return { label: 'DONE', bg: 'rgba(16, 185, 129, 0.12)', color: '#059669' };
+      case 'Review & Testing':
+        return { label: 'REVIEW & TESTING', bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706' };
+      case 'In Development':
+        return { label: 'IN DEVELOPMENT', bg: 'rgba(99, 102, 241, 0.12)', color: '#4f46e5' };
+      case 'To Do':
+        return { label: 'TO DO', bg: 'rgba(59, 130, 246, 0.12)', color: '#2563eb' };
+      case 'Rejected':
+        return { label: 'REJECTED', bg: 'rgba(239, 68, 68, 0.12)', color: '#dc2626' };
+      case 'Backlog':
       default:
-        return { label: 'TO DO', bg: 'var(--bg-secondary, #f1f5f9)', color: 'var(--text-secondary, #64748b)' };
+        return { label: 'BACKLOG', bg: 'var(--bg-secondary, #f1f5f9)', color: 'var(--text-secondary, #64748b)' };
     }
   }
 
@@ -153,7 +150,7 @@ export class TaskListView {
 
     const totalEstimate = sortedTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
     const totalLogged = sortedTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
-    const doneTasksCount = sortedTasks.filter(t => t.status === 'Selesai' || t.status === 'Deploy Production').length;
+    const doneTasksCount = sortedTasks.filter(t => getCanonicalStatus(t.status) === 'Done').length;
     const criticalBugs = sortedTasks.filter(t => t.type === 'Bug' && (t.priority === 'Hotfix' || t.priority === 'Tertinggi'));
 
     this.container.innerHTML = `

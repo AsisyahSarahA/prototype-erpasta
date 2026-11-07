@@ -4,6 +4,7 @@
  */
 
 import { INITIAL_PROJECTS, INITIAL_MEMBERS, INITIAL_EPICS, INITIAL_SPRINTS, INITIAL_TASKS, INITIAL_CRM_DEALS, INITIAL_INVOICES, INITIAL_EVENTS, INITIAL_COMMENTS, INITIAL_RULES } from "../data/mockData.js";
+import { validateStatusTransition, getCanonicalStatus } from "../utils/workflow.js";
 
 class Store {
   constructor() {
@@ -12,7 +13,10 @@ class Store {
       selectedProjectId: "proj-perpustakaan",
       activeTab: "kanban",
       role: "owner",
-      tasks: JSON.parse(JSON.stringify(INITIAL_TASKS)),
+      tasks: JSON.parse(JSON.stringify(INITIAL_TASKS)).map(t => ({
+        ...t,
+        status: getCanonicalStatus(t.status)
+      })),
       epics: JSON.parse(JSON.stringify(INITIAL_EPICS)),
       sprints: JSON.parse(JSON.stringify(INITIAL_SPRINTS)),
       teamMembers: JSON.parse(JSON.stringify(INITIAL_MEMBERS)),
@@ -292,15 +296,26 @@ class Store {
   }
 
   // --- Task Operations ---
-  updateTaskStatus(taskId, targetStatus, reason = "") {
+  updateTaskStatus(taskId, targetStatus, reason = "", bypassRules = false) {
     const currentTask = this.state.tasks.find((t) => t.id === taskId);
-    const oldStatus = currentTask ? currentTask.status : "Unknown";
+    if (!currentTask) return false;
+
+    const oldStatus = currentTask.status || "Backlog";
+    const canonicalTarget = getCanonicalStatus(targetStatus);
+
+    if (!bypassRules) {
+      const validation = validateStatusTransition(oldStatus, canonicalTarget);
+      if (!validation.allowed) {
+        this.addToast("warning", "Transisi Alur Kerja Ditolak", validation.reason);
+        return false;
+      }
+    }
 
     const updatedTasks = this.state.tasks.map((task) => {
       if (task.id === taskId) {
         return {
           ...task,
-          status: targetStatus,
+          status: canonicalTarget,
           lastStatusUpdated: new Date().toISOString(),
         };
       }
@@ -309,7 +324,7 @@ class Store {
 
     let selectedTask = this.state.selectedTask;
     if (selectedTask && selectedTask.id === taskId) {
-      selectedTask = { ...selectedTask, status: targetStatus };
+      selectedTask = { ...selectedTask, status: canonicalTarget };
     }
 
     // Append-only audit trail event (PRD Section 6.20)
@@ -319,7 +334,7 @@ class Store {
       taskId,
       actorName: actor.name,
       actorRole: actor.role,
-      action: `Mengubah status dari "${oldStatus}" ke "${targetStatus}"`,
+      action: `Mengubah status dari "${oldStatus}" ke "${canonicalTarget}"`,
       reason: reason || undefined,
       timestamp: new Date().toISOString(),
     };
@@ -327,7 +342,8 @@ class Store {
     const newEvents = [auditEvent, ...(this.state.events || [])];
 
     this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
-    this.addToast("success", "Status Tiket Diperbarui", `Tiket dipindahkan ke: ${targetStatus}`);
+    this.addToast("success", "Status Tiket Diperbarui", `Tiket dipindahkan ke: ${canonicalTarget}`);
+    return true;
   }
 
   updateTask(taskId, updates) {
@@ -763,7 +779,7 @@ class Store {
         epicId: epicId,
         title: `[Core/Backend] ${mod.title}`,
         description: `Implementasi backend, skema basis data, dan endpoint API untuk modul: ${mod.title}.\n\nSpesifikasi:\n${mod.description || "Pengerjaan REST API dan business logic."}`,
-        status: idx === 0 ? "In Progress" : "To Do",
+        status: "Backlog",
         priority: idx === 0 ? "Tinggi" : "Sedang",
         type: "Story",
         assigneeId: mod.assigneeId || mod.defaultAssigneeId || (idx % 2 === 0 ? "user-dev-1" : "user-dev-3"),
@@ -2320,7 +2336,7 @@ class Store {
   getProjectProgress(projectId) {
     const tasks = this.state.tasks.filter((t) => t.projectId === projectId);
     if (tasks.length === 0) return 0;
-    const completedTasks = tasks.filter((t) => t.status === "Selesai");
+    const completedTasks = tasks.filter((t) => t.status === "Done" || t.status === "Selesai");
     return Math.round((completedTasks.length / tasks.length) * 100);
   }
 }

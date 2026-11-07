@@ -16,6 +16,7 @@
 
 import { store } from '../state/store.js';
 import { Icons } from '../utils/icons.js';
+import { getCanonicalStatus } from '../utils/workflow.js';
 
 export class TaskDetailModal {
   constructor() {
@@ -100,25 +101,19 @@ export class TaskDetailModal {
   }
 
   getStatusStyle(status) {
-    switch (status) {
-      case 'Selesai':
+    const canonical = getCanonicalStatus(status);
+    switch (canonical) {
+      case 'Done':
         return 'background-color: #e3fcef; color: #006644; border-color: #abf5d1;';
-      case 'In Progress':
-      case 'Diperbaiki Agen':
+      case 'In Development':
         return 'background-color: #deebff; color: #0747a6; border-color: #b3d4ff;';
-      case 'In Review':
-      case 'Menunggu Persetujuan':
-        return 'background-color: #fff0b3; color: #172b4d; border-color: #ffe380;';
-      case 'QA/Testing':
-      case 'Deploy Staging':
-      case 'Disetujui':
-        return 'background-color: #eae6ff; color: #403294; border-color: #c0b6f2;';
-      case 'Perlu Manual':
-      case 'Ditolak':
+      case 'Review & Testing':
+        return 'background-color: #fff0b3; color: #b45309; border-color: #fde68a;';
+      case 'To Do':
+        return 'background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;';
+      case 'Rejected':
         return 'background-color: #ffebe6; color: #bf2600; border-color: #ffbdad;';
-      case 'Dipantau':
-      case 'Deploy Production':
-        return 'background-color: #eae6ff; color: #5243aa; border-color: #d3adf7;';
+      case 'Backlog':
       default:
         return 'background-color: #dfe1e6; color: #42526e; border-color: #c1c7d0;';
     }
@@ -253,19 +248,12 @@ export class TaskDetailModal {
           <div style="display: flex; align-items: center; gap: 12px;">
             <!-- Atlassian Jira Status Dropdown Lozenge -->
             <select id="detailStatusSelect" style="padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; border: 1px solid; cursor: pointer; outline: none; text-transform: uppercase; letter-spacing: 0.02em; ${this.getStatusStyle(currentTask.status)}">
-              <option value="Backlog" ${currentTask.status === 'Backlog' ? 'selected' : ''}>Backlog</option>
-              <option value="To Do" ${currentTask.status === 'To Do' ? 'selected' : ''}>To Do</option>
-              <option value="In Progress" ${currentTask.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-              <option value="Baru" ${currentTask.status === 'Baru' ? 'selected' : ''}>Baru (Laporan Masuk)</option>
-              <option value="Dianalisis" ${currentTask.status === 'Dianalisis' ? 'selected' : ''}>Dianalisis (AI Triage)</option>
-              <option value="Menunggu Persetujuan" ${currentTask.status === 'Menunggu Persetujuan' ? 'selected' : ''}>Menunggu Persetujuan PR</option>
-              <option value="Disetujui" ${currentTask.status === 'Disetujui' ? 'selected' : ''}>Disetujui</option>
-              <option value="Perlu Manual" ${currentTask.status === 'Perlu Manual' ? 'selected' : ''}>Perlu Manual</option>
-              <option value="Deploy Staging" ${currentTask.status === 'Deploy Staging' ? 'selected' : ''}>Deploy Staging</option>
-              <option value="Deploy Production" ${currentTask.status === 'Deploy Production' ? 'selected' : ''}>Deploy Production</option>
-              <option value="Dipantau" ${currentTask.status === 'Dipantau' ? 'selected' : ''}>Dipantau (Post-Deploy)</option>
-              <option value="Selesai" ${currentTask.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
-              <option value="Ditolak" ${currentTask.status === 'Ditolak' ? 'selected' : ''}>Ditolak</option>
+              <option value="Backlog" ${getCanonicalStatus(currentTask.status) === 'Backlog' ? 'selected' : ''}>1. Backlog</option>
+              <option value="To Do" ${getCanonicalStatus(currentTask.status) === 'To Do' ? 'selected' : ''}>2. To Do</option>
+              <option value="In Development" ${getCanonicalStatus(currentTask.status) === 'In Development' ? 'selected' : ''}>3. In Development</option>
+              <option value="Review & Testing" ${getCanonicalStatus(currentTask.status) === 'Review & Testing' ? 'selected' : ''}>4. Review & Testing</option>
+              <option value="Done" ${getCanonicalStatus(currentTask.status) === 'Done' ? 'selected' : ''}>5. Done</option>
+              <option value="Rejected" ${getCanonicalStatus(currentTask.status) === 'Rejected' ? 'selected' : ''}>6. Rejected</option>
             </select>
 
             <!-- Close Dialog Button -->
@@ -1285,7 +1273,10 @@ ${currentTask.prDiff.split('\n').map(line => {
     const statusSelect = this.container.querySelector('#detailStatusSelect');
     if (statusSelect) {
       statusSelect.addEventListener('change', (e) => {
-        store.updateTaskStatus(currentTask.id, e.target.value);
+        const success = store.updateTaskStatus(currentTask.id, e.target.value);
+        if (!success) {
+          e.target.value = getCanonicalStatus(currentTask.status);
+        }
       });
     }
 
