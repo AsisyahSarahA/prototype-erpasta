@@ -17,6 +17,7 @@
 
 import { store } from '../state/store.js';
 import { Icons } from '../utils/icons.js';
+import { swalValidation, swalSuccess } from '../utils/swal.js';
 
 export class CreateTaskModal {
   constructor() {
@@ -635,16 +636,18 @@ export class CreateTaskModal {
     if (addSubBtn && subInput) {
       const handleAddSub = () => {
         const val = subInput.value.trim();
-        if (val) {
-          this.initialSubtasks.push(val);
-          subInput.value = '';
-          this.saveFormDraft();
-          this.render();
-          setTimeout(() => {
-            const nextInput = this.container.querySelector('#newSubtaskTitleInput');
-            if (nextInput) nextInput.focus();
-          }, 30);
+        if (!val) {
+          swalValidation('Subtask Kosong', 'Silakan ketik judul subtask sebelum menambahkan ke daftar.');
+          return;
         }
+        this.initialSubtasks.push(val);
+        subInput.value = '';
+        this.saveFormDraft();
+        this.render();
+        setTimeout(() => {
+          const nextInput = this.container.querySelector('#newSubtaskTitleInput');
+          if (nextInput) nextInput.focus();
+        }, 30);
       };
 
       addSubBtn.addEventListener('click', handleAddSub);
@@ -692,7 +695,7 @@ export class CreateTaskModal {
             titleError.textContent = 'Judul tiket wajib diisi.';
             titleError.style.display = 'block';
           }
-          store.addToast('warning', 'Judul Wajib Diisi', 'Silakan masukkan ringkasan atau judul tiket pekerjaan.');
+          swalValidation('Judul Tiket Wajib Diisi', 'Silakan masukkan ringkasan atau judul tiket pekerjaan sebelum menyimpan.');
           return;
         }
 
@@ -700,7 +703,12 @@ export class CreateTaskModal {
         if (titleError) titleError.style.display = 'none';
 
         const description = descInput ? descInput.value.trim() : '';
-        const estimateHours = hoursInput ? Number(hoursInput.value) || 4 : 4;
+        const rawHours = hoursInput ? Number(hoursInput.value) : 4;
+        if (hoursInput && hoursInput.value !== '' && (isNaN(rawHours) || rawHours <= 0)) {
+          swalValidation('Estimasi Jam Tidak Valid', 'Estimasi jam pengerjaan harus berupa angka lebih besar dari 0.');
+          return;
+        }
+        const estimateHours = rawHours || 4;
         const dueDate = dueDateInput ? dueDateInput.value : '';
         const visibility = visSelect ? visSelect.value : 'client_public';
         const assigneeId = assigneeSelect ? assigneeSelect.value : '';
@@ -770,7 +778,7 @@ export class CreateTaskModal {
           subtasks: subtasks.length > 0 ? subtasks : undefined
         });
 
-        store.addToast('success', 'Tiket Berhasil Dibuat', `Issue [${title}] telah berhasil didaftarkan ke proyek.`);
+        swalSuccess('Tiket Berhasil Dibuat', `Issue <b>${title}</b> telah didaftarkan ke status <b>Backlog</b>.`);
 
         // Mode Input Beruntun (Create Another)
         if (this.createAnother) {

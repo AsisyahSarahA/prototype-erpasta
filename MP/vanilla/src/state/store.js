@@ -5,6 +5,7 @@
 
 import { INITIAL_PROJECTS, INITIAL_MEMBERS, INITIAL_EPICS, INITIAL_SPRINTS, INITIAL_TASKS, INITIAL_CRM_DEALS, INITIAL_INVOICES, INITIAL_EVENTS, INITIAL_COMMENTS, INITIAL_RULES } from "../data/mockData.js";
 import { validateStatusTransition, getCanonicalStatus } from "../utils/workflow.js";
+import { swalValidation, swalError } from "../utils/swal.js";
 
 class Store {
   constructor() {
@@ -306,7 +307,7 @@ class Store {
     if (!bypassRules) {
       const validation = validateStatusTransition(oldStatus, canonicalTarget);
       if (!validation.allowed) {
-        this.addToast("warning", "Transisi Alur Kerja Ditolak", validation.reason);
+        swalValidation("Transisi Status Tidak Diizinkan", validation.reason);
         return false;
       }
     }
@@ -442,7 +443,7 @@ class Store {
       type: "Bug",
       title: report.title,
       description: report.description || "",
-      status: "Baru",
+      status: "Backlog",
       priority: report.priority || "Tinggi",
       severity: report.severity || "S2 - Major",
       environment: report.environment || "Production",
@@ -1011,8 +1012,8 @@ class Store {
     const currentProgress = this.getProjectProgress(project.id);
 
     if (currentProgress < 10) {
-      const errMsg = `Invoice belum dapat diterbitkan karena progres proyek "${project.name}" saat ini baru ${currentProgress}%. Sesuai SOP & PRD, progres pengerjaan minimal harus mencapai ≥ 10%.`;
-      this.addToast("error", "Syarat Progres Belum Terpenuhi", errMsg);
+      const errMsg = `Invoice belum dapat diterbitkan karena progres proyek <b>"${project.name}"</b> saat ini baru <b>${currentProgress}%</b>. Sesuai SOP & PRD, progres pengerjaan minimal harus mencapai <b>≥ 10%</b>.`;
+      swalValidation("Syarat Progres Belum Terpenuhi", errMsg);
       return { success: false, error: errMsg };
     }
 
@@ -1243,11 +1244,11 @@ class Store {
 
     const project = this.state.projects.find((p) => p.id === task.projectId);
     if (project?.killSwitchActive) {
-      this.addToast("error", "Kill Switch Aktif", "Agen AI dinonaktifkan untuk proyek ini.");
+      swalError("Kill Switch Aktif", "Agen AI sedang dinonaktifkan untuk proyek ini demi keamanan produksi.");
       return;
     }
 
-    this.updateTaskStatus(taskId, "Dianalisis", "Intelligent Orchestrator memulai triage otomatis, evaluasi masa garansi 1 bulan, dan klasifikasi kompleksitas.");
+    this.updateTaskStatus(taskId, "To Do", "Intelligent Orchestrator memulai triage otomatis, evaluasi masa garansi 1 bulan, dan klasifikasi kompleksitas.", true);
     await new Promise((res) => setTimeout(res, 800));
 
     const orchestratorResult = this.runIntelligentOrchestrator(`${task.title}\n${task.description}`, { taskKey: task.key, projectId: task.projectId });
@@ -1473,13 +1474,13 @@ class Store {
     if (!task) return false;
 
     if (task.difficulty === "Hard" && !doubleConfirmed) {
-      this.addToast("error", "Konfirmasi Ganda Diperlukan", "Bug kategori Hard memerlukan konfirmasi ganda sebelum deploy ke production!");
+      swalValidation("Konfirmasi Ganda Diperlukan", "Bug kategori <b>Hard</b> memerlukan konfirmasi ganda sebelum deploy ke production!");
       return false;
     }
 
-    this.updateTaskStatus(taskId, "Deploy Production", "Deploy ke Production via GitHub Actions.");
+    this.updateTaskStatus(taskId, "Done", "Deploy ke Production via GitHub Actions.", true);
     setTimeout(() => {
-      this.updateTask(taskId, { status: "Dipantau" });
+      this.updateTask(taskId, { status: "Done" });
       this.addToast("info", "Jendela Pemantauan Aktif", "Sistem memantau error rate selama 30 menit pasca-deploy.");
     }, 800);
 

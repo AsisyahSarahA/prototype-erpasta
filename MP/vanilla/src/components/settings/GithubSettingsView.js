@@ -20,6 +20,7 @@
 
 import { store } from '../../state/store.js';
 import { Icons } from '../../utils/icons.js';
+import { swalConfirm, swalSuccess, swalValidation, swalInfo } from '../../utils/swal.js';
 
 export class GithubSettingsView {
   constructor() {
@@ -2852,7 +2853,7 @@ Implementasi fitur sesuai tiket backlog dan acceptance criteria.
           this.branchToDelete = null;
           this.render();
         } else {
-          store.addToast('error', 'Konfirmasi Nama Tidak Cocok', 'Ketik nama cabang secara persis untuk konfirmasi penghapusan.');
+          swalValidation('Konfirmasi Nama Tidak Cocok', 'Ketik nama cabang secara persis untuk konfirmasi penghapusan.');
         }
         return;
       }
@@ -2890,14 +2891,14 @@ Implementasi fitur sesuai tiket backlog dan acceptance criteria.
           };
           this.lastSyncTime = new Date();
           this.render();
-          store.addToast('success', 'Koneksi GitHub API Berhasil!', `Response time: ${this.connectionStatus.latencyMs}ms · Rate-limit: ${this.connectionStatus.rateLimitRemaining}/5000`);
+          swalSuccess('Koneksi GitHub API Berhasil!', `Response time: ${this.connectionStatus.latencyMs}ms · Rate-limit: ${this.connectionStatus.rateLimitRemaining}/5000`);
         }, 550);
         return;
       }
 
       // 34. Ping Webhook
       if (e.target.closest('#pingWebhookBtn')) {
-        store.addToast('success', 'Ping Webhook Terkirim', 'Status 200 OK diterima dari endpoint server.');
+        swalSuccess('Ping Webhook Terkirim', 'Status 200 OK diterima dari endpoint server webhook.');
         return;
       }
 
@@ -2912,9 +2913,18 @@ Implementasi fitur sesuai tiket backlog dan acceptance criteria.
       if (removeCollabBtn) {
         const id = removeCollabBtn.dataset.id;
         const name = removeCollabBtn.dataset.name;
-        if (confirm(`Cabut hak akses repositori untuk ${name}?`)) {
-          store.deleteTeamMember(id);
-        }
+        swalConfirm({
+          title: 'Cabut Hak Akses?',
+          text: `Apakah Anda yakin ingin mencabut hak akses repositori untuk ${name}?`,
+          confirmText: 'Ya, Cabut Akses',
+          cancelText: 'Batal',
+          icon: 'warning'
+        }).then((confirmed) => {
+          if (confirmed) {
+            store.deleteTeamMember(id);
+            swalSuccess('Akses Dicabut', `Hak akses repositori untuk <b>${name}</b> telah dicabut.`);
+          }
+        });
         return;
       }
 
@@ -2929,6 +2939,7 @@ Implementasi fitur sesuai tiket backlog dan acceptance criteria.
           webhookUrl: whUrl.trim(),
           webhookSecret: whSec.trim()
         });
+        swalSuccess('Pengaturan Disimpan', 'Konfigurasi GitHub, Webhook, dan Branch Protection berhasil diperbarui.');
         return;
       }
 

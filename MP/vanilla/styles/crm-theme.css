@@ -1592,3 +1592,55 @@
   color: var(--indigo-600, #4f46e5);
 }
 
+.kanban-locked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  user-select: none;
+}
+
+/* ==========================================================================
+   SWEETALERT2 (CDN) ENTERPRISE THEME CUSTOMIZATION FOR ASTACODE PM
+   ========================================================================== */
+.astacode-swal-container {
+  z-index: 100000 !important;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif !important;
+}
+
+.astacode-swal-popup {
+  border-radius: 16px !important;
+  padding: 22px 24px !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22) !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.astacode-swal-title {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.015em !important;
+}
+
+.astacode-swal-html {
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  color: #475569 !important;
+  margin-top: 8px !important;
+}
+
+.astacode-swal-confirm,
+.astacode-swal-cancel {
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  padding: 9px 18px !important;
+}
+
+

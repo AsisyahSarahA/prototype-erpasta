@@ -12,6 +12,7 @@
 
 import { store } from "../../state/store.js";
 import { Icons } from "../../utils/icons.js";
+import { swalValidation, swalSuccess } from "../../utils/swal.js";
 
 export class BacklogView {
   constructor(options = {}) {
@@ -1470,7 +1471,10 @@ export class BacklogView {
         const capVal = Number(this.element.querySelector("#modalSprintCapacityInput")?.value) || 160;
         const goalVal = this.element.querySelector("#modalSprintGoalInput")?.value.trim() || "";
 
-        if (!nameVal) return;
+        if (!nameVal) {
+          swalValidation("Nama Sprint Wajib Diisi", "Silakan masukkan nama sprint (contoh: Sprint 2: Integrasi Pembayaran).");
+          return;
+        }
 
         const newSprintId = `sprint-${Date.now()}`;
         const newSprint = {
@@ -1521,7 +1525,10 @@ export class BacklogView {
         const descVal = this.element.querySelector("#modalEpicDescInput")?.value.trim() || "";
         const autoCreateTask = this.element.querySelector("#modalEpicAutoTaskChk")?.checked;
 
-        if (!titleVal) return;
+        if (!titleVal) {
+          swalValidation("Judul Epik Wajib Diisi", "Silakan masukkan nama modul/epik pekerjaan baru.");
+          return;
+        }
 
         const newEpicId = `epic-${Date.now()}`;
         const newEpic = {

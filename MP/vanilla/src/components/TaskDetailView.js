@@ -7,7 +7,8 @@
  */
 
 import { store } from '../state/store.js';
-import { getCanonicalStatus, KANBAN_STAGES } from '../utils/workflow.js';
+import { getCanonicalStatus, KANBAN_STAGES, validateStatusTransition } from '../utils/workflow.js';
+import { swalValidation, swalConfirm, swalSuccess } from '../utils/swal.js';
 
 const ICONS = {
   arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
@@ -480,12 +481,12 @@ export class TaskDetailView {
                   STATUS WORKFLOW
                 </label>
                 <select id="meta-task-status" class="form-select" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-weight:700;color:var(--text-primary);outline:none;">
-                  <option value="Backlog" ${getCanonicalStatus(currentTask.status) === 'Backlog' ? 'selected' : ''}>1. Backlog</option>
-                  <option value="To Do" ${getCanonicalStatus(currentTask.status) === 'To Do' ? 'selected' : ''}>2. To Do</option>
-                  <option value="In Development" ${getCanonicalStatus(currentTask.status) === 'In Development' ? 'selected' : ''}>3. In Development</option>
-                  <option value="Review & Testing" ${getCanonicalStatus(currentTask.status) === 'Review & Testing' ? 'selected' : ''}>4. Review & Testing</option>
-                  <option value="Done" ${getCanonicalStatus(currentTask.status) === 'Done' ? 'selected' : ''}>5. Done</option>
-                  <option value="Rejected" ${getCanonicalStatus(currentTask.status) === 'Rejected' ? 'selected' : ''}>6. Rejected</option>
+                  ${KANBAN_STAGES.map((stg, idx) => {
+                    const isCurrent = getCanonicalStatus(currentTask.status) === stg.primaryStatus;
+                    const check = validateStatusTransition(currentTask.status, stg.primaryStatus);
+                    const lockPrefix = (!isCurrent && !check.allowed) ? '🔒 ' : '';
+                    return `<option value="${stg.primaryStatus}" ${isCurrent ? 'selected' : ''}>${lockPrefix}${idx + 1}. ${stg.name}</option>`;
+                  }).join('')}
                 </select>
               </div>
 
@@ -1194,10 +1195,19 @@ export class TaskDetailView {
     // Delete task button
     const deleteBtn = this.container.querySelector('#btn-action-delete');
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => {
-        if (confirm(`Apakah Anda yakin ingin menghapus tiket ${task.key}?`)) {
+      deleteBtn.addEventListener('click', async () => {
+        const confirmed = await swalConfirm({
+          title: 'Hapus Tiket Pekerjaan?',
+          html: `Apakah Anda yakin ingin menghapus tiket <b>[${task.key}] ${task.title}</b> secara permanen?`,
+          icon: 'warning',
+          confirmText: 'Ya, Hapus Tiket',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           store.deleteTask(task.id);
           store.closeTaskDetail();
+          swalSuccess('Tiket Dihapus', `Tiket <b>${task.key}</b> berhasil dihapus dari sistem.`);
         }
       });
     }
@@ -1214,10 +1224,19 @@ export class TaskDetailView {
 
     // Delete subtask buttons
     this.container.querySelectorAll('.btn-delete-subtask[data-subtask-id]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.preventDefault();
         const subId = btn.dataset.subtaskId;
-        if (subId && confirm('Hapus subtask ini?')) {
+        if (!subId) return;
+        const confirmed = await swalConfirm({
+          title: 'Hapus Subtask?',
+          text: 'Subtask ini akan dihapus dari daftar rincian tiket.',
+          icon: 'warning',
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           const updatedSubtasks = (task.subtasks || []).filter(s => s.id !== subId);
           store.updateTask(task.id, { subtasks: updatedSubtasks });
           store.addToast('info', 'Subtask Dihapus', 'Subtask berhasil dihapus.');
@@ -1231,10 +1250,12 @@ export class TaskDetailView {
       subtaskForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const input = this.container.querySelector('#input-quick-subtask');
-        if (input && input.value.trim()) {
-          store.addSubtask(task.id, input.value.trim());
-          input.value = '';
+        if (!input || !input.value.trim()) {
+          swalValidation('Judul Subtask Wajib Diisi', 'Silakan masukkan rincian subtask sebelum menambahkan.');
+          return;
         }
+        store.addSubtask(task.id, input.value.trim());
+        input.value = '';
       });
     }
 
@@ -1259,6 +1280,11 @@ export class TaskDetailView {
       const selAuthor = this.container.querySelector(selectId);
       const currentState = store.getState();
       
+      if (!input || !input.value.trim()) {
+        swalValidation('Komentar Kosong', 'Silakan tulis isi komentar atau catatan diskusi terlebih dahulu.');
+        return;
+      }
+
       if (input && input.value.trim()) {
         const authorId = (selAuthor ? selAuthor.value : this.selectedCommentAuthorId) || 'user-pm';
         const member = (currentState.teamMembers || []).find(m => m.id === authorId) || (currentState.teamMembers || [])[0] || {
@@ -1325,10 +1351,19 @@ export class TaskDetailView {
 
     // Delete comment buttons (Interactive per comment)
     this.container.querySelectorAll('.btn-delete-comment[data-comment-id]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.preventDefault();
         const commentId = btn.dataset.commentId;
-        if (commentId) {
+        if (!commentId) return;
+        const confirmed = await swalConfirm({
+          title: 'Hapus Komentar?',
+          text: 'Komentar ini akan dihapus dari diskusi tiket.',
+          icon: 'warning',
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           store.deleteComment(commentId);
         }
       });
@@ -1470,7 +1505,10 @@ export class TaskDetailView {
         const notesInput = this.container.querySelector('#modalSubtaskNotes');
 
         const titleVal = titleInput ? titleInput.value.trim() : '';
-        if (!titleVal) return;
+        if (!titleVal) {
+          swalValidation('Judul Subtask Wajib Diisi', 'Silakan masukkan nama atau rincian pekerjaan subtask terlebih dahulu.');
+          return;
+        }
 
         const newSubtask = {
           id: `sub-${Date.now()}-${Math.floor(Math.random() * 1000)}`,

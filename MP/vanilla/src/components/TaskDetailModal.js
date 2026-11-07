@@ -17,6 +17,7 @@
 import { store } from '../state/store.js';
 import { Icons } from '../utils/icons.js';
 import { getCanonicalStatus } from '../utils/workflow.js';
+import { swalValidation, swalInfo, swalConfirm, swalPrompt, swalSuccess } from '../utils/swal.js';
 
 export class TaskDetailModal {
   constructor() {
@@ -1285,14 +1286,16 @@ ${currentTask.prDiff.split('\n').map(line => {
       btn.addEventListener('click', () => {
         const targetStatus = btn.dataset.status;
         const phaseLabel = btn.dataset.label;
-        if (targetStatus && targetStatus !== currentTask.status) {
-          store.updateTaskStatus(currentTask.id, targetStatus, `Dipindahkan ke tahapan: ${phaseLabel}`);
-          store.addToast('success', 'Fase Berpindah!', `Tugas berhasil dipindahkan ke: ${phaseLabel}`);
+        if (targetStatus && getCanonicalStatus(targetStatus) !== getCanonicalStatus(currentTask.status)) {
+          const ok = store.updateTaskStatus(currentTask.id, targetStatus, `Dipindahkan ke tahapan: ${phaseLabel}`);
+          if (ok) {
+            store.addToast('success', 'Fase Berpindah!', `Tugas berhasil dipindahkan ke: ${phaseLabel}`);
+          }
         }
       });
     });
 
-    // Subtask toggle with auto-advance logic
+    // Subtask toggle with strict forward-only auto-advance logic
     this.container.querySelectorAll('.subtask-row').forEach(row => {
       row.addEventListener('click', (e) => {
         // If clicked on delete button, do not toggle
@@ -1302,6 +1305,7 @@ ${currentTask.prDiff.split('\n').map(line => {
         const targetSubtask = (currentTask.subtasks || []).find(s => s.id === subtaskId);
         if (!targetSubtask) return;
 
+        const canonicalCur = getCanonicalStatus(currentTask.status);
         const willBeCompleted = !targetSubtask.completed;
         const updatedSubtasks = currentTask.subtasks.map(s => s.id === subtaskId ? { ...s, completed: willBeCompleted } : s);
         const newCompletedCount = updatedSubtasks.filter(s => s.completed).length;
@@ -1310,30 +1314,18 @@ ${currentTask.prDiff.split('\n').map(line => {
 
         store.toggleSubtask(currentTask.id, subtaskId);
 
-        // Auto-advance logic
-        if (willBeCompleted && ['Baru', 'Backlog', 'To Do'].includes(currentTask.status)) {
-          store.updateTaskStatus(currentTask.id, 'In Progress', `Subtask "${targetSubtask.title}" mulai dicentang. Pengerjaan dimulai.`);
-          store.addToast('info', 'Fase Berpindah: In Progress', 'Tugas otomatis masuk ke kolom "In Progress" karena subtask mulai dikerjakan.');
+        // Forward-only auto-advance
+        if (willBeCompleted && canonicalCur === 'To Do') {
+          store.updateTaskStatus(currentTask.id, 'In Development', `Subtask "${targetSubtask.title}" mulai dicentang. Pengerjaan dimulai.`);
           return;
         }
 
         if (isNowAllDone) {
-          if (['In Progress', 'Perlu Manual', 'Diperbaiki Agen', 'Dianalisis'].includes(currentTask.status)) {
-            store.updateTaskStatus(currentTask.id, 'Menunggu Persetujuan', 'Seluruh checklist subtask tuntas 100%. Diajukan untuk Code Review PR.');
-            store.addToast('success', 'Checklist 100% Tuntas!', 'Semua subtask selesai! Tugas otomatis berpindah ke tahap "Review PR / Persetujuan".');
-          } else if (currentTask.status === 'Menunggu Persetujuan') {
-            store.updateTaskStatus(currentTask.id, 'QA/Testing', 'PR telah lolos verifikasi subtask, masuk ke QA Staging.');
-            store.addToast('success', 'Masuk Pengujian QA', 'Tugas otomatis beralih ke tahap QA/Testing.');
-          } else if (['QA/Testing', 'Deploy Staging', 'Disetujui'].includes(currentTask.status)) {
-            store.updateTaskStatus(currentTask.id, 'Selesai', 'Seluruh pengujian subtask QA selesai.');
-            store.addToast('success', 'Tugas Selesai & Terverifikasi!', 'Tugas otomatis berpindah ke kolom Selesai.');
+          if (canonicalCur === 'In Development') {
+            store.updateTaskStatus(currentTask.id, 'Review & Testing', 'Seluruh checklist subtask tuntas 100%. Diajukan ke Review & Testing.');
+          } else if (canonicalCur === 'Review & Testing') {
+            store.updateTaskStatus(currentTask.id, 'Done', 'Seluruh pengujian subtask QA selesai.');
           }
-          return;
-        }
-
-        if (!willBeCompleted && currentTask.status === 'Selesai') {
-          store.updateTaskStatus(currentTask.id, 'In Progress', `Subtask "${targetSubtask.title}" batal dicentang. Tugas dibuka kembali.`);
-          store.addToast('warning', 'Tugas Dibuka Kembali', 'Subtask belum tuntas, tugas kembali ke In Progress.');
           return;
         }
 
@@ -1345,10 +1337,19 @@ ${currentTask.prDiff.split('\n').map(line => {
 
     // Subtask delete handler
     this.container.querySelectorAll('.subtask-delete-btn').forEach(delBtn => {
-      delBtn.addEventListener('click', (e) => {
+      delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const subtaskId = delBtn.dataset.subtaskId;
-        if (subtaskId) {
+        if (!subtaskId) return;
+        const confirmed = await swalConfirm({
+          title: 'Hapus Subtask?',
+          text: 'Subtask ini akan dihapus dari daftar rincian tiket.',
+          icon: 'warning',
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           store.deleteSubtask(currentTask.id, subtaskId);
         }
       });
@@ -1361,10 +1362,12 @@ ${currentTask.prDiff.split('\n').map(line => {
         e.preventDefault();
         const input = this.container.querySelector('#newSubtaskInput');
         const val = input ? input.value.trim() : '';
-        if (val) {
-          store.addSubtask(currentTask.id, val);
-          this.subModalData.newSubtaskTitle = '';
+        if (!val) {
+          swalValidation('Judul Subtask Wajib Diisi', 'Silakan masukkan judul subtask terlebih dahulu.');
+          return;
         }
+        store.addSubtask(currentTask.id, val);
+        this.subModalData.newSubtaskTitle = '';
       });
     }
 
@@ -1384,17 +1387,23 @@ ${currentTask.prDiff.split('\n').map(line => {
     const attachBtn = this.container.querySelector('#attachFileBtn');
     if (attachBtn) {
       attachBtn.addEventListener('click', () => {
-        alert('Fitur Lampiran Jira: Anda dapat melampirkan screenshot bug, log Sentry, atau file spesifikasi PRD.');
+        swalInfo('Lampiran Berkas Tiket', 'Anda dapat melampirkan screenshot bug, log Sentry, atau berkas spesifikasi PRD pada tiket ini.');
       });
     }
 
     // Link Issue Button
     const linkBtn = this.container.querySelector('#linkIssueBtn');
     if (linkBtn) {
-      linkBtn.addEventListener('click', () => {
-        const key = prompt('Masukkan Kode Tiket yang ingin ditautkan (contoh: LIB-102):');
-        if (key && key.trim()) {
-          store.addToast('success', 'Masalah Ditautkan', `Tiket ${currentTask.key} berhasil ditautkan dengan ${key.toUpperCase()}.`);
+      linkBtn.addEventListener('click', async () => {
+        const key = await swalPrompt({
+          title: 'Tautkan Tiket Terkait',
+          text: 'Masukkan kode tiket yang ingin ditautkan dengan tiket ini:',
+          inputPlaceholder: 'Contoh: LIB-102',
+          confirmText: 'Tautkan',
+          requiredMessage: 'Kode tiket wajib diisi!'
+        });
+        if (key) {
+          swalSuccess('Tiket Berhasil Ditautkan', `Tiket <b>${currentTask.key}</b> ditautkan dengan <b>${key.toUpperCase()}</b>.`);
         }
       });
     }
@@ -1659,10 +1668,19 @@ ${currentTask.prDiff.split('\n').map(line => {
     // Delete task button
     const deleteBtn = this.container.querySelector('#deleteTaskBtn');
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => {
-        if (confirm(`Yakin ingin menghapus task ${currentTask.key}?`)) {
+      deleteBtn.addEventListener('click', async () => {
+        const confirmed = await swalConfirm({
+          title: 'Hapus Task Ini?',
+          html: `Apakah Anda yakin ingin menghapus task <b>${currentTask.key}</b>?`,
+          icon: 'warning',
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           store.deleteTask(currentTask.id);
           store.closeTaskDetail();
+          swalSuccess('Task Dihapus', `Task <b>${currentTask.key}</b> berhasil dihapus.`);
         }
       });
     }
@@ -1721,6 +1739,10 @@ ${currentTask.prDiff.split('\n').map(line => {
       confirmRcaBtn.addEventListener('click', () => {
         const rca = this.container.querySelector('#rcaTextInput')?.value || '';
         const prev = this.container.querySelector('#preventiveTextInput')?.value || '';
+        if (!rca.trim()) {
+          swalValidation('Analisis Akar Masalah Wajib Diisi', 'Silakan lengkapi penjelasan Root Cause Analysis (RCA) terlebih dahulu.');
+          return;
+        }
         store.recordBugRca(currentTask.id, rca.trim(), prev.trim());
         this.activeSubModal = null;
         this.render();
@@ -1732,11 +1754,15 @@ ${currentTask.prDiff.split('\n').map(line => {
       confirmManualPrBtn.addEventListener('click', () => {
         const title = this.container.querySelector('#manualPrTitleInput')?.value || '';
         const diff = this.container.querySelector('#manualPrDiffInput')?.value || '';
+        if (!title.trim()) {
+          swalValidation('Judul Pull Request Wajib Diisi', 'Silakan masukkan judul Pull Request terlebih dahulu.');
+          return;
+        }
         const prNum = `PR #${Math.floor(Math.random() * 80) + 20}`;
         const branch = currentTask.branchName || `fix/${currentTask.key.toLowerCase()}-hotfix`;
 
         store.updateTask(currentTask.id, {
-          status: 'Menunggu Persetujuan',
+          status: 'Review & Testing',
           prNumber: prNum,
           branchName: branch,
           prDiff: diff.trim(),
@@ -1764,6 +1790,10 @@ ${currentTask.prDiff.split('\n').map(line => {
     if (confirmRevBtn) {
       confirmRevBtn.addEventListener('click', () => {
         const notes = this.container.querySelector('#revisionNotesInput')?.value || '';
+        if (!notes.trim()) {
+          swalValidation('Catatan Revisi Wajib Diisi', 'Silakan tuliskan rincian catatan revisi terlebih dahulu.');
+          return;
+        }
         store.requestAiRevision(currentTask.id, notes.trim());
         this.activeSubModal = null;
         this.render();
@@ -1774,6 +1804,10 @@ ${currentTask.prDiff.split('\n').map(line => {
     if (confirmRejBtn) {
       confirmRejBtn.addEventListener('click', () => {
         const reason = this.container.querySelector('#rejectReasonInput')?.value || '';
+        if (!reason.trim()) {
+          swalValidation('Alasan Penolakan Wajib Diisi', 'Silakan masukkan alasan penolakan Pull Request terlebih dahulu.');
+          return;
+        }
         store.rejectAiPr(currentTask.id, reason.trim());
         this.activeSubModal = null;
         this.render();
