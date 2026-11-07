@@ -17,6 +17,7 @@ import { KanbanBoard } from '../KanbanBoard.js';
 import { BacklogView } from '../backlog/BacklogView.js';
 import { TimelineView } from '../timeline/TimelineView.js';
 import { TaskListView } from '../list/TaskListView.js';
+import { swalValidation, swalSuccess, swalInfo } from '../../utils/swal.js';
 
 export class ProjectModuleView {
   constructor(options = {}) {
@@ -1317,7 +1318,7 @@ export class ProjectModuleView {
         const { name, code, clientName, contractType, contractValue, targetDeadline, description, modules } = this.newProjectDraft;
 
         if (!name.trim() || !code.trim() || !clientName.trim()) {
-          store.addToast('error', 'Data Belum Lengkap', 'Mohon isi Nama Proyek, Kode Proyek, dan Nama Klien.');
+          swalValidation('Data Belum Lengkap', 'Mohon isi <b>Nama Proyek</b>, <b>Kode Proyek</b>, dan <b>Nama Klien</b> sebelum menyimpan.');
           return;
         }
 
@@ -2247,7 +2248,7 @@ export class ProjectModuleView {
             <h3 class="pm-section-title">Berkas &amp; Repositori Dokumen (${project.name})</h3>
             <span class="pm-section-desc">Arsip deliverable, file spesifikasi teknis, sertifikat UAT, dan skema arsitektur.</span>
           </div>
-          <button class="pm-btn pm-btn--primary" onclick="alert('Fitur unggah berkas: Berkas berhasil diunggah ke storage cloud proyek.');">
+          <button class="pm-btn pm-btn--primary" onclick="window.astaSwal ? window.astaSwal.info('Fitur Unggah Berkas', 'Berkas berhasil diunggah ke storage cloud proyek.') : alert('Fitur unggah berkas: Berkas berhasil diunggah ke storage cloud proyek.');">
             <i class="fi fi-rr-upload"></i> Unggah Berkas Baru
           </button>
         </div>
@@ -2278,7 +2279,7 @@ export class ProjectModuleView {
                   <td>${f.date}</td>
                   <td>${f.uploader}</td>
                   <td>
-                    <button class="pm-btn pm-btn--sm pm-btn--outline" onclick="alert('Mengunduh: ${f.name}');">
+                    <button class="pm-btn pm-btn--sm pm-btn--outline" onclick="window.astaSwal ? window.astaSwal.info('Unduh Berkas', 'Mengunduh berkas: <b>${f.name}</b>') : alert('Mengunduh: ${f.name}');">
                       <i class="fi fi-rr-download"></i> Unduh
                     </button>
                   </td>
@@ -2436,7 +2437,7 @@ export class ProjectModuleView {
             <h3 class="pm-section-title">Lembar Waktu &amp; Beban Kerja (${project.name})</h3>
             <span class="pm-section-desc">Pencatatan jam kerja riil per engineer, rasio billable, dan kapasitas mingguan.</span>
           </div>
-          <button class="pm-btn pm-btn--primary" onclick="alert('Log waktu manual dicatat.');">
+          <button class="pm-btn pm-btn--primary" onclick="window.astaSwal ? window.astaSwal.success('Log Waktu Dicatat', 'Log waktu pengerjaan manual berhasil disimpan ke lembar kerja.') : alert('Log waktu manual dicatat.');">
             <i class="fi fi-rr-plus"></i> Catat Waktu Manual
           </button>
         </div>
@@ -2938,7 +2939,7 @@ export class ProjectModuleView {
             <h3 class="pm-section-title">Biaya Operasional &amp; Infrastruktur (${project.name})</h3>
             <span class="pm-section-desc">Rincian pengeluaran server cloud, lisensi API pihak ketiga, dan infrastruktur container.</span>
           </div>
-          <button class="pm-btn pm-btn--primary" onclick="alert('Catat pengeluaran baru.');">
+          <button class="pm-btn pm-btn--primary" onclick="window.astaSwal ? window.astaSwal.info('Catat Pengeluaran', 'Formulir pencatatan pengeluaran operasional baru dibuka.') : alert('Catat pengeluaran baru.');">
             <i class="fi fi-rr-plus"></i> Catat Pengeluaran
           </button>
         </div>
@@ -2990,7 +2991,7 @@ export class ProjectModuleView {
             <h3 class="pm-section-title">Surat Perjanjian Kerjasama &amp; SLA Layanan</h3>
             <span class="pm-section-desc">Ketentuan hukum, scope of work (SOW), jaminan garansi bug, dan komitmen SLA software house.</span>
           </div>
-          <button class="pm-btn pm-btn--outline" onclick="alert('Mencetak Surat Perjanjian Kerjasama (SOW)');">
+          <button class="pm-btn pm-btn--outline" onclick="window.astaSwal ? window.astaSwal.info('Unduh Kontrak', 'Mencetak dan mengunduh Surat Perjanjian Kerjasama (SOW &amp; SLA) format PDF...') : alert('Mencetak Surat Perjanjian Kerjasama (SOW)');">
             <i class="fi fi-rr-download"></i> Unduh Kontrak Resmi (PDF)
           </button>
         </div>

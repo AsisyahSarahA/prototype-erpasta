@@ -12,6 +12,7 @@
 import { store } from '../../state/store.js';
 import { Icons } from '../../utils/icons.js';
 import { getCanonicalStatus } from '../../utils/workflow.js';
+import { swalConfirm, swalSuccess, swalValidation } from '../../utils/swal.js';
 
 export class TaskListView {
   constructor() {
@@ -287,14 +288,20 @@ export class TaskListView {
             <button class="jql-preset-chip ${this.jqlQuery === 'priority = Hotfix' ? 'active' : ''}" data-jql="priority = Hotfix">
               ${Icons.flame('', 12)} priority = Hotfix
             </button>
-            <button class="jql-preset-chip ${this.jqlQuery === 'status = Menunggu Persetujuan' ? 'active' : ''}" data-jql="status = Menunggu Persetujuan">
-              status = Menunggu Persetujuan
+            <button class="jql-preset-chip ${this.jqlQuery === 'status = Backlog' ? 'active' : ''}" data-jql="status = Backlog">
+              status = Backlog
             </button>
-            <button class="jql-preset-chip ${this.jqlQuery === 'status = In Progress' ? 'active' : ''}" data-jql="status = In Progress">
-              status = In Progress
+            <button class="jql-preset-chip ${this.jqlQuery === 'status = To Do' ? 'active' : ''}" data-jql="status = To Do">
+              status = To Do
             </button>
-            <button class="jql-preset-chip ${this.jqlQuery === 'status = QA/Testing' ? 'active' : ''}" data-jql="status = QA/Testing">
-              status = QA/Testing
+            <button class="jql-preset-chip ${this.jqlQuery === 'status = In Development' ? 'active' : ''}" data-jql="status = In Development">
+              status = In Development
+            </button>
+            <button class="jql-preset-chip ${this.jqlQuery === 'status = Review & Testing' ? 'active' : ''}" data-jql="status = Review & Testing">
+              status = Review & Testing
+            </button>
+            <button class="jql-preset-chip ${this.jqlQuery === 'status = Done' ? 'active' : ''}" data-jql="status = Done">
+              status = Done
             </button>
             <button class="jql-preset-chip ${this.jqlQuery === 'severity = S1' ? 'active' : ''}" data-jql="severity = S1">
               severity = S1
@@ -315,11 +322,14 @@ export class TaskListView {
 
             <div class="list-bulk-actions">
               <span style="font-size: 11px; color: var(--slate-400); margin-right: 4px;">Tindakan Massal:</span>
-              <button id="bulkInProgressBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 10px;">
-                Pindahkan ke In Progress
+              <button id="bulkInDevBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 10px;">
+                Maju ke In Development
+              </button>
+              <button id="bulkReviewBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 10px;">
+                Maju ke Review & Testing
               </button>
               <button id="bulkDoneBtn" class="btn btn-primary btn-sm" style="background-color: var(--emerald-600); border-color: var(--emerald-600); font-size: 11px; padding: 4px 12px;">
-                ✓ Tandai Selesai
+                ✓ Tandai Done
               </button>
               <button id="clearSelectionBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 10px;">
                 Batalkan Pilihan
@@ -509,7 +519,7 @@ export class TaskListView {
   }
 
   attachEvents() {
-    this.container.addEventListener('click', (e) => {
+    this.container.addEventListener('click', async (e) => {
       // Row click or Detail Link -> Open Task Detail
       const row = e.target.closest('.list-task-row');
       const openDetailBtn = e.target.closest('.open-task-detail-btn') || e.target.closest('.open-task-detail-link');
@@ -563,25 +573,69 @@ export class TaskListView {
         return;
       }
 
-      // Bulk In Progress
-      if (e.target.closest('#bulkInProgressBtn')) {
-        this.selectedTaskIds.forEach(id => {
-          store.updateTaskStatus(id, 'In Progress');
+      // Bulk In Development
+      if (e.target.closest('#bulkInDevBtn')) {
+        const confirmed = await swalConfirm({
+          title: 'Maju ke In Development?',
+          html: `Pindahkan <b>${this.selectedTaskIds.length} tiket</b> ke status <b>In Development</b>?<br><small style="color:#64748b;">(Hanya tiket berstatus To Do yang sah dimajukan)</small>`,
+          confirmText: 'Ya, Pindahkan',
+          confirmColor: '#4f46e5'
         });
-        store.addToast('success', 'Perubahan Massal Berhasil', `${this.selectedTaskIds.length} tiket diubah ke In Progress.`);
-        this.selectedTaskIds = [];
-        this.render();
+        if (confirmed) {
+          let count = 0;
+          this.selectedTaskIds.forEach(id => {
+            if (store.updateTaskStatus(id, 'In Development')) count++;
+          });
+          if (count > 0) {
+            swalSuccess('Berhasil Dimajukan', `<b>${count} tiket</b> berhasil dipindahkan ke In Development.`);
+          }
+          this.selectedTaskIds = [];
+          this.render();
+        }
+        return;
+      }
+
+      // Bulk Review & Testing
+      if (e.target.closest('#bulkReviewBtn')) {
+        const confirmed = await swalConfirm({
+          title: 'Maju ke Review & Testing?',
+          html: `Ajukan <b>${this.selectedTaskIds.length} tiket</b> ke status <b>Review & Testing</b>?<br><small style="color:#64748b;">(Hanya tiket berstatus In Development yang sah dimajukan)</small>`,
+          confirmText: 'Ya, Ajukan Review',
+          confirmColor: '#f59e0b'
+        });
+        if (confirmed) {
+          let count = 0;
+          this.selectedTaskIds.forEach(id => {
+            if (store.updateTaskStatus(id, 'Review & Testing')) count++;
+          });
+          if (count > 0) {
+            swalSuccess('Berhasil Dimajukan', `<b>${count} tiket</b> diajukan ke Review & Testing.`);
+          }
+          this.selectedTaskIds = [];
+          this.render();
+        }
         return;
       }
 
       // Bulk Done
       if (e.target.closest('#bulkDoneBtn')) {
-        this.selectedTaskIds.forEach(id => {
-          store.updateTaskStatus(id, 'Selesai');
+        const confirmed = await swalConfirm({
+          title: 'Tandai Selesai (Done)?',
+          html: `Pindahkan <b>${this.selectedTaskIds.length} tiket</b> ke status <b>Done</b>?<br><small style="color:#dc2626;">Perhatian: Status Done terkunci dan tidak dapat dikembalikan lagi.</small>`,
+          confirmText: 'Ya, Tandai Done',
+          confirmColor: '#10b981'
         });
-        store.addToast('success', 'Perubahan Massal Berhasil', `${this.selectedTaskIds.length} tiket ditandai Selesai.`);
-        this.selectedTaskIds = [];
-        this.render();
+        if (confirmed) {
+          let count = 0;
+          this.selectedTaskIds.forEach(id => {
+            if (store.updateTaskStatus(id, 'Done')) count++;
+          });
+          if (count > 0) {
+            swalSuccess('Berhasil Selesai', `<b>${count} tiket</b> telah tuntas dan berstatus Done.`);
+          }
+          this.selectedTaskIds = [];
+          this.render();
+        }
         return;
       }
 

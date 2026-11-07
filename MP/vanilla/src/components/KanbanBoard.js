@@ -16,6 +16,7 @@ import {
   getCanonicalStatus,
   validateStatusTransition
 } from '../utils/workflow.js';
+import { swalConfirm, swalSuccess } from '../utils/swal.js';
 
 const ICONS = {
   search: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
@@ -31,6 +32,7 @@ const ICONS = {
   arrowUpDown: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>`,
   xCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`,
   rotateCcw: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
+  lock: `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
   info: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`
 };
 
@@ -154,39 +156,17 @@ export class KanbanBoard {
                 </span>`
               : '';
 
-            // Workflow transitions buttons based on user rules
+            // Workflow transitions buttons based on Strict Forward-Only rules
             let actionsHtml = '';
-            if (canonicalStatus === 'Rejected') {
+            if (canonicalStatus === 'Rejected' || canonicalStatus === 'Done') {
               actionsHtml = `
-                <button
-                  class="btn-restore-task kanban-restore-btn"
-                  data-task-id="${task.id}"
-                  data-target-status="Backlog"
-                  title="Pulihkan tiket kembali ke Backlog"
+                <span
+                  class="kanban-locked-badge"
+                  title="Status akhir (${canonicalStatus}) terkunci dan tidak dapat dikembalikan ke tahap sebelumnya"
                 >
-                  ${ICONS.rotateCcw}
-                  <span>Pulihkan</span>
-                </button>
-                <button
-                  class="btn-open-detail kanban-detail-btn"
-                  data-task-id="${task.id}"
-                  title="Buka detail tiket"
-                >
-                  <span>Detail</span>
-                  ${ICONS.arrowRight}
-                </button>
-              `;
-            } else if (canonicalStatus === 'Done') {
-              actionsHtml = `
-                <button
-                  class="btn-reopen-task kanban-reopen-btn"
-                  data-task-id="${task.id}"
-                  data-target-status="In Development"
-                  title="Buka kembali (Reopen) jika ditemukan bug kritis mendadak"
-                >
-                  ${ICONS.rotateCcw}
-                  <span>Reopen</span>
-                </button>
+                  ${ICONS.lock}
+                  <span>Final</span>
+                </span>
                 <button
                   class="btn-open-detail kanban-detail-btn"
                   data-task-id="${task.id}"
@@ -197,42 +177,24 @@ export class KanbanBoard {
                 </button>
               `;
             } else {
-              let prevTarget = null;
-              let prevTooltip = 'Tidak dapat mundur';
               let nextTarget = null;
               let nextTooltip = 'Tidak dapat maju';
 
               if (canonicalStatus === 'Backlog') {
                 nextTarget = 'To Do';
-                nextTooltip = 'Setujui tiket dan pindahkan ke To Do (Siap Dikerjakan)';
+                nextTooltip = 'Selesai analisis & setujui ke To Do (Siap Dikerjakan)';
               } else if (canonicalStatus === 'To Do') {
-                prevTarget = 'Backlog';
-                prevTooltip = 'Kembalikan ke Backlog (jika ditunda/spesifikasi belum jelas)';
                 nextTarget = 'In Development';
-                nextTooltip = 'Ambil tiket dan mulai koding (Pindah ke In Development)';
+                nextTooltip = 'Ambil tiket dan mulai koding (Maju ke In Development)';
               } else if (canonicalStatus === 'In Development') {
-                prevTarget = 'To Do';
-                prevTooltip = 'Hentikan / alihkan pengerjaan (Kembali ke To Do)';
                 nextTarget = 'Review & Testing';
-                nextTooltip = 'Selesai koding & ajukan PR (Pindah ke Review & Testing)';
+                nextTooltip = 'Selesai koding & ajukan PR (Maju ke Review & Testing)';
               } else if (canonicalStatus === 'Review & Testing') {
-                prevTarget = 'In Development';
-                prevTooltip = 'Ada bug atau catatan perbaikan (Kembalikan ke In Development)';
                 nextTarget = 'Done';
-                nextTooltip = 'Lolos pengujian dan verifikasi (Pindah ke Done)';
+                nextTooltip = 'Lolos pengujian dan verifikasi (Maju ke Done)';
               }
 
               actionsHtml = `
-                <button
-                  class="btn-shift-prev kanban-shift-btn"
-                  data-task-id="${task.id}"
-                  data-target-status="${prevTarget || ''}"
-                  ${!prevTarget ? 'disabled' : ''}
-                  title="${prevTooltip}"
-                >
-                  ${ICONS.chevronLeft}
-                </button>
-
                 <button
                   class="btn-open-detail kanban-detail-btn"
                   data-task-id="${task.id}"
@@ -662,39 +624,17 @@ export class KanbanBoard {
 
           const initials = assignee.name.split(' ').map((n) => n[0]).slice(0, 2).join('');
 
-          // Table action buttons
+          // Table action buttons (Strict Forward-Only)
           let actionsHtml = '';
-          if (canonicalStatus === 'Rejected') {
+          if (canonicalStatus === 'Rejected' || canonicalStatus === 'Done') {
             actionsHtml = `
-              <button
-                class="btn-restore-task kanban-restore-btn"
-                data-task-id="${task.id}"
-                data-target-status="Backlog"
-                title="Pulihkan tiket kembali ke Backlog"
+              <span
+                class="kanban-locked-badge"
+                title="Status akhir (${canonicalStatus}) terkunci dan tidak dapat dikembalikan ke tahap sebelumnya"
               >
-                ${ICONS.rotateCcw}
-                <span>Pulihkan</span>
-              </button>
-              <button
-                class="btn-open-detail kanban-detail-btn"
-                data-task-id="${task.id}"
-                title="Lihat detail lengkap pekerjaan"
-              >
-                <span>Detail</span>
-                ${ICONS.arrowRight}
-              </button>
-            `;
-          } else if (canonicalStatus === 'Done') {
-            actionsHtml = `
-              <button
-                class="btn-reopen-task kanban-reopen-btn"
-                data-task-id="${task.id}"
-                data-target-status="In Development"
-                title="Buka kembali (Reopen) jika ditemukan bug kritis mendadak"
-              >
-                ${ICONS.rotateCcw}
-                <span>Reopen</span>
-              </button>
+                ${ICONS.lock}
+                <span>Final</span>
+              </span>
               <button
                 class="btn-open-detail kanban-detail-btn"
                 data-task-id="${task.id}"
@@ -705,32 +645,18 @@ export class KanbanBoard {
               </button>
             `;
           } else {
-            let prevTarget = null;
             let nextTarget = null;
             if (canonicalStatus === 'Backlog') {
               nextTarget = 'To Do';
             } else if (canonicalStatus === 'To Do') {
-              prevTarget = 'Backlog';
               nextTarget = 'In Development';
             } else if (canonicalStatus === 'In Development') {
-              prevTarget = 'To Do';
               nextTarget = 'Review & Testing';
             } else if (canonicalStatus === 'Review & Testing') {
-              prevTarget = 'In Development';
               nextTarget = 'Done';
             }
 
             actionsHtml = `
-              <button
-                class="btn-shift-prev kanban-shift-btn"
-                data-task-id="${task.id}"
-                data-target-status="${prevTarget || ''}"
-                ${!prevTarget ? 'disabled' : ''}
-                title="${prevTarget ? `Kembalikan ke ${prevTarget}` : 'Tidak dapat mundur'}"
-              >
-                ${ICONS.chevronLeft}
-              </button>
-
               <button
                 class="btn-open-detail kanban-detail-btn"
                 data-task-id="${task.id}"
@@ -1074,19 +1000,7 @@ export class KanbanBoard {
       });
     });
 
-    // Shift previous button (works for both Kanban cards and Table rows)
-    this.container.querySelectorAll('.btn-shift-prev').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const taskId = btn.dataset.taskId;
-        const targetStatus = btn.dataset.targetStatus;
-        if (taskId && targetStatus) {
-          store.updateTaskStatus(taskId, targetStatus, `Dipindahkan mundur ke ${targetStatus}`);
-        }
-      });
-    });
-
-    // Shift next button (works for both Kanban cards and Table rows)
+    // Shift next button (Strict Forward-Only: works for both Kanban cards and Table rows)
     this.container.querySelectorAll('.btn-shift-next').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1098,47 +1012,28 @@ export class KanbanBoard {
       });
     });
 
-    // Quick reject button (Backlog, To Do, In Development, Review & Testing -> Rejected)
+    // Quick reject button (Backlog, To Do, In Development, Review & Testing -> Rejected via SweetAlert2)
     this.container.querySelectorAll('.btn-quick-reject').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const taskId = btn.dataset.taskId;
         const task = store.getState().tasks.find((t) => t.id === taskId);
         if (!task) return;
 
-        const confirmed = window.confirm(
-          `Apakah Anda yakin ingin menolak / membatalkan tiket [${task.key}] "${task.title}"?\nTiket akan dipindahkan ke status Rejected.`
-        );
+        const confirmed = await swalConfirm({
+          title: 'Tolak / Batalkan Tiket?',
+          html: `Apakah Anda yakin ingin menolak tiket <b>[${task.key}] ${task.title}</b>?<br><br><small style="color:#dc2626;">Perhatian: Tiket yang dipindahkan ke <b>Rejected</b> akan terkunci permanen dan tidak dapat dikembalikan ke status sebelumnya.</small>`,
+          icon: 'warning',
+          confirmText: 'Ya, Tolak Tiket',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+
         if (confirmed) {
-          store.updateTaskStatus(taskId, 'Rejected', 'Ditolak / Dibatalkan oleh pengguna via Aksi Cepat');
-        }
-      });
-    });
-
-    // Restore button (Rejected -> Backlog)
-    this.container.querySelectorAll('.btn-restore-task').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const taskId = btn.dataset.taskId;
-        if (taskId) {
-          store.updateTaskStatus(taskId, 'Backlog', 'Klien/PM membatalkan penolakan (Restored to Backlog)');
-        }
-      });
-    });
-
-    // Reopen button (Done -> In Development)
-    this.container.querySelectorAll('.btn-reopen-task').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const taskId = btn.dataset.taskId;
-        const task = store.getState().tasks.find((t) => t.id === taskId);
-        if (!task) return;
-
-        const confirmed = window.confirm(
-          `Buka kembali (Reopen) tiket [${task.key}] ke status "In Development" untuk perbaikan pengerjaan?`
-        );
-        if (confirmed) {
-          store.updateTaskStatus(taskId, 'In Development', 'Tiket dibuka kembali (Reopened by user)');
+          const ok = store.updateTaskStatus(taskId, 'Rejected', 'Ditolak / Dibatalkan oleh pengguna via Aksi Cepat');
+          if (ok) {
+            swalSuccess('Tiket Ditolak', `Tiket <b>${task.key}</b> telah dipindahkan ke status <b>Rejected</b>.`);
+          }
         }
       });
     });
@@ -1184,17 +1079,17 @@ export class KanbanBoard {
       this.container.querySelectorAll('.kanban-cards-scroll').forEach((dropZone) => {
         dropZone.addEventListener('dragover', (e) => {
           e.preventDefault();
+          // Keep dropEffect='move' so browser allows drop event to fire and trigger SweetAlert2 validation on forbidden columns
+          e.dataTransfer.dropEffect = 'move';
           const targetStatus = dropZone.dataset.primaryStatus;
           const draggedTask = store.getState().tasks.find((t) => t.id === this.draggedTaskId);
           const sourceStatus = getCanonicalStatus(draggedTask ? draggedTask.status : 'Backlog');
           const validation = validateStatusTransition(sourceStatus, targetStatus);
 
           if (validation.allowed) {
-            e.dataTransfer.dropEffect = 'move';
             dropZone.classList.add('drag-over-allowed');
             dropZone.classList.remove('drag-over-forbidden');
           } else {
-            e.dataTransfer.dropEffect = 'none';
             dropZone.classList.add('drag-over-forbidden');
             dropZone.classList.remove('drag-over-allowed');
           }
