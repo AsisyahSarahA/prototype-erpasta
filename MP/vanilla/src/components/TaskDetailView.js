@@ -7,6 +7,7 @@
  */
 
 import { store } from '../state/store.js';
+import { getCanonicalStatus, KANBAN_STAGES } from '../utils/workflow.js';
 
 const ICONS = {
   arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
@@ -26,14 +27,14 @@ const ICONS = {
   activity: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`
 };
 
-// 6 Fase Siklus Standar Software House
+// 6 Fase Alur Kerja Standar ASTACODE PM
 const SOFTWARE_HOUSE_STAGES = [
-  { id: 'Backlog', label: '1. Backlog & Spec', shortName: 'Backlog', pct: 16, gateRule: 'Verifikasi kelengkapan KAK, user stories, dan kriteria penerimaan (DoD).' },
-  { id: 'To Do', label: '2. Scope & Arsitektur', shortName: 'Arsitektur', pct: 33, gateRule: 'Penyusunan arsitektur DB/API, pembagian subtasks, dan estimasi jam selesai.' },
-  { id: 'In Progress', label: '3. Coding Sprint', shortName: 'Coding', pct: 50, gateRule: 'Pengerjaan fitur di branch git, implementasi middleware, dan commit berkala.' },
-  { id: 'In Review', label: '4. Code Review PR', shortName: 'Review PR', pct: 67, gateRule: 'PR diajukan ke GitHub, CI/CD automated test lulus, dan peer review disetujui.' },
-  { id: 'QA/Testing', label: '5. QA & Staging UAT', shortName: 'QA Staging', pct: 83, gateRule: 'Deployment otomatis ke server Staging, pengujian regresi, dan sign-off QA.' },
-  { id: 'Selesai', label: '6. Production Live', shortName: 'Production', pct: 100, gateRule: 'Merge ke branch main, deploy ke Production, dan monitoring real-time aktif.' }
+  { id: 'Backlog', label: '1. Backlog & Spec', shortName: 'Backlog', pct: 16, gateRule: 'Titik Awal: Analisis PM/Lead Dev sebelum disetujui ke To Do atau dibatalkan ke Rejected.' },
+  { id: 'To Do', label: '2. To Do (Siap Dikerjakan)', shortName: 'To Do', pct: 33, gateRule: 'Spesifikasi jelas, task siap diambil developer untuk mulai koding.' },
+  { id: 'In Development', label: '3. In Development (Coding)', shortName: 'In Dev', pct: 50, gateRule: 'Pengerjaan fitur di branch git, implementasi logic, dan commit berkala.' },
+  { id: 'Review & Testing', label: '4. Review & Testing (PR & QA)', shortName: 'Review & QA', pct: 67, gateRule: 'PR diajukan ke GitHub, deploy ke Staging, dan pengujian menyeluruh QA.' },
+  { id: 'Done', label: '5. Done (Production Live)', shortName: 'Done', pct: 85, gateRule: 'Merge ke branch main, deploy ke Production, dan disetujui penuh oleh klien.' },
+  { id: 'Rejected', label: '6. Rejected (Dibatalkan)', shortName: 'Rejected', pct: 100, gateRule: 'Fitur dibatalkan klien, out-of-scope, atau task duplikat.' }
 ];
 
 function getRoleBadgeStyle(role) {
@@ -100,12 +101,9 @@ export class TaskDetailView {
   }
 
   getStageIndex(status) {
-    const idx = SOFTWARE_HOUSE_STAGES.findIndex(s => s.id === status);
-    if (idx !== -1) return idx;
-    if (status === 'Diperbaiki Agen' || status === 'Perlu Manual') return 2;
-    if (status === 'Deploy Staging' || status === 'Disetujui') return 4;
-    if (status === 'Deploy Production' || status === 'Dipantau') return 5;
-    return 0;
+    const canonical = getCanonicalStatus(status);
+    const idx = SOFTWARE_HOUSE_STAGES.findIndex(s => s.id === canonical);
+    return idx !== -1 ? idx : 0;
   }
 
   render() {
@@ -482,12 +480,12 @@ export class TaskDetailView {
                   STATUS WORKFLOW
                 </label>
                 <select id="meta-task-status" class="form-select" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-weight:700;color:var(--text-primary);outline:none;">
-                  <option value="Backlog" ${currentTask.status === 'Backlog' ? 'selected' : ''}>Backlog</option>
-                  <option value="To Do" ${currentTask.status === 'To Do' ? 'selected' : ''}>To Do</option>
-                  <option value="In Progress" ${currentTask.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                  <option value="In Review" ${currentTask.status === 'In Review' ? 'selected' : ''}>In Review (PR)</option>
-                  <option value="QA/Testing" ${currentTask.status === 'QA/Testing' ? 'selected' : ''}>QA / Staging</option>
-                  <option value="Selesai" ${currentTask.status === 'Selesai' ? 'selected' : ''}>Selesai (Done)</option>
+                  <option value="Backlog" ${getCanonicalStatus(currentTask.status) === 'Backlog' ? 'selected' : ''}>1. Backlog</option>
+                  <option value="To Do" ${getCanonicalStatus(currentTask.status) === 'To Do' ? 'selected' : ''}>2. To Do</option>
+                  <option value="In Development" ${getCanonicalStatus(currentTask.status) === 'In Development' ? 'selected' : ''}>3. In Development</option>
+                  <option value="Review & Testing" ${getCanonicalStatus(currentTask.status) === 'Review & Testing' ? 'selected' : ''}>4. Review & Testing</option>
+                  <option value="Done" ${getCanonicalStatus(currentTask.status) === 'Done' ? 'selected' : ''}>5. Done</option>
+                  <option value="Rejected" ${getCanonicalStatus(currentTask.status) === 'Rejected' ? 'selected' : ''}>6. Rejected</option>
                 </select>
               </div>
 
@@ -1172,8 +1170,8 @@ export class TaskDetailView {
       store.addToast('info', 'AI Dev Assistant', `Memulai analisis dan auto-fix patch untuk ${task.key}...`);
       setTimeout(() => {
         this.isAiProcessing = false;
-        store.updateTaskStatus(task.id, 'In Review', 'Auto-Fix patch AI berhasil dipublish ke PR Staging');
-        store.addToast('success', 'Auto-Fix AI Berhasil', `Patch fix untuk ${task.key} telah diajukan ke Review PR.`);
+        store.updateTaskStatus(task.id, 'Review & Testing', 'Auto-Fix patch AI berhasil dipublish ke PR Staging', true);
+        store.addToast('success', 'Auto-Fix AI Berhasil', `Patch fix untuk ${task.key} telah diajukan ke Review & Testing.`);
       }, 1500);
     };
 
@@ -1340,7 +1338,10 @@ export class TaskDetailView {
     const statusSelect = this.container.querySelector('#meta-task-status');
     if (statusSelect) {
       statusSelect.addEventListener('change', (e) => {
-        store.updateTaskStatus(task.id, e.target.value, `Status diubah ke ${e.target.value}`);
+        const success = store.updateTaskStatus(task.id, e.target.value, `Status diubah ke ${e.target.value}`);
+        if (!success) {
+          e.target.value = getCanonicalStatus(task.status);
+        }
       });
     }
 

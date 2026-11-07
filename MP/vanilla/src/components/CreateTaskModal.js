@@ -766,7 +766,7 @@ export class CreateTaskModal {
           dueDate,
           visibility,
           source: 'Manual',
-          status: this.type === 'Bug' ? 'Baru' : 'Backlog',
+          status: 'Backlog',
           subtasks: subtasks.length > 0 ? subtasks : undefined
         });
 
