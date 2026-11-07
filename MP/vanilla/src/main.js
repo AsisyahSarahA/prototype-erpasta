@@ -26,7 +26,7 @@ import { ProjectModuleView } from './components/project/ProjectModuleView.js';
 
 // Modals
 import { TaskDetailModal } from './components/TaskDetailModal.js';
-import { CreateTaskModal } from './components/CreateTaskModal.js';
+import { CreateTaskModal } from './components/CreateTaskModal.js?v=2.2';
 import { IntakeSimulatorModal } from './components/intake/IntakeSimulatorModal.js';
 import { SopGuideModal } from './components/common/SopGuideModal.js';
 

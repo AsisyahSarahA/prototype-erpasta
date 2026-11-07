@@ -1,14 +1,18 @@
 /**
  * CreateTaskModal Component (100% Native Vanilla JS ES Module)
- * Enterprise-Grade Jira / Linear "Create Issue" Dialog:
- * - Proportional 2-Column SaaS Layout (60% Primary Specifications, 40% Metadata & People)
- * - Visual Issue Type Pills (Task, Feature, Bug, Revisi, Maintenance)
- * - Software House Bug Triage Standard (Severity S1-S4, Environment, Warranty, Steps to Reproduce, Expected vs Actual)
- * - Initial Subtasks Checklist Builder
- * - 4 Visual Priority Cards with Status Dots (Hotfix, Tinggi, Sedang, Rendah)
- * - Team Assignee with Avatar & Role
- * - Epic Module Selector matching Target Project
- * - "Create Another" Rapid Ticket Ingestion Workflow
+ * ASTACODE PM — CREATE NEW ISSUE MODAL REDESIGN
+ * 
+ * Sesuai panduan UI/UX Redesign Brief (UI/UX_REDESIGN_BRIEF_CREATE_NEW_ISSUE_MODAL.MD):
+ * 1. Layout & Proporsi 2 Kolom Enterprise SaaS (~62% Form Utama : ~38% Atribut & Penjadwalan).
+ * 2. Header Ringkas & Contextual Metadata Proyek Aktif tanpa gradien berlebih.
+ * 3. Klasifikasi Tipe Issue: Segmented Control Intuitif (Task Teknis, Fitur Baru, Bug/Error, Revisi CR, Maintenance).
+ * 4. Form Utama: Judul Issue (fokus utama), Deskripsi & Acceptance Criteria (Markdown Toolbar), SOP Bug Triage kontekstual, dan Subtask Builder dengan Empty State informatif.
+ * 5. Panel Atribut Terkelompokkan berdasarkan Konteks:
+ *    - Proyek & Ownership (Target Proyek, PIC, Tautkan Epik).
+ *    - Prioritas & Penjadwalan (4 Kartu Prioritas Semantik, Sprint, Tenggat Waktu).
+ *    - Beban Kerja & Akses (Estimasi Jam, Visibilitas Akses).
+ * 6. Sticky Footer: Opsi "Buat issue lain setelah ini", Tombol Batal, dan Tombol Utama "Buat Tiket" berhirarki tinggi.
+ * 7. Nol AI Slop: Tanpa gradien dekoratif, tanpa glassmorphism, konsistensi ikon Lucide flat SVG.
  */
 
 import { store } from '../state/store.js';
@@ -74,6 +78,11 @@ export class CreateTaskModal {
         this.projectId = store.getState().selectedProjectId || this.projectId;
         this.container.classList.add('modal-backdrop--open');
         this.render();
+        // Auto-focus pada input judul setelah modal terbuka
+        setTimeout(() => {
+          const titleInput = this.container.querySelector('#taskTitleInput');
+          if (titleInput) titleInput.focus();
+        }, 60);
       }
     } else {
       this.container.classList.remove('modal-backdrop--open');
@@ -92,27 +101,27 @@ export class CreateTaskModal {
       {
         id: 'Task',
         label: 'Task Teknis',
-        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`
+        icon: Icons.checkSquare('', 14)
       },
       {
         id: 'Feature',
         label: 'Fitur Baru',
-        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`
+        icon: Icons.sparkles('', 14)
       },
       {
         id: 'Bug',
         label: 'Bug / Error',
-        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>`
+        icon: Icons.bug('', 14)
       },
       {
         id: 'Revisi',
         label: 'Revisi (CR)',
-        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>`
+        icon: Icons.rotateCcw('', 14)
       },
       {
         id: 'Maintenance',
         label: 'Maintenance',
-        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`
+        icon: Icons.wrench('', 14)
       }
     ];
 
@@ -126,41 +135,38 @@ export class CreateTaskModal {
     const projectCodePrefix = activeProject.code ? activeProject.code.split('-')[0] : 'PRJ';
 
     this.container.innerHTML = `
-      <div class="modal-dialog modal-dialog--create">
+      <div class="modal-dialog modal-dialog--create" role="dialog" aria-modal="true" aria-labelledby="createIssueModalTitle">
         
-        <!-- Modal Header -->
+        <!-- A. Modal Header Ringkas & Contextual Metadata -->
         <div class="create-issue-header">
           <div class="create-issue-title-group">
             <div class="create-issue-icon-box">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              ${Icons.listTodo('', 18)}
             </div>
             <div>
               <div class="create-issue-header-top">
-                <h2 class="create-issue-title">Buat Issue Baru</h2>
+                <h2 id="createIssueModalTitle" class="create-issue-title">Buat Issue Baru</h2>
                 <span class="create-issue-project-badge">
-                  ${projectCodePrefix} · ${this.escapeHtml(activeProject.name || 'Proyek Aktif')}
+                  <span class="meta-dot"></span>
+                  <span>${projectCodePrefix} · ${this.escapeHtml(activeProject.name || 'Proyek Aktif')}</span>
                 </span>
               </div>
               <p class="create-issue-subtitle">
-                Distribusikan spesifikasi task, fitur, atau laporan bug ke sprint kerja dan backlog engineering.
+                Distribusikan spesifikasi teknis, fitur, atau laporan bug ke sprint kerja dan backlog engineering.
               </p>
             </div>
           </div>
 
           <button type="button" id="createModalCloseBtn" class="modal-header__close-btn" title="Tutup (Esc)">
-            ${Icons.x('', 18)}
+            ${Icons.x('', 16)}
           </button>
         </div>
 
-        <!-- Form Body (Proportional 2-Column Software House Layout) -->
+        <!-- Form Body Container -->
         <form id="createTaskForm" class="create-issue-form" novalidate>
           
-          <!-- Top Full-Width Classification Bar -->
+          <!-- B. Issue Classification (Segmented Control Berkontras Bersih) -->
           <div class="create-issue-type-bar">
-            <div class="create-field-label" style="margin-bottom: 8px;">
-              <span>KLASIFIKASI TIPE ISSUE <span class="req-star">*</span></span>
-              <span class="create-label-hint">Pilih kategori tiket untuk menyesuaikan workflow &amp; SLA</span>
-            </div>
             <div class="create-type-chips">
               ${issueTypes.map((t) => `
                 <button
@@ -175,32 +181,34 @@ export class CreateTaskModal {
             </div>
           </div>
 
+          <!-- Main Scrollable Content Area -->
           <div class="create-issue-body">
             
-            <!-- Left Column: Primary Specification & Technical Context -->
+            <!-- C. Main Form Area (~62% Proposional) -->
             <div class="create-issue-left">
               
-              <!-- 1. Ringkasan / Judul Pekerjaan -->
+              <!-- 1. Ringkasan / Judul Issue (Fokus Utama) -->
               <div class="create-field-group">
                 <label class="create-field-label" for="taskTitleInput">
-                  <span>RINGKASAN / JUDUL ISSUE <span class="req-star">*</span></span>
-                  <span class="create-label-hint">Format: <code>[Modul] Judul pekerjaan</code></span>
+                  <span>JUDUL / RINGKASAN ISSUE <span class="req-star">*</span></span>
+                  <span class="create-label-hint">Format ringkas: <code>[Modul] Deskripsi tugas</code></span>
                 </label>
                 <input
                   type="text"
                   id="taskTitleInput"
                   required
-                  placeholder="Contoh: [Backend] Sinkronisasi stok multi-warehouse dengan Redis lock..."
+                  placeholder="Contoh: [Backend] Sinkronisasi stok multi-gudang dengan Redis distributed lock..."
                   value="${this.escapeHtml(this.title)}"
                   class="create-input create-input-title"
                 />
+                <span id="taskTitleError" class="create-field-error" style="display:none;"></span>
               </div>
 
-              <!-- 2. Deskripsi & Spesifikasi Teknis (Unified Editor Box) -->
+              <!-- 2. Deskripsi & Acceptance Criteria (Minimal Functional Editor) -->
               <div class="create-field-group">
                 <label class="create-field-label" for="taskDescTextarea">
                   <span>DESKRIPSI &amp; ACCEPTANCE CRITERIA</span>
-                  <span class="create-label-hint">Mendukung Markdown</span>
+                  <span class="create-label-hint">Mendukung format Markdown</span>
                 </label>
                 <div class="create-editor-box">
                   <div class="create-editor-toolbar">
@@ -215,21 +223,21 @@ export class CreateTaskModal {
                   <textarea
                     id="taskDescTextarea"
                     rows="5"
-                    placeholder="Jelaskan kebutuhan fungsional, arsitektur data, endpoint API, serta kriteria penerimaan (Acceptance Criteria)..."
+                    placeholder="Jelaskan kebutuhan fungsional, arsitektur data, endpoint API, serta kriteria penyelesaian (Acceptance Criteria)..."
                     class="create-editor-textarea"
                   >${this.escapeHtml(this.description)}</textarea>
                 </div>
               </div>
 
-              <!-- 3. Standar Tiket Bug Software House (Tampil Otomatis saat Tipe = Bug) -->
+              <!-- 3. Standar Bug Triage Software House (Tampil Otomatis jika Tipe = Bug) -->
               ${this.type === 'Bug' ? `
                 <div class="create-bug-triage-box">
                   <div class="create-bug-triage-header">
                     <div class="create-bug-triage-title">
-                      <i class="fi fi-rr-bug"></i>
-                      <span>Standar Triage Bug Software House (SOP QA &amp; Dev)</span>
+                      ${Icons.bug('', 14)}
+                      <span>Standar Triage Bug (SOP QA &amp; Dev)</span>
                     </div>
-                    <span class="create-bug-iso-badge">ISO QA Ready</span>
+                    <span class="create-bug-iso-badge">SLA Enforcement</span>
                   </div>
 
                   <!-- Severity, Env, Warranty in 3 Columns -->
@@ -270,9 +278,9 @@ export class CreateTaskModal {
                     <textarea
                       id="bugReproStepsTextarea"
                       rows="2"
-                      placeholder="1. Buka halaman katalog&#10;2. Input parameter pencarian&#10;3. Amati response HTTP 500..."
+                      placeholder="1. Buka halaman katalog&#10;2. Masukkan parameter pencarian&#10;3. Amati response server HTTP 500..."
                       class="create-textarea"
-                      style="font-family: var(--font-mono); font-size: 11.5px; min-height: 54px;"
+                      style="font-family: var(--font-mono, monospace); font-size: 11.5px; min-height: 54px;"
                     >${this.escapeHtml(this.reproStepsText)}</textarea>
                   </div>
 
@@ -283,7 +291,7 @@ export class CreateTaskModal {
                       <input
                         type="text"
                         id="bugExpectedInput"
-                        placeholder="Menampilkan daftar atau state kosong"
+                        placeholder="Contoh: Menampilkan hasil pencarian valid"
                         value="${this.escapeHtml(this.expectedBehavior)}"
                         class="create-input create-input--sm"
                       />
@@ -293,7 +301,7 @@ export class CreateTaskModal {
                       <input
                         type="text"
                         id="bugActualInput"
-                        placeholder="Contoh: HTTP 500 QueryException"
+                        placeholder="Contoh: HTTP 500 Internal Server Error"
                         value="${this.escapeHtml(this.actualBehavior)}"
                         class="create-input create-input--sm"
                       />
@@ -302,22 +310,22 @@ export class CreateTaskModal {
                 </div>
               ` : ''}
 
-              <!-- 4. Checklist Subtasks Awal -->
+              <!-- 4. Checklist Subtask Awal (Dengan Empty State Bermakna) -->
               <div class="create-field-group">
                 <div class="create-field-label">
                   <span>CHECKLIST SUBTASK AWAL (${this.initialSubtasks.length})</span>
-                  <span class="create-label-hint">Opsional · Breakdown langkah kerja</span>
+                  <span class="create-label-hint">Pecah lingkup pekerjaan ke langkah-langkah terukur</span>
                 </div>
                 
                 <div class="create-subtask-input-row">
                   <input
                     type="text"
                     id="newSubtaskTitleInput"
-                    placeholder="Ketik rincian subtask (misal: Buat unit test & dokumentasi Swagger)..."
+                    placeholder="Ketik rincian subtask lalu tekan Enter atau klik Tambah..."
                     class="create-input"
                   />
                   <button type="button" id="addInitialSubtaskBtn" class="create-subtask-add-btn">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    ${Icons.plus('', 13)}
                     <span>Tambah</span>
                   </button>
                 </div>
@@ -336,140 +344,162 @@ export class CreateTaskModal {
                       </div>
                     `).join('')}
                   </div>
-                ` : ''}
+                ` : `
+                  <div class="create-subtask-empty">
+                    <span class="create-subtask-empty-icon">${Icons.listTodo('', 14)}</span>
+                    <span>Belum ada subtask ditambahkan. Anda dapat membuat subtask sekarang atau menambahkannya nanti.</span>
+                  </div>
+                `}
               </div>
 
             </div>
 
-            <!-- Right Column: Metadata, Categorization & People -->
+            <!-- D. Attributes & Scheduling Panel (~38% Terkelompokkan Berdasarkan Konteks) -->
             <div class="create-issue-right">
               <div class="create-meta-panel">
-                <div class="create-meta-panel-header">
-                  <span>ATRIBUT &amp; PENJADWALAN</span>
-                  <span class="meta-badge">Routing</span>
-                </div>
 
-                <!-- Target Proyek & Epik -->
-                <div class="create-field-group">
-                  <label class="create-field-label" for="taskTargetProjectSelect">
-                    <span>PROYEK TARGET <span class="req-star">*</span></span>
-                  </label>
-                  <select id="taskTargetProjectSelect" class="create-input create-select-bold">
-                    ${state.projects.map((p) => `
-                      <option value="${p.id}" ${p.id === this.projectId ? 'selected' : ''}>
-                        ${p.code} — ${p.name}
-                      </option>
-                    `).join('')}
-                  </select>
-                </div>
-
-                <!-- Prioritas Kartu -->
-                <div class="create-field-group">
-                  <label class="create-field-label">
-                    <span>TINGKAT PRIORITAS</span>
-                  </label>
-                  <div class="create-priority-grid">
-                    ${priorityCards.map((p) => `
-                      <div
-                        class="create-priority-card ${this.priority === p.id ? `active ${p.activeClass}` : ''}"
-                        data-priority="${p.id}"
-                      >
-                        <span class="p-dot ${p.dotClass}"></span>
-                        <div class="p-card-text">
-                          <div class="p-card-title">${p.label}</div>
-                          <div class="p-card-sub">${p.sub}</div>
-                        </div>
-                      </div>
-                    `).join('')}
+                <!-- Grup 1: Project & Ownership -->
+                <div class="create-meta-group">
+                  <div class="create-meta-group-title">
+                    <span>PROYEK &amp; OWNERSHIP</span>
                   </div>
-                </div>
 
-                <!-- Assignee (PIC Developer) -->
-                <div class="create-field-group">
-                  <div class="create-field-label">
-                    <span>PENANGGUNG JAWAB (PIC)</span>
-                    <button type="button" id="assignToMeCreateBtn" class="create-inline-link">Tugaskan ke Saya</button>
-                  </div>
-                  <select id="taskAssigneeSelect" class="create-input">
-                    ${teamMembers.map((m) => `
-                      <option value="${m.id}" ${m.id === this.assigneeId ? 'selected' : ''}>
-                        ${m.name} — ${m.role}
-                      </option>
-                    `).join('')}
-                  </select>
-                </div>
-
-                <!-- Tautkan ke Epik -->
-                <div class="create-field-group">
-                  <label class="create-field-label" for="taskEpicSelect">
-                    <span>TAUTKAN KE EPIK MODUL</span>
-                  </label>
-                  <select id="taskEpicSelect" class="create-input">
-                    <option value="">— Tanpa Epik Khusus —</option>
-                    ${projectEpics.map((ep) => `
-                      <option value="${ep.id}" ${ep.id === this.epicId ? 'selected' : ''}>
-                        ${ep.title || ep.name}
-                      </option>
-                    `).join('')}
-                  </select>
-                </div>
-
-                <!-- Estimasi (Jam) & Jatuh Tempo (Due Date) Grid -->
-                <div class="create-grid-2">
+                  <!-- Target Proyek -->
                   <div class="create-field-group">
-                    <label class="create-field-label" for="taskHoursInput">
-                      <span>ESTIMASI BEBAN</span>
+                    <label class="create-field-label" for="taskTargetProjectSelect">
+                      <span>PROYEK TARGET <span class="req-star">*</span></span>
                     </label>
-                    <div class="create-input-suffix-wrap">
-                      <input
-                        type="number"
-                        id="taskHoursInput"
-                        min="1"
-                        max="160"
-                        value="${this.estimateHours}"
-                        class="create-input create-input-mono"
-                      />
-                      <span class="create-input-suffix">Jam</span>
+                    <select id="taskTargetProjectSelect" class="create-input create-select-bold">
+                      ${state.projects.map((p) => `
+                        <option value="${p.id}" ${p.id === this.projectId ? 'selected' : ''}>
+                          ${p.code} — ${p.name}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+
+                  <!-- Penanggung Jawab (PIC Developer) -->
+                  <div class="create-field-group">
+                    <div class="create-field-label">
+                      <span>PENANGGUNG JAWAB (PIC)</span>
+                      <button type="button" id="assignToMeCreateBtn" class="create-inline-link">Tugaskan ke Saya</button>
+                    </div>
+                    <select id="taskAssigneeSelect" class="create-input">
+                      ${teamMembers.map((m) => `
+                        <option value="${m.id}" ${m.id === this.assigneeId ? 'selected' : ''}>
+                          ${m.name} — ${m.role}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+
+                  <!-- Tautkan ke Epik Modul -->
+                  <div class="create-field-group">
+                    <label class="create-field-label" for="taskEpicSelect">
+                      <span>TAUTKAN KE EPIK MODUL</span>
+                    </label>
+                    <select id="taskEpicSelect" class="create-input">
+                      <option value="">— Tanpa Epik Khusus —</option>
+                      ${projectEpics.map((ep) => `
+                        <option value="${ep.id}" ${ep.id === this.epicId ? 'selected' : ''}>
+                          ${ep.title || ep.name}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Grup 2: Priority & Scheduling -->
+                <div class="create-meta-group">
+                  <div class="create-meta-group-title">
+                    <span>PRIORITAS &amp; PENJADWALAN</span>
+                  </div>
+
+                  <!-- Tingkat Prioritas (4 Kartu Semantik Bersih) -->
+                  <div class="create-field-group">
+                    <label class="create-field-label">
+                      <span>TINGKAT PRIORITAS</span>
+                    </label>
+                    <div class="create-priority-grid">
+                      ${priorityCards.map((p) => `
+                        <div
+                          class="create-priority-card ${this.priority === p.id ? `active ${p.activeClass}` : ''}"
+                          data-priority="${p.id}"
+                          role="button"
+                          tabindex="0"
+                        >
+                          <span class="p-dot ${p.dotClass}"></span>
+                          <span class="p-card-title">${p.label}</span>
+                        </div>
+                      `).join('')}
                     </div>
                   </div>
 
-                  <div class="create-field-group">
-                    <label class="create-field-label" for="taskDueDateInput">
-                      <span>TENGGAT (DUE)</span>
-                    </label>
-                    <input
-                      type="date"
-                      id="taskDueDateInput"
-                      value="${this.dueDate}"
-                      class="create-input create-input-mono"
-                    />
+                  <!-- Penempatan Sprint & Tenggat Waktu -->
+                  <div class="create-grid-2">
+                    <div class="create-field-group">
+                      <label class="create-field-label" for="taskSprintSelect">
+                        <span>PENEMPATAN</span>
+                      </label>
+                      <select id="taskSprintSelect" class="create-input">
+                        <option value="${activeSprint ? activeSprint.id : 'sprint-1'}">${activeSprint ? activeSprint.name : 'Sprint Aktif'} (Kanban)</option>
+                        <option value="backlog">Backlog Pool</option>
+                      </select>
+                    </div>
+
+                    <div class="create-field-group">
+                      <label class="create-field-label" for="taskDueDateInput">
+                        <span>TENGGAT WAKTU</span>
+                      </label>
+                      <input
+                        type="date"
+                        id="taskDueDateInput"
+                        value="${this.dueDate}"
+                        class="create-input create-input-mono"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <!-- Penempatan & Visibilitas Grid -->
-                <div class="create-grid-2">
-                  <div class="create-field-group">
-                    <label class="create-field-label" for="taskSprintSelect">
-                      <span>PENEMPATAN</span>
-                    </label>
-                    <select id="taskSprintSelect" class="create-input">
-                      <option value="${activeSprint ? activeSprint.id : 'sprint-1'}">${activeSprint ? activeSprint.name : 'Sprint Aktif'} (Kanban)</option>
-                      <option value="backlog">Backlog Pool</option>
-                    </select>
+                <!-- Grup 3: Workload & Visibility -->
+                <div class="create-meta-group">
+                  <div class="create-meta-group-title">
+                    <span>BEBAN KERJA &amp; AKSES</span>
                   </div>
 
-                  <div class="create-field-group">
-                    <label class="create-field-label" for="taskVisibilitySelect">
-                      <span>VISIBILITAS</span>
-                    </label>
-                    <select id="taskVisibilitySelect" class="create-input">
-                      <option value="client_public" ${this.visibility === 'client_public' ? 'selected' : ''}>
-                        Publik &amp; Klien
-                      </option>
-                      <option value="internal" ${this.visibility === 'internal' ? 'selected' : ''}>
-                        Internal Tim
-                      </option>
-                    </select>
+                  <div class="create-grid-2">
+                    <!-- Estimasi Beban (Jam) -->
+                    <div class="create-field-group">
+                      <label class="create-field-label" for="taskHoursInput">
+                        <span>ESTIMASI BEBAN</span>
+                      </label>
+                      <div class="create-input-suffix-wrap">
+                        <input
+                          type="number"
+                          id="taskHoursInput"
+                          min="1"
+                          max="160"
+                          value="${this.estimateHours}"
+                          class="create-input create-input-mono"
+                        />
+                        <span class="create-input-suffix">Jam</span>
+                      </div>
+                    </div>
+
+                    <!-- Visibilitas Akses -->
+                    <div class="create-field-group">
+                      <label class="create-field-label" for="taskVisibilitySelect">
+                        <span>VISIBILITAS</span>
+                      </label>
+                      <select id="taskVisibilitySelect" class="create-input">
+                        <option value="client_public" ${this.visibility === 'client_public' ? 'selected' : ''}>
+                          Publik &amp; Klien
+                        </option>
+                        <option value="internal" ${this.visibility === 'internal' ? 'selected' : ''}>
+                          Internal Tim
+                        </option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -478,7 +508,7 @@ export class CreateTaskModal {
 
           </div>
 
-          <!-- Modal Footer -->
+          <!-- E. Sticky Footer Selalu Terlihat -->
           <div class="create-issue-footer">
             <label class="create-another-toggle">
               <input type="checkbox" id="createAnotherCheck" ${this.createAnother ? 'checked' : ''} />
@@ -524,11 +554,10 @@ export class CreateTaskModal {
     const cancelBtn = this.container.querySelector('#createModalCancelBtn');
     if (cancelBtn) cancelBtn.addEventListener('click', () => store.closeCreateTaskModal());
 
-    // Type Selector Chips
+    // Type Selector Chips (Segmented Controls)
     this.container.querySelectorAll('.create-type-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
         this.type = chip.dataset.type;
-        // Save form draft
         this.saveFormDraft();
         this.render();
       });
@@ -536,16 +565,24 @@ export class CreateTaskModal {
 
     // Priority Cards
     this.container.querySelectorAll('.create-priority-card').forEach((card) => {
-      card.addEventListener('click', () => {
+      const handleSelect = () => {
         this.priority = card.dataset.priority;
         this.container.querySelectorAll('.create-priority-card').forEach((c) => {
           c.classList.remove('active', 'p-hotfix', 'p-tinggi', 'p-sedang', 'p-rendah');
         });
         card.classList.add('active', `p-${this.priority.toLowerCase()}`);
+      };
+
+      card.addEventListener('click', handleSelect);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleSelect();
+        }
       });
     });
 
-    // Project change: update epics
+    // Project change: update epics and maintain draft
     const projectSelect = this.container.querySelector('#taskTargetProjectSelect');
     if (projectSelect) {
       projectSelect.addEventListener('change', (e) => {
@@ -564,6 +601,7 @@ export class CreateTaskModal {
         if (assigneeSelect) {
           assigneeSelect.value = 'user-pm';
           this.assigneeId = 'user-pm';
+          store.addToast('info', 'Penugasan Mandiri', 'Tiket ini dialokasikan ke Anda (Project Manager).');
         }
       });
     }
@@ -586,6 +624,8 @@ export class CreateTaskModal {
 
         textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
         textarea.focus();
+        const newCursorPos = start + replacement.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
       });
     });
 
@@ -600,6 +640,10 @@ export class CreateTaskModal {
           subInput.value = '';
           this.saveFormDraft();
           this.render();
+          setTimeout(() => {
+            const nextInput = this.container.querySelector('#newSubtaskTitleInput');
+            if (nextInput) nextInput.focus();
+          }, 30);
         }
       };
 
@@ -614,7 +658,7 @@ export class CreateTaskModal {
 
     // Remove initial subtask
     this.container.querySelectorAll('.remove-subtask-item-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', () => {
         const idx = Number(btn.dataset.index);
         this.initialSubtasks.splice(idx, 1);
         this.saveFormDraft();
@@ -622,13 +666,14 @@ export class CreateTaskModal {
       });
     });
 
-    // Form submit
+    // Form submit validation & dispatch
     const form = this.container.querySelector('#createTaskForm');
     if (form) {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
 
         const titleInput = this.container.querySelector('#taskTitleInput');
+        const titleError = this.container.querySelector('#taskTitleError');
         const descInput = this.container.querySelector('#taskDescTextarea');
         const hoursInput = this.container.querySelector('#taskHoursInput');
         const dueDateInput = this.container.querySelector('#taskDueDateInput');
@@ -640,15 +685,19 @@ export class CreateTaskModal {
         const title = titleInput ? titleInput.value.trim() : '';
         if (!title) {
           if (titleInput) {
-            titleInput.style.borderColor = '#ef4444';
+            titleInput.classList.add('create-input--error');
             titleInput.focus();
+          }
+          if (titleError) {
+            titleError.textContent = 'Judul tiket wajib diisi.';
+            titleError.style.display = 'block';
           }
           store.addToast('warning', 'Judul Wajib Diisi', 'Silakan masukkan ringkasan atau judul tiket pekerjaan.');
           return;
         }
-        if (titleInput) {
-          titleInput.style.borderColor = '';
-        }
+
+        if (titleInput) titleInput.classList.remove('create-input--error');
+        if (titleError) titleError.style.display = 'none';
 
         const description = descInput ? descInput.value.trim() : '';
         const estimateHours = hoursInput ? Number(hoursInput.value) || 4 : 4;
@@ -692,7 +741,7 @@ export class CreateTaskModal {
           ? (severity === 'S1 - Critical (Blocker)' ? 'Hotfix' : severity === 'S2 - Major' ? 'Tinggi' : 'Sedang')
           : this.priority;
 
-        // Format subtasks
+        // Format initial subtasks
         const subtasks = this.initialSubtasks.map((titleText, idx) => ({
           id: `sub-${Date.now()}-${idx}`,
           title: titleText,
@@ -721,7 +770,9 @@ export class CreateTaskModal {
           subtasks: subtasks.length > 0 ? subtasks : undefined
         });
 
-        // If create another is enabled, keep open with cleared fields
+        store.addToast('success', 'Tiket Berhasil Dibuat', `Issue [${title}] telah berhasil didaftarkan ke proyek.`);
+
+        // Mode Input Beruntun (Create Another)
         if (this.createAnother) {
           this.title = '';
           this.description = '';
@@ -761,6 +812,22 @@ export class CreateTaskModal {
     if (visSelect) this.visibility = visSelect.value;
     if (assigneeSelect) this.assigneeId = assigneeSelect.value;
     if (epicSelect) this.epicId = epicSelect.value;
+
+    if (this.type === 'Bug') {
+      const sevSelect = this.container.querySelector('#bugSeveritySelect');
+      const envSelect = this.container.querySelector('#bugEnvSelect');
+      const warSelect = this.container.querySelector('#bugWarrantySelect');
+      const reproText = this.container.querySelector('#bugReproStepsTextarea');
+      const expInput = this.container.querySelector('#bugExpectedInput');
+      const actInput = this.container.querySelector('#bugActualInput');
+
+      if (sevSelect) this.severity = sevSelect.value;
+      if (envSelect) this.environment = envSelect.value;
+      if (warSelect) this.warrantyStatus = warSelect.value;
+      if (reproText) this.reproStepsText = reproText.value;
+      if (expInput) this.expectedBehavior = expInput.value;
+      if (actInput) this.actualBehavior = actInput.value;
+    }
   }
 
   getElement() {
