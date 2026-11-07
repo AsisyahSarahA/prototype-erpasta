@@ -582,28 +582,27 @@
 
 
 /* ==========================================================================
-   Create Issue Modal — Enterprise SaaS Swiss Modernist Redesign
-   Sesuai panduan UI/UX Redesign Brief (UI/UX_REDESIGN_BRIEF_CREATE_NEW_ISSUE_MODAL.MD):
-   - Proportional 2-column layout (~62% main form : ~38% meta panel)
-   - Zero AI slop: no decorative gradients, subtle enterprise shadows, clean borders
-   - Fixed header, fixed classification bar, scrollable body, fixed sticky footer
-   - Contextual grouped attributes panel & meaningful empty states
+   Create Issue Modal — Authentic Atlassian Jira Cloud & Software House Standard
+   - Single-Column Focused Modal (max-width: 760px).
+   - Clean, natural top-to-bottom reading gravity.
+   - Atlassian Design System tokens: fonts, colors, borders, and button states.
    ========================================================================== */
 
+.modal-dialog--jira,
 .modal-dialog--create {
-  max-width: 980px !important;
-  width: 94% !important;
-  max-height: 90vh !important;
-  border-radius: 12px !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 20px 40px -12px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.05) !important;
+  max-width: 760px !important;
+  width: 90% !important;
+  max-height: 88vh !important;
+  border-radius: 8px !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: 0 20px 48px -12px rgba(9, 30, 66, 0.25), 0 0 0 1px rgba(9, 30, 66, 0.08) !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
   background: #ffffff !important;
 }
 
-.create-issue-form {
+.jira-modal-form {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -611,13 +610,10 @@
   margin: 0;
 }
 
-/* ==========================================================================
-   A. Modal Header Ringkas & Contextual Project Metadata
-   ========================================================================== */
-
-.create-issue-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #e2e8f0;
+/* 1. Header Modal (Atlassian Jira Standard) */
+.jira-modal-header {
+  padding: 18px 24px 14px 24px;
+  border-bottom: 1px solid #ebecf0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -625,434 +621,402 @@
   flex-shrink: 0;
 }
 
-.create-issue-title-group {
+.jira-modal-header-left {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
+  align-items: baseline;
+  gap: 12px;
 }
 
-.create-issue-icon-box {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  background: #eef2ff;
-  border: 1px solid #e0e7ff;
-  color: #4f46e5;
-  display: flex;
+.jira-modal-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #172b4d;
+  margin: 0;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.jira-required-hint {
+  font-size: 11.5px;
+  color: #6b778c;
+  font-weight: 400;
+}
+
+.jira-required-hint .req-star,
+.req-star {
+  color: #de350b;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.jira-modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #6b778c;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.jira-modal-close-btn:hover {
+  background: #ebecf0;
+  color: #172b4d;
+}
+
+/* 2. Scrollable Body */
+.jira-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  max-height: calc(88vh - 140px);
+  flex: 1;
+  min-height: 0;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.jira-divider {
+  height: 1px;
+  background: #ebecf0;
+  margin: 4px 0;
   flex-shrink: 0;
 }
 
-.create-issue-header-top {
+/* Form Rows & Labels */
+.jira-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.jira-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jira-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #344563;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.jira-sub-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0 0 4px 0;
+  display: block;
+}
+
+.jira-hint {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: #6b778c;
+}
+
+.jira-hint code {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  background: #f4f5f7;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #172b4d;
+  border: 1px solid #ebecf0;
+}
+
+.jira-text-action {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0052cc;
+  cursor: pointer;
+}
+
+.jira-text-action:hover {
+  text-decoration: underline;
+  color: #0747a6;
+}
+
+.jira-field-error {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #de350b;
+  margin-top: 3px;
+}
+
+/* Select, Inputs & Textarea */
+.jira-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.jira-select-icon {
+  position: absolute;
+  left: 11px;
+  color: #6b778c;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.jira-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid #dfe1e6;
+  background: #fafbfc;
+  color: #172b4d;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.jira-select:hover {
+  background: #ebecf0;
+}
+
+.jira-select:focus {
+  background: #ffffff;
+  border-color: #4c9aff;
+  box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.2);
+}
+
+.jira-select--with-icon {
+  padding-left: 34px;
+}
+
+.jira-select--sm {
+  height: 34px;
+  font-size: 12px;
+}
+
+/* Issue Type Selector (Jira Segmented) */
+.jira-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jira-type-btn {
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 4px;
+  border: 1px solid #dfe1e6;
+  background: #ffffff;
+  color: #344563;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.jira-type-btn:hover {
+  background: #f4f5f7;
+  border-color: #c1c7d0;
+  color: #172b4d;
+}
+
+.jira-type-btn.active {
+  box-shadow: 0 1px 3px rgba(9, 30, 66, 0.12);
+  font-weight: 700;
+}
+
+.jira-type-btn.active.jira-type-task {
+  background: #deebff;
+  border-color: #4c9aff;
+  color: #0747a6;
+}
+
+.jira-type-btn.active.jira-type-feature {
+  background: #eae6ff;
+  border-color: #8777d9;
+  color: #403294;
+}
+
+.jira-type-btn.active.jira-type-bug {
+  background: #ffebe6;
+  border-color: #ff8f73;
+  color: #bf2600;
+}
+
+.jira-type-btn.active.jira-type-revisi {
+  background: #fff0b3;
+  border-color: #ffab00;
+  color: #172b4d;
+}
+
+.jira-type-btn.active.jira-type-maintenance {
+  background: #e3fcef;
+  border-color: #57d9a3;
+  color: #006644;
+}
+
+/* Status Indicator */
+.jira-status-display {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.create-issue-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-  letter-spacing: -0.015em;
-}
-
-.create-issue-project-badge {
+.jira-status-badge {
   display: inline-flex;
   align-items: center;
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  font-weight: 600;
-  background: #f1f5f9;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-  padding: 2px 8px;
-  border-radius: 6px;
-  max-width: 340px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.create-issue-project-badge .meta-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-  margin-right: 6px;
-  flex-shrink: 0;
-}
-
-.create-issue-subtitle {
-  font-size: 12px;
-  color: #64748b;
-  margin: 2px 0 0 0;
-  line-height: 1.4;
-}
-
-/* ==========================================================================
-   B. Issue Classification Segmented Control
-   ========================================================================== */
-
-.create-issue-type-bar {
-  padding: 10px 24px;
-  background: #fafbfc;
-  border-bottom: 1px solid #e2e8f0;
-  flex-shrink: 0;
-}
-
-.create-type-chips {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  background: #f1f5f9;
-  padding: 3px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-@media (max-width: 768px) {
-  .create-type-chips {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.create-type-chip {
-  height: 36px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #475569;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.create-type-chip .chip-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: inherit;
-}
-
-.create-type-chip:hover {
-  background: rgba(255, 255, 255, 0.7);
-  color: #0f172a;
-}
-
-.create-type-chip.active {
-  background: #ffffff;
-  color: #0f172a;
-  font-weight: 700;
-  border-color: #cbd5e1;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-}
-
-.create-type-chip.active.type-task {
-  border-color: #c7d2fe;
-  color: #4338ca;
-}
-
-.create-type-chip.active.type-bug {
-  border-color: #fecaca;
-  color: #b91c1c;
-}
-
-.create-type-chip.active.type-feature {
-  border-color: #ddd6fe;
-  color: #6d28d9;
-}
-
-.create-type-chip.active.type-revisi {
-  border-color: #fde68a;
-  color: #b45309;
-}
-
-.create-type-chip.active.type-maintenance {
-  border-color: #a7f3d0;
-  color: #047857;
-}
-
-/* ==========================================================================
-   C. Main Scrollable 2-Column Body Layout (~62% : ~38%)
-   ========================================================================== */
-
-.create-issue-body {
-  display: grid;
-  grid-template-columns: 1.55fr 1fr;
-  gap: 20px;
-  padding: 20px 24px;
-  overflow-y: auto;
-  max-height: calc(90vh - 180px);
-  flex: 1;
-  min-height: 0;
-  background: #ffffff;
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .create-issue-body {
-    grid-template-columns: 1fr;
-    padding: 16px;
-    gap: 18px;
-  }
-}
-
-.create-issue-left {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-.create-issue-right {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-/* ==========================================================================
-   Form Field Labels, Hints & Validation
-   ========================================================================== */
-
-.create-field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.create-field-label {
-  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: #dfe1e6;
+  color: #42526e;
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #334155;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
 }
 
-.create-field-label .req-star {
-  color: #ef4444;
+.jira-status-badge .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #42526e;
 }
 
-.create-label-hint {
-  font-size: 11px;
-  font-weight: 500;
-  color: #64748b;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.create-label-hint code {
-  font-family: var(--font-mono, monospace);
-  font-size: 10.5px;
-  background: #f1f5f9;
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-}
-
-.create-inline-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 11px;
-  font-weight: 600;
-  color: #4f46e5;
-  cursor: pointer;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.create-inline-link:hover {
-  text-decoration: underline;
-  color: #3730a3;
-}
-
-.create-sub-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.create-field-error {
+.jira-status-desc {
   font-size: 11.5px;
-  font-weight: 600;
-  color: #ef4444;
-  margin-top: 4px;
+  color: #6b778c;
 }
 
-/* Grid Utilities */
-.create-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.create-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-@media (max-width: 600px) {
-  .create-grid-2,
-  .create-grid-3 {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Inputs, Selects & Textareas */
-.create-input {
+/* Inputs */
+.jira-input {
   width: 100%;
   height: 38px;
   padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: #0f172a;
-  background: #ffffff;
+  border-radius: 4px;
+  border: 1px solid #dfe1e6;
+  background: #fafbfc;
+  color: #172b4d;
+  font-size: 13px;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.create-input:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+.jira-input:hover {
+  background: #ebecf0;
 }
 
-.create-input--error {
-  border-color: #ef4444 !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+.jira-input:focus {
+  background: #ffffff;
+  border-color: #4c9aff;
+  box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.2);
 }
 
-.create-input--sm {
-  height: 34px;
-  padding: 0 10px;
-  font-size: 11.5px;
-}
-
-.create-input-title {
+.jira-input-summary {
   height: 42px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  padding: 0 14px;
-  border-radius: 8px;
 }
 
-.create-select-bold {
-  font-weight: 600;
-  color: #0f172a;
+.jira-input--sm {
+  height: 34px;
+  font-size: 12px;
 }
 
-.create-input-mono {
+.jira-input--error {
+  border-color: #de350b !important;
+  box-shadow: 0 0 0 2px rgba(222, 53, 11, 0.2) !important;
+}
+
+.jira-input-mono {
   font-family: var(--font-mono, monospace);
   font-size: 12px;
-  font-weight: 600;
 }
 
-.create-input-suffix-wrap {
+.jira-input-suffix-wrap {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.create-input-suffix-wrap .create-input {
-  padding-right: 42px;
+.jira-input-suffix-wrap .jira-input {
+  padding-right: 44px;
 }
 
-.create-input-suffix {
+.jira-input-suffix {
   position: absolute;
   right: 12px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
-  color: #64748b;
+  color: #6b778c;
   pointer-events: none;
 }
 
-/* Minimal Functional Markdown Editor Box */
-.create-editor-box {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+/* Markdown Editor (Jira Style) */
+.jira-editor {
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
   background: #ffffff;
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.create-editor-box:focus-within {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+.jira-editor:focus-within {
+  border-color: #4c9aff;
+  box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.2);
 }
 
-.create-editor-toolbar {
+.jira-editor-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px;
-  background: #fafbfc;
-  border-bottom: 1px solid #e2e8f0;
+  background: #f4f5f7;
+  border-bottom: 1px solid #ebecf0;
 }
 
-.editor-toolbar-left {
+.jira-toolbar-actions {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.md-helper-btn {
-  height: 24px;
-  padding: 0 8px;
-  border-radius: 4px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #475569;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.12s ease;
-}
-
-.md-helper-btn:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #0f172a;
-}
-
-.editor-toolbar-tag {
+.jira-toolbar-badge {
   font-size: 11px;
+  color: #6b778c;
   font-weight: 500;
-  color: #64748b;
 }
 
-.create-editor-textarea {
+.jira-textarea {
   width: 100%;
   padding: 10px 12px;
   border: none;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #172b4d;
   background: #ffffff;
   outline: none;
   box-sizing: border-box;
@@ -1061,85 +1025,154 @@
   display: block;
 }
 
-.create-textarea {
-  width: 100%;
+.jira-textarea-mono {
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
   padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: #0f172a;
-  background: #ffffff;
-  outline: none;
-  box-sizing: border-box;
-  resize: vertical;
-  min-height: 64px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  min-height: 54px;
 }
 
-.create-textarea:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+.jira-textarea-mono:focus {
+  border-color: #4c9aff;
+  box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.2);
 }
 
-/* ==========================================================================
-   Bug Triage Box (Standard QA / Bug Protocol)
-   ========================================================================== */
-
-.create-bug-triage-box {
+/* Bug Section */
+.jira-bug-section {
   padding: 14px;
-  border-radius: 8px;
-  border: 1px solid #fecdd3;
-  background-color: #fff8f8;
+  border-radius: 6px;
+  border: 1px solid #ffbdad;
+  background: #fff8f6;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.create-bug-triage-header {
+.jira-bug-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #fecdd3;
+  border-bottom: 1px solid #ffbdad;
   padding-bottom: 8px;
 }
 
-.create-bug-triage-title {
+.jira-bug-title {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #b91c1c;
+  color: #bf2600;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
-.create-bug-iso-badge {
-  font-size: 10px;
+.jira-bug-iso-badge {
+  font-size: 10.5px;
   font-weight: 700;
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: 3px;
   background: #ffffff;
-  color: #b91c1c;
-  border: 1px solid #fca5a5;
+  color: #bf2600;
+  border: 1px solid #ff8f73;
 }
 
-/* ==========================================================================
-   Checklist Subtask Awal & Meaningful Empty State
-   ========================================================================== */
+/* Grids */
+.jira-attributes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
 
-.create-subtask-input-row {
+.jira-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.jira-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 650px) {
+  .jira-attributes-grid,
+  .jira-grid-2,
+  .jira-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Priority Pills (4 Compact Segments) */
+.jira-priority-pills {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.jira-p-pill {
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid #dfe1e6;
+  background: #fafbfc;
+  color: #344563;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
+  gap: 7px;
+  transition: all 0.15s ease;
+}
+
+.jira-p-pill:hover {
+  background: #ebecf0;
+}
+
+.jira-p-pill.active {
+  box-shadow: 0 1px 3px rgba(9, 30, 66, 0.1);
+  font-weight: 700;
+}
+
+.jira-p-pill.active.p-hotfix {
+  border-color: #ff8f73;
+  background: #ffebe6;
+  color: #bf2600;
+}
+
+.jira-p-pill.active.p-tinggi {
+  border-color: #ffab00;
+  background: #fff0b3;
+  color: #172b4d;
+}
+
+.jira-p-pill.active.p-sedang {
+  border-color: #4c9aff;
+  background: #deebff;
+  color: #0747a6;
+}
+
+.jira-p-pill.active.p-rendah {
+  border-color: #c1c7d0;
+  background: #f4f5f7;
+  color: #172b4d;
+}
+
+/* Subtasks */
+.jira-subtask-input-bar {
+  display: flex;
   gap: 8px;
 }
 
-.create-subtask-add-btn {
+.jira-btn-add-subtask {
   height: 38px;
   padding: 0 14px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #334155;
+  border-radius: 4px;
+  border: 1px solid #dfe1e6;
+  background: #f4f5f7;
+  color: #344563;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1150,282 +1183,153 @@
   transition: all 0.15s ease;
 }
 
-.create-subtask-add-btn:hover {
-  background: #eef2ff;
-  border-color: #6366f1;
-  color: #4338ca;
+.jira-btn-add-subtask:hover {
+  background: #ebecf0;
+  color: #172b4d;
 }
 
-.create-subtask-empty {
+.jira-subtask-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.jira-subtask-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  border-radius: 4px;
+  background: #fafbfc;
+  border: 1px solid #ebecf0;
+  font-size: 12.5px;
+}
+
+.jira-subtask-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.jira-subtask-del {
+  background: none;
+  border: none;
+  color: #6b778c;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.jira-subtask-del:hover {
+  color: #de350b;
+  background: #ffebe6;
+}
+
+.jira-subtask-empty {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
   background: #fafbfc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 6px;
+  border: 1px dashed #dfe1e6;
+  border-radius: 4px;
   font-size: 12px;
-  color: #64748b;
+  color: #6b778c;
   line-height: 1.4;
 }
 
-.create-subtask-empty-icon {
+.jira-subtask-empty-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: #97a0af;
   flex-shrink: 0;
 }
 
-.create-subtask-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 2px;
-  max-height: 120px;
-  overflow-y: auto;
-}
-
-.create-subtask-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  font-size: 12px;
-}
-
-.create-subtask-item-text {
-  color: #1e293b;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.create-subtask-item-text .subtask-num {
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-}
-
-.remove-subtask-item-btn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 3px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.remove-subtask-item-btn:hover {
-  color: #ef4444;
-  background: #fee2e2;
-}
-
-/* ==========================================================================
-   D. Attributes & Scheduling Panel (3 Contextual Groups)
-   ========================================================================== */
-
-.create-meta-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.create-meta-group {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.create-meta-group-title {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #edf2f7;
-  margin-bottom: 2px;
-}
-
-/* Priority Card Grid (Semantic Enterprise Swiss Modernist) */
-.create-priority-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-}
-
-.create-priority-card {
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #334155;
-  transition: all 0.15s ease;
-}
-
-.create-priority-card:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-}
-
-.create-priority-card .p-card-title {
-  font-size: 11.5px;
-  font-weight: 600;
-}
-
-.create-priority-card.active {
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-}
-
-.create-priority-card.active.p-hotfix {
-  border-color: #ef4444;
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-.create-priority-card.active.p-tinggi {
-  border-color: #f59e0b;
-  background: #fffbeb;
-  color: #92400e;
-}
-
-.create-priority-card.active.p-sedang {
-  border-color: #4f46e5;
-  background: #eef2ff;
-  color: #3730a3;
-}
-
-.create-priority-card.active.p-rendah {
-  border-color: #64748b;
-  background: #f1f5f9;
-  color: #1e293b;
-}
-
-.p-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.p-dot-hotfix { background: #ef4444; }
-.p-dot-tinggi { background: #f59e0b; }
-.p-dot-sedang { background: #4f46e5; }
-.p-dot-rendah { background: #94a3b8; }
-
-/* ==========================================================================
-   E. Sticky Footer (Fixed Action Bar)
-   ========================================================================== */
-
-.create-issue-footer {
+/* 3. Sticky Footer (Atlassian Jira) */
+.jira-modal-footer {
   padding: 14px 24px;
-  border-top: 1px solid #e2e8f0;
-  background: #fafbfc;
+  border-top: 1px solid #ebecf0;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  border-radius: 0 0 12px 12px;
 }
 
-.create-another-toggle {
+.jira-create-another {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #334155;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #344563;
   cursor: pointer;
   user-select: none;
 }
 
-.create-another-toggle input[type="checkbox"] {
-  accent-color: #4f46e5;
+.jira-create-another input[type="checkbox"] {
+  accent-color: #0052cc;
   width: 15px;
   height: 15px;
   cursor: pointer;
 }
 
-.create-another-hint {
-  font-size: 10.5px;
-  font-weight: 500;
-  color: #64748b;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-@media (max-width: 600px) {
-  .create-another-hint {
-    display: none;
-  }
-}
-
-.create-footer-actions {
+.jira-footer-actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.create-btn-cancel {
+.jira-btn-cancel {
   height: 36px;
   padding: 0 16px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #475569;
-  font-size: 12.5px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #42526e;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
 }
 
-.create-btn-cancel:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
+.jira-btn-cancel:hover {
+  background: #ebecf0;
+  color: #172b4d;
 }
 
-.create-btn-submit {
+.jira-btn-create {
   height: 36px;
-  padding: 0 18px;
-  border-radius: 6px;
-  border: 1px solid #4338ca;
-  background: #4f46e5;
+  padding: 0 20px;
+  border-radius: 4px;
+  border: 1px solid #0052cc;
+  background: #0052cc;
   color: #ffffff;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.15);
 }
 
-.create-btn-submit:hover {
-  background: #4338ca;
-  border-color: #3730a3;
+.jira-btn-create:hover {
+  background: #0065ff;
+  border-color: #0065ff;
 }
 
-.create-btn-submit:active {
-  background: #3730a3;
+.jira-btn-create:active {
+  background: #0747a6;
+  border-color: #0747a6;
 }

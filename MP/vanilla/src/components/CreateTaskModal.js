@@ -1,18 +1,24 @@
 /**
  * CreateTaskModal Component (100% Native Vanilla JS ES Module)
- * ASTACODE PM — CREATE NEW ISSUE MODAL REDESIGN
+ * ASTACODE PM — CREATE NEW ISSUE MODAL (ATLASSIAN JIRA CLOUD STANDARD)
  * 
- * Sesuai panduan UI/UX Redesign Brief (UI/UX_REDESIGN_BRIEF_CREATE_NEW_ISSUE_MODAL.MD):
- * 1. Layout & Proporsi 2 Kolom Enterprise SaaS (~62% Form Utama : ~38% Atribut & Penjadwalan).
- * 2. Header Ringkas & Contextual Metadata Proyek Aktif tanpa gradien berlebih.
- * 3. Klasifikasi Tipe Issue: Segmented Control Intuitif (Task Teknis, Fitur Baru, Bug/Error, Revisi CR, Maintenance).
- * 4. Form Utama: Judul Issue (fokus utama), Deskripsi & Acceptance Criteria (Markdown Toolbar), SOP Bug Triage kontekstual, dan Subtask Builder dengan Empty State informatif.
- * 5. Panel Atribut Terkelompokkan berdasarkan Konteks:
- *    - Proyek & Ownership (Target Proyek, PIC, Tautkan Epik).
- *    - Prioritas & Penjadwalan (4 Kartu Prioritas Semantik, Sprint, Tenggat Waktu).
- *    - Beban Kerja & Akses (Estimasi Jam, Visibilitas Akses).
- * 6. Sticky Footer: Opsi "Buat issue lain setelah ini", Tombol Batal, dan Tombol Utama "Buat Tiket" berhirarki tinggi.
- * 7. Nol AI Slop: Tanpa gradien dekoratif, tanpa glassmorphism, konsistensi ikon Lucide flat SVG.
+ * Standar Otentik Jira Cloud & Enterprise Software House:
+ * 1. Layout Single-Column Linear Terfokus (max-width: 760px) — Tidak memecah form ke 2 kolom yang melelahkan pandangan.
+ * 2. Alur Pengisian Top-to-Bottom Alami (Mental Model Jira):
+ *    - Header: Judul "Buat Issue" + Penanda kolom wajib + Tombol Tutup (X).
+ *    - Proyek Target (Dropdown dengan ikon proyek).
+ *    - Tipe Issue (5 Kategori resmi dengan ikon & warna Atlassian Jira).
+ *    - Status Alur Transparan: Backlog (Titik Awal sesuai Strict Forward-Only).
+ *    - Ringkasan / Judul Issue (Auto-focus, visual hierarchy tinggi).
+ *    - Deskripsi & Acceptance Criteria (Markdown Toolbar + Spesifikasi & DoD).
+ *    - Bug Triage Protocol (Kondisional otomatis jika tipe = Bug: Severity, Env, Garansi, Repro Steps, Expected vs Actual).
+ *    - Atribut Rapi Seimbang (Grid 2 Kolom: PIC + Tugaskan ke Saya, Prioritas 4 Segmen, Sprint, Epik, Tenggat Waktu, Estimasi Jam, Visibilitas).
+ *    - Checklist Subtask Awal dengan empty state compact.
+ * 3. Sticky Footer Jira Standard:
+ *    - Checkbox "Buat issue lain setelah ini" (Mode cepat input beruntun).
+ *    - Tombol Batal & Tombol Utama "Buat" (Atlassian Blue).
+ * 4. Kompatibilitas 100% dengan seluruh ID, selector, dan event handler JavaScript existing.
+ * 5. Validasi Dialog Elegan & Konsisten dengan SweetAlert2 CDN.
  */
 
 import { store } from '../state/store.js';
@@ -102,436 +108,413 @@ export class CreateTaskModal {
       {
         id: 'Task',
         label: 'Task Teknis',
-        icon: Icons.checkSquare('', 14)
+        icon: Icons.checkSquare('', 14),
+        badgeClass: 'jira-type-task'
       },
       {
         id: 'Feature',
         label: 'Fitur Baru',
-        icon: Icons.sparkles('', 14)
+        icon: Icons.sparkles('', 14),
+        badgeClass: 'jira-type-feature'
       },
       {
         id: 'Bug',
         label: 'Bug / Error',
-        icon: Icons.bug('', 14)
+        icon: Icons.bug('', 14),
+        badgeClass: 'jira-type-bug'
       },
       {
         id: 'Revisi',
         label: 'Revisi (CR)',
-        icon: Icons.rotateCcw('', 14)
+        icon: Icons.rotateCcw('', 14),
+        badgeClass: 'jira-type-revisi'
       },
       {
         id: 'Maintenance',
         label: 'Maintenance',
-        icon: Icons.wrench('', 14)
+        icon: Icons.wrench('', 14),
+        badgeClass: 'jira-type-maintenance'
       }
     ];
 
-    const priorityCards = [
-      { id: 'Hotfix', label: 'Hotfix', sub: 'Kritis / Segera', dotClass: 'p-dot-hotfix', activeClass: 'p-hotfix' },
+    const priorityList = [
+      { id: 'Hotfix', label: 'Hotfix', sub: 'Kritis / Blocker', dotClass: 'p-dot-hotfix', activeClass: 'p-hotfix' },
       { id: 'Tinggi', label: 'Tinggi', sub: 'Prioritas Utama', dotClass: 'p-dot-tinggi', activeClass: 'p-tinggi' },
       { id: 'Sedang', label: 'Sedang', sub: 'Standar Sprint', dotClass: 'p-dot-sedang', activeClass: 'p-sedang' },
-      { id: 'Rendah', label: 'Rendah', sub: 'Backlog Minor', dotClass: 'p-dot-rendah', activeClass: 'p-rendah' }
+      { id: 'Rendah', label: 'Rendah', sub: 'Minor Backlog', dotClass: 'p-dot-rendah', activeClass: 'p-rendah' }
     ];
 
-    const projectCodePrefix = activeProject.code ? activeProject.code.split('-')[0] : 'PRJ';
-
     this.container.innerHTML = `
-      <div class="modal-dialog modal-dialog--create" role="dialog" aria-modal="true" aria-labelledby="createIssueModalTitle">
+      <div class="modal-dialog modal-dialog--jira" role="dialog" aria-modal="true" aria-labelledby="createIssueModalTitle">
         
-        <!-- A. Modal Header Ringkas & Contextual Metadata -->
-        <div class="create-issue-header">
-          <div class="create-issue-title-group">
-            <div class="create-issue-icon-box">
-              ${Icons.listTodo('', 18)}
-            </div>
-            <div>
-              <div class="create-issue-header-top">
-                <h2 id="createIssueModalTitle" class="create-issue-title">Buat Issue Baru</h2>
-                <span class="create-issue-project-badge">
-                  <span class="meta-dot"></span>
-                  <span>${projectCodePrefix} · ${this.escapeHtml(activeProject.name || 'Proyek Aktif')}</span>
-                </span>
-              </div>
-              <p class="create-issue-subtitle">
-                Distribusikan spesifikasi teknis, fitur, atau laporan bug ke sprint kerja dan backlog engineering.
-              </p>
-            </div>
+        <!-- ====================================================================
+             HEADER MODAL (JIRA CLOUD STANDARD)
+             ==================================================================== -->
+        <div class="jira-modal-header">
+          <div class="jira-modal-header-left">
+            <h2 id="createIssueModalTitle" class="jira-modal-title">Buat Issue</h2>
+            <span class="jira-required-hint"><span class="req-star">*</span> Kolom wajib diisi</span>
           </div>
-
-          <button type="button" id="createModalCloseBtn" class="modal-header__close-btn" title="Tutup (Esc)">
+          <button type="button" id="createModalCloseBtn" class="jira-modal-close-btn" title="Tutup modal (Esc)" aria-label="Tutup">
             ${Icons.x('', 16)}
           </button>
         </div>
 
-        <!-- Form Body Container -->
-        <form id="createTaskForm" class="create-issue-form" novalidate>
-          
-          <!-- B. Issue Classification (Segmented Control Berkontras Bersih) -->
-          <div class="create-issue-type-bar">
-            <div class="create-type-chips">
-              ${issueTypes.map((t) => `
-                <button
-                  type="button"
-                  class="create-type-chip ${this.type === t.id ? `active type-${t.id.toLowerCase()}` : ''}"
-                  data-type="${t.id}"
-                >
-                  <span class="chip-icon">${t.icon}</span>
-                  <span>${t.label}</span>
-                </button>
-              `).join('')}
-            </div>
-          </div>
-
-          <!-- Main Scrollable Content Area -->
-          <div class="create-issue-body">
+        <!-- ====================================================================
+             FORM BODY (SINGLE-COLUMN VERTICAL NATURAL FLOW)
+             ==================================================================== -->
+        <form id="createTaskForm" class="jira-modal-form" novalidate>
+          <div class="jira-modal-body">
             
-            <!-- C. Main Form Area (~62% Proposional) -->
-            <div class="create-issue-left">
-              
-              <!-- 1. Ringkasan / Judul Issue (Fokus Utama) -->
-              <div class="create-field-group">
-                <label class="create-field-label" for="taskTitleInput">
-                  <span>JUDUL / RINGKASAN ISSUE <span class="req-star">*</span></span>
-                  <span class="create-label-hint">Format ringkas: <code>[Modul] Deskripsi tugas</code></span>
+            <!-- 1. Proyek Target -->
+            <div class="jira-form-row">
+              <label class="jira-label" for="taskTargetProjectSelect">
+                Proyek <span class="req-star">*</span>
+              </label>
+              <div class="jira-select-wrap">
+                <span class="jira-select-icon">${Icons.folder ? Icons.folder('', 15) : Icons.briefcase('', 15)}</span>
+                <select id="taskTargetProjectSelect" class="jira-select jira-select--with-icon">
+                  ${state.projects.map((p) => `
+                    <option value="${p.id}" ${p.id === this.projectId ? 'selected' : ''}>
+                      [${p.code}] ${p.name}
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+            </div>
+
+            <!-- 2. Tipe Issue (Jira Segmented Issue Type Chips) -->
+            <div class="jira-form-row">
+              <label class="jira-label">
+                Tipe Issue <span class="req-star">*</span>
+              </label>
+              <div class="jira-type-selector">
+                ${issueTypes.map((t) => `
+                  <button
+                    type="button"
+                    class="create-type-chip jira-type-btn ${this.type === t.id ? `active ${t.badgeClass}` : ''}"
+                    data-type="${t.id}"
+                    title="${t.label}"
+                  >
+                    <span class="chip-icon">${t.icon}</span>
+                    <span class="chip-text">${t.label}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="jira-divider"></div>
+
+            <!-- 3. Status Alur Transparan (Strict Forward-Only Indicator) -->
+            <div class="jira-form-row">
+              <label class="jira-label">Status Awal</label>
+              <div class="jira-status-display">
+                <span class="jira-status-badge">
+                  <span class="status-dot"></span>
+                  <span>Backlog</span>
+                </span>
+                <span class="jira-status-desc">🔒 Tiket baru otomatis masuk ke Backlog untuk dianalisis (Strict Forward-Only).</span>
+              </div>
+            </div>
+
+            <!-- 4. Ringkasan / Judul Issue (Fokus Utama) -->
+            <div class="jira-form-row">
+              <div class="jira-label-row">
+                <label class="jira-label" for="taskTitleInput">
+                  Ringkasan Issue <span class="req-star">*</span>
                 </label>
+                <span class="jira-hint">Format ringkas: <code>[Modul] Deskripsi pekerjaan</code></span>
+              </div>
+              <input
+                type="text"
+                id="taskTitleInput"
+                required
+                placeholder="Contoh: [Backend] Sinkronisasi stok multi-gudang dengan Redis distributed lock..."
+                value="${this.escapeHtml(this.title)}"
+                class="jira-input jira-input-summary"
+                autocomplete="off"
+              />
+              <span id="taskTitleError" class="jira-field-error" style="display:none;"></span>
+            </div>
+
+            <!-- 5. Deskripsi & Acceptance Criteria (Markdown Toolbar) -->
+            <div class="jira-form-row">
+              <div class="jira-label-row">
+                <label class="jira-label" for="taskDescTextarea">
+                  Deskripsi &amp; Acceptance Criteria
+                </label>
+                <span class="jira-hint">Mendukung format Markdown &amp; DoD</span>
+              </div>
+              <div class="jira-editor">
+                <div class="jira-editor-toolbar">
+                  <div class="jira-toolbar-actions">
+                    <button type="button" class="md-helper-btn" data-tag="bold" title="Tebal (Bold)"><strong>B</strong></button>
+                    <button type="button" class="md-helper-btn" data-tag="italic" title="Miring (Italic)"><em>I</em></button>
+                    <button type="button" class="md-helper-btn" data-tag="code" title="Potongan Kode (Inline Code)">&lt;/&gt;</button>
+                    <button type="button" class="md-helper-btn" data-tag="list" title="Daftar Poin (List)">• List</button>
+                  </div>
+                  <span class="jira-toolbar-badge">Spesifikasi Teknis &amp; DoD</span>
+                </div>
+                <textarea
+                  id="taskDescTextarea"
+                  rows="5"
+                  placeholder="Jelaskan kebutuhan fungsional, arsitektur data, endpoint API, serta kriteria penyelesaian (Definition of Done / DoD)..."
+                  class="jira-textarea"
+                >${this.escapeHtml(this.description)}</textarea>
+              </div>
+            </div>
+
+            <!-- 6. Standar Triage Bug (Tampil Khusus saat Tipe = Bug) -->
+            ${this.type === 'Bug' ? `
+              <div class="jira-bug-section">
+                <div class="jira-bug-header">
+                  <div class="jira-bug-title">
+                    ${Icons.bug('', 15)}
+                    <span>Standar Triage Bug (SOP QA &amp; Dev)</span>
+                  </div>
+                  <span class="jira-bug-iso-badge">SLA Enforcement</span>
+                </div>
+
+                <div class="jira-grid-3">
+                  <div class="jira-form-row">
+                    <label class="jira-sub-label" for="bugSeveritySelect">Keparahan (Severity) *</label>
+                    <select id="bugSeveritySelect" class="jira-select jira-select--sm">
+                      <option value="S1 - Critical (Blocker)" ${this.severity === 'S1 - Critical (Blocker)' ? 'selected' : ''}>S1 - Critical (SLA &lt; 4 Jam)</option>
+                      <option value="S2 - Major" ${this.severity === 'S2 - Major' ? 'selected' : ''}>S2 - Major (SLA 24 Jam)</option>
+                      <option value="S3 - Minor" ${this.severity === 'S3 - Minor' ? 'selected' : ''}>S3 - Minor (SLA 3 Hari)</option>
+                      <option value="S4 - Trivial" ${this.severity === 'S4 - Trivial' ? 'selected' : ''}>S4 - Trivial (UI/Typo)</option>
+                    </select>
+                  </div>
+
+                  <div class="jira-form-row">
+                    <label class="jira-sub-label" for="bugEnvSelect">Environment *</label>
+                    <select id="bugEnvSelect" class="jira-select jira-select--sm">
+                      <option value="Production" ${this.environment === 'Production' ? 'selected' : ''}>Production (Live Server)</option>
+                      <option value="Staging" ${this.environment === 'Staging' ? 'selected' : ''}>Staging (Pre-Release)</option>
+                      <option value="QA / Testing" ${this.environment === 'QA / Testing' ? 'selected' : ''}>QA / Testing Lab</option>
+                      <option value="Development" ${this.environment === 'Development' ? 'selected' : ''}>Development Local</option>
+                    </select>
+                  </div>
+
+                  <div class="jira-form-row">
+                    <label class="jira-sub-label" for="bugWarrantySelect">Status Garansi *</label>
+                    <select id="bugWarrantySelect" class="jira-select jira-select--sm">
+                      <option value="Garansi Proyek (Gratis)" ${this.warrantyStatus === 'Garansi Proyek (Gratis)' ? 'selected' : ''}>Garansi Proyek (Gratis)</option>
+                      <option value="Kuota Maintenance" ${this.warrantyStatus === 'Kuota Maintenance' ? 'selected' : ''}>Potong Retainer</option>
+                      <option value="Non-Garansi (Billable)" ${this.warrantyStatus === 'Non-Garansi (Billable)' ? 'selected' : ''}>Non-Garansi (Billable)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="jira-form-row">
+                  <label class="jira-sub-label" for="bugReproStepsTextarea">Langkah Reproduksi (Steps to Reproduce)</label>
+                  <textarea
+                    id="bugReproStepsTextarea"
+                    rows="2"
+                    placeholder="1. Buka modul pendaftaran&#10;2. Masukkan parameter...&#10;3. Amati error HTTP 500..."
+                    class="jira-textarea jira-textarea-mono"
+                  >${this.escapeHtml(this.reproStepsText)}</textarea>
+                </div>
+
+                <div class="jira-grid-2">
+                  <div class="jira-form-row">
+                    <label class="jira-sub-label" for="bugExpectedInput">Hasil Diharapkan (Expected)</label>
+                    <input
+                      type="text"
+                      id="bugExpectedInput"
+                      placeholder="Contoh: Transaksi berhasil disimpan"
+                      value="${this.escapeHtml(this.expectedBehavior)}"
+                      class="jira-input jira-input--sm"
+                    />
+                  </div>
+                  <div class="jira-form-row">
+                    <label class="jira-sub-label" for="bugActualInput">Hasil Aktual (Actual Error)</label>
+                    <input
+                      type="text"
+                      id="bugActualInput"
+                      placeholder="Contoh: HTTP 500 Internal Server Error"
+                      value="${this.escapeHtml(this.actualBehavior)}"
+                      class="jira-input jira-input--sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- 7. Atribut & Penjadwalan (Grid 2 Kolom Seimbang) -->
+            <div class="jira-attributes-grid">
+              
+              <!-- Penanggung Jawab (PIC) -->
+              <div class="jira-form-row">
+                <div class="jira-label-row">
+                  <label class="jira-label" for="taskAssigneeSelect">Penanggung Jawab (PIC)</label>
+                  <button type="button" id="assignToMeCreateBtn" class="jira-text-action">Tugaskan ke Saya</button>
+                </div>
+                <div class="jira-select-wrap">
+                  <span class="jira-select-icon">${Icons.user ? Icons.user('', 14) : ''}</span>
+                  <select id="taskAssigneeSelect" class="jira-select jira-select--with-icon">
+                    ${teamMembers.map((m) => `
+                      <option value="${m.id}" ${m.id === this.assigneeId ? 'selected' : ''}>
+                        ${m.name} (${m.role})
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <!-- Tingkat Prioritas (4 Segmen Semantik) -->
+              <div class="jira-form-row">
+                <label class="jira-label">Prioritas</label>
+                <div class="jira-priority-pills">
+                  ${priorityList.map((p) => `
+                    <button
+                      type="button"
+                      class="create-priority-card create-priority-segment jira-p-pill ${this.priority === p.id ? `active ${p.activeClass}` : ''}"
+                      data-priority="${p.id}"
+                      title="${p.sub}"
+                    >
+                      <span class="p-dot ${p.dotClass}"></span>
+                      <span class="p-card-title">${p.label}</span>
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Penempatan Sprint -->
+              <div class="jira-form-row">
+                <label class="jira-label" for="taskSprintSelect">Penempatan Sprint</label>
+                <select id="taskSprintSelect" class="jira-select">
+                  <option value="${activeSprint ? activeSprint.id : 'sprint-1'}">${activeSprint ? activeSprint.name : 'Sprint Aktif'} (Kanban)</option>
+                  <option value="backlog">Backlog Pool (Tanpa Sprint)</option>
+                </select>
+              </div>
+
+              <!-- Tautkan ke Epik Modul -->
+              <div class="jira-form-row">
+                <label class="jira-label" for="taskEpicSelect">Epik Modul</label>
+                <select id="taskEpicSelect" class="jira-select">
+                  <option value="">— Tanpa Epik Khusus —</option>
+                  ${projectEpics.map((ep) => `
+                    <option value="${ep.id}" ${ep.id === this.epicId ? 'selected' : ''}>
+                      ${ep.title || ep.name}
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+
+              <!-- Tenggat Waktu (Due Date) -->
+              <div class="jira-form-row">
+                <label class="jira-label" for="taskDueDateInput">Tenggat Waktu</label>
+                <input
+                  type="date"
+                  id="taskDueDateInput"
+                  value="${this.dueDate}"
+                  class="jira-input jira-input-mono"
+                />
+              </div>
+
+              <!-- Estimasi Beban (Jam) -->
+              <div class="jira-form-row">
+                <label class="jira-label" for="taskHoursInput">Estimasi Jam</label>
+                <div class="jira-input-suffix-wrap">
+                  <input
+                    type="number"
+                    id="taskHoursInput"
+                    min="1"
+                    max="160"
+                    value="${this.estimateHours}"
+                    class="jira-input jira-input-mono"
+                  />
+                  <span class="jira-input-suffix">Jam</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- 8. Visibilitas Akses -->
+            <div class="jira-form-row">
+              <label class="jira-label" for="taskVisibilitySelect">Visibilitas Akses</label>
+              <select id="taskVisibilitySelect" class="jira-select">
+                <option value="client_public" ${this.visibility === 'client_public' ? 'selected' : ''}>
+                  Publik &amp; Klien (Terlihat di Portal Klien)
+                </option>
+                <option value="internal" ${this.visibility === 'internal' ? 'selected' : ''}>
+                  Internal Tim Saja
+                </option>
+              </select>
+            </div>
+
+            <!-- 9. Checklist Subtask Awal -->
+            <div class="jira-form-row">
+              <div class="jira-label-row">
+                <label class="jira-label">
+                  Checklist Subtask (${this.initialSubtasks.length})
+                </label>
+                <span class="jira-hint">Langkah-langkah terukur pengerjaan tugas</span>
+              </div>
+              
+              <div class="jira-subtask-input-bar">
                 <input
                   type="text"
-                  id="taskTitleInput"
-                  required
-                  placeholder="Contoh: [Backend] Sinkronisasi stok multi-gudang dengan Redis distributed lock..."
-                  value="${this.escapeHtml(this.title)}"
-                  class="create-input create-input-title"
+                  id="newSubtaskTitleInput"
+                  placeholder="Ketik rincian subtask lalu tekan Enter atau klik Tambah..."
+                  class="jira-input"
                 />
-                <span id="taskTitleError" class="create-field-error" style="display:none;"></span>
+                <button type="button" id="addInitialSubtaskBtn" class="jira-btn-add-subtask">
+                  ${Icons.plus('', 13)}
+                  <span>Tambah</span>
+                </button>
               </div>
 
-              <!-- 2. Deskripsi & Acceptance Criteria (Minimal Functional Editor) -->
-              <div class="create-field-group">
-                <label class="create-field-label" for="taskDescTextarea">
-                  <span>DESKRIPSI &amp; ACCEPTANCE CRITERIA</span>
-                  <span class="create-label-hint">Mendukung format Markdown</span>
-                </label>
-                <div class="create-editor-box">
-                  <div class="create-editor-toolbar">
-                    <div class="editor-toolbar-left">
-                      <button type="button" class="md-helper-btn" data-tag="bold" title="Tebal (Bold)"><strong>B</strong></button>
-                      <button type="button" class="md-helper-btn" data-tag="italic" title="Miring (Italic)"><em>I</em></button>
-                      <button type="button" class="md-helper-btn" data-tag="code" title="Potongan Kode">&lt;/&gt;</button>
-                      <button type="button" class="md-helper-btn" data-tag="list" title="Daftar Poin">• List</button>
-                    </div>
-                    <span class="editor-toolbar-tag">Spesifikasi Teknis &amp; DoD</span>
-                  </div>
-                  <textarea
-                    id="taskDescTextarea"
-                    rows="5"
-                    placeholder="Jelaskan kebutuhan fungsional, arsitektur data, endpoint API, serta kriteria penyelesaian (Acceptance Criteria)..."
-                    class="create-editor-textarea"
-                  >${this.escapeHtml(this.description)}</textarea>
-                </div>
-              </div>
-
-              <!-- 3. Standar Bug Triage Software House (Tampil Otomatis jika Tipe = Bug) -->
-              ${this.type === 'Bug' ? `
-                <div class="create-bug-triage-box">
-                  <div class="create-bug-triage-header">
-                    <div class="create-bug-triage-title">
-                      ${Icons.bug('', 14)}
-                      <span>Standar Triage Bug (SOP QA &amp; Dev)</span>
-                    </div>
-                    <span class="create-bug-iso-badge">SLA Enforcement</span>
-                  </div>
-
-                  <!-- Severity, Env, Warranty in 3 Columns -->
-                  <div class="create-grid-3">
-                    <div class="create-field-group">
-                      <label class="create-sub-label">Keparahan (Severity) *</label>
-                      <select id="bugSeveritySelect" class="create-input create-input--sm">
-                        <option value="S1 - Critical (Blocker)" ${this.severity === 'S1 - Critical (Blocker)' ? 'selected' : ''}>S1 - Critical (SLA &lt; 4J)</option>
-                        <option value="S2 - Major" ${this.severity === 'S2 - Major' ? 'selected' : ''}>S2 - Major (SLA 24J)</option>
-                        <option value="S3 - Minor" ${this.severity === 'S3 - Minor' ? 'selected' : ''}>S3 - Minor (SLA 3H)</option>
-                        <option value="S4 - Trivial" ${this.severity === 'S4 - Trivial' ? 'selected' : ''}>S4 - Trivial (UI/Typo)</option>
-                      </select>
-                    </div>
-
-                    <div class="create-field-group">
-                      <label class="create-sub-label">Environment *</label>
-                      <select id="bugEnvSelect" class="create-input create-input--sm">
-                        <option value="Production" ${this.environment === 'Production' ? 'selected' : ''}>Production (Live)</option>
-                        <option value="Staging" ${this.environment === 'Staging' ? 'selected' : ''}>Staging (Pre-Release)</option>
-                        <option value="QA / Testing" ${this.environment === 'QA / Testing' ? 'selected' : ''}>QA / Testing Lab</option>
-                        <option value="Development" ${this.environment === 'Development' ? 'selected' : ''}>Development Local</option>
-                      </select>
-                    </div>
-
-                    <div class="create-field-group">
-                      <label class="create-sub-label">Status Garansi *</label>
-                      <select id="bugWarrantySelect" class="create-input create-input--sm">
-                        <option value="Garansi Proyek (Gratis)" ${this.warrantyStatus === 'Garansi Proyek (Gratis)' ? 'selected' : ''}>Garansi Proyek (Gratis)</option>
-                        <option value="Kuota Maintenance" ${this.warrantyStatus === 'Kuota Maintenance' ? 'selected' : ''}>Potong Kuota Retainer</option>
-                        <option value="Non-Garansi (Billable)" ${this.warrantyStatus === 'Non-Garansi (Billable)' ? 'selected' : ''}>Non-Garansi (Billable)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <!-- Reproduction Steps -->
-                  <div class="create-field-group">
-                    <label class="create-sub-label">Langkah Reproduksi (Steps to Reproduce)</label>
-                    <textarea
-                      id="bugReproStepsTextarea"
-                      rows="2"
-                      placeholder="1. Buka halaman katalog&#10;2. Masukkan parameter pencarian&#10;3. Amati response server HTTP 500..."
-                      class="create-textarea"
-                      style="font-family: var(--font-mono, monospace); font-size: 11.5px; min-height: 54px;"
-                    >${this.escapeHtml(this.reproStepsText)}</textarea>
-                  </div>
-
-                  <!-- Expected vs Actual -->
-                  <div class="create-grid-2">
-                    <div class="create-field-group">
-                      <label class="create-sub-label">Hasil Diharapkan (Expected)</label>
-                      <input
-                        type="text"
-                        id="bugExpectedInput"
-                        placeholder="Contoh: Menampilkan hasil pencarian valid"
-                        value="${this.escapeHtml(this.expectedBehavior)}"
-                        class="create-input create-input--sm"
-                      />
-                    </div>
-                    <div class="create-field-group">
-                      <label class="create-sub-label">Hasil Aktual (Actual Error)</label>
-                      <input
-                        type="text"
-                        id="bugActualInput"
-                        placeholder="Contoh: HTTP 500 Internal Server Error"
-                        value="${this.escapeHtml(this.actualBehavior)}"
-                        class="create-input create-input--sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ` : ''}
-
-              <!-- 4. Checklist Subtask Awal (Dengan Empty State Bermakna) -->
-              <div class="create-field-group">
-                <div class="create-field-label">
-                  <span>CHECKLIST SUBTASK AWAL (${this.initialSubtasks.length})</span>
-                  <span class="create-label-hint">Pecah lingkup pekerjaan ke langkah-langkah terukur</span>
-                </div>
-                
-                <div class="create-subtask-input-row">
-                  <input
-                    type="text"
-                    id="newSubtaskTitleInput"
-                    placeholder="Ketik rincian subtask lalu tekan Enter atau klik Tambah..."
-                    class="create-input"
-                  />
-                  <button type="button" id="addInitialSubtaskBtn" class="create-subtask-add-btn">
-                    ${Icons.plus('', 13)}
-                    <span>Tambah</span>
-                  </button>
-                </div>
-
-                ${this.initialSubtasks.length > 0 ? `
-                  <div class="create-subtask-list">
-                    ${this.initialSubtasks.map((st, idx) => `
-                      <div class="create-subtask-item">
-                        <span class="create-subtask-item-text">
-                          <span class="subtask-num">${idx + 1}.</span>
-                          ${this.escapeHtml(st)}
-                        </span>
-                        <button type="button" class="remove-subtask-item-btn" data-index="${idx}" title="Hapus subtask">
-                          ${Icons.x('', 12)}
-                        </button>
+              ${this.initialSubtasks.length > 0 ? `
+                <div class="jira-subtask-list">
+                  ${this.initialSubtasks.map((st, idx) => `
+                    <div class="jira-subtask-item">
+                      <div class="jira-subtask-item-left">
+                        <span class="subtask-num">${idx + 1}.</span>
+                        <span class="subtask-title">${this.escapeHtml(st)}</span>
                       </div>
-                    `).join('')}
-                  </div>
-                ` : `
-                  <div class="create-subtask-empty">
-                    <span class="create-subtask-empty-icon">${Icons.listTodo('', 14)}</span>
-                    <span>Belum ada subtask ditambahkan. Anda dapat membuat subtask sekarang atau menambahkannya nanti.</span>
-                  </div>
-                `}
-              </div>
-
-            </div>
-
-            <!-- D. Attributes & Scheduling Panel (~38% Terkelompokkan Berdasarkan Konteks) -->
-            <div class="create-issue-right">
-              <div class="create-meta-panel">
-
-                <!-- Grup 1: Project & Ownership -->
-                <div class="create-meta-group">
-                  <div class="create-meta-group-title">
-                    <span>PROYEK &amp; OWNERSHIP</span>
-                  </div>
-
-                  <!-- Target Proyek -->
-                  <div class="create-field-group">
-                    <label class="create-field-label" for="taskTargetProjectSelect">
-                      <span>PROYEK TARGET <span class="req-star">*</span></span>
-                    </label>
-                    <select id="taskTargetProjectSelect" class="create-input create-select-bold">
-                      ${state.projects.map((p) => `
-                        <option value="${p.id}" ${p.id === this.projectId ? 'selected' : ''}>
-                          ${p.code} — ${p.name}
-                        </option>
-                      `).join('')}
-                    </select>
-                  </div>
-
-                  <!-- Penanggung Jawab (PIC Developer) -->
-                  <div class="create-field-group">
-                    <div class="create-field-label">
-                      <span>PENANGGUNG JAWAB (PIC)</span>
-                      <button type="button" id="assignToMeCreateBtn" class="create-inline-link">Tugaskan ke Saya</button>
+                      <button type="button" class="remove-subtask-item-btn jira-subtask-del" data-index="${idx}" title="Hapus subtask">
+                        ${Icons.x('', 12)}
+                      </button>
                     </div>
-                    <select id="taskAssigneeSelect" class="create-input">
-                      ${teamMembers.map((m) => `
-                        <option value="${m.id}" ${m.id === this.assigneeId ? 'selected' : ''}>
-                          ${m.name} — ${m.role}
-                        </option>
-                      `).join('')}
-                    </select>
-                  </div>
-
-                  <!-- Tautkan ke Epik Modul -->
-                  <div class="create-field-group">
-                    <label class="create-field-label" for="taskEpicSelect">
-                      <span>TAUTKAN KE EPIK MODUL</span>
-                    </label>
-                    <select id="taskEpicSelect" class="create-input">
-                      <option value="">— Tanpa Epik Khusus —</option>
-                      ${projectEpics.map((ep) => `
-                        <option value="${ep.id}" ${ep.id === this.epicId ? 'selected' : ''}>
-                          ${ep.title || ep.name}
-                        </option>
-                      `).join('')}
-                    </select>
-                  </div>
+                  `).join('')}
                 </div>
-
-                <!-- Grup 2: Priority & Scheduling -->
-                <div class="create-meta-group">
-                  <div class="create-meta-group-title">
-                    <span>PRIORITAS &amp; PENJADWALAN</span>
-                  </div>
-
-                  <!-- Tingkat Prioritas (4 Kartu Semantik Bersih) -->
-                  <div class="create-field-group">
-                    <label class="create-field-label">
-                      <span>TINGKAT PRIORITAS</span>
-                    </label>
-                    <div class="create-priority-grid">
-                      ${priorityCards.map((p) => `
-                        <div
-                          class="create-priority-card ${this.priority === p.id ? `active ${p.activeClass}` : ''}"
-                          data-priority="${p.id}"
-                          role="button"
-                          tabindex="0"
-                        >
-                          <span class="p-dot ${p.dotClass}"></span>
-                          <span class="p-card-title">${p.label}</span>
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
-
-                  <!-- Penempatan Sprint & Tenggat Waktu -->
-                  <div class="create-grid-2">
-                    <div class="create-field-group">
-                      <label class="create-field-label" for="taskSprintSelect">
-                        <span>PENEMPATAN</span>
-                      </label>
-                      <select id="taskSprintSelect" class="create-input">
-                        <option value="${activeSprint ? activeSprint.id : 'sprint-1'}">${activeSprint ? activeSprint.name : 'Sprint Aktif'} (Kanban)</option>
-                        <option value="backlog">Backlog Pool</option>
-                      </select>
-                    </div>
-
-                    <div class="create-field-group">
-                      <label class="create-field-label" for="taskDueDateInput">
-                        <span>TENGGAT WAKTU</span>
-                      </label>
-                      <input
-                        type="date"
-                        id="taskDueDateInput"
-                        value="${this.dueDate}"
-                        class="create-input create-input-mono"
-                      />
-                    </div>
-                  </div>
+              ` : `
+                <div class="jira-subtask-empty">
+                  <span class="jira-subtask-empty-icon">${Icons.listTodo('', 14)}</span>
+                  <span>Belum ada subtask. Anda dapat menambahkan subtask sekarang atau nanti langsung di papan kanban.</span>
                 </div>
-
-                <!-- Grup 3: Workload & Visibility -->
-                <div class="create-meta-group">
-                  <div class="create-meta-group-title">
-                    <span>BEBAN KERJA &amp; AKSES</span>
-                  </div>
-
-                  <div class="create-grid-2">
-                    <!-- Estimasi Beban (Jam) -->
-                    <div class="create-field-group">
-                      <label class="create-field-label" for="taskHoursInput">
-                        <span>ESTIMASI BEBAN</span>
-                      </label>
-                      <div class="create-input-suffix-wrap">
-                        <input
-                          type="number"
-                          id="taskHoursInput"
-                          min="1"
-                          max="160"
-                          value="${this.estimateHours}"
-                          class="create-input create-input-mono"
-                        />
-                        <span class="create-input-suffix">Jam</span>
-                      </div>
-                    </div>
-
-                    <!-- Visibilitas Akses -->
-                    <div class="create-field-group">
-                      <label class="create-field-label" for="taskVisibilitySelect">
-                        <span>VISIBILITAS</span>
-                      </label>
-                      <select id="taskVisibilitySelect" class="create-input">
-                        <option value="client_public" ${this.visibility === 'client_public' ? 'selected' : ''}>
-                          Publik &amp; Klien
-                        </option>
-                        <option value="internal" ${this.visibility === 'internal' ? 'selected' : ''}>
-                          Internal Tim
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
+              `}
             </div>
 
           </div>
 
-          <!-- E. Sticky Footer Selalu Terlihat -->
-          <div class="create-issue-footer">
-            <label class="create-another-toggle">
+          <!-- ====================================================================
+               STICKY FOOTER (ATLASSIAN JIRA STANDARD)
+               ==================================================================== -->
+          <div class="jira-modal-footer">
+            <label class="jira-create-another">
               <input type="checkbox" id="createAnotherCheck" ${this.createAnother ? 'checked' : ''} />
-              <span>Buat issue lain setelah ini</span>
-              <span class="create-another-hint">Mode input beruntun</span>
+              <span class="create-another-text">Buat issue lain setelah ini</span>
             </label>
 
-            <div class="create-footer-actions">
+            <div class="jira-footer-actions">
               <button
                 type="button"
                 id="createModalCancelBtn"
-                class="create-btn-cancel"
+                class="jira-btn-cancel"
               >
                 Batal
               </button>
 
               <button
                 type="submit"
-                class="create-btn-submit"
+                id="createIssueSubmitBtn"
+                class="jira-btn-create"
               >
                 ${Icons.check('', 15)}
-                <span>Buat Tiket</span>
+                <span>Buat</span>
               </button>
             </div>
           </div>
@@ -545,7 +528,11 @@ export class CreateTaskModal {
   }
 
   escapeHtml(text = '') {
-    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   attachEvents() {
@@ -555,7 +542,7 @@ export class CreateTaskModal {
     const cancelBtn = this.container.querySelector('#createModalCancelBtn');
     if (cancelBtn) cancelBtn.addEventListener('click', () => store.closeCreateTaskModal());
 
-    // Type Selector Chips (Segmented Controls)
+    // Type Selector Chips
     this.container.querySelectorAll('.create-type-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
         this.type = chip.dataset.type;
@@ -564,22 +551,14 @@ export class CreateTaskModal {
       });
     });
 
-    // Priority Cards
-    this.container.querySelectorAll('.create-priority-card').forEach((card) => {
-      const handleSelect = () => {
-        this.priority = card.dataset.priority;
-        this.container.querySelectorAll('.create-priority-card').forEach((c) => {
-          c.classList.remove('active', 'p-hotfix', 'p-tinggi', 'p-sedang', 'p-rendah');
+    // Priority Segments
+    this.container.querySelectorAll('.create-priority-card, .create-priority-segment').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        this.priority = btn.dataset.priority;
+        this.container.querySelectorAll('.create-priority-card, .create-priority-segment').forEach((b) => {
+          b.classList.remove('active', 'p-hotfix', 'p-tinggi', 'p-sedang', 'p-rendah');
         });
-        card.classList.add('active', `p-${this.priority.toLowerCase()}`);
-      };
-
-      card.addEventListener('click', handleSelect);
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleSelect();
-        }
+        btn.classList.add('active', `p-${this.priority.toLowerCase()}`);
       });
     });
 
@@ -602,7 +581,7 @@ export class CreateTaskModal {
         if (assigneeSelect) {
           assigneeSelect.value = 'user-pm';
           this.assigneeId = 'user-pm';
-          store.addToast('info', 'Penugasan Mandiri', 'Tiket ini dialokasikan ke Anda (Project Manager).');
+          swalSuccess('Ditugaskan ke Anda', 'Tiket ini dialokasikan ke Anda sebagai Penanggung Jawab (PIC).');
         }
       });
     }
@@ -637,7 +616,7 @@ export class CreateTaskModal {
       const handleAddSub = () => {
         const val = subInput.value.trim();
         if (!val) {
-          swalValidation('Subtask Kosong', 'Silakan ketik judul subtask sebelum menambahkan ke daftar.');
+          swalValidation('Subtask Kosong', 'Silakan ketik rincian subtask sebelum menambahkan ke daftar.');
           return;
         }
         this.initialSubtasks.push(val);
@@ -688,18 +667,18 @@ export class CreateTaskModal {
         const title = titleInput ? titleInput.value.trim() : '';
         if (!title) {
           if (titleInput) {
-            titleInput.classList.add('create-input--error');
+            titleInput.classList.add('jira-input--error');
             titleInput.focus();
           }
           if (titleError) {
-            titleError.textContent = 'Judul tiket wajib diisi.';
+            titleError.textContent = 'Ringkasan issue wajib diisi.';
             titleError.style.display = 'block';
           }
-          swalValidation('Judul Tiket Wajib Diisi', 'Silakan masukkan ringkasan atau judul tiket pekerjaan sebelum menyimpan.');
+          swalValidation('Ringkasan Issue Wajib Diisi', 'Silakan masukkan ringkasan atau judul tiket sebelum menyimpan.');
           return;
         }
 
-        if (titleInput) titleInput.classList.remove('create-input--error');
+        if (titleInput) titleInput.classList.remove('jira-input--error');
         if (titleError) titleError.style.display = 'none';
 
         const description = descInput ? descInput.value.trim() : '';
@@ -778,7 +757,7 @@ export class CreateTaskModal {
           subtasks: subtasks.length > 0 ? subtasks : undefined
         });
 
-        swalSuccess('Tiket Berhasil Dibuat', `Issue <b>${title}</b> telah didaftarkan ke status <b>Backlog</b>.`);
+        swalSuccess('Issue Berhasil Dibuat', `Issue <b>${this.escapeHtml(title)}</b> telah didaftarkan ke status <b>Backlog</b>.`);
 
         // Mode Input Beruntun (Create Another)
         if (this.createAnother) {
