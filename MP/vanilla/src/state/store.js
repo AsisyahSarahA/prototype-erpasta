@@ -5,7 +5,7 @@
 
 import { INITIAL_PROJECTS, INITIAL_MEMBERS, INITIAL_EPICS, INITIAL_SPRINTS, INITIAL_TASKS, INITIAL_CRM_DEALS, INITIAL_INVOICES, INITIAL_EVENTS, INITIAL_COMMENTS, INITIAL_RULES } from "../data/mockData.js";
 import { validateStatusTransition, getCanonicalStatus } from "../utils/workflow.js";
-import { swalValidation, swalError } from "../utils/swal.js";
+import { swalValidation, swalError, swalSuccess } from "../utils/swal.js";
 
 class Store {
   constructor() {
@@ -34,6 +34,8 @@ class Store {
       filterSeverity: "all",
       filterAssignee: "all",
       filterEpic: "all",
+      filterSprint: "all",
+      selectedSprintId: "sprint-lib-1",
       selectedTask: null,
       isCreateTaskModalOpen: false,
       isSopGuideModalOpen: false,
@@ -228,6 +230,7 @@ class Store {
       filterSeverity: "all",
       filterAssignee: "all",
       filterEpic: "all",
+      filterSprint: "all",
     });
   }
 
@@ -297,12 +300,14 @@ class Store {
   }
 
   // --- Task Operations ---
-  updateTaskStatus(taskId, targetStatus, reason = "", bypassRules = false) {
+  updateTaskStatus(taskId, targetStatus, reason = "", bypassRules = false, showSwal = false) {
     const currentTask = this.state.tasks.find((t) => t.id === taskId);
     if (!currentTask) return false;
 
     const oldStatus = currentTask.status || "Backlog";
     const canonicalTarget = getCanonicalStatus(targetStatus);
+
+    if (oldStatus === canonicalTarget) return false;
 
     if (!bypassRules) {
       const validation = validateStatusTransition(oldStatus, canonicalTarget);
@@ -329,12 +334,22 @@ class Store {
     }
 
     // Append-only audit trail event (PRD Section 6.20)
-    const actor = (this.state.teamMembers || []).find((m) => m.id === (this.state.role === "pm" ? "user-pm" : this.state.role === "qa" ? "user-qa" : "user-dev-1")) || { name: "Sistem Manjer", role: "System" };
+    // Dynamic PIC / Actor determination:
+    // Gunakan PIC / Developer yang ditetapkan pada tiket sebagai pelaksana tindakan utama
+    const targetTask = this.state.tasks.find((t) => t.id === taskId);
+    const assignedPic = targetTask?.assigneeId
+      ? (this.state.teamMembers || []).find((m) => m.id === targetTask.assigneeId)
+      : null;
+    const actor = assignedPic
+      || (this.state.teamMembers || []).find((m) => m.id === (this.state.role === "pm" ? "user-pm" : this.state.role === "qa" ? "user-qa" : "user-dev-1"))
+      || { name: "Developer PIC", role: "Engineering" };
+
     const auditEvent = {
       id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       taskId,
       actorName: actor.name,
       actorRole: actor.role,
+      actor: `${actor.name} (${actor.role})`,
       action: `Mengubah status dari "${oldStatus}" ke "${canonicalTarget}"`,
       reason: reason || undefined,
       timestamp: new Date().toISOString(),
@@ -344,10 +359,45 @@ class Store {
 
     this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
     this.addToast("success", "Status Tiket Diperbarui", `Tiket dipindahkan ke: ${canonicalTarget}`);
+
+    if (showSwal) {
+      const stageColors = {
+        'Backlog': '#64748b',
+        'To Do': '#3b82f6',
+        'In Development': '#6366f1',
+        'Review & Testing': '#f59e0b',
+        'Done': '#10b981',
+        'Rejected': '#ef4444'
+      };
+      const oldColor = stageColors[oldStatus] || '#64748b';
+      const targetColor = stageColors[canonicalTarget] || '#10b981';
+      const taskKey = targetTask?.key ? `<b>[${targetTask.key}]</b> ` : '';
+      const taskTitle = targetTask?.title ? `<div style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.4;">${targetTask.title}</div>` : '';
+
+      swalSuccess(
+        'Status Berhasil Diperbarui!',
+        `
+          <div style="font-size:13.5px;color:#1e293b;margin-bottom:8px;">
+            ${taskKey}Tiket berhasil dipindahkan progresnya:
+          </div>
+          <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-top:4px;">
+            <span style="font-size:12px;font-weight:700;color:${oldColor};background:${oldColor}15;padding:2px 8px;border-radius:5px;">${oldStatus}</span>
+            <span style="color:#94a3b8;font-size:13px;">➔</span>
+            <span style="font-size:12px;font-weight:700;color:${targetColor};background:${targetColor}15;padding:2px 8px;border-radius:5px;">${canonicalTarget}</span>
+          </div>
+          ${taskTitle}
+        `,
+        2200
+      );
+    }
+
     return true;
   }
 
   updateTask(taskId, updates) {
+    const prevTask = this.state.tasks.find((t) => t.id === taskId);
+    let newEvents = this.state.events || [];
+
     const updatedTasks = this.state.tasks.map((task) => {
       if (task.id === taskId) {
         return { ...task, ...updates, lastStatusUpdated: new Date().toISOString() };
@@ -360,7 +410,60 @@ class Store {
       selectedTask = { ...selectedTask, ...updates };
     }
 
-    this.setState({ tasks: updatedTasks, selectedTask });
+    if (prevTask) {
+      // 1. Audit event saat PIC dialihkan / diubah
+      if (updates.assigneeId && updates.assigneeId !== prevTask.assigneeId) {
+        const newPic = (this.state.teamMembers || []).find((m) => m.id === updates.assigneeId) || { name: "Tim", role: "Dev" };
+        const oldPic = (this.state.teamMembers || []).find((m) => m.id === prevTask.assigneeId) || { name: "Sebelumnya", role: "Dev" };
+        const auditEv = {
+          id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          taskId,
+          actorName: newPic.name,
+          actorRole: newPic.role,
+          actor: `${newPic.name} (${newPic.role})`,
+          action: `Mengalihkan PIC dari ${oldPic.name} ke ${newPic.name} (${newPic.role})`,
+          timestamp: new Date().toISOString(),
+        };
+        newEvents = [auditEv, ...newEvents];
+      }
+
+      // 2. Audit event saat Beban Jam Kerja dicatat / diubah
+      if (updates.timeLoggedHours !== undefined && Number(updates.timeLoggedHours) !== Number(prevTask.timeLoggedHours || 0)) {
+        const targetAssigneeId = updates.assigneeId || prevTask.assigneeId;
+        const pic = (this.state.teamMembers || []).find((m) => m.id === targetAssigneeId) || { name: "Developer", role: "Engineering" };
+        const hours = Number(updates.timeLoggedHours) || 0;
+        const est = Number(updates.estimateHours || prevTask.estimateHours || 0);
+        const auditEv = {
+          id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          taskId,
+          actorName: pic.name,
+          actorRole: pic.role,
+          actor: `${pic.name} (${pic.role})`,
+          action: `Mencatat beban kerja ${hours} jam (Estimasi: ${est} jam)`,
+          timestamp: new Date().toISOString(),
+        };
+        newEvents = [auditEv, ...newEvents];
+      }
+
+      // 3. Audit event saat Estimasi Beban diubah
+      if (updates.estimateHours !== undefined && Number(updates.estimateHours) !== Number(prevTask.estimateHours || 0)) {
+        const targetAssigneeId = updates.assigneeId || prevTask.assigneeId;
+        const pic = (this.state.teamMembers || []).find((m) => m.id === targetAssigneeId) || { name: "Lead Dev / PM", role: "Management" };
+        const est = Number(updates.estimateHours) || 0;
+        const auditEv = {
+          id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          taskId,
+          actorName: pic.name,
+          actorRole: pic.role,
+          actor: `${pic.name} (${pic.role})`,
+          action: `Memperbarui estimasi beban kerja menjadi ${est} jam`,
+          timestamp: new Date().toISOString(),
+        };
+        newEvents = [auditEv, ...newEvents];
+      }
+    }
+
+    this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
   }
 
   deleteTask(taskId) {
@@ -388,6 +491,7 @@ class Store {
       key,
       projectId: targetProject.id,
       epicId: taskData.epicId || "",
+      sprintId: taskData.sprintId || undefined,
       type: taskData.type || "Task",
       title: taskData.title || "Untitled Task",
       description: taskData.description || "",
@@ -556,6 +660,12 @@ class Store {
   }
 
   toggleSubtask(taskId, subtaskId) {
+    const task = this.state.tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const targetSub = (task.subtasks || []).find((s) => s.id === subtaskId);
+    const willBeCompleted = targetSub ? !targetSub.completed : false;
+    const picMember = (this.state.teamMembers || []).find((m) => m.id === task.assigneeId) || { name: "Developer", role: "Engineering" };
+
     const updatedTasks = this.state.tasks.map((t) => {
       if (t.id === taskId) {
         const updatedSubs = t.subtasks.map((st) => {
@@ -580,7 +690,23 @@ class Store {
       selectedTask = { ...selectedTask, subtasks: updatedSubs };
     }
 
-    this.setState({ tasks: updatedTasks, selectedTask });
+    let newEvents = this.state.events || [];
+    if (targetSub) {
+      const auditEv = {
+        id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        taskId,
+        actorName: picMember.name,
+        actorRole: picMember.role,
+        actor: `${picMember.name} (${picMember.role})`,
+        action: willBeCompleted 
+          ? `Menyelesaikan subtask: "${targetSub.title}"`
+          : `Membuka kembali subtask: "${targetSub.title}"`,
+        timestamp: new Date().toISOString(),
+      };
+      newEvents = [auditEv, ...newEvents];
+    }
+
+    this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
   }
 
   addSubtask(taskId, title) {
@@ -612,7 +738,19 @@ class Store {
       };
     }
 
-    this.setState({ tasks: updatedTasks, selectedTask });
+    const picMember = (this.state.teamMembers || []).find((m) => m.id === task.assigneeId) || { name: "Developer", role: "Engineering" };
+    const auditEv = {
+      id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      taskId,
+      actorName: picMember.name,
+      actorRole: picMember.role,
+      actor: `${picMember.name} (${picMember.role})`,
+      action: `Menambahkan subtask: "${newSub.title}"`,
+      timestamp: new Date().toISOString(),
+    };
+    const newEvents = [auditEv, ...(this.state.events || [])];
+
+    this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
     this.addToast("success", "Subtask Ditambahkan", `"${newSub.title}" siap dikerjakan.`);
   }
 
@@ -2287,6 +2425,8 @@ class Store {
       filterSeverity: "all",
       filterAssignee: "all",
       filterEpic: "all",
+      filterSprint: "all",
+      selectedSprintId: "sprint-lib-1",
       selectedTask: null,
       isCreateTaskModalOpen: false,
       isIntakeModalOpen: false,
@@ -2305,6 +2445,220 @@ class Store {
 
   getProjectEpics() {
     return this.state.epics.filter((e) => e.projectId === this.state.selectedProjectId);
+  }
+
+  // --- Sprint Management ---
+  setSelectedSprintId(sprintId) {
+    this.setState({
+      selectedSprintId: sprintId,
+      filterSprint: sprintId,
+    });
+  }
+
+  getProjectSprints(projectId) {
+    const targetProjectId = projectId || this.state.selectedProjectId;
+    return (this.state.sprints || []).filter((s) => s.projectId === targetProjectId);
+  }
+
+  getActiveSprint(projectId) {
+    const sprints = this.getProjectSprints(projectId);
+    return sprints.find((s) => s.status === "active") || sprints[0] || null;
+  }
+
+  getSelectedSprint(projectId) {
+    const sprints = this.getProjectSprints(projectId);
+    if (this.state.selectedSprintId && this.state.selectedSprintId !== "all" && this.state.selectedSprintId !== "backlog_pool") {
+      const found = sprints.find((s) => s.id === this.state.selectedSprintId);
+      if (found) return found;
+    }
+    return this.getActiveSprint(projectId);
+  }
+
+  createSprint(sprintData = {}) {
+    const targetProjectId = sprintData.projectId || this.state.selectedProjectId;
+    const projectSprints = this.getProjectSprints(targetProjectId);
+    const sprintCount = projectSprints.length + 1;
+    const newSprintId = sprintData.id || `sprint-${Date.now()}`;
+    const name = sprintData.name ? sprintData.name.trim() : `Sprint ${sprintCount}: Pengembangan Fitur & Stabilisasi`;
+    const status = sprintData.status || "future";
+
+    const newSprint = {
+      id: newSprintId,
+      projectId: targetProjectId,
+      name,
+      startDate: sprintData.startDate || new Date().toISOString().split("T")[0],
+      endDate: sprintData.endDate || new Date(Date.now() + (Number(sprintData.durationDays) || 14) * 86400000).toISOString().split("T")[0],
+      capacityHours: Number(sprintData.capacityHours) || 160,
+      goal: sprintData.goal ? sprintData.goal.trim() : "",
+      status,
+      createdAt: new Date().toISOString(),
+    };
+
+    let updatedSprints = (this.state.sprints || []).map((s) => {
+      if (status === "active" && s.projectId === targetProjectId && s.status === "active") {
+        return { ...s, status: "future" };
+      }
+      return s;
+    });
+    updatedSprints = [...updatedSprints, newSprint];
+
+    // Alokasikan task jika dipilih
+    let updatedTasks = this.state.tasks;
+    if (Array.isArray(sprintData.taskIds) && sprintData.taskIds.length > 0) {
+      updatedTasks = this.state.tasks.map((t) => {
+        if (sprintData.taskIds.includes(t.id)) {
+          return { ...t, sprintId: newSprintId };
+        }
+        return t;
+      });
+    }
+
+    const picMember = (this.state.teamMembers || []).find((m) => m.id === (this.state.role === "pm" ? "user-pm" : "user-owner")) || { name: "PM Asisyah", role: "Project Manager" };
+    const auditEv = {
+      id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      actorName: picMember.name,
+      actorRole: picMember.role,
+      actor: `${picMember.name} (${picMember.role})`,
+      action: `Membuat sprint baru "${name}" (${status === "active" ? "Status: Aktif" : "Status: Rencana"})${sprintData.taskIds?.length ? ` dengan ${sprintData.taskIds.length} tiket` : ""}`,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.setState({
+      sprints: updatedSprints,
+      tasks: updatedTasks,
+      selectedSprintId: newSprintId,
+      filterSprint: newSprintId,
+      events: [auditEv, ...(this.state.events || [])],
+    });
+
+    this.addToast("success", "Sprint Berhasil Dibuat", `Sprint "${name}" telah ditambahkan.`);
+    return newSprint;
+  }
+
+  startSprint(sprintId) {
+    const targetSprint = (this.state.sprints || []).find((s) => s.id === sprintId);
+    if (!targetSprint) return false;
+
+    const targetProjectId = targetSprint.projectId;
+    const updatedSprints = (this.state.sprints || []).map((s) => {
+      if (s.projectId === targetProjectId) {
+        if (s.id === sprintId) {
+          return { ...s, status: "active", startDate: new Date().toISOString().split("T")[0] };
+        }
+        if (s.status === "active") {
+          return { ...s, status: "completed" };
+        }
+      }
+      return s;
+    });
+
+    const picMember = (this.state.teamMembers || []).find((m) => m.id === (this.state.role === "pm" ? "user-pm" : "user-owner")) || { name: "PM Asisyah", role: "Project Manager" };
+    const auditEv = {
+      id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      actorName: picMember.name,
+      actorRole: picMember.role,
+      actor: `${picMember.name} (${picMember.role})`,
+      action: `Memulai sprint "${targetSprint.name}" menjadi SPRINT AKTIF`,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.setState({
+      sprints: updatedSprints,
+      selectedSprintId: sprintId,
+      filterSprint: sprintId,
+      events: [auditEv, ...(this.state.events || [])],
+    });
+
+    this.addToast("success", "Sprint Dimulai!", `"${targetSprint.name}" sekarang berstatus AKTIF.`);
+    return true;
+  }
+
+  completeSprint(sprintId) {
+    const targetSprint = (this.state.sprints || []).find((s) => s.id === sprintId);
+    if (!targetSprint) return false;
+
+    const targetProjectId = targetSprint.projectId;
+    const nextSprint = (this.state.sprints || []).find((s) => s.projectId === targetProjectId && s.id !== sprintId && s.status === "future");
+
+    const updatedTasks = (this.state.tasks || []).map((t) => {
+      if (t.sprintId === sprintId && t.status !== "Done" && t.status !== "Selesai") {
+        return { ...t, sprintId: nextSprint ? nextSprint.id : undefined };
+      }
+      return t;
+    });
+
+    const updatedSprints = (this.state.sprints || []).map((s) => {
+      if (s.id === sprintId) {
+        return { ...s, status: "completed", completionDate: new Date().toISOString() };
+      }
+      if (nextSprint && s.id === nextSprint.id) {
+        return { ...s, status: "active" };
+      }
+      return s;
+    });
+
+    const nextSprintId = nextSprint ? nextSprint.id : "all";
+    const picMember = (this.state.teamMembers || []).find((m) => m.id === (this.state.role === "pm" ? "user-pm" : "user-owner")) || { name: "PM Asisyah", role: "Project Manager" };
+    const auditEv = {
+      id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      actorName: picMember.name,
+      actorRole: picMember.role,
+      actor: `${picMember.name} (${picMember.role})`,
+      action: `Menyelesaikan sprint "${targetSprint.name}". Tiket yang belum tuntas dialihkan ke ${nextSprint ? nextSprint.name : "Backlog Pool"}.`,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.setState({
+      sprints: updatedSprints,
+      tasks: updatedTasks,
+      selectedSprintId: nextSprintId,
+      filterSprint: nextSprintId,
+      events: [auditEv, ...(this.state.events || [])],
+    });
+
+    this.addToast("success", "Sprint Dituntaskan!", `Sprint "${targetSprint.name}" telah diselesaikan.`);
+    return true;
+  }
+
+  moveTaskToSprint(taskId, targetSprintId) {
+    const task = (this.state.tasks || []).find((t) => t.id === taskId);
+    if (!task) return;
+
+    const targetSprint = targetSprintId ? (this.state.sprints || []).find((s) => s.id === targetSprintId) : null;
+    const prevSprint = task.sprintId ? (this.state.sprints || []).find((s) => s.id === task.sprintId) : null;
+
+    const updatedTasks = (this.state.tasks || []).map((t) => {
+      if (t.id === taskId) {
+        return { ...t, sprintId: targetSprintId || undefined };
+      }
+      return t;
+    });
+
+    let selectedTask = this.state.selectedTask;
+    if (selectedTask && selectedTask.id === taskId) {
+      selectedTask = { ...selectedTask, sprintId: targetSprintId || undefined };
+    }
+
+    const picMember = (this.state.teamMembers || []).find((m) => m.id === task.assigneeId) || { name: "Tim", role: "Dev" };
+    const auditEv = {
+      id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      taskId,
+      actorName: picMember.name,
+      actorRole: picMember.role,
+      actor: `${picMember.name} (${picMember.role})`,
+      action: targetSprint 
+        ? `Memindahkan tiket ke "${targetSprint.name}"` 
+        : `Mengembalikan tiket dari "${prevSprint?.name || 'Sprint'}" ke Backlog Pool`,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.setState({
+      tasks: updatedTasks,
+      selectedTask,
+      events: [auditEv, ...(this.state.events || [])],
+    });
+
+    this.addToast("info", "Alokasi Tiket Diperbarui", targetSprint ? `Tiket dimasukkan ke ${targetSprint.name}` : "Tiket dikembalikan ke Backlog Pool");
   }
 
   getFilteredTasks() {

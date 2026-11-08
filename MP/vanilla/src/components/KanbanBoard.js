@@ -33,7 +33,12 @@ const ICONS = {
   xCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`,
   rotateCcw: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
   lock: `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
-  info: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`
+  info: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`,
+  calendar: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`,
+  user: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  tag: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>`,
+  flag: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>`,
+  layers: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`
 };
 
 export class KanbanBoard {
@@ -86,6 +91,13 @@ export class KanbanBoard {
       if (state.filterEpic && state.filterEpic !== 'all') {
         if (t.epicId !== state.filterEpic) return false;
       }
+      if (state.filterSprint && state.filterSprint !== 'all') {
+        if (state.filterSprint === 'backlog_pool') {
+          if (t.sprintId) return false;
+        } else if (t.sprintId !== state.filterSprint) {
+          return false;
+        }
+      }
       return true;
     });
 
@@ -101,8 +113,32 @@ export class KanbanBoard {
     const criticalBugs = filteredTasks.filter(
       (t) => t.type === 'Bug' && (t.severity?.startsWith('S1') || t.severity?.startsWith('S2') || t.priority === 'Hotfix')
     );
-    const activeSprintObj = (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id && s.status === 'active') || (state.sprints || []).find((s) => activeProject && s.projectId === activeProject.id);
-    const activeSprintName = activeSprintObj ? activeSprintObj.name : `Sprint 1: ${activeProject ? activeProject.name : 'MVP'}`;
+    const projectSprints = (state.sprints || []).filter((s) => activeProject && s.projectId === activeProject.id);
+    const activeSprintObj = projectSprints.find((s) => s.status === 'active') || projectSprints[0];
+    let selectedSprintObj = activeSprintObj;
+    if (state.filterSprint && state.filterSprint !== 'all' && state.filterSprint !== 'backlog_pool') {
+      selectedSprintObj = projectSprints.find((s) => s.id === state.filterSprint) || activeSprintObj;
+    }
+    const isSprintFiltered = Boolean(state.filterSprint && state.filterSprint !== 'all');
+    const isSprintActive = isSprintFiltered;
+    const isPicActive = Boolean(state.filterAssignee && state.filterAssignee !== 'all');
+    const isTypeActive = Boolean(state.filterType && state.filterType !== 'all');
+    const isPriorityActive = Boolean(state.filterPriority && state.filterPriority !== 'all');
+    const isEpicActive = Boolean(state.filterEpic && state.filterEpic !== 'all');
+    const hasActiveFilters = Boolean(
+      (state.searchQuery && state.searchQuery.trim().length > 0) ||
+      isSprintActive ||
+      isPicActive ||
+      isTypeActive ||
+      isPriorityActive ||
+      isEpicActive
+    );
+    const selectedSprintLabel = isSprintFiltered
+      ? (state.filterSprint === 'backlog_pool' ? 'Backlog Pool' : 'Sprint Terpilih')
+      : 'Sprint Aktif';
+    const selectedSprintName = state.filterSprint === 'backlog_pool'
+      ? 'Backlog Pool (Tanpa Sprint)'
+      : (selectedSprintObj ? selectedSprintObj.name : `Sprint 1: ${activeProject ? activeProject.name : 'MVP'}`);
 
     // Columns HTML for 6 Kanban Stages
     const columnsHtml = KANBAN_STAGES.map((stage, stageIdx) => {
@@ -373,30 +409,15 @@ export class KanbanBoard {
 
             <div class="kanban-kpi-divider"></div>
 
-            <div class="kanban-kpi-stat kanban-kpi-stat--sprint" title="${activeSprintName.replace(/"/g, '&quot;')}">
-              <span class="kanban-kpi-label">Sprint Aktif</span>
-              <strong class="kanban-kpi-sprint-text">${activeSprintName}</strong>
+            <div class="kanban-kpi-stat kanban-kpi-stat--sprint" id="kanban-kpi-sprint-card" style="cursor: pointer;" title="Klik untuk fokus memfilter sprint aktif">
+              <span class="kanban-kpi-label">${selectedSprintLabel}</span>
+              <strong class="kanban-kpi-sprint-text">${selectedSprintName}</strong>
             </div>
-          </div>
 
-          ${criticalBugs.length > 0 ? `
-            <div class="kanban-kpi-alert kanban-kpi-alert--danger" title="${criticalBugs.length} tiket Bug S1/S2 atau Hotfix membutuhkan penanganan segera">
-              ${ICONS.alertTriangle}
-              <span>${criticalBugs.length} Bug Kritis S1/S2 Menunggu Penanganan</span>
-            </div>
-          ` : `
-            <div class="kanban-kpi-alert kanban-kpi-alert--safe">
-              ${ICONS.checkCircle}
-              <span>0 Bug Kritis S1/S2</span>
-            </div>
-          `}
-        </div>
+            <div class="kanban-kpi-divider"></div>
 
-        <!-- Row 2: Filter Controls & Dual View Switcher Row -->
-        <div class="kanban-filter-row">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;min-width:0;">
-            <!-- View Mode Switcher (Papan Kanban & List Tabel) -->
-            <div class="kanban-view-switcher">
+            <!-- View Mode Switcher (Papan Kanban & List Tabel) di sebelah teks Sprint Aktif -->
+            <div class="kanban-view-switcher" title="Beralih mode tampilan pekerjaan">
               <button
                 type="button"
                 class="kanban-view-btn btn-toggle-view ${this.viewMode === 'kanban' ? 'active' : ''}"
@@ -416,36 +437,74 @@ export class KanbanBoard {
                 <span>List Tabel</span>
               </button>
             </div>
+          </div>
 
-            <!-- Search input -->
-            <div class="kanban-search-wrap">
-              <span class="kanban-search-icon">
-                ${ICONS.search}
-              </span>
-              <input
-                id="kanban-search-box"
-                type="text"
-                class="form-input kanban-search-input"
-                placeholder="Filter cepat judul, key tiket, deskripsi..."
-                value="${state.searchQuery || ''}"
-              />
+          ${criticalBugs.length > 0 ? `
+            <div class="kanban-kpi-alert kanban-kpi-alert--danger" title="${criticalBugs.length} tiket Bug S1/S2 atau Hotfix membutuhkan penanganan segera">
+              ${ICONS.alertTriangle}
+              <span>${criticalBugs.length} Bug Kritis S1/S2 Menunggu Penanganan</span>
             </div>
+          ` : `
+            <div class="kanban-kpi-alert kanban-kpi-alert--safe">
+              ${ICONS.checkCircle}
+              <span>0 Bug Kritis S1/S2</span>
+            </div>
+          `}
+        </div>
+
+        <!-- Row 2: Filter Controls Row (Pencarian Cepat & Filter Dropdown Tanpa Tabrakan) -->
+        <div class="kanban-filter-row">
+          <!-- Search input -->
+          <div class="kanban-search-wrap">
+            <span class="kanban-search-icon">
+              ${ICONS.search}
+            </span>
+            <input
+              id="kanban-search-box"
+              type="text"
+              class="form-input kanban-search-input"
+              placeholder="Cari tiket, PIC, modul..."
+              value="${state.searchQuery || ''}"
+            />
           </div>
 
           <!-- Select dropdowns -->
           <div class="kanban-filters-group">
-            <div class="kanban-filter-item">
-              <span class="kanban-filter-label">PIC:</span>
-              <select id="kanban-filter-pic" class="form-select kanban-filter-select">
-                <option value="all" ${state.filterAssignee === 'all' ? 'selected' : ''}>Semua PIC</option>
-                ${teamMembers.map((m) => `<option value="${m.id}" ${state.filterAssignee === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+            <!-- Sprint Filter Dropdown -->
+            <div class="kanban-filter-item ${isSprintActive ? 'kanban-filter-item--active' : ''}" title="Filter tiket berdasarkan Sprint kerja">
+              <span class="kanban-filter-icon">${ICONS.calendar}</span>
+              <span class="kanban-filter-label">Sprint</span>
+              <select id="kanban-filter-sprint" class="form-select kanban-filter-select kanban-filter-select--sprint">
+                <option value="all" ${!isSprintActive ? 'selected' : ''}>Semua</option>
+                ${projectSprints.map((s) => {
+                  const shortSprint = s.name.split(':')[0].trim();
+                  const statusTag = s.status === 'active' ? 'Aktif' : s.status === 'completed' ? 'Selesai' : 'Rencana';
+                  return `<option value="${s.id}" title="${s.name}" ${state.filterSprint === s.id ? 'selected' : ''}>${shortSprint} (${statusTag})</option>`;
+                }).join('')}
+                <option value="backlog_pool" title="Backlog Pool (Tanpa Sprint)" ${state.filterSprint === 'backlog_pool' ? 'selected' : ''}>Backlog Pool</option>
               </select>
             </div>
 
-            <div class="kanban-filter-item">
-              <span class="kanban-filter-label">Tipe:</span>
-              <select id="kanban-filter-type" class="form-select kanban-filter-select">
-                <option value="all" ${state.filterType === 'all' ? 'selected' : ''}>Semua Tipe</option>
+            <!-- PIC Filter Dropdown -->
+            <div class="kanban-filter-item ${isPicActive ? 'kanban-filter-item--active' : ''}" title="Filter tiket berdasarkan Penanggung Jawab (PIC)">
+              <span class="kanban-filter-icon">${ICONS.user}</span>
+              <span class="kanban-filter-label">PIC</span>
+              <select id="kanban-filter-pic" class="form-select kanban-filter-select kanban-filter-select--pic">
+                <option value="all" ${!isPicActive ? 'selected' : ''}>Semua</option>
+                ${teamMembers.map((m) => {
+                  const firstName = m.name.split(' ')[0];
+                  const shortRole = m.role ? m.role.split(' ')[0] : '';
+                  return `<option value="${m.id}" title="${m.name} (${m.role})" ${state.filterAssignee === m.id ? 'selected' : ''}>${firstName}${shortRole ? ` (${shortRole})` : ''}</option>`;
+                }).join('')}
+              </select>
+            </div>
+
+            <!-- Tipe Filter Dropdown -->
+            <div class="kanban-filter-item ${isTypeActive ? 'kanban-filter-item--active' : ''}" title="Filter tiket berdasarkan Tipe">
+              <span class="kanban-filter-icon">${ICONS.tag}</span>
+              <span class="kanban-filter-label">Tipe</span>
+              <select id="kanban-filter-type" class="form-select kanban-filter-select kanban-filter-select--type">
+                <option value="all" ${!isTypeActive ? 'selected' : ''}>Semua</option>
                 <option value="Feature" ${state.filterType === 'Feature' ? 'selected' : ''}>Feature</option>
                 <option value="Story" ${state.filterType === 'Story' ? 'selected' : ''}>Story</option>
                 <option value="Task" ${state.filterType === 'Task' ? 'selected' : ''}>Task</option>
@@ -453,10 +512,12 @@ export class KanbanBoard {
               </select>
             </div>
 
-            <div class="kanban-filter-item">
-              <span class="kanban-filter-label">Prioritas:</span>
-              <select id="kanban-filter-priority" class="form-select kanban-filter-select">
-                <option value="all" ${state.filterPriority === 'all' ? 'selected' : ''}>Semua Prioritas</option>
+            <!-- Prioritas Filter Dropdown -->
+            <div class="kanban-filter-item ${isPriorityActive ? 'kanban-filter-item--active' : ''}" title="Filter tiket berdasarkan Prioritas">
+              <span class="kanban-filter-icon">${ICONS.flag}</span>
+              <span class="kanban-filter-label">Prioritas</span>
+              <select id="kanban-filter-priority" class="form-select kanban-filter-select kanban-filter-select--priority">
+                <option value="all" ${!isPriorityActive ? 'selected' : ''}>Semua</option>
                 <option value="Hotfix" ${state.filterPriority === 'Hotfix' ? 'selected' : ''}>Hotfix</option>
                 <option value="Tinggi" ${state.filterPriority === 'Tinggi' ? 'selected' : ''}>Tinggi</option>
                 <option value="Sedang" ${state.filterPriority === 'Sedang' ? 'selected' : ''}>Sedang</option>
@@ -464,17 +525,24 @@ export class KanbanBoard {
               </select>
             </div>
 
-            <div class="kanban-filter-item">
-              <span class="kanban-filter-label">Modul:</span>
+            <!-- Modul (Epic) Filter Dropdown -->
+            <div class="kanban-filter-item ${isEpicActive ? 'kanban-filter-item--active' : ''}" title="Filter tiket berdasarkan Modul / Epik">
+              <span class="kanban-filter-icon">${ICONS.layers}</span>
+              <span class="kanban-filter-label">Modul</span>
               <select id="kanban-filter-epic" class="form-select kanban-filter-select kanban-filter-select--epic">
-                <option value="all" ${state.filterEpic === 'all' ? 'selected' : ''}>Semua Modul</option>
-                ${epics.map((e) => `<option value="${e.id}" ${state.filterEpic === e.id ? 'selected' : ''}>${e.title}</option>`).join('')}
+                <option value="all" ${!isEpicActive ? 'selected' : ''}>Semua</option>
+                ${epics.map((e) => {
+                  const epicKeyShort = (e.key || '').replace(/^[^-]+-/, '');
+                  const shortTitle = (e.title || '').length > 18 ? e.title.substring(0, 16) + '...' : (e.title || '');
+                  return `<option value="${e.id}" title="${e.title}" ${state.filterEpic === e.id ? 'selected' : ''}>${epicKeyShort ? `${epicKeyShort}: ` : ''}${shortTitle}</option>`;
+                }).join('')}
               </select>
             </div>
 
-            ${(state.searchQuery || state.filterAssignee !== 'all' || state.filterType !== 'all' || state.filterPriority !== 'all' || state.filterEpic !== 'all') ? `
-              <button id="kanban-reset-filters" class="btn btn-secondary btn-sm kanban-reset-btn">
-                Reset Filter
+            ${hasActiveFilters ? `
+              <button id="kanban-reset-filters" class="btn btn-secondary btn-sm kanban-reset-btn" title="Kembalikan semua filter ke default">
+                ${ICONS.rotateCcw}
+                <span>Reset</span>
               </button>
             ` : ''}
           </div>
@@ -926,7 +994,20 @@ export class KanbanBoard {
     // Search input
     const searchInput = this.container.querySelector('#kanban-search-box');
     if (searchInput) {
+      if (this._lastSearchFocused) {
+        searchInput.focus();
+        const len = searchInput.value.length;
+        searchInput.setSelectionRange(len, len);
+        this._lastSearchFocused = false;
+      }
+      searchInput.addEventListener('focus', () => {
+        this._isSearchFocused = true;
+      });
+      searchInput.addEventListener('blur', () => {
+        this._isSearchFocused = false;
+      });
       searchInput.addEventListener('input', (e) => {
+        this._lastSearchFocused = true;
         store.setSearchQuery(e.target.value);
       });
     }
@@ -957,6 +1038,31 @@ export class KanbanBoard {
     if (epicSelect) {
       epicSelect.addEventListener('change', (e) => {
         store.setFilterEpic(e.target.value);
+      });
+    }
+
+    // Sprint Filter Dropdown
+    const sprintSelect = this.container.querySelector('#kanban-filter-sprint');
+    if (sprintSelect) {
+      sprintSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        store.setState({ filterSprint: val, selectedSprintId: val });
+      });
+    }
+
+    // Interactive Sprint KPI Card Click -> Focus to Active Sprint
+    const sprintKpiCard = this.container.querySelector('#kanban-kpi-sprint-card');
+    if (sprintKpiCard) {
+      sprintKpiCard.addEventListener('click', () => {
+        const state = store.getState();
+        const activeProj = store.getActiveProject();
+        const activeSprint = (state.sprints || []).find(
+          (s) => activeProj && s.projectId === activeProj.id && s.status === 'active'
+        );
+        if (activeSprint) {
+          const nextVal = state.filterSprint === activeSprint.id ? 'all' : activeSprint.id;
+          store.setState({ filterSprint: nextVal, selectedSprintId: nextVal });
+        }
       });
     }
 
@@ -1007,7 +1113,7 @@ export class KanbanBoard {
         const taskId = btn.dataset.taskId;
         const targetStatus = btn.dataset.targetStatus;
         if (taskId && targetStatus) {
-          store.updateTaskStatus(taskId, targetStatus, `Dipindahkan maju ke ${targetStatus}`);
+          store.updateTaskStatus(taskId, targetStatus, `Dipindahkan maju ke ${targetStatus}`, false, true);
         }
       });
     });
@@ -1109,7 +1215,9 @@ export class KanbanBoard {
             const success = store.updateTaskStatus(
               taskId,
               targetStatus,
-              `Drag & drop ke kolom ${targetStatus}`
+              `Drag & drop ke kolom ${targetStatus}`,
+              false,
+              true
             );
 
             if (!success) {
