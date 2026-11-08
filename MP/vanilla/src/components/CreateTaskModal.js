@@ -384,8 +384,16 @@ export class CreateTaskModal {
               <div class="jira-form-row">
                 <label class="jira-label" for="taskSprintSelect">Penempatan Sprint</label>
                 <select id="taskSprintSelect" class="jira-select">
-                  <option value="${activeSprint ? activeSprint.id : 'sprint-1'}">${activeSprint ? activeSprint.name : 'Sprint Aktif'} (Kanban)</option>
-                  <option value="backlog">Backlog Pool (Tanpa Sprint)</option>
+                  ${projectSprints.map((s) => {
+                    const shortName = s.name.split(':')[0].trim();
+                    const statusTag = s.status === 'active' ? 'Aktif' : 'Rencana';
+                    return `
+                      <option value="${s.id}" ${s.status === 'active' ? 'selected' : ''} title="${s.name}">
+                        ${shortName} (${statusTag})
+                      </option>
+                    `;
+                  }).join('')}
+                  <option value="backlog" ${projectSprints.length === 0 ? 'selected' : ''}>Backlog Pool (Tanpa Sprint)</option>
                 </select>
               </div>
 
@@ -394,11 +402,15 @@ export class CreateTaskModal {
                 <label class="jira-label" for="taskEpicSelect">Epik Modul</label>
                 <select id="taskEpicSelect" class="jira-select">
                   <option value="">— Tanpa Epik Khusus —</option>
-                  ${projectEpics.map((ep) => `
-                    <option value="${ep.id}" ${ep.id === this.epicId ? 'selected' : ''}>
-                      ${ep.title || ep.name}
-                    </option>
-                  `).join('')}
+                  ${projectEpics.map((ep) => {
+                    const fullTitle = ep.title || ep.name || '';
+                    const shortTitle = fullTitle.length > 36 ? fullTitle.substring(0, 34) + '...' : fullTitle;
+                    return `
+                      <option value="${ep.id}" ${ep.id === this.epicId ? 'selected' : ''} title="${fullTitle}">
+                        ${ep.key ? `[${ep.key}] ` : ''}${shortTitle}
+                      </option>
+                    `;
+                  }).join('')}
                 </select>
               </div>
 
@@ -662,6 +674,7 @@ export class CreateTaskModal {
         const visSelect = this.container.querySelector('#taskVisibilitySelect');
         const assigneeSelect = this.container.querySelector('#taskAssigneeSelect');
         const epicSelect = this.container.querySelector('#taskEpicSelect');
+        const sprintSelect = this.container.querySelector('#taskSprintSelect');
         const createAnotherCheck = this.container.querySelector('#createAnotherCheck');
 
         const title = titleInput ? titleInput.value.trim() : '';
@@ -735,8 +748,12 @@ export class CreateTaskModal {
           completed: false
         }));
 
+        const sprintIdVal = sprintSelect ? sprintSelect.value : undefined;
+        const sprintId = (sprintIdVal && sprintIdVal !== 'backlog') ? sprintIdVal : undefined;
+
         store.createTask({
           projectId: this.projectId,
+          sprintId,
           type: this.type,
           title,
           description,
