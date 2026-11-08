@@ -1504,28 +1504,17 @@ export class ProjectModuleView {
 
     this.container.innerHTML = `
       <div class="pm-ws-wrap pm-ws-wrap--${this.activeWorkspaceTab}">
-                <!-- 1. TOP STRIP -->
-        <div class="pm-ws-top-strip">
-          <div class="pm-ws-top-breadcrumb" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <button id="pmBackToPortfolioBtn" class="pm-ws-back-link">
-              <i class="fi fi-rr-arrow-left"></i>
-              <span>Kembali</span>
-            </button>
-          </div>
-          <div class="pm-ws-badges-right">
-            <span class="pm-ws-pill ${isAtRisk ? 'pm-ws-pill--at-risk' : 'pm-ws-pill--on-track'}">
-              • ${health}
-            </span>
-            <span class="pm-ws-pill pm-ws-pill--fixed">
-              ${activeProject.contractType || 'Fixed Price'}
-            </span>
-          </div>
-        </div>
+        <!-- WORKSPACE STICKY NAVIGATION HEADER (UNIFIED & PROPORTIONAL) -->
+        <header class="pm-ws-nav-header">
+          <button id="pmBackToPortfolioBtn" class="pm-ws-back-btn" title="Kembali ke Portofolio Proyek">
+            <i class="fi fi-rr-arrow-left"></i>
+            <span>Kembali</span>
+          </button>
+          <div class="pm-ws-nav-divider"></div>
+          ${this.renderTabsBar(stats)}
+        </header>
 
-        <!-- 2. TABS BAR (STICKY DI ATAS WORKSPACE) -->
-        ${this.renderTabsBar(stats)}
-
-        <!-- 3. MAIN WORKSPACE CONTENT CONTAINER -->
+        <!-- MAIN WORKSPACE CONTENT CONTAINER -->
         <main class="pm-content" id="pmWorkspaceContentArea"></main>
 
         <!-- Modals -->
