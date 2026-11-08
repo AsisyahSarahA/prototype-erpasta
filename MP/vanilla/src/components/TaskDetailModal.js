@@ -860,25 +860,33 @@ ${currentTask.prDiff.split('\n').map(line => {
                 </div>
               ` : `
                 <div style="display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto;">
-                  ${taskEvents.map(ev => `
+                  ${taskEvents.map(ev => {
+                    const isLegacyDefault = !ev.actor && (!ev.actorName || (ev.actorName === 'Azi' && assignee && assignee.name !== 'Azi'));
+                    const actorDisplay = isLegacyDefault
+                      ? (assignee ? `${assignee.name} (${assignee.role})` : 'PIC Developer')
+                      : (ev.actor || (ev.actorName ? `${ev.actorName} (${ev.actorRole || 'Tim'})` : (assignee ? `${assignee.name} (${assignee.role})` : 'Tim')));
+                    
+                    const actionDisplay = ev.action || (ev.eventType === 'status_change'
+                      ? `Mengubah status: <strong style="color: #172b4d;">${ev.fromValue}</strong> → <strong style="color: #0052cc;">${ev.toValue}</strong>`
+                      : ev.payload || '');
+
+                    return `
                     <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #ebecf0;">
                       <div style="width: 6px; height: 6px; border-radius: 50%; background: #0052cc; margin-top: 6px;"></div>
                       <div style="flex: 1;">
                         <div style="display: flex; justify-content: space-between;">
-                          <strong style="color: #172b4d;">${ev.actor}</strong>
+                          <strong style="color: #172b4d;">${actorDisplay}</strong>
                           <span style="font-size: 10px; font-family: var(--font-mono); color: #6b778c;">
                             ${new Date(ev.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <div style="color: #42526e; font-size: 11px; margin-top: 2px;">
-                          ${ev.eventType === 'status_change'
-                            ? `Mengubah status: <strong style="color: #172b4d;">${ev.fromValue}</strong> → <strong style="color: #0052cc;">${ev.toValue}</strong>`
-                            : ev.payload || ''
-                          }
+                          ${actionDisplay}
                         </div>
                       </div>
                     </div>
-                  `).join('')}
+                  `;
+                  }).join('')}
                 </div>
               `}
             </div>

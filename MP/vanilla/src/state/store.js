@@ -329,12 +329,22 @@ class Store {
     }
 
     // Append-only audit trail event (PRD Section 6.20)
-    const actor = (this.state.teamMembers || []).find((m) => m.id === (this.state.role === "pm" ? "user-pm" : this.state.role === "qa" ? "user-qa" : "user-dev-1")) || { name: "Sistem Manjer", role: "System" };
+    // Dynamic PIC / Actor determination:
+    // Gunakan PIC / Developer yang ditetapkan pada tiket sebagai pelaksana tindakan utama
+    const targetTask = this.state.tasks.find((t) => t.id === taskId);
+    const assignedPic = targetTask?.assigneeId
+      ? (this.state.teamMembers || []).find((m) => m.id === targetTask.assigneeId)
+      : null;
+    const actor = assignedPic
+      || (this.state.teamMembers || []).find((m) => m.id === (this.state.role === "pm" ? "user-pm" : this.state.role === "qa" ? "user-qa" : "user-dev-1"))
+      || { name: "Developer PIC", role: "Engineering" };
+
     const auditEvent = {
       id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       taskId,
       actorName: actor.name,
       actorRole: actor.role,
+      actor: `${actor.name} (${actor.role})`,
       action: `Mengubah status dari "${oldStatus}" ke "${canonicalTarget}"`,
       reason: reason || undefined,
       timestamp: new Date().toISOString(),
@@ -348,6 +358,9 @@ class Store {
   }
 
   updateTask(taskId, updates) {
+    const prevTask = this.state.tasks.find((t) => t.id === taskId);
+    let newEvents = this.state.events || [];
+
     const updatedTasks = this.state.tasks.map((task) => {
       if (task.id === taskId) {
         return { ...task, ...updates, lastStatusUpdated: new Date().toISOString() };
@@ -360,7 +373,60 @@ class Store {
       selectedTask = { ...selectedTask, ...updates };
     }
 
-    this.setState({ tasks: updatedTasks, selectedTask });
+    if (prevTask) {
+      // 1. Audit event saat PIC dialihkan / diubah
+      if (updates.assigneeId && updates.assigneeId !== prevTask.assigneeId) {
+        const newPic = (this.state.teamMembers || []).find((m) => m.id === updates.assigneeId) || { name: "Tim", role: "Dev" };
+        const oldPic = (this.state.teamMembers || []).find((m) => m.id === prevTask.assigneeId) || { name: "Sebelumnya", role: "Dev" };
+        const auditEv = {
+          id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          taskId,
+          actorName: newPic.name,
+          actorRole: newPic.role,
+          actor: `${newPic.name} (${newPic.role})`,
+          action: `Mengalihkan PIC dari ${oldPic.name} ke ${newPic.name} (${newPic.role})`,
+          timestamp: new Date().toISOString(),
+        };
+        newEvents = [auditEv, ...newEvents];
+      }
+
+      // 2. Audit event saat Beban Jam Kerja dicatat / diubah
+      if (updates.timeLoggedHours !== undefined && Number(updates.timeLoggedHours) !== Number(prevTask.timeLoggedHours || 0)) {
+        const targetAssigneeId = updates.assigneeId || prevTask.assigneeId;
+        const pic = (this.state.teamMembers || []).find((m) => m.id === targetAssigneeId) || { name: "Developer", role: "Engineering" };
+        const hours = Number(updates.timeLoggedHours) || 0;
+        const est = Number(updates.estimateHours || prevTask.estimateHours || 0);
+        const auditEv = {
+          id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          taskId,
+          actorName: pic.name,
+          actorRole: pic.role,
+          actor: `${pic.name} (${pic.role})`,
+          action: `Mencatat beban kerja ${hours} jam (Estimasi: ${est} jam)`,
+          timestamp: new Date().toISOString(),
+        };
+        newEvents = [auditEv, ...newEvents];
+      }
+
+      // 3. Audit event saat Estimasi Beban diubah
+      if (updates.estimateHours !== undefined && Number(updates.estimateHours) !== Number(prevTask.estimateHours || 0)) {
+        const targetAssigneeId = updates.assigneeId || prevTask.assigneeId;
+        const pic = (this.state.teamMembers || []).find((m) => m.id === targetAssigneeId) || { name: "Lead Dev / PM", role: "Management" };
+        const est = Number(updates.estimateHours) || 0;
+        const auditEv = {
+          id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          taskId,
+          actorName: pic.name,
+          actorRole: pic.role,
+          actor: `${pic.name} (${pic.role})`,
+          action: `Memperbarui estimasi beban kerja menjadi ${est} jam`,
+          timestamp: new Date().toISOString(),
+        };
+        newEvents = [auditEv, ...newEvents];
+      }
+    }
+
+    this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
   }
 
   deleteTask(taskId) {
@@ -556,6 +622,12 @@ class Store {
   }
 
   toggleSubtask(taskId, subtaskId) {
+    const task = this.state.tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const targetSub = (task.subtasks || []).find((s) => s.id === subtaskId);
+    const willBeCompleted = targetSub ? !targetSub.completed : false;
+    const picMember = (this.state.teamMembers || []).find((m) => m.id === task.assigneeId) || { name: "Developer", role: "Engineering" };
+
     const updatedTasks = this.state.tasks.map((t) => {
       if (t.id === taskId) {
         const updatedSubs = t.subtasks.map((st) => {
@@ -580,7 +652,23 @@ class Store {
       selectedTask = { ...selectedTask, subtasks: updatedSubs };
     }
 
-    this.setState({ tasks: updatedTasks, selectedTask });
+    let newEvents = this.state.events || [];
+    if (targetSub) {
+      const auditEv = {
+        id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        taskId,
+        actorName: picMember.name,
+        actorRole: picMember.role,
+        actor: `${picMember.name} (${picMember.role})`,
+        action: willBeCompleted 
+          ? `Menyelesaikan subtask: "${targetSub.title}"`
+          : `Membuka kembali subtask: "${targetSub.title}"`,
+        timestamp: new Date().toISOString(),
+      };
+      newEvents = [auditEv, ...newEvents];
+    }
+
+    this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
   }
 
   addSubtask(taskId, title) {
@@ -612,7 +700,19 @@ class Store {
       };
     }
 
-    this.setState({ tasks: updatedTasks, selectedTask });
+    const picMember = (this.state.teamMembers || []).find((m) => m.id === task.assigneeId) || { name: "Developer", role: "Engineering" };
+    const auditEv = {
+      id: `ev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      taskId,
+      actorName: picMember.name,
+      actorRole: picMember.role,
+      actor: `${picMember.name} (${picMember.role})`,
+      action: `Menambahkan subtask: "${newSub.title}"`,
+      timestamp: new Date().toISOString(),
+    };
+    const newEvents = [auditEv, ...(this.state.events || [])];
+
+    this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
     this.addToast("success", "Subtask Ditambahkan", `"${newSub.title}" siap dikerjakan.`);
   }
 
