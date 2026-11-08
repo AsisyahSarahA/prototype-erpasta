@@ -1074,23 +1074,41 @@
   --status-soft: #eff6ff;
   --status-text: #1d4ed8;
 }
-/* 3. In Progress: Bar Color #F59E0B, Soft Background #FFFBEB */
+/* 2b. In Development: Bar Color #6366F1, Soft Background #EEF2FF */
+.tl-status--in-dev {
+  --status-bar: #6366f1;
+  --status-soft: #eef2ff;
+  --status-text: #4338ca;
+}
+/* 3. In Progress: Bar Color #6366F1, Soft Background #EEF2FF */
 .tl-status--in-progress {
+  --status-bar: #6366f1;
+  --status-soft: #eef2ff;
+  --status-text: #4338ca;
+}
+/* 3b. Review & Testing: Bar Color #F59E0B, Soft Background #FFFBEB */
+.tl-status--review-testing {
   --status-bar: #f59e0b;
   --status-soft: #fffbeb;
   --status-text: #b45309;
 }
-/* 4. In Review: Bar Color #8B5CF6, Soft Background #F5F3FF */
+/* 4. In Review: Bar Color #F59E0B, Soft Background #FFFBEB */
 .tl-status--in-review {
-  --status-bar: #8b5cf6;
-  --status-soft: #f5f3ff;
-  --status-text: #6d28d9;
+  --status-bar: #f59e0b;
+  --status-soft: #fffbeb;
+  --status-text: #b45309;
 }
-/* 5. Testing / QA: Bar Color #06B6D4, Soft Background #ECFEFF */
+/* 5. Testing / QA: Bar Color #F59E0B, Soft Background #FFFBEB */
 .tl-status--testing-qa {
-  --status-bar: #06b6d4;
-  --status-soft: #ecfeff;
-  --status-text: #0e7490;
+  --status-bar: #f59e0b;
+  --status-soft: #fffbeb;
+  --status-text: #b45309;
+}
+/* 5b. Rejected: Bar Color #EF4444, Soft Background #FEF2F2 */
+.tl-status--rejected {
+  --status-bar: #ef4444;
+  --status-soft: #fef2f2;
+  --status-text: #b91c1c;
 }
 /* 6. Blocked: Bar Color #EF4444, Soft Background #FEF2F2 */
 .tl-status--blocked {

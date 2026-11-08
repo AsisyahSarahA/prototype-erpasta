@@ -36,13 +36,16 @@ import { Icons } from '../../utils/icons.js';
 export const STATUS_CONFIG = {
   'Backlog': { label: 'Backlog', barColor: '#94A3B8', softBg: '#F1F5F9', textColor: '#334155', className: 'tl-status--backlog' },
   'To Do': { label: 'To Do', barColor: '#3B82F6', softBg: '#EFF6FF', textColor: '#1E40AF', className: 'tl-status--todo' },
-  'In Progress': { label: 'In Progress', barColor: '#F59E0B', softBg: '#FFFBEB', textColor: '#92400E', className: 'tl-status--in-progress' },
-  'In Review': { label: 'In Review', barColor: '#8B5CF6', softBg: '#F5F3FF', textColor: '#5B21B6', className: 'tl-status--in-review' },
-  'Testing / QA': { label: 'Testing / QA', barColor: '#06B6D4', softBg: '#ECFEFF', textColor: '#155E75', className: 'tl-status--testing-qa' },
+  'In Development': { label: 'In Development', barColor: '#6366F1', softBg: '#EEF2FF', textColor: '#4338CA', className: 'tl-status--in-dev' },
+  'In Progress': { label: 'In Development', barColor: '#6366F1', softBg: '#EEF2FF', textColor: '#4338CA', className: 'tl-status--in-dev' },
+  'Review & Testing': { label: 'Review & Testing', barColor: '#F59E0B', softBg: '#FFFBEB', textColor: '#92400E', className: 'tl-status--review-testing' },
+  'In Review': { label: 'Review & Testing', barColor: '#F59E0B', softBg: '#FFFBEB', textColor: '#92400E', className: 'tl-status--review-testing' },
+  'Testing / QA': { label: 'Review & Testing', barColor: '#F59E0B', softBg: '#FFFBEB', textColor: '#92400E', className: 'tl-status--review-testing' },
+  'Done': { label: 'Done', barColor: '#22C55E', softBg: '#F0FDF4', textColor: '#166534', className: 'tl-status--done' },
+  'Rejected': { label: 'Rejected', barColor: '#EF4444', softBg: '#FEF2F2', textColor: '#991B1B', className: 'tl-status--rejected' },
   'Blocked': { label: 'Blocked', barColor: '#EF4444', softBg: '#FEF2F2', textColor: '#991B1B', className: 'tl-status--blocked' },
   'On Hold': { label: 'On Hold', barColor: '#64748B', softBg: '#F1F5F9', textColor: '#334155', className: 'tl-status--on-hold' },
   'Reopened': { label: 'Reopened', barColor: '#F97316', softBg: '#FFF7ED', textColor: '#9A3412', className: 'tl-status--reopened' },
-  'Done': { label: 'Done', barColor: '#22C55E', softBg: '#F0FDF4', textColor: '#166534', className: 'tl-status--done' },
   'Cancelled': { label: 'Cancelled', barColor: '#6B7280', softBg: '#F3F4F6', textColor: '#374151', className: 'tl-status--cancelled' }
 };
 
@@ -50,15 +53,36 @@ export function normalizeStatus(rawStatus) {
   if (!rawStatus) return 'Backlog';
   const s = String(rawStatus).trim().toLowerCase();
   if (s === 'done' || s === 'selesai' || s === 'completed') return 'Done';
-  if (s === 'in progress' || s === 'sedang dikerjakan' || s === 'dianalisis') return 'In Progress';
-  if (s === 'in review' || s === 'review pr' || s === 'menunggu persetujuan') return 'In Review';
-  if (s === 'testing / qa' || s === 'testing' || s === 'qa' || s === 'qa/testing') return 'Testing / QA';
+  if (s === 'review & testing' || s === 'review' || s === 'in review' || s === 'review pr' || s === 'qa' || s === 'testing' || s === 'testing / qa' || s === 'qa/testing' || s === 'menunggu persetujuan' || s === 'deploy staging' || s === 'disetujui') return 'Review & Testing';
+  if (s === 'in development' || s === 'in progress' || s === 'sedang dikerjakan' || s === 'dianalisis' || s === 'diperbaiki agen' || s === 'perlu manual') return 'In Development';
+  if (s === 'to do' || s === 'todo' || s === 'baru') return 'To Do';
+  if (s === 'rejected' || s === 'ditolak' || s === 'batal' || s === 'cancelled' || s === 'dibatalkan') return 'Rejected';
   if (s === 'blocked' || s === 'kendala' || s === 'terkendala') return 'Blocked';
   if (s === 'on hold' || s === 'tertunda') return 'On Hold';
   if (s === 'reopened' || s === 'dibuka kembali') return 'Reopened';
-  if (s === 'to do' || s === 'todo' || s === 'baru') return 'To Do';
-  if (s === 'cancelled' || s === 'dibatalkan') return 'Cancelled';
   return 'Backlog';
+}
+
+export function getTaskProgress(task) {
+  if (!task) return 0;
+  const norm = normalizeStatus(task.status);
+  if (norm === 'Done') return 100;
+  if (norm === 'Rejected' || norm === 'Cancelled') return 0;
+  if (norm === 'Backlog') return 0;
+  if (norm === 'To Do') return 15;
+
+  const subtasks = task.subtasks || [];
+  if (subtasks.length > 0) {
+    const doneSub = subtasks.filter(s => s.completed).length;
+    const subPct = Math.round((doneSub / subtasks.length) * 100);
+    if (norm === 'Review & Testing') return Math.max(80, subPct);
+    if (norm === 'In Development') return Math.max(30, Math.min(85, subPct));
+    return subPct;
+  }
+
+  if (norm === 'Review & Testing') return 85;
+  if (norm === 'In Development') return 55;
+  return 0;
 }
 
 const LOCAL_STORAGE_RELEASES_KEY = 'astacode_pm_timeline_releases';
@@ -287,10 +311,12 @@ export class TimelineView {
     const filteredTasks = projectTasks.filter(task => {
       if (this.statusFilter !== 'all') {
         const norm = normalizeStatus(task.status);
-        if (this.statusFilter === 'in_progress' && norm !== 'In Progress') return false;
+        if ((this.statusFilter === 'in_dev' || this.statusFilter === 'in_progress') && norm !== 'In Development' && norm !== 'In Progress') return false;
+        if ((this.statusFilter === 'review' || this.statusFilter === 'qa') && norm !== 'Review & Testing' && norm !== 'Testing / QA' && norm !== 'In Review') return false;
         if (this.statusFilter === 'done' && norm !== 'Done') return false;
-        if (this.statusFilter === 'qa' && norm !== 'Testing / QA' && norm !== 'In Review') return false;
-        if (this.statusFilter === 'backlog' && norm !== 'Backlog' && norm !== 'To Do') return false;
+        if (this.statusFilter === 'todo' && norm !== 'To Do') return false;
+        if (this.statusFilter === 'backlog' && norm !== 'Backlog') return false;
+        if (this.statusFilter === 'rejected' && norm !== 'Rejected') return false;
         if (this.statusFilter === 'blocked' && norm !== 'Blocked') return false;
       }
       if (this.searchQuery.trim()) {
@@ -305,7 +331,10 @@ export class TimelineView {
     // 2. Perhitungan Statistik KPI
     const totalTasksCount = projectTasks.length;
     const completedTasksCount = projectTasks.filter(t => normalizeStatus(t.status) === 'Done').length;
-    const inProgressCount = projectTasks.filter(t => normalizeStatus(t.status) === 'In Progress').length;
+    const inProgressCount = projectTasks.filter(t => {
+      const norm = normalizeStatus(t.status);
+      return norm === 'In Development' || norm === 'In Progress' || norm === 'Review & Testing';
+    }).length;
     const totalEstimatedHours = projectTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
     const totalLoggedHours = projectTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
     const completionPercentage = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
@@ -480,10 +509,12 @@ export class TimelineView {
                 <label for="tlStatusFilter" class="timeline-filter-label">Status:</label>
                 <select id="tlStatusFilter" class="timeline-status-select">
                   <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>Semua Status (${projectTasks.length})</option>
-                  <option value="in_progress" ${this.statusFilter === 'in_progress' ? 'selected' : ''}>In Progress</option>
-                  <option value="qa" ${this.statusFilter === 'qa' ? 'selected' : ''}>Testing / QA &amp; Review</option>
+                  <option value="in_dev" ${this.statusFilter === 'in_dev' ? 'selected' : ''}>In Development</option>
+                  <option value="review" ${this.statusFilter === 'review' ? 'selected' : ''}>Review &amp; Testing</option>
                   <option value="done" ${this.statusFilter === 'done' ? 'selected' : ''}>Done / Selesai</option>
-                  <option value="backlog" ${this.statusFilter === 'backlog' ? 'selected' : ''}>Backlog / To Do</option>
+                  <option value="todo" ${this.statusFilter === 'todo' ? 'selected' : ''}>To Do</option>
+                  <option value="backlog" ${this.statusFilter === 'backlog' ? 'selected' : ''}>Backlog</option>
+                  <option value="rejected" ${this.statusFilter === 'rejected' ? 'selected' : ''}>Rejected</option>
                   <option value="blocked" ${this.statusFilter === 'blocked' ? 'selected' : ''}>Blocked (Kendala)</option>
                 </select>
               </div>
@@ -497,18 +528,29 @@ export class TimelineView {
               </div>
               <div class="timeline-legend-item">
                 <span class="timeline-legend-dot" style="background:#f59e0b;"></span>
-                <span>In Progress</span>
+                <span>Review &amp; Testing</span>
+              </div>
+              <div class="timeline-legend-item">
+                <span class="timeline-legend-dot" style="background:#6366f1;"></span>
+                <span>In Development</span>
               </div>
               <div class="timeline-legend-item">
                 <span class="timeline-legend-dot" style="background:#3b82f6;"></span>
                 <span>To Do</span>
               </div>
               <div class="timeline-legend-item">
-                <span class="timeline-legend-dot" style="background:#8b5cf6;"></span>
-                <span>In Review</span>
+                <span class="timeline-legend-dot" style="background:#94a3b8;"></span>
+                <span>Backlog</span>
               </div>
               <div class="timeline-legend-item">
                 <span class="timeline-legend-dot" style="background:#ef4444;"></span>
+                <span>Rejected</span>
+              </div>
+              <div class="timeline-legend-today">
+                <span class="timeline-legend-today-indicator"></span>
+                <span>Hari Ini</span>
+              </div>
+            </div>
                 <span>Blocked</span>
               </div>
               <div class="timeline-legend-today">
@@ -695,26 +737,43 @@ export class TimelineView {
 
                 const barPos = this.calculateBarPosition(epicStartDate, epicDueDate, 5 + epicIdx * 6, 15);
 
-                const doneCount = epicTasks.filter(t => normalizeStatus(t.status) === 'Done').length;
-                const inProgCount = epicTasks.filter(t => normalizeStatus(t.status) === 'In Progress').length;
-                const blockedCount = epicTasks.filter(t => normalizeStatus(t.status) === 'Blocked').length;
                 const totalCount = epicTasks.length;
+                const doneCount = epicTasks.filter(t => normalizeStatus(t.status) === 'Done').length;
+                const inDevCount = epicTasks.filter(t => {
+                  const norm = normalizeStatus(t.status);
+                  return norm === 'In Development' || norm === 'In Progress';
+                }).length;
+                const reviewCount = epicTasks.filter(t => {
+                  const norm = normalizeStatus(t.status);
+                  return norm === 'Review & Testing' || norm === 'In Review' || norm === 'Testing / QA';
+                }).length;
+                const blockedCount = epicTasks.filter(t => normalizeStatus(t.status) === 'Blocked').length;
 
                 // Tentukan status riil Epik berdasarkan kondisi child task
-                let epicNormStatus = 'To Do';
-                if (totalCount > 0 && doneCount === totalCount) {
-                  epicNormStatus = 'Done';
-                } else if (blockedCount > 0) {
-                  epicNormStatus = 'Blocked';
-                } else if (inProgCount > 0) {
-                  epicNormStatus = 'In Progress';
+                let epicNormStatus = 'Backlog';
+                if (totalCount > 0) {
+                  if (doneCount === totalCount) {
+                    epicNormStatus = 'Done';
+                  } else if (blockedCount > 0) {
+                    epicNormStatus = 'Blocked';
+                  } else if (reviewCount > 0) {
+                    epicNormStatus = 'Review & Testing';
+                  } else if (inDevCount > 0) {
+                    epicNormStatus = 'In Development';
+                  } else if (epicTasks.some(t => normalizeStatus(t.status) === 'To Do')) {
+                    epicNormStatus = 'To Do';
+                  } else {
+                    epicNormStatus = 'Backlog';
+                  }
                 } else if (epic.status) {
                   epicNormStatus = normalizeStatus(epic.status);
                 }
 
                 const statusCfg = STATUS_CONFIG[epicNormStatus] || STATUS_CONFIG['To Do'];
-                const doneProgressPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-                const hasRunning = inProgCount > 0;
+                const epicProgressPct = totalCount > 0
+                  ? Math.round(epicTasks.reduce((sum, t) => sum + getTaskProgress(t), 0) / totalCount)
+                  : (epicNormStatus === 'Done' ? 100 : 0);
+                const hasRunning = epicNormStatus === 'In Development' || epicNormStatus === 'Review & Testing';
                 const isOverdue = epicDueDate < '2026-11-06' && epicNormStatus !== 'Done';
                 const showWarning = isOverdue || epicNormStatus === 'Blocked';
 
@@ -759,8 +818,8 @@ export class TimelineView {
                       <div class="tl-epic-segmented-bar" style="background:#e2e8f0;">
                         <div
                           class="tl-seg-fill ${hasRunning ? 'in-progress-running' : ''}"
-                          style="width: ${hasRunning ? this.liveProgress : doneProgressPct}%; background-color: ${statusCfg.barColor};"
-                          title="Progres Aktual: ${doneProgressPct}% (${doneCount}/${totalCount} task selesai)"
+                          style="width: ${epicProgressPct}%; background-color: ${statusCfg.barColor};"
+                          title="Progres Aktual: ${epicProgressPct}% (${doneCount}/${totalCount} task selesai)"
                         ></div>
                       </div>
                     </div>
@@ -778,12 +837,12 @@ export class TimelineView {
                         id="bar-epic-${epic.id}"
                         data-bar-id="epic-${epic.id}"
                         style="left: ${barPos.left}; width: ${barPos.width}; background-color: ${statusCfg.barColor};"
-                        title="${epic.key}: ${this.escapeHtml(epic.title)}&#10;Status: ${statusCfg.label}&#10;Rentang: ${epicStartDate} s/d ${epicDueDate}&#10;Progres: ${doneProgressPct}%"
+                        title="${epic.key}: ${this.escapeHtml(epic.title)}&#10;Status: ${statusCfg.label}&#10;Rentang: ${epicStartDate} s/d ${epicDueDate}&#10;Progres: ${epicProgressPct}%"
                       >
                         <!-- Progress Fill using status color with different intensity (Zero Gradient) -->
                         <div
                           class="tl-gantt-progress-fill ${hasRunning ? 'progress-running' : ''}"
-                          style="width: ${hasRunning ? this.liveProgress : doneProgressPct}%;"
+                          style="width: ${epicProgressPct}%;"
                         ></div>
 
                         <!-- Content overlay -->
@@ -794,15 +853,15 @@ export class TimelineView {
                             ${hasRunning ? `
                               <span class="tl-bar-running-badge">
                                 <span class="tl-pulse-dot"></span>
-                                <span class="tl-bar-running-pct">${Math.round(this.liveProgress)}%</span>
+                                <span class="tl-bar-running-pct">${epicProgressPct}%</span>
                               </span>
-                            ` : doneProgressPct === 100 ? `
+                            ` : epicProgressPct === 100 ? `
                               <span class="tl-bar-running-badge">
                                 100%
                               </span>
                             ` : `
                               <span class="tl-bar-running-badge" style="font-weight:600;">
-                                ${doneProgressPct}%
+                                ${epicProgressPct}%
                               </span>
                             `}
 
@@ -821,7 +880,8 @@ export class TimelineView {
                     const ctPos = this.calculateBarPosition(ct.startDate || epicStartDate, ct.dueDate || epicDueDate, barPos.startIdx + ctIdx * 2, 7);
                     const ctNormStatus = normalizeStatus(ct.status);
                     const ctStatusCfg = STATUS_CONFIG[ctNormStatus] || STATUS_CONFIG['To Do'];
-                    const isTaskRunning = ctNormStatus === 'In Progress';
+                    const ctProgress = getTaskProgress(ct);
+                    const isTaskRunning = ctNormStatus === 'In Development' || ctNormStatus === 'Review & Testing';
                     const isDone = ctNormStatus === 'Done';
                     const isTaskOverdue = (ct.dueDate || epicDueDate) < '2026-11-06' && !isDone;
                     const showTaskWarning = isTaskOverdue || ctNormStatus === 'Blocked';
@@ -830,7 +890,7 @@ export class TimelineView {
                       <div class="tl-gantt-row tl-child-gantt-row" data-row-task-id="${ct.id}">
                         <!-- Indented Left Column -->
                         <div class="timeline-col-ticket tl-child-task-col" style="width:320px;min-width:320px;max-width:320px;position:sticky;left:0;z-index:20;">
-                          <span class="tl-task-checkbox-icon" style="color: ${isDone ? '#22c55e' : '#64748b'};">
+                          <span class="tl-task-checkbox-icon" style="color: ${ctStatusCfg.barColor};">
                             ${isDone ? Icons.checkSquare('', 12) : Icons.listTodo('', 12)}
                           </span>
                           
@@ -861,12 +921,13 @@ export class TimelineView {
                           >
                             <div
                               class="tl-gantt-progress-fill ${isTaskRunning ? 'progress-running' : ''}"
-                              style="width: ${isTaskRunning ? this.liveProgress : (isDone ? 100 : 0)}%;"
+                              style="width: ${ctProgress}%;"
                             ></div>
                             <div class="tl-bar-content">
                               <span class="tl-bar-title">${ct.key} ${this.escapeHtml(ct.title)}</span>
                               
                               <div style="display:flex;align-items:center;gap:4px;">
+                                ${ctProgress > 0 ? `<span style="font-size:10px;font-weight:700;color:#ffffff;opacity:0.95;">${ctProgress}%</span>` : ''}
                                 ${showTaskWarning ? `<span class="tl-bar-warn-icon">${Icons.alertTriangle('', 10)}</span>` : ''}
                                 <span class="tl-bar-link-icon">${Icons.link('', 10)}</span>
                               </div>
