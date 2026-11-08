@@ -1433,7 +1433,7 @@ export class TaskDetailView {
     const statusSelect = this.container.querySelector('#meta-task-status');
     if (statusSelect) {
       statusSelect.addEventListener('change', (e) => {
-        const success = store.updateTaskStatus(task.id, e.target.value, `Status diubah ke ${e.target.value}`);
+        const success = store.updateTaskStatus(task.id, e.target.value, `Status diubah ke ${e.target.value}`, false, true);
         if (!success) {
           e.target.value = getCanonicalStatus(task.status);
         }

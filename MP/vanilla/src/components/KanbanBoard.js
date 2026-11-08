@@ -1113,7 +1113,7 @@ export class KanbanBoard {
         const taskId = btn.dataset.taskId;
         const targetStatus = btn.dataset.targetStatus;
         if (taskId && targetStatus) {
-          store.updateTaskStatus(taskId, targetStatus, `Dipindahkan maju ke ${targetStatus}`);
+          store.updateTaskStatus(taskId, targetStatus, `Dipindahkan maju ke ${targetStatus}`, false, true);
         }
       });
     });
@@ -1215,7 +1215,9 @@ export class KanbanBoard {
             const success = store.updateTaskStatus(
               taskId,
               targetStatus,
-              `Drag & drop ke kolom ${targetStatus}`
+              `Drag & drop ke kolom ${targetStatus}`,
+              false,
+              true
             );
 
             if (!success) {

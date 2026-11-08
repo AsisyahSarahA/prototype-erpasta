@@ -5,7 +5,7 @@
 
 import { INITIAL_PROJECTS, INITIAL_MEMBERS, INITIAL_EPICS, INITIAL_SPRINTS, INITIAL_TASKS, INITIAL_CRM_DEALS, INITIAL_INVOICES, INITIAL_EVENTS, INITIAL_COMMENTS, INITIAL_RULES } from "../data/mockData.js";
 import { validateStatusTransition, getCanonicalStatus } from "../utils/workflow.js";
-import { swalValidation, swalError } from "../utils/swal.js";
+import { swalValidation, swalError, swalSuccess } from "../utils/swal.js";
 
 class Store {
   constructor() {
@@ -300,12 +300,14 @@ class Store {
   }
 
   // --- Task Operations ---
-  updateTaskStatus(taskId, targetStatus, reason = "", bypassRules = false) {
+  updateTaskStatus(taskId, targetStatus, reason = "", bypassRules = false, showSwal = false) {
     const currentTask = this.state.tasks.find((t) => t.id === taskId);
     if (!currentTask) return false;
 
     const oldStatus = currentTask.status || "Backlog";
     const canonicalTarget = getCanonicalStatus(targetStatus);
+
+    if (oldStatus === canonicalTarget) return false;
 
     if (!bypassRules) {
       const validation = validateStatusTransition(oldStatus, canonicalTarget);
@@ -357,6 +359,38 @@ class Store {
 
     this.setState({ tasks: updatedTasks, selectedTask, events: newEvents });
     this.addToast("success", "Status Tiket Diperbarui", `Tiket dipindahkan ke: ${canonicalTarget}`);
+
+    if (showSwal) {
+      const stageColors = {
+        'Backlog': '#64748b',
+        'To Do': '#3b82f6',
+        'In Development': '#6366f1',
+        'Review & Testing': '#f59e0b',
+        'Done': '#10b981',
+        'Rejected': '#ef4444'
+      };
+      const oldColor = stageColors[oldStatus] || '#64748b';
+      const targetColor = stageColors[canonicalTarget] || '#10b981';
+      const taskKey = targetTask?.key ? `<b>[${targetTask.key}]</b> ` : '';
+      const taskTitle = targetTask?.title ? `<div style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.4;">${targetTask.title}</div>` : '';
+
+      swalSuccess(
+        'Status Berhasil Diperbarui!',
+        `
+          <div style="font-size:13.5px;color:#1e293b;margin-bottom:8px;">
+            ${taskKey}Tiket berhasil dipindahkan progresnya:
+          </div>
+          <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-top:4px;">
+            <span style="font-size:12px;font-weight:700;color:${oldColor};background:${oldColor}15;padding:2px 8px;border-radius:5px;">${oldStatus}</span>
+            <span style="color:#94a3b8;font-size:13px;">➔</span>
+            <span style="font-size:12px;font-weight:700;color:${targetColor};background:${targetColor}15;padding:2px 8px;border-radius:5px;">${canonicalTarget}</span>
+          </div>
+          ${taskTitle}
+        `,
+        2200
+      );
+    }
+
     return true;
   }
 

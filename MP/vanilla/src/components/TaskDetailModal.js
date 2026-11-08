@@ -1282,7 +1282,7 @@ ${currentTask.prDiff.split('\n').map(line => {
     const statusSelect = this.container.querySelector('#detailStatusSelect');
     if (statusSelect) {
       statusSelect.addEventListener('change', (e) => {
-        const success = store.updateTaskStatus(currentTask.id, e.target.value);
+        const success = store.updateTaskStatus(currentTask.id, e.target.value, `Status diubah via dropdown`, false, true);
         if (!success) {
           e.target.value = getCanonicalStatus(currentTask.status);
         }
@@ -1295,10 +1295,7 @@ ${currentTask.prDiff.split('\n').map(line => {
         const targetStatus = btn.dataset.status;
         const phaseLabel = btn.dataset.label;
         if (targetStatus && getCanonicalStatus(targetStatus) !== getCanonicalStatus(currentTask.status)) {
-          const ok = store.updateTaskStatus(currentTask.id, targetStatus, `Dipindahkan ke tahapan: ${phaseLabel}`);
-          if (ok) {
-            store.addToast('success', 'Fase Berpindah!', `Tugas berhasil dipindahkan ke: ${phaseLabel}`);
-          }
+          store.updateTaskStatus(currentTask.id, targetStatus, `Dipindahkan ke tahapan: ${phaseLabel}`, false, true);
         }
       });
     });
