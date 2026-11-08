@@ -411,7 +411,7 @@ export class KanbanBoard {
 
             <div class="kanban-kpi-stat kanban-kpi-stat--sprint" id="kanban-kpi-sprint-card" style="cursor: pointer;" title="Klik untuk fokus memfilter sprint aktif">
               <span class="kanban-kpi-label">${selectedSprintLabel}</span>
-              <strong class="kanban-kpi-sprint-text">${selectedSprintName}</strong>
+              <strong class="kanban-kpi-sprint-text" title="${selectedSprintName}">${selectedSprintName}</strong>
             </div>
 
             <div class="kanban-kpi-divider"></div>
