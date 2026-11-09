@@ -85,6 +85,41 @@ export function getTaskProgress(task) {
   return 0;
 }
 
+export function getSprintShortLabel(sprintName, sprintIdx = 0) {
+  if (!sprintName) return `Sprint ${sprintIdx + 1}`;
+  const match = sprintName.match(/(?:Sprint|Siklus|Iterasi)\s*\d+/i);
+  if (match) return match[0];
+  const colonIdx = sprintName.indexOf(':');
+  if (colonIdx > 0 && colonIdx < 16) return sprintName.substring(0, colonIdx).trim();
+  return `Sprint ${sprintIdx + 1}`;
+}
+
+export function getSprintStatusInfo(status) {
+  const s = String(status || '').toLowerCase().trim();
+  if (s === 'active' || s === 'aktif') {
+    return {
+      label: 'Aktif',
+      badgeClass: 'tl-sprint-status-tag--active',
+      markerClass: 'tl-sprint-marker--active',
+      isActive: true
+    };
+  }
+  if (s === 'completed' || s === 'selesai' || s === 'done') {
+    return {
+      label: 'Selesai',
+      badgeClass: 'tl-sprint-status-tag--completed',
+      markerClass: 'tl-sprint-marker--completed',
+      isCompleted: true
+    };
+  }
+  return {
+    label: 'Rencana',
+    badgeClass: 'tl-sprint-status-tag--future',
+    markerClass: 'tl-sprint-marker--future',
+    isFuture: true
+  };
+}
+
 const LOCAL_STORAGE_RELEASES_KEY = 'astacode_pm_timeline_releases';
 const LOCAL_STORAGE_EPICS_KEY = 'astacode_pm_timeline_epics';
 
@@ -95,6 +130,7 @@ export class TimelineView {
 
     this.searchQuery = '';
     this.statusFilter = 'all';
+    this.selectedSprintFilter = null;
 
     // State expand/collapse per epik
     this.expandedEpics = {};
@@ -307,8 +343,18 @@ export class TimelineView {
     const projectReleases = this.releases.filter(r => r.projectId === currentProjectId);
     const projectCode = activeProject?.code || 'PRJ';
 
-    // 1. Filter tasks berdasarkan pencarian dan status
+    // 0. Active Sprint Filter (sinkron dengan store atau komponen internal)
+    const activeSprintFilter = (this.selectedSprintFilter && this.selectedSprintFilter !== 'all')
+      ? this.selectedSprintFilter
+      : (state.filterSprint && state.filterSprint !== 'all' ? state.filterSprint : null);
+
+    // 1. Filter tasks berdasarkan pencarian, status, dan sprint terpilih
     const filteredTasks = projectTasks.filter(task => {
+      if (activeSprintFilter && activeSprintFilter !== 'backlog_pool') {
+        if (task.sprintId !== activeSprintFilter) return false;
+      } else if (activeSprintFilter === 'backlog_pool') {
+        if (task.sprintId) return false;
+      }
       if (this.statusFilter !== 'all') {
         const norm = normalizeStatus(task.status);
         if ((this.statusFilter === 'in_dev' || this.statusFilter === 'in_progress') && norm !== 'In Development' && norm !== 'In Progress') return false;
@@ -328,16 +374,57 @@ export class TimelineView {
       return true;
     });
 
-    // 2. Perhitungan Statistik KPI
-    const totalTasksCount = projectTasks.length;
-    const completedTasksCount = projectTasks.filter(t => normalizeStatus(t.status) === 'Done').length;
-    const inProgressCount = projectTasks.filter(t => {
+    // Visible Epics (Epik yang memiliki task pada sprint terpilih, atau seluruh epik jika tanpa filter sprint)
+    const visibleEpics = activeSprintFilter
+      ? currentEpics.filter(e => filteredTasks.some(t => t.epicId === e.id))
+      : currentEpics;
+
+    if (activeSprintFilter) {
+      visibleEpics.forEach(e => {
+        this.expandedEpics[e.id] = true;
+      });
+    }
+
+    // 2. Perhitungan Statistik KPI (High-Signal Data untuk Kartu Metrik)
+    const kpiTasks = activeSprintFilter ? filteredTasks : projectTasks;
+    const totalTasksCount = kpiTasks.length;
+    const completedTasksCount = kpiTasks.filter(t => normalizeStatus(t.status) === 'Done').length;
+    const inDevOnlyCount = kpiTasks.filter(t => {
       const norm = normalizeStatus(t.status);
-      return norm === 'In Development' || norm === 'In Progress' || norm === 'Review & Testing';
+      return norm === 'In Development' || norm === 'In Progress';
     }).length;
-    const totalEstimatedHours = projectTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
-    const totalLoggedHours = projectTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
+    const reviewCount = kpiTasks.filter(t => {
+      const norm = normalizeStatus(t.status);
+      return norm === 'Review & Testing' || norm === 'In Review' || norm === 'Testing / QA';
+    }).length;
+    const inProgressCount = inDevOnlyCount + reviewCount;
+    const todoCount = kpiTasks.filter(t => normalizeStatus(t.status) === 'To Do').length;
+    const remainingTasksCount = Math.max(0, totalTasksCount - completedTasksCount);
+
+    const totalEstimatedHours = kpiTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+    const totalLoggedHours = kpiTasks.reduce((acc, t) => acc + (Number(t.timeLoggedHours) || 0), 0);
+    const remainingHours = Math.max(0, totalEstimatedHours - totalLoggedHours);
     const completionPercentage = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+
+    // Perhitungan deadline dan countdown sisa hari
+    const rawDeadline = (activeProject?.targetDeadline && activeProject.targetDeadline < '2027-01-01')
+      ? activeProject.targetDeadline
+      : '2026-11-30';
+    let formattedDeadline = rawDeadline;
+    let daysRemaining = null;
+    try {
+      const parts = rawDeadline.split('-');
+      if (parts.length === 3) {
+        const dObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        if (!isNaN(dObj.getTime())) {
+          const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+          formattedDeadline = `${dObj.getDate()} ${monthShort[dObj.getMonth()]} ${dObj.getFullYear()}`;
+          const todayMid = new Date();
+          todayMid.setHours(0, 0, 0, 0);
+          daysRemaining = Math.ceil((dObj.getTime() - todayMid.getTime()) / (1000 * 60 * 60 * 24));
+        }
+      }
+    } catch (e) {}
 
     // 3. Menghitung Rentang Tanggal Kalender Kanvas secara Dinamis dari Data Proyek Riil
     // Fokus pada jendela pengerjaan aktif (Active Work Window: 2-3 bulan) agar lebar bar proporsional dan enak dilihat
@@ -505,10 +592,24 @@ export class TimelineView {
                 />
               </div>
 
+              <!-- Sprint Selector Dropdown -->
+              <div class="timeline-status-select-wrap">
+                <label for="tlSprintFilter" class="timeline-filter-label">Sprint:</label>
+                <select id="tlSprintFilter" class="timeline-status-select">
+                  <option value="all" ${!activeSprintFilter || activeSprintFilter === 'all' ? 'selected' : ''}>Semua Sprint (${projectSprints.length})</option>
+                  ${projectSprints.map((s, sIdx) => {
+                    const shortName = getSprintShortLabel(s.name, sIdx);
+                    const tag = s.status === 'active' ? 'Aktif' : s.status === 'completed' ? 'Selesai' : 'Rencana';
+                    return `<option value="${s.id}" ${activeSprintFilter === s.id ? 'selected' : ''}>${shortName} (${tag})</option>`;
+                  }).join('')}
+                </select>
+              </div>
+
+              <!-- Status Selector Dropdown -->
               <div class="timeline-status-select-wrap">
                 <label for="tlStatusFilter" class="timeline-filter-label">Status:</label>
                 <select id="tlStatusFilter" class="timeline-status-select">
-                  <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>Semua Status (${projectTasks.length})</option>
+                  <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>Semua Status (${kpiTasks.length})</option>
                   <option value="in_dev" ${this.statusFilter === 'in_dev' ? 'selected' : ''}>In Development</option>
                   <option value="review" ${this.statusFilter === 'review' ? 'selected' : ''}>Review &amp; Testing</option>
                   <option value="done" ${this.statusFilter === 'done' ? 'selected' : ''}>Done / Selesai</option>
@@ -518,6 +619,13 @@ export class TimelineView {
                   <option value="blocked" ${this.statusFilter === 'blocked' ? 'selected' : ''}>Blocked (Kendala)</option>
                 </select>
               </div>
+
+              ${activeSprintFilter ? `
+                <div class="tl-active-sprint-chip" title="Klik tombol ✕ untuk menampilkan seluruh sprint">
+                  <span>🎯 ${this.escapeHtml(getSprintShortLabel(projectSprints.find(s => s.id === activeSprintFilter)?.name, 0))}</span>
+                  <button type="button" class="tl-chip-clear" id="tlClearSprintFilter" title="Reset filter sprint">✕</button>
+                </div>
+              ` : ''}
             </div>
 
             <!-- Legend Status Sesuai Sistem Warna Wajib -->
@@ -551,80 +659,107 @@ export class TimelineView {
                 <span>Hari Ini</span>
               </div>
             </div>
-                <span>Blocked</span>
-              </div>
-              <div class="timeline-legend-today">
-                <span class="timeline-legend-today-indicator"></span>
-                <span>Hari Ini</span>
-              </div>
-            </div>
           </div>
         </div>
 
-        <!-- 3. Metric Summary Cards (4 KPI Minimalis) -->
+        <!-- 3. Metric Summary Cards (4 KPI Minimalis, Informatif & Berbasis Flaticon) -->
         <div class="timeline-metrics-grid">
+          
+          <!-- Card 1: Progress Penyelesaian -->
           <div class="timeline-metric-card">
-            <div>
-              <div class="timeline-metric-card__header">
-                <span class="timeline-metric-card__label">Progress Penyelesaian</span>
+            <div class="timeline-metric-card__header">
+              <span class="timeline-metric-card__label">Progress Penyelesaian</span>
+              <span class="tl-metric-icon-box tl-metric-icon-box--emerald" title="Progress Penyelesaian Keseluruhan">
+                <i class="fi fi-rr-check-circle"></i>
+              </span>
+            </div>
+            <div class="timeline-metric-card__body">
+              <div class="timeline-metric-card__value-row">
+                <span class="timeline-metric-card__value" style="color: #059669;">${completionPercentage}%</span>
+                <span class="tl-metric-chip tl-metric-chip--emerald">${completedTasksCount}/${totalTasksCount} Tiket</span>
               </div>
-              <div class="timeline-metric-card__body">
-                <div class="timeline-metric-card__value-row">
-                  <span class="timeline-metric-card__value">${completionPercentage}%</span>
-                  <span class="timeline-metric-card__subvalue">(${completedTasksCount}/${totalTasksCount} tiket)</span>
-                </div>
-                <div class="timeline-metric-card__progress-track">
-                  <div class="timeline-metric-card__progress-bar" style="width: ${completionPercentage}%; background-color:#22c55e;"></div>
-                </div>
+              <div class="timeline-metric-card__progress-track">
+                <div class="timeline-metric-card__progress-bar" style="width: ${completionPercentage}%; background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">${completedTasksCount} tiket selesai dari total lingkup modul ${this.escapeHtml(projectCode)}.</p>
+            <div class="tl-metric-info-row">
+              <span class="tl-metric-info-item"><i class="fi fi-rr-check" style="color:#059669; font-size:11px;"></i> <strong>${completedTasksCount}</strong> Selesai</span>
+              <span class="tl-metric-info-dot">·</span>
+              <span class="tl-metric-info-item" style="color:#64748b;"><strong>${remainingTasksCount}</strong> Tersisa</span>
+            </div>
           </div>
 
+          <!-- Card 2: Aktif Dikerjakan -->
           <div class="timeline-metric-card">
-            <div>
-              <div class="timeline-metric-card__header">
-                <span class="timeline-metric-card__label">Aktif Dikerjakan</span>
-              </div>
-              <div class="timeline-metric-card__body">
-                <div class="timeline-metric-card__value-row">
-                  <span class="timeline-metric-card__value" style="color:#f59e0b;">${inProgressCount}</span>
-                  <span class="timeline-metric-card__subvalue">tiket sedang berjalan</span>
-                </div>
+            <div class="timeline-metric-card__header">
+              <span class="timeline-metric-card__label">Aktif Dikerjakan</span>
+              <span class="tl-metric-icon-box tl-metric-icon-box--amber" title="Tiket dalam Siklus Pengerjaan">
+                <i class="fi fi-rr-chart-kanban"></i>
+              </span>
+            </div>
+            <div class="timeline-metric-card__body">
+              <div class="timeline-metric-card__value-row">
+                <span class="timeline-metric-card__value" style="color: #d97706;">${inProgressCount}</span>
+                <span class="tl-metric-unit">Tiket</span>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Pekerjaan berjalan pada sprint aktif dengan alokasi tim teknis.</p>
+            <div class="tl-metric-info-row">
+              <span class="tl-metric-info-item" title="Sedang dikerjakan oleh tim"><span class="tl-metric-status-dot" style="background:#f59e0b;"></span> <strong>${inDevOnlyCount}</strong> In Dev</span>
+              <span class="tl-metric-info-dot">·</span>
+              <span class="tl-metric-info-item" title="Tahap QA dan Code Review"><span class="tl-metric-status-dot" style="background:#8b5cf6;"></span> <strong>${reviewCount}</strong> Review</span>
+              <span class="tl-metric-info-dot">·</span>
+              <span class="tl-metric-info-item" title="Siap dikerjakan"><span class="tl-metric-status-dot" style="background:#3b82f6;"></span> <strong>${todoCount}</strong> To Do</span>
+            </div>
           </div>
 
+          <!-- Card 3: Alokasi Estimasi Waktu -->
           <div class="timeline-metric-card">
-            <div>
-              <div class="timeline-metric-card__header">
-                <span class="timeline-metric-card__label">Alokasi Estimasi Waktu</span>
-              </div>
-              <div class="timeline-metric-card__body">
-                <div class="timeline-metric-card__value-row">
-                  <span class="timeline-metric-card__value">${totalEstimatedHours} Jam</span>
-                  <span class="timeline-metric-card__subvalue">(${totalLoggedHours}j tercatat)</span>
-                </div>
+            <div class="timeline-metric-card__header">
+              <span class="timeline-metric-card__label">Alokasi Estimasi Waktu</span>
+              <span class="tl-metric-icon-box tl-metric-icon-box--indigo" title="Beban Estimasi Jam Kerja Arsitektur">
+                <i class="fi fi-rr-clock"></i>
+              </span>
+            </div>
+            <div class="timeline-metric-card__body">
+              <div class="timeline-metric-card__value-row">
+                <span class="timeline-metric-card__value" style="color: #4f46e5;">${totalEstimatedHours}</span>
+                <span class="tl-metric-unit">Jam</span>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Total estimasi jam pengerjaan seluruh lingkup arsitektur.</p>
+            <div class="tl-metric-info-row">
+              <span class="tl-metric-info-item" title="Jam kerja yang telah dicatat"><i class="fi fi-rr-stopwatch" style="color:#4f46e5; font-size:11px;"></i> Log: <strong>${totalLoggedHours}j</strong></span>
+              <span class="tl-metric-info-dot">·</span>
+              <span class="tl-metric-info-item" title="Sisa estimasi pengerjaan"><i class="fi fi-rr-hourglass" style="color:#64748b; font-size:11px;"></i> Sisa: <strong>${remainingHours}j</strong></span>
+              ${totalEstimatedHours > 0 ? `
+                <span class="tl-metric-info-dot">·</span>
+                <span class="tl-metric-chip tl-metric-chip--indigo" style="font-size:9.5px; padding:1px 5px;">${Math.round((totalLoggedHours / totalEstimatedHours) * 100)}%</span>
+              ` : ''}
+            </div>
           </div>
 
+          <!-- Card 4: Target Delivery & UAT -->
           <div class="timeline-metric-card">
-            <div>
-              <div class="timeline-metric-card__header">
-                <span class="timeline-metric-card__label">Target Delivery &amp; UAT</span>
-              </div>
-              <div class="timeline-metric-card__body">
-                <div class="timeline-metric-card__value-row">
-                  <span class="timeline-metric-card__value" style="color:#4f46e5;">${this.escapeHtml((activeProject?.targetDeadline && activeProject.targetDeadline < '2027-01-01') ? activeProject.targetDeadline : '2026-11-30')}</span>
-                  <span class="timeline-metric-card__badge" style="background:#eef2ff; color:#4f46e5; border-color:#c7d2fe;">Target Rilis</span>
-                </div>
+            <div class="timeline-metric-card__header">
+              <span class="timeline-metric-card__label">Target Delivery &amp; UAT</span>
+              <span class="tl-metric-icon-box tl-metric-icon-box--violet" title="Target Rilis Kesepakatan Klien">
+                <i class="fi fi-rr-calendar-check"></i>
+              </span>
+            </div>
+            <div class="timeline-metric-card__body">
+              <div class="timeline-metric-card__value-row" style="align-items: center;">
+                <span class="timeline-metric-card__value" style="color: #6d28d9; font-size: 20px;">${this.escapeHtml(formattedDeadline)}</span>
               </div>
             </div>
-            <p class="timeline-metric-card__desc">Target penyelesaian proyek sesuai kontrak kesepakatan klien.</p>
+            <div class="tl-metric-info-row">
+              ${daysRemaining !== null ? `
+                <span class="tl-metric-chip ${daysRemaining < 0 ? 'tl-metric-chip--rose' : daysRemaining <= 7 ? 'tl-metric-chip--amber' : 'tl-metric-chip--violet'}">
+                  ${daysRemaining < 0 ? `${Math.abs(daysRemaining)} hari lewat` : daysRemaining === 0 ? 'Hari ini' : `${daysRemaining} hari lagi`}
+                </span>
+              ` : ''}
+              <span class="tl-metric-info-item" style="color:#64748b; font-weight:600;"><i class="fi fi-rr-flag" style="font-size:10px; color:#7c3aed;"></i> Target Rilis</span>
+            </div>
           </div>
+
         </div>
 
         <!-- 4. GANTT ROADMAP CANVAS SESUAI STRUKTUR REFERENSI -->
@@ -655,18 +790,29 @@ export class TimelineView {
                 <span style="font-size:10px; color:#64748b; margin-left:auto; font-weight:600;">${sprintMarkers.length} Sprint</span>
               </div>
               <div class="tl-meta-track-content">
-                ${sprintMarkers.map(sp => `
-                  <div
-                    class="tl-sprint-marker ${sp.active ? 'tl-sprint-marker--active' : ''}"
-                    style="left: ${sp.left}; width: ${sp.width};"
-                    title="${this.escapeHtml(sp.name)} (${sp.startDate} s/d ${sp.endDate})"
-                  >
-                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                      ${this.escapeHtml(sp.name)}
-                    </span>
-                    ${sp.active ? '<span class="tl-sprint-active-badge">ACTIVE</span>' : ''}
-                  </div>
-                `).join('')}
+                ${sprintMarkers.map((sp, spIdx) => {
+                  const shortName = getSprintShortLabel(sp.name, spIdx);
+                  const statusInfo = getSprintStatusInfo(sp.status);
+                  const isSelected = activeSprintFilter === sp.id;
+                  const isActive = sp.active || statusInfo.label === 'Aktif';
+
+                  return `
+                    <div
+                      class="tl-sprint-marker ${statusInfo.markerClass} ${isActive ? 'tl-sprint-marker--active' : ''} ${isSelected ? 'tl-sprint-marker--selected' : ''}"
+                      data-sprint-id="${sp.id}"
+                      style="left: ${sp.left}; width: ${sp.width};"
+                      title="${this.escapeHtml(sp.name)}&#10;Periode: ${sp.startDate || '-'} s/d ${sp.endDate || '-'}&#10;Status: ${statusInfo.label}&#10;Klik untuk ${isSelected ? 'membatalkan filter' : 'memilih & memfilter sprint ini'}"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <span class="tl-sprint-title">${this.escapeHtml(shortName)}</span>
+                      <span class="tl-sprint-status-tag ${statusInfo.badgeClass}">
+                        ${statusInfo.label}
+                      </span>
+                      ${isSelected ? `<span class="tl-sprint-check" title="Sedang difilter">✓</span>` : ''}
+                    </div>
+                  `;
+                }).join('')}
               </div>
             </div>
 
@@ -719,7 +865,12 @@ export class TimelineView {
               ` : ''}
 
               <!-- Epics Iteration (100% Mengacu pada Epik & Task Riil Proyek Ini) -->
-              ${currentEpics.map((epic, epicIdx) => {
+              ${visibleEpics.length === 0 ? `
+                <div style="padding: 48px 24px; text-align: center; color: #64748b; font-size: 13px; background: #ffffff; border-bottom: 1px solid #f1f5f9;">
+                  <p style="font-weight: 700; margin-bottom: 6px; color: #334155;">Tidak ada tiket pada sprint yang dipilih</p>
+                  <p style="font-size: 12px; opacity: 0.85;">Silakan pilih sprint lain atau klik batalkan filter untuk menampilkan seluruh pekerjaan proyek.</p>
+                </div>
+              ` : visibleEpics.map((epic, epicIdx) => {
                 const epicTasks = filteredTasks.filter(t => t.epicId === epic.id);
                 const isExpanded = !!this.expandedEpics[epic.id];
 
@@ -1013,7 +1164,7 @@ export class TimelineView {
 
     // Gambar kurva bezier penghubung setelah render DOM
     setTimeout(() => {
-      this.drawDependencyLines(currentEpics);
+      this.drawDependencyLines(visibleEpics);
     }, 60);
   }
 
@@ -1120,6 +1271,48 @@ export class TimelineView {
         }
       });
     }
+
+    // Sprint Selector Filter Dropdown
+    const sprintSelect = this.container.querySelector('#tlSprintFilter');
+    if (sprintSelect) {
+      sprintSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        this.selectedSprintFilter = val === 'all' ? null : val;
+        store.setState({ filterSprint: this.selectedSprintFilter, selectedSprintId: this.selectedSprintFilter });
+        this.render();
+      });
+    }
+
+    // Clear Sprint Filter Chip Button
+    const clearSprintBtn = this.container.querySelector('#tlClearSprintFilter');
+    if (clearSprintBtn) {
+      clearSprintBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.selectedSprintFilter = null;
+        store.setState({ filterSprint: null, selectedSprintId: null });
+        this.render();
+      });
+    }
+
+    // Sprint Marker Interactive Click Selection (From Gantt Sprints Row)
+    const sprintMarkers = this.container.querySelectorAll('.tl-sprint-marker[data-sprint-id]');
+    sprintMarkers.forEach(marker => {
+      marker.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const sId = marker.dataset.sprintId;
+        if (!sId) return;
+
+        // Toggle sprint filter: jika klik sprint yang sama, reset ke semua
+        if (this.selectedSprintFilter === sId) {
+          this.selectedSprintFilter = null;
+          store.setState({ filterSprint: null, selectedSprintId: null });
+        } else {
+          this.selectedSprintFilter = sId;
+          store.setState({ filterSprint: sId, selectedSprintId: sId });
+        }
+        this.render();
+      });
+    });
 
     // Status Filter
     const statusSelect = this.container.querySelector('#tlStatusFilter');

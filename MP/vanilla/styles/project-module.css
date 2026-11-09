@@ -3265,30 +3265,79 @@
   background: #3730a3;
 }
 
-/* Tabs Bar (Fixed / Sticky Header) */
-.pm-ws-tabs-bar {
+/* Tabs Bar (Fixed / Sticky Header & Proportional Layout) */
+.pm-ws-nav-header {
   position: sticky;
   top: 0;
   z-index: 50;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 24px;
-  min-height: 46px;
-  flex-shrink: 0;
-  border-bottom: 1px solid #e2e8f0;
+  gap: 12px;
+  padding: 0 16px;
+  min-height: 48px;
   background-color: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.pm-ws-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pm-ws-back-btn:hover {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border-color: #c7d2fe;
+  transform: translateX(-1px);
+}
+
+.pm-ws-nav-divider {
+  width: 1px;
+  height: 24px;
+  background-color: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.pm-ws-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-height: 48px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
   overflow-x: auto;
   overflow-y: hidden;
-  white-space: nowrap;
 }
 
 .pm-ws-tab-btn {
+  flex: 1;
+  min-width: 120px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 8px;
   padding: 12px 14px;
+  min-height: 48px;
   flex-shrink: 0;
   border: none;
   background: none;
@@ -3296,19 +3345,26 @@
   font-weight: 600;
   color: #64748b;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-bottom: 2.5px solid transparent;
   transition: all 0.15s ease;
   white-space: nowrap;
+  border-radius: 6px 6px 0 0;
 }
 
 .pm-ws-tab-btn:hover {
   color: #0f172a;
+  background-color: #f8fafc;
 }
 
 .pm-ws-tab-btn--active {
   color: #4f46e5;
   border-bottom-color: #4f46e5;
   font-weight: 700;
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.03) 0%, rgba(79, 70, 229, 0.08) 100%);
+}
+
+.pm-ws-tab-btn--active i {
+  color: #4f46e5;
 }
 
 .pm-ws-tab-badge {
@@ -3316,8 +3372,9 @@
   color: #64748b;
   font-size: 11px;
   font-weight: 700;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 999px;
+  line-height: 1.2;
 }
 
 .pm-ws-tab-btn--active .pm-ws-tab-badge {

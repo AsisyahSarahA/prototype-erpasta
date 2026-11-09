@@ -1,5 +1,5 @@
 /**
- * ProjectModuleView Component (100% Native Vanilla JS ES Module)
+ * ProjectModuleView Component (100% Native Vanilla JS ES Module - v3.4 Clean)
  * Implements the Project Management module faithfully matching the user's
  * reference screenshot:
  * 1. Top Utility Navigation Bar (Menu, Quick Links, Search, Create, Timer, Notif Badge, User Profile)
@@ -1504,28 +1504,17 @@ export class ProjectModuleView {
 
     this.container.innerHTML = `
       <div class="pm-ws-wrap pm-ws-wrap--${this.activeWorkspaceTab}">
-                <!-- 1. TOP STRIP -->
-        <div class="pm-ws-top-strip">
-          <div class="pm-ws-top-breadcrumb" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <button id="pmBackToPortfolioBtn" class="pm-ws-back-link">
-              <i class="fi fi-rr-arrow-left"></i>
-              <span>Kembali</span>
-            </button>
-          </div>
-          <div class="pm-ws-badges-right">
-            <span class="pm-ws-pill ${isAtRisk ? 'pm-ws-pill--at-risk' : 'pm-ws-pill--on-track'}">
-              • ${health}
-            </span>
-            <span class="pm-ws-pill pm-ws-pill--fixed">
-              ${activeProject.contractType || 'Fixed Price'}
-            </span>
-          </div>
-        </div>
+        <!-- WORKSPACE STICKY NAVIGATION HEADER (UNIFIED & PROPORTIONAL) -->
+        <header class="pm-ws-nav-header">
+          <button id="pmBackToPortfolioBtn" class="pm-ws-back-btn" title="Kembali ke Portofolio Proyek">
+            <i class="fi fi-rr-arrow-left"></i>
+            <span>Kembali</span>
+          </button>
+          <div class="pm-ws-nav-divider"></div>
+          ${this.renderTabsBar(stats)}
+        </header>
 
-        <!-- 2. TABS BAR (STICKY DI ATAS WORKSPACE) -->
-        ${this.renderTabsBar(stats)}
-
-        <!-- 3. MAIN WORKSPACE CONTENT CONTAINER -->
+        <!-- MAIN WORKSPACE CONTENT CONTAINER -->
         <main class="pm-content" id="pmWorkspaceContentArea"></main>
 
         <!-- Modals -->
@@ -2502,79 +2491,161 @@ export class ProjectModuleView {
     const contractNumber = activeProject.contractNumber || (code === 'LIB-DIG' ? 'CT/2026/10/0001' : `CT/2026/10/${code}-001`);
 
     // Financial calculations
-    const contractVal = Number(activeProject.contractValue) || 185000000;
-    const actualMandays = activeProject.usedHours ? Math.round(activeProject.usedHours / 8) : 110;
-    const budgetMandays = activeProject.totalHours ? Math.round(activeProject.totalHours / 8) : 110;
-    const progressPct = 100;
-
-    const dpVal = Math.round(contractVal * 0.3);
-    const uatVal = Math.round(contractVal * 0.4);
-    const finalVal = Math.round(contractVal * 0.3);
+    const contractVal = Number(activeProject.contractValue) || (code === 'FTSL-PRO' ? 52000000 : 185000000);
+    const actualMandays = activeProject.usedHours ? Math.round(activeProject.usedHours / 8) : 21;
+    const budgetMandays = activeProject.totalHours ? Math.round(activeProject.totalHours / 8) : 53;
+    const currentProgress = store.getProjectProgress(activeProject.id);
 
     const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
 
-    const termins = (activeProject.top_scheme && activeProject.top_scheme.items) ? activeProject.top_scheme.items : [
+    // 5 Termin Milestone / Iterasi Release Model (25% - 25% - 20% - 20% - 10%)
+    const term1Val = Math.round(contractVal * 0.25);
+    const term2Val = Math.round(contractVal * 0.25);
+    const term3Val = Math.round(contractVal * 0.20);
+    const term4Val = Math.round(contractVal * 0.20);
+    const term5Val = Math.round(contractVal * 0.10);
+
+    const termins = [
       {
         term_no: 1,
-        name: 'Down Payment (DP)',
-        description: 'Pembayaran uang muka untuk kick-off proyek & resource allocation',
-        value: 30,
-        calculated_amount: dpVal,
-        trigger_label: 'Saat penandatanganan kontrak / MoU',
+        name: 'Down Payment (DP) / Sprint 0',
+        phase: 'Inisialisasi & Setup Arsitektur',
+        value: 25,
+        calculated_amount: term1Val,
+        min_progress: 0,
+        trigger_label: 'Saat penandatanganan kontrak / MoU & Project Kick-off',
         due_days_label: 'Net 7',
-        status: 'Paid',
-        is_locked: true,
-        invoice_no: 'INV/2026/10/0001'
+        deliverables: [
+          'Project kickoff & alignment ekspektasi stakeholder',
+          'Dokumen Product Backlog awal & prioritisasi user story',
+          'Desain wireframe UI/UX & arsitektur sistem',
+          'Setup environment staging & konfigurasi repository CI/CD'
+        ],
+        default_status: 'Paid',
+        default_invoice_no: `INV/2026/10/${code}-001`
       },
       {
         term_no: 2,
-        name: 'Progress / UAT Milestone',
-        description: 'Penyelesaian fitur utama sirkulasi, OPAC & pengujian UAT client',
-        value: 40,
-        calculated_amount: uatVal,
-        trigger_label: 'Setelah penyelesaian UAT aplikasi',
+        name: 'Release 1 (Core Engine / MVP Awal)',
+        phase: 'Selesai 2–3 Sprint Pertama',
+        value: 25,
+        calculated_amount: term2Val,
+        min_progress: 20,
+        trigger_label: 'Selesai 2–3 sprint pertama & MVP terdemo di staging',
         due_days_label: 'Net 14',
-        status: this.isTermin2Invoiced ? 'Invoiced' : 'Planned',
-        is_locked: this.isTermin2Invoiced,
-        invoice_no: this.isTermin2Invoiced ? `INV/2026/11/${code}-002` : null
+        deliverables: [
+          'Modul autentikasi pengguna & manajemen peran (RBAC)',
+          'Database schema operasional & migrasi struktur tabel',
+          'Fungsionalitas inti MVP (katalog layanan / master dashboard)',
+          'Live Demo sistem pada server staging'
+        ]
       },
       {
         term_no: 3,
-        name: 'Pelunasan Final',
-        description: 'Serah terima sistem final dan dokumen BAST perpustakaan',
-        value: 30,
-        calculated_amount: finalVal,
-        trigger_label: 'Setelah penandatanganan BAST',
+        name: 'Release 2 (Fitur Transaksional / Integrasi API)',
+        phase: 'Pertengahan Siklus Sprint',
+        value: 20,
+        calculated_amount: term3Val,
+        min_progress: 50,
+        trigger_label: 'Integrasi payment gateway, API eksternal, atau modul bisnis inti stabil',
         due_days_label: 'Net 14',
-        status: this.isTermin3Invoiced ? 'Invoiced' : 'Planned',
-        is_locked: this.isTermin3Invoiced,
-        invoice_no: this.isTermin3Invoiced ? `INV/2026/12/${code}-003` : null
+        deliverables: [
+          'Integrasi payment gateway / multi-channel pembayaran QRIS & VA',
+          'Integrasi API eksternal & webhook notifikasi otomatis',
+          'Modul transaksional bisnis inti berjalan stabil',
+          'Pengujian performa & benchmark keamanan awal'
+        ]
+      },
+      {
+        term_no: 4,
+        name: 'Release 3: UAT & User Sign-off',
+        phase: 'Deployment Production & Pelatihan',
+        value: 20,
+        calculated_amount: term4Val,
+        min_progress: 80,
+        trigger_label: 'Seluruh item backlog prioritas selesai & lolos UAT',
+        due_days_label: 'Net 14',
+        deliverables: [
+          'Penyelesaian 100% user story prioritas tinggi (High Priority)',
+          'Lolos User Acceptance Testing (UAT) bersama pihak klien',
+          'Deployment ke production / live cloud environment',
+          'Pelatihan (training) bagi admin dan pengguna sistem'
+        ]
+      },
+      {
+        term_no: 5,
+        name: 'Retensi & Handover Final',
+        phase: 'Pasca Garansi & Handover Aset',
+        value: 10,
+        calculated_amount: term5Val,
+        min_progress: 100,
+        trigger_label: 'Berakhir masa garansi/pemeliharaan 14–30 hari pasca go-live & BAST',
+        due_days_label: 'Net 30',
+        deliverables: [
+          'Masa garansi/pemeliharaan awal 14–30 hari tuntas tanpa bug kritis',
+          'Penyerahan source code lengkap & kepemilikan repository',
+          'Dokumentasi teknis, user guide, dan dokumentasi API lengkap',
+          'Penandatanganan Berita Acara Serah Terima (BAST) final'
+        ]
       }
     ];
 
-    const issuedInvoices = [
-      {
-        no: 'INV/2026/10/0001',
-        title: 'Termin 1: Down Payment (DP 30%)',
-        amount: dpVal,
+    // Read stored invoices for this project
+    const projectInvoices = (store.state.invoices || []).filter(inv =>
+      inv.projectId === activeProject.id ||
+      (inv.invoiceNumber && inv.invoiceNumber.includes(code))
+    );
+
+    termins.forEach(term => {
+      const existingInv = projectInvoices.find(inv =>
+        inv.termin_no === term.term_no ||
+        (inv.type && inv.type.includes(`Termin ${term.term_no}`)) ||
+        (inv.invoiceNumber && inv.invoiceNumber.endsWith(`-00${term.term_no}`)) ||
+        (term.term_no === 1 && (inv.status === 'Lunas' || (inv.type && inv.type.toLowerCase().includes('down payment'))))
+      );
+
+      if (existingInv) {
+        term.status = (existingInv.status === 'Lunas' || existingInv.status === 'Paid') ? 'Paid' : 'Invoiced';
+        term.invoice_no = existingInv.invoiceNumber;
+        term.is_locked = true;
+      } else if (term.term_no === 1 && activeProject.status === 'Active') {
+        term.status = 'Paid';
+        term.invoice_no = term.default_invoice_no;
+        term.is_locked = true;
+      } else {
+        term.status = 'Planned';
+        term.invoice_no = null;
+        term.is_locked = false;
+      }
+    });
+
+    // Populate issued invoices list
+    const issuedInvoices = [];
+    const term1 = termins.find(t => t.term_no === 1);
+    if (term1 && term1.status === 'Paid') {
+      issuedInvoices.push({
+        no: term1.invoice_no || `INV/2026/10/${code}-001`,
+        title: `Termin 1: Down Payment (DP 25%) - Kick-off & Arsitektur`,
+        amount: term1.calculated_amount,
         date: '18 Okt 2026',
-        status: 'LUNAS (PAID)'
-      },
-      ...(this.isTermin2Invoiced ? [{
-        no: `INV/2026/11/${code}-002`,
-        title: 'Termin 2: Progress / UAT Milestone (40%)',
-        amount: uatVal,
-        date: '05 Nov 2026',
-        status: 'MENUNGGU'
-      }] : []),
-      ...(this.isTermin3Invoiced ? [{
-        no: `INV/2026/12/${code}-003`,
-        title: 'Termin 3: Pelunasan Final (30%)',
-        amount: finalVal,
-        date: '01 Des 2026',
-        status: 'DRAFT'
-      }] : [])
-    ];
+        status: 'LUNAS (PAID)',
+        isPaid: true
+      });
+    }
+
+    projectInvoices.forEach(inv => {
+      if (inv.invoiceNumber && !issuedInvoices.some(x => x.no === inv.invoiceNumber)) {
+        const isPaid = inv.status === 'Lunas' || inv.status === 'Paid';
+        issuedInvoices.push({
+          no: inv.invoiceNumber,
+          title: inv.type || (inv.items && inv.items[0]?.description) || 'Faktur Termin',
+          amount: inv.totalAmount || inv.subtotal,
+          date: inv.issueDate || '08 Nov 2026',
+          status: isPaid ? 'LUNAS (PAID)' : 'TERKIRIM KE FINANCE',
+          isPaid: isPaid
+        });
+      }
+    });
 
     return `
       <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; max-width: 1440px; margin: 0 auto; width: 100%; padding: 20px 24px;">
@@ -2619,7 +2690,7 @@ export class ProjectModuleView {
               <div style="border-left: 1px solid #e2e8f0; padding-left: 18px;">
                 <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">SKEMA TERMIN</span>
                 <p style="font-weight: 800; color: #0f172a; margin: 2px 0 0 0; font-size: 13px;">
-                  30/40/30
+                  25/25/20/20/10
                 </p>
               </div>
 
@@ -2632,15 +2703,18 @@ export class ProjectModuleView {
             </div>
           </div>
 
-          <!-- Progress Bar (Matches Screenshot) -->
-          <div style="width: 100%; height: 6px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; margin-top: 4px;">
-            <div style="width: ${progressPct}%; height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 100%); border-radius: 9999px;"></div>
+          <!-- Progress Bar & Indicator -->
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+            <div style="flex: 1; height: 6px; background: #f1f5f9; border-radius: 9999px; overflow: hidden;">
+              <div style="width: ${Math.max(currentProgress, 25)}%; height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 100%); border-radius: 9999px;"></div>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; color: #059669; font-family: var(--font-mono, monospace);">
+              Progres Pengerjaan: ${currentProgress}%
+            </span>
           </div>
         </div>
 
-        <!-- PERMINTAAN USER: JANGAN ADA KAN CARD TAHAPAN PROSES -->
-
-        <!-- 2. HEADER MODUL KONTRAK, INVOICING & SETTING TOP (PERSIS SEPERTI DI GAMBAR) -->
+        <!-- 2. HEADER MODUL KONTRAK, INVOICING & SETTING TOP -->
         <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -2652,11 +2726,11 @@ export class ProjectModuleView {
               </span>
             </div>
             <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">
-              Setting TOP diwariskan langsung dari Quotation yang disetujui (Deal) dan mengendalikan jadwal penerbitan invoice per termin.
+              Setting TOP diwariskan dari kesepakatan kontrak (Deal) dan mengendalikan pengiriman tagihan invoice ke Departemen Finance berbasis capaian milestone aplikasi.
             </p>
           </div>
 
-          <!-- View Switcher Subtabs (Matches Screenshot Top Right) -->
+          <!-- View Switcher Subtabs -->
           <div style="display: flex; align-items: center; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 12px; font-size: 12px; font-weight: 600;">
             <button type="button" class="pm-finance-top-subtab-btn ${this.financeTopSubTab === 'top_setting' ? 'active' : ''}" data-subtab="top_setting" style="padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s ease; ${this.financeTopSubTab === 'top_setting' ? 'background: white; color: #4338ca; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.05);' : 'background: none; color: #64748b;'}">
               Setting TOP Kontrak Ini
@@ -2668,7 +2742,7 @@ export class ProjectModuleView {
         </div>
 
         ${this.financeTopSubTab === 'top_setting' ? `
-          <!-- 3. KONTRAK / PROYEK TERPILIH SUMMARY BAR (PERSIS SEPERTI DI GAMBAR) -->
+          <!-- 3. KONTRAK / PROYEK TERPILIH SUMMARY BAR -->
           <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px;">
               
@@ -2685,7 +2759,7 @@ export class ProjectModuleView {
                 </div>
               </div>
 
-              <!-- Right Metrics (Matches Screenshot) -->
+              <!-- Right Metrics -->
               <div style="display: flex; align-items: center; gap: 24px; font-size: 12px; flex-wrap: wrap;">
                 <div>
                   <span style="color: #64748b; font-size: 11px; display: block;">Nilai Kontrak Total:</span>
@@ -2697,7 +2771,7 @@ export class ProjectModuleView {
                 <div style="border-left: 1px solid #e2e8f0; padding-left: 20px;">
                   <span style="color: #64748b; font-size: 11px; display: block;">Skema Termin TOP:</span>
                   <p style="font-weight: 700; color: #0f172a; margin: 2px 0 0 0;">
-                    30/40/30 (${termins.length} Termin)
+                    25/25/20/20/10 (${termins.length} Termin Release)
                   </p>
                 </div>
 
@@ -2712,93 +2786,142 @@ export class ProjectModuleView {
             </div>
           </div>
 
-          <!-- 4. JADWAL TERMIN PEMBAYARAN KONTRAK TABLE (PERSIS SEPERTI DI GAMBAR) -->
+          <!-- 4. JADWAL TERMIN PEMBAYARAN KONTRAK TABLE (5 TERMIN MILESTONE RELEASE) -->
           <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 16px;">
-            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
-              <h3 style="font-size: 14.5px; font-weight: 800; color: #0f172a; margin: 0;">
-                Jadwal Termin Pembayaran Kontrak ${contractNumber}
-              </h3>
-              <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
-                🔒 Termin yang sudah diterbitkan invoice terkunci demi kepatuhan akuntansi (PRD BR-19).
-              </p>
+            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="font-size: 14.5px; font-weight: 800; color: #0f172a; margin: 0;">
+                  Jadwal Termin Pembayaran Kontrak ${contractNumber}
+                </h3>
+                <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
+                  🔒 Model Termin per Milestone / Iterasi Release (5 Termin). Invoice dapat diajukan ke Departemen Finance saat deliverable terpenuhi.
+                </p>
+              </div>
+              <div style="font-size: 11.5px; color: #4338ca; background: #eef2ff; border: 1px solid #c7d2fe; padding: 4px 10px; border-radius: 6px; font-weight: 600;">
+                <i class="fi fi-rr-info"></i> Progres Proyek Saat Ini: <strong>${currentProgress}%</strong>
+              </div>
             </div>
 
-            <!-- Table of Termins matching Screenshot -->
+            <!-- Table of 5 Termins matching user requirement -->
             <div style="overflow-x: auto;">
               <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 12px;">
                 <thead>
                   <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.05em;">
                     <th style="padding: 12px 14px; width: 44px; text-align: center;">NO</th>
-                    <th style="padding: 12px 14px;">NAMA TERMIN</th>
-                    <th style="padding: 12px 14px; width: 90px;">PORSI (%)</th>
+                    <th style="padding: 12px 14px; min-width: 260px;">NAMA TERMIN &amp; DELIVERABLES</th>
+                    <th style="padding: 12px 14px; width: 85px;">PORSI (%)</th>
                     <th style="padding: 12px 14px; width: 160px;">NOMINAL (IDR)</th>
-                    <th style="padding: 12px 14px;">PEMICU TAGIHAN (TRIGGER)</th>
-                    <th style="padding: 12px 14px; width: 140px;">STATUS TERMIN</th>
-                    <th style="padding: 12px 14px; text-align: right; width: 160px;">AKSI FINANCE</th>
+                    <th style="padding: 12px 14px; min-width: 240px;">PEMICU TAGIHAN (TRIGGER) &amp; KESIAPAN</th>
+                    <th style="padding: 12px 14px; width: 150px;">STATUS TERMIN</th>
+                    <th style="padding: 12px 14px; text-align: right; width: 180px;">AKSI FINANCE</th>
                   </tr>
                 </thead>
                 <tbody style="border-top: 1px solid #e2e8f0;">
                   ${termins.map((term, idx) => {
                     const isPaid = term.status === 'Paid';
                     const isInvoiced = term.status === 'Invoiced' || term.is_locked;
+                    const isProgressReady = currentProgress >= term.min_progress;
 
                     return `
                       <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
-                        <td style="padding: 14px; text-align: center; font-family: var(--font-mono, monospace); font-weight: 700; color: #64748b;">
+                        <td style="padding: 14px; text-align: center; font-family: var(--font-mono, monospace); font-weight: 700; color: #64748b; vertical-align: top;">
                           ${idx + 1}
                         </td>
 
-                        <td style="padding: 14px;">
-                          <div style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
-                            <span>${term.name}</span>
-                            ${isInvoiced ? `<span title="Terkunci: Invoice sudah terbit" style="color: #94a3b8; font-size: 12px;">🔒</span>` : ''}
+                        <td style="padding: 14px; vertical-align: top;">
+                          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span style="font-weight: 800; color: #0f172a; font-size: 13px;">${term.name}</span>
+                            <span style="font-size: 10px; font-weight: 700; background: rgba(99,102,241,0.08); color: #4338ca; padding: 2px 7px; border-radius: 4px;">
+                              ${term.phase}
+                            </span>
+                            ${isInvoiced ? `<span title="Terkunci: Invoice sudah diterbitkan" style="color: #94a3b8; font-size: 11px;">🔒</span>` : ''}
                           </div>
-                          <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
-                            ${term.description || ''}
+                          
+                          <!-- Deliverables items -->
+                          <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 4px; background: #fafafa; border: 1px solid #f1f5f9; border-radius: 6px; padding: 8px 10px;">
+                            <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">Deliverable yang disyaratkan:</span>
+                            ${term.deliverables.map(d => `
+                              <div style="font-size: 11px; color: #334155; display: flex; align-items: flex-start; gap: 5px; line-height: 1.4;">
+                                <i class="fi fi-rr-check" style="color: #10b981; font-size: 10px; margin-top: 2px; flex-shrink: 0;"></i>
+                                <span>${d}</span>
+                              </div>
+                            `).join('')}
                           </div>
                         </td>
 
-                        <td style="padding: 14px; font-family: var(--font-mono, monospace); font-weight: 700; color: #0f172a;">
+                        <td style="padding: 14px; font-family: var(--font-mono, monospace); font-weight: 800; color: #0f172a; font-size: 13px; vertical-align: top;">
                           ${term.value}%
                         </td>
 
-                        <td style="padding: 14px; font-family: var(--font-mono, monospace); font-weight: 800; color: #059669; font-size: 12.5px;">
-                          ${formatIDR(term.calculated_amount)}
+                        <td style="padding: 14px; vertical-align: top;">
+                          <div style="font-family: var(--font-mono, monospace); font-weight: 800; color: #059669; font-size: 13px;">
+                            ${formatIDR(term.calculated_amount)}
+                          </div>
+                          <div style="font-size: 10.5px; color: #64748b; margin-top: 3px;">
+                            + PPN 11%: ${formatIDR(Math.round(term.calculated_amount * 0.11))}
+                          </div>
                         </td>
 
-                        <td style="padding: 14px; color: #334155;">
-                          <div style="font-weight: 500;">${term.trigger_label || '-'}</div>
-                          <span style="font-size: 10.5px; font-family: var(--font-mono, monospace); color: #64748b;">${term.due_days_label || '-'}</span>
+                        <td style="padding: 14px; color: #334155; vertical-align: top;">
+                          <div style="font-weight: 600; font-size: 12px; line-height: 1.4;">${term.trigger_label}</div>
+                          <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                            <span style="font-size: 10.5px; font-family: var(--font-mono, monospace); font-weight: 700; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">
+                              ${term.due_days_label}
+                            </span>
+                            ${isPaid ? `
+                              <span style="font-size: 10.5px; font-weight: 700; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="fi fi-rr-badge-check"></i> Milestone Tuntas
+                              </span>
+                            ` : isProgressReady ? `
+                              <span style="font-size: 10.5px; font-weight: 700; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="fi fi-rr-check"></i> Progres Memenuhi (${currentProgress}% / Min ${term.min_progress}%)
+                              </span>
+                            ` : `
+                              <span style="font-size: 10.5px; font-weight: 600; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; padding: 2px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="fi fi-rr-hourglass-end"></i> Menunggu Progres (${currentProgress}% / Target ${term.min_progress}%)
+                              </span>
+                            `}
+                          </div>
                         </td>
 
-                        <td style="padding: 14px;">
+                        <td style="padding: 14px; vertical-align: top;">
                           ${isPaid ? `
-                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">
-                              ✔ LUNAS (PAID)
+                            <span style="padding: 4px 10px; border-radius: 6px; font-size: 10.5px; font-weight: 800; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; display: inline-flex; align-items: center; gap: 5px;">
+                              <i class="fi fi-rr-badge-check"></i> LUNAS (PAID)
                             </span>
                           ` : isInvoiced ? `
-                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;">
-                              🔒 INVOICED
+                            <span style="padding: 4px 10px; border-radius: 6px; font-size: 10.5px; font-weight: 800; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 5px;">
+                              <i class="fi fi-rr-paper-plane"></i> TERKIRIM KE FINANCE
                             </span>
                           ` : `
-                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #fffbeb; color: #b45309; border: 1px solid #fde68a;">
-                              PLANNED
+                            <span style="padding: 4px 10px; border-radius: 6px; font-size: 10.5px; font-weight: 800; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 5px;">
+                              <i class="fi fi-rr-clock"></i> PLANNED
                             </span>
                           `}
                         </td>
 
-                        <td style="padding: 14px; text-align: right;">
+                        <td style="padding: 14px; text-align: right; vertical-align: top;">
                           ${isPaid ? `
-                            <span style="font-size: 11px; color: #64748b; font-family: var(--font-mono, monospace); font-weight: 700;">
-                              ${term.invoice_no || 'INV/2026/10/0001'}
-                            </span>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                              <span style="font-size: 11px; color: #64748b; font-family: var(--font-mono, monospace); font-weight: 700;">
+                                ${term.invoice_no || `INV/2026/10/${code}-001`}
+                              </span>
+                              <button type="button" class="pm-print-invoice-btn" data-inv="${term.invoice_no || `INV/2026/10/${code}-001`}" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #475569; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <i class="fi fi-rr-print"></i> Cetak Faktur
+                              </button>
+                            </div>
                           ` : isInvoiced ? `
-                            <span style="font-size: 11px; color: #4338ca; font-family: var(--font-mono, monospace); font-weight: 700;">
-                              ${term.invoice_no || 'Invoice Terbit'}
-                            </span>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                              <span style="font-size: 11px; color: #1d4ed8; font-family: var(--font-mono, monospace); font-weight: 700;">
+                                ${term.invoice_no}
+                              </span>
+                              <button type="button" class="pm-view-invoice-btn" data-inv="${term.invoice_no}" data-term-no="${term.term_no}" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 6px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;">
+                                <i class="fi fi-rr-eye"></i> Detail Faktur
+                              </button>
+                            </div>
                           ` : `
-                            <button type="button" class="pm-issue-invoice-btn" data-term-no="${term.term_no}" style="padding: 6px 14px; border-radius: 8px; background: #4338ca; color: white; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(67, 56, 202, 0.25); transition: background 0.15s ease;">
-                              Terbitkan Invoice
+                            <button type="button" class="pm-send-invoice-to-finance-btn" data-term-no="${term.term_no}" style="padding: 7px 14px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: white; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.28); display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease; white-space: nowrap;">
+                              <i class="fi fi-rr-paper-plane"></i> Kirim Invoice ke Finance
                             </button>
                           `}
                         </td>
@@ -2818,7 +2941,7 @@ export class ProjectModuleView {
                   Daftar Faktur Tagihan Terbit (${issuedInvoices.length})
                 </h3>
                 <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
-                  Arsip invoice resmi untuk proyek [${code}] ${title}
+                  Arsip invoice resmi untuk proyek [${code}] ${title} yang telah diajukan ke Departemen Finance &amp; AR.
                 </p>
               </div>
             </div>
@@ -2851,13 +2974,13 @@ export class ProjectModuleView {
                         ${inv.date}
                       </td>
                       <td style="padding: 14px;">
-                        <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; ${inv.status.includes('LUNAS') ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' : 'background: #fffbeb; color: #b45309; border: 1px solid #fde68a;'}">
+                        <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; ${inv.isPaid ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' : 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;'}">
                           ${inv.status}
                         </span>
                       </td>
                       <td style="padding: 14px; text-align: right;">
-                        <button type="button" class="pm-print-invoice-btn" data-inv="${inv.no}" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #334155; font-size: 11px; font-weight: 600; cursor: pointer;">
-                          Cetak Faktur
+                        <button type="button" class="pm-view-invoice-btn" data-inv="${inv.no}" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #334155; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                          <i class="fi fi-rr-eye"></i> Detail Faktur
                         </button>
                       </td>
                     </tr>
@@ -3020,7 +3143,7 @@ export class ProjectModuleView {
             </div>
             <div class="pm-contract-item">
               <span class="pm-ci-label">Skema Pembayaran:</span>
-              <strong class="pm-ci-val">Fixed Price (Termin 30% - 40% - 30%)</strong>
+              <strong class="pm-ci-val">Fixed Price (Termin 25% - 25% - 20% - 20% - 10%)</strong>
             </div>
             <div class="pm-contract-item">
               <span class="pm-ci-label">Masa Garansi Bebas Bug:</span>
@@ -3165,17 +3288,23 @@ export class ProjectModuleView {
       });
     });
 
-    // Issue Invoice Action in Finance Tab
-    this.container.querySelectorAll('.pm-issue-invoice-btn').forEach((btn) => {
+    // Send Invoice to Finance Action in Finance Tab
+    this.container.querySelectorAll('.pm-send-invoice-to-finance-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const termNo = Number(e.currentTarget.dataset.termNo);
-        if (termNo === 2) {
-          this.isTermin2Invoiced = true;
-        } else if (termNo === 3) {
-          this.isTermin3Invoiced = true;
+        if (termNo) {
+          this.handleSendInvoiceToFinance(termNo);
         }
-        store.addToast('success', 'Invoice Berhasil Diterbitkan!', `Faktur Termin ${termNo} telah diterbitkan dan dikirimkan ke bagian Finance & Klien.`);
-        this.render();
+      });
+    });
+
+    // View Invoice Detail Action
+    this.container.querySelectorAll('.pm-view-invoice-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const inv = e.currentTarget.dataset.inv;
+        if (inv) {
+          this.showInvoiceDetailModal(inv);
+        }
       });
     });
 
@@ -3183,7 +3312,9 @@ export class ProjectModuleView {
     this.container.querySelectorAll('.pm-print-invoice-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const inv = e.currentTarget.dataset.inv;
-        store.addToast('info', 'Mencetak Faktur', `Menyiapkan cetakan faktur tagihan [${inv}].`);
+        if (inv) {
+          this.showInvoiceDetailModal(inv);
+        }
       });
     });
 
@@ -3542,7 +3673,376 @@ export class ProjectModuleView {
     }
   }
 
-    getElement() {
+    async handleSendInvoiceToFinance(termNo) {
+    const activeProject = store.getActiveProject() || {};
+    const code = activeProject.code || 'LIB-DIG';
+    const title = activeProject.name || activeProject.title || 'Proyek';
+    const clientName = activeProject.clientName || activeProject.customer_name || 'Klien';
+    const pmName = activeProject.pmName || activeProject.pm_name || 'Asisyah Sarah Azzahra';
+    const contractVal = Number(activeProject.contractValue) || (code === 'FTSL-PRO' ? 52000000 : 185000000);
+    const currentProgress = store.getProjectProgress(activeProject.id);
+    const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
+
+    const termDefinitions = [
+      {
+        term_no: 1,
+        name: 'Down Payment (DP) / Sprint 0',
+        value: 25,
+        min_progress: 0,
+        due_days_label: 'Net 7',
+        trigger_label: 'Saat penandatanganan kontrak / MoU & Project Kick-off',
+        deliverables: [
+          'Project kickoff & alignment ekspektasi stakeholder',
+          'Dokumen Product Backlog awal & prioritisasi user story',
+          'Wireframe UI/UX & arsitektur sistem',
+          'Setup environment staging & konfigurasi repository CI/CD'
+        ]
+      },
+      {
+        term_no: 2,
+        name: 'Release 1 (Core Engine / MVP Awal)',
+        value: 25,
+        min_progress: 20,
+        due_days_label: 'Net 14',
+        trigger_label: 'Selesai 2–3 sprint pertama & MVP terdemo di staging',
+        deliverables: [
+          'Modul autentikasi pengguna & manajemen peran (RBAC)',
+          'Database schema operasional & migrasi struktur tabel',
+          'Fungsionalitas inti MVP (katalog layanan / master dashboard)',
+          'Live Demo sistem pada server staging'
+        ]
+      },
+      {
+        term_no: 3,
+        name: 'Release 2 (Fitur Transaksional / Integrasi API)',
+        value: 20,
+        min_progress: 50,
+        due_days_label: 'Net 14',
+        trigger_label: 'Integrasi payment gateway, API eksternal, atau modul bisnis inti stabil',
+        deliverables: [
+          'Integrasi payment gateway / multi-channel pembayaran QRIS & VA',
+          'Integrasi API eksternal & webhook notifikasi otomatis',
+          'Modul transaksional bisnis inti berjalan stabil',
+          'Pengujian performa & benchmark keamanan awal'
+        ]
+      },
+      {
+        term_no: 4,
+        name: 'Release 3: UAT & User Sign-off',
+        value: 20,
+        min_progress: 80,
+        due_days_label: 'Net 14',
+        trigger_label: 'Seluruh item backlog prioritas selesai & lolos UAT',
+        deliverables: [
+          'Penyelesaian 100% user story prioritas tinggi (High Priority)',
+          'Lolos User Acceptance Testing (UAT) bersama pihak klien',
+          'Deployment ke production / live cloud environment',
+          'Pelatihan (training) bagi admin dan pengguna sistem'
+        ]
+      },
+      {
+        term_no: 5,
+        name: 'Retensi & Handover Final',
+        value: 10,
+        min_progress: 100,
+        due_days_label: 'Net 30',
+        trigger_label: 'Berakhir masa garansi/pemeliharaan 14–30 hari pasca go-live & BAST',
+        deliverables: [
+          'Masa garansi/pemeliharaan awal 14–30 hari tuntas tanpa bug kritis',
+          'Penyerahan source code lengkap & kepemilikan repository',
+          'Dokumentasi teknis, user guide, dan dokumentasi API lengkap',
+          'Penandatanganan Berita Acara Serah Terima (BAST) final'
+        ]
+      }
+    ];
+
+    const term = termDefinitions.find(t => t.term_no === termNo);
+    if (!term) return;
+
+    const dpp = Math.round(contractVal * (term.value / 100));
+    const ppn = Math.round(dpp * 0.11);
+    const total = dpp + ppn;
+    const invNumber = `INV/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/${code}-00${term.term_no}`;
+
+    const Swal = window.Swal;
+
+    // Check progress qualification
+    if (currentProgress < term.min_progress) {
+      if (Swal) {
+        const warnResult = await Swal.fire({
+          title: 'Milestone Belum Terpenuhi',
+          html: `
+            <div style="text-align: left; font-size: 13px; color: #334155; line-height: 1.5;">
+              <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                <p style="margin: 0; color: #92400e; font-weight: 600;">
+                  ⚠️ Progres pengerjaan proyek saat ini baru <strong>${currentProgress}%</strong>. Syarat minimum pengajuan Termin ${term.term_no} adalah <strong>≥ ${term.min_progress}%</strong>.
+                </p>
+              </div>
+              <p style="margin: 0;">Apakah Anda ingin tetap memproses pengiriman invoice ke Departemen Finance &amp; AR sebagai diskresi PM (misal: sprint demo telah disetujui klien)?</p>
+            </div>
+          `,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Lanjutkan Pengajuan ke Finance',
+          cancelButtonText: 'Batal',
+          confirmButtonColor: '#4f46e5',
+          cancelButtonColor: '#94a3b8'
+        });
+        if (!warnResult.isConfirmed) return;
+      }
+    }
+
+    // Modal Confirmation & Preview Submission
+    if (Swal) {
+      const modalResult = await Swal.fire({
+        title: `<div style="font-size: 16.5px; font-weight: 800; color: #0f172a; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fi fi-rr-paper-plane" style="color: #4f46e5;"></i>
+          Kirim Invoice ke Departemen Finance
+        </div>`,
+        html: `
+          <div style="text-align: left; font-size: 12.5px; color: #334155; line-height: 1.5;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 10.5px; color: #64748b; font-weight: 700;">NOMOR INVOICE OTOMATIS</span>
+                  <div style="font-family: var(--font-mono, monospace); font-weight: 800; color: #4338ca; font-size: 13.5px;">${invNumber}</div>
+                </div>
+                <div style="text-align: right;">
+                  <span style="font-size: 10.5px; color: #64748b; font-weight: 700;">JATUH TEMPO</span>
+                  <div style="font-weight: 700; color: #0f172a;">${term.due_days_label}</div>
+                </div>
+              </div>
+
+              <div style="font-weight: 700; color: #0f172a; font-size: 13px;">
+                Termin ${term.term_no}: ${term.name} (${term.value}%)
+              </div>
+              <div style="color: #64748b; font-size: 11.5px; margin-top: 3px;">
+                Proyek: <strong>${title}</strong> [${code}]
+              </div>
+              <div style="color: #64748b; font-size: 11.5px;">
+                Klien: <strong>${clientName}</strong> • PM: <strong>${pmName}</strong>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+              <span style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">
+                Deliverable Milestone yang Divalidasi:
+              </span>
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px;">
+                ${term.deliverables.map(d => `
+                  <div style="display: flex; align-items: flex-start; gap: 6px; font-size: 11.5px; color: #1e293b;">
+                    <i class="fi fi-rr-check" style="color: #10b981; font-weight: 800; font-size: 11px; margin-top: 2px;"></i>
+                    <span>${d}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; color: #475569;">
+                <span>Nilai DPP (${term.value}%):</span>
+                <strong style="color: #0f172a; font-family: var(--font-mono, monospace);">${formatIDR(dpp)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 12px; color: #475569; margin-top: 4px;">
+                <span>PPN (11%):</span>
+                <strong style="color: #0f172a; font-family: var(--font-mono, monospace);">${formatIDR(ppn)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13.5px; border-top: 1px solid #cbd5e1; margin-top: 8px; padding-top: 8px; font-weight: 800;">
+                <span style="color: #0f172a;">Total Tagihan:</span>
+                <strong style="color: #059669; font-family: var(--font-mono, monospace); font-size: 15px;">${formatIDR(total)}</strong>
+              </div>
+            </div>
+
+            <div style="font-size: 11px; color: #4338ca; background: #eef2ff; border-radius: 6px; padding: 8px 10px; display: flex; align-items: center; gap: 6px;">
+              <i class="fi fi-rr-info"></i>
+              <span>Invoice akan langsung masuk ke antrean verifikasi Departemen Finance &amp; AR untuk proses penagihan resmi ke Klien.</span>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fi fi-rr-paper-plane"></i> Kirim ke Dept. Finance & AR',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#4f46e5',
+        cancelButtonColor: '#94a3b8',
+        width: 560
+      });
+
+      if (!modalResult.isConfirmed) return;
+    }
+
+    // Save invoice in store
+    const newInvoice = {
+      id: `inv-${Date.now()}`,
+      invoiceNumber: invNumber,
+      projectId: activeProject.id,
+      clientName: activeProject.clientName || clientName,
+      type: `Termin ${term.term_no}: ${term.name} (${term.value}%)`,
+      issueDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+      items: [
+        {
+          id: `item-${Date.now()}`,
+          description: `Pembayaran ${term.name} (${term.value}%): ${term.deliverables.join(', ')}`,
+          hoursOrUnits: 1,
+          ratePerUnit: dpp,
+          amount: dpp
+        }
+      ],
+      subtotal: dpp,
+      taxPpn: ppn,
+      totalAmount: total,
+      status: 'Terkirim ke Finance',
+      termin_no: term.term_no,
+      percentage: term.value,
+      deliverables: term.deliverables,
+      projectProgressAtIssue: currentProgress,
+      notes: `Diajukan otomatis oleh Project Manager berdasarkan capaian milestone pengerjaan aplikasi (${term.name}).`,
+      bankAccount: {
+        bankName: 'Bank Central Asia (BCA)',
+        accountNumber: '883-091-2391',
+        accountHolder: 'PT Digital Manjer Solusindo'
+      }
+    };
+
+    store.setState({
+      invoices: [newInvoice, ...(store.state.invoices || [])]
+    });
+
+    // Notify Finance Department
+    store.addNotification({
+      title: `[Finance & AR] Invoice Baru Diterima: ${invNumber}`,
+      message: `Invoice Termin ${term.term_no} (${term.name} - ${term.value}%) senilai ${formatIDR(total)} untuk proyek "${title}" telah dikirimkan oleh PM dan siap diverifikasi.`,
+      type: 'finance',
+      projectId: activeProject.id,
+      invoiceId: newInvoice.id,
+      amount: total
+    });
+
+    // Notify CRM
+    store.addNotification({
+      title: `[CRM] Update Finansial Deal: ${title}`,
+      message: `Faktur Termin ${term.term_no} (${term.value}%) senilai ${formatIDR(total)} telah diteruskan ke Finance.`,
+      type: 'crm',
+      projectId: activeProject.id,
+      invoiceId: newInvoice.id,
+      amount: total
+    });
+
+    store.addToast('success', 'Invoice Terkirim ke Finance!', `${invNumber} (${term.name})`);
+
+    if (Swal) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Invoice Berhasil Dikirimkan ke Departemen Finance!',
+        html: `
+          <div style="text-align: left; font-size: 12.5px; color: #334155; line-height: 1.6;">
+            <p style="margin: 0 0 10px 0;">
+              Faktur <strong>${invNumber}</strong> senilai <strong>${formatIDR(total)}</strong> untuk <strong>${term.name}</strong> telah berhasil diterbitkan dan masuk ke sistem Departemen Finance &amp; AR.
+            </p>
+            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; font-size: 11.5px; color: #047857;">
+              ✔ Notifikasi otomatis terkirim ke Tim Finance &amp; AR.<br>
+              ✔ Status jadwal termin terkunci demi kepatuhan akuntansi (PRD BR-19).<br>
+              ✔ Dokumen faktur telah ditambahkan ke tab <strong>Daftar Invoice Terbit</strong>.
+            </div>
+          </div>
+        `,
+        confirmButtonText: 'Tutup &amp; Lihat Jadwal Termin',
+        confirmButtonColor: '#10b981'
+      });
+    }
+
+    this.render();
+  }
+
+  showInvoiceDetailModal(invNumber) {
+    const activeProject = store.getActiveProject() || {};
+    const code = activeProject.code || 'LIB-DIG';
+    const title = activeProject.name || activeProject.title || 'Proyek';
+    const clientName = activeProject.clientName || activeProject.customer_name || 'Klien';
+    const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
+
+    const inv = (store.state.invoices || []).find(i => i.invoiceNumber === invNumber) || {
+      invoiceNumber: invNumber,
+      clientName: clientName,
+      type: 'Faktur Termin Pembayaran',
+      issueDate: '2026-10-18',
+      dueDate: '2026-11-01',
+      subtotal: 13000000,
+      taxPpn: 1430000,
+      totalAmount: 14430000,
+      status: 'Lunas'
+    };
+
+    const isPaid = inv.status === 'Lunas' || inv.status === 'Paid';
+    const Swal = window.Swal;
+    if (!Swal) {
+      store.addToast('info', 'Faktur Tagihan', `${inv.invoiceNumber} - ${formatIDR(inv.totalAmount || inv.subtotal)}`);
+      return;
+    }
+
+    Swal.fire({
+      title: `<div style="font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fi fi-rr-document-signed" style="color: #4f46e5;"></i>
+        Detail Faktur Tagihan Resmi
+      </div>`,
+      html: `
+        <div style="text-align: left; font-size: 12px; color: #334155; line-height: 1.5;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <div>
+              <span style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">FAKTUR TAGIHAN</span>
+              <div style="font-family: var(--font-mono, monospace); font-weight: 800; font-size: 14px; color: #4338ca;">${inv.invoiceNumber}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Tanggal: ${inv.issueDate || '2026-10-18'} • Jatuh Tempo: ${inv.dueDate || '2026-11-01'}</div>
+            </div>
+            <div style="text-align: right;">
+              <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; ${isPaid ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' : 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;'}">
+                ${isPaid ? '✔ LUNAS (PAID)' : '📩 TERKIRIM KE FINANCE'}
+              </span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 11px; color: #64748b;">Ditujukan Kepada Klien:</div>
+            <div style="font-weight: 800; font-size: 13px; color: #0f172a;">${inv.clientName || clientName}</div>
+            <div style="font-size: 11.5px; color: #475569;">Proyek: <strong>${title}</strong> (${code})</div>
+          </div>
+
+          <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">${inv.type || 'Pembayaran Termin'}</div>
+            <div style="font-size: 11px; color: #64748b;">${inv.notes || 'Faktur tagihan termin pengembangan aplikasi sesuai kesepakatan kontrak.'}</div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid #f1f5f9; margin-top: 8px; padding-top: 8px;">
+              <span>Nilai DPP:</span>
+              <span style="font-family: var(--font-mono, monospace); font-weight: 700;">${formatIDR(inv.subtotal || inv.amount)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+              <span>PPN (11%):</span>
+              <span style="font-family: var(--font-mono, monospace); font-weight: 700;">${formatIDR(inv.taxPpn || Math.round((inv.subtotal || inv.amount) * 0.11))}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid #cbd5e1; margin-top: 8px; padding-top: 8px; font-weight: 800; font-size: 13px;">
+              <span style="color: #0f172a;">Total Tagihan:</span>
+              <span style="color: #059669; font-family: var(--font-mono, monospace); font-size: 14px;">${formatIDR(inv.totalAmount || Math.round((inv.subtotal || inv.amount) * 1.11))}</span>
+            </div>
+          </div>
+
+          <div style="background: #f8fafc; border-radius: 8px; padding: 10px 12px; font-size: 11px; color: #64748b;">
+            <span style="font-weight: 700; color: #334155; display: block; margin-bottom: 2px;">Rekening Pembayaran Resmi:</span>
+            BCA: <strong>883-091-2391</strong> a.n <strong>PT Digital Manjer Solusindo</strong>
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: '<i class="fi fi-rr-print"></i> Cetak Dokumen Faktur',
+      cancelButtonText: 'Tutup',
+      confirmButtonColor: '#4f46e5',
+      cancelButtonColor: '#94a3b8',
+      width: 520
+    }).then((res) => {
+      if (res.isConfirmed) {
+        window.print();
+      }
+    });
+  }
+
+  getElement() {
     return this.container;
   }
 

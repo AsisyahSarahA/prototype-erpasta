@@ -85,21 +85,24 @@ export class BacklogView {
       case "Selesai":
       case "Deploy Production":
       case "Dipantau":
-        return { label: "SELESAI", bg: "rgba(16, 185, 129, 0.12)", color: "#059669" };
+      case "Done":
+        return { label: "SELESAI", bg: "#ecfdf5", color: "#059669", border: "#a7f3d0" };
       case "In Progress":
+      case "In Development":
       case "Diperbaiki Agen":
-        return { label: "IN PROGRESS", bg: "rgba(99, 102, 241, 0.12)", color: "#4f46e5" };
+        return { label: "IN PROGRESS", bg: "#eef2ff", color: "#4f46e5", border: "#c7d2fe" };
       case "In Review":
+      case "Review & Testing":
       case "Menunggu Persetujuan":
-        return { label: "IN REVIEW", bg: "rgba(245, 158, 11, 0.12)", color: "#d97706" };
+        return { label: "IN REVIEW", bg: "#fffbeb", color: "#d97706", border: "#fde68a" };
       case "QA/Testing":
       case "Deploy Staging":
-        return { label: "QA STAGING", bg: "rgba(139, 92, 246, 0.12)", color: "#7c3aed" };
+        return { label: "QA STAGING", bg: "#f5f3ff", color: "#7c3aed", border: "#ddd6fe" };
       case "Perlu Manual":
       case "Ditolak":
-        return { label: "PERLU MANUAL", bg: "rgba(239, 68, 68, 0.12)", color: "#dc2626" };
+        return { label: "PERLU MANUAL", bg: "#fef2f2", color: "#dc2626", border: "#fecaca" };
       default:
-        return { label: "TO DO", bg: "var(--bg-secondary, #f1f5f9)", color: "var(--text-secondary, #64748b)" };
+        return { label: "TO DO", bg: "#f8fafc", color: "#475569", border: "#e2e8f0" };
     }
   }
 
@@ -197,6 +200,8 @@ export class BacklogView {
     const selectedEpicObj = projectEpics.find((e) => e.id === this.filterEpic);
     const selectedMemberObj = teamMembers.find((m) => m.id === this.filterAssignee);
     const displayedTaskCount = sprintsToRender.reduce((acc, s) => acc + projectTasks.filter((t) => t.sprintId === s.id && matchesFilters(t)).length, 0) + ((this.selectedSprintFilter === "all" || this.selectedSprintFilter === "backlog_pool" || sprintsToRender.length === 0) ? backlogPoolTasks.length : 0);
+    const activeSprintCompletedTasks = activeSprintTasks.filter((t) => ["Selesai", "Deploy Production", "Dipantau", "Done"].includes(t.status));
+    const sprintPercentDone = activeSprintTasks.length > 0 ? Math.round((activeSprintCompletedTasks.length / activeSprintTasks.length) * 100) : 0;
 
     this.element.innerHTML = `
       <div class="backlog-root">
@@ -241,48 +246,96 @@ export class BacklogView {
             </div>
           </div>
 
-          <!-- Baris 2: KPI Metrics Summary Bar (Matching CRM & Kanban) -->
-          <div class="backlog-kpi-bar">
-            <div class="backlog-kpi-group">
-              <div class="backlog-kpi-item">
-                <span class="backlog-kpi-label">Total Tiket:</span>
-                <span class="backlog-kpi-val">${allTotalTasks} Tiket (${allTotalHours} Jam)</span>
-              </div>
-
-              <div class="backlog-kpi-divider"></div>
-
-              <div class="backlog-kpi-item">
-                <span class="backlog-kpi-label">Sprint Aktif:</span>
-                <span class="backlog-kpi-val" style="color: var(--indigo-600);">${activeSprintTasks.length} Tiket (${totalSprintHours}h)</span>
-              </div>
-
-              <div class="backlog-kpi-divider"></div>
-
-              <div class="backlog-kpi-item">
-                <span class="backlog-kpi-label">Backlog Pool:</span>
-                <span class="backlog-kpi-val" style="color: var(--text-secondary);">${backlogPoolTasks.length} Tiket (${totalBacklogHours}h)</span>
-              </div>
-
-              <div class="backlog-kpi-divider"></div>
-
-              <div class="backlog-kpi-item">
-                <span class="backlog-kpi-label">Selesai di Sprint:</span>
-                <span class="backlog-kpi-val" style="color: var(--emerald-600);">
-                  ${activeSprintTasks.filter((t) => t.status === "Selesai" || t.status === "Deploy Production").length} Tiket (${sprintPoints.done}h)
+          <!-- Baris 2: KPI Metrics Summary Cards (4 Executive Flaticon Cards) -->
+          <div class="backlog-metrics-grid">
+            <!-- Card 1: Total Lingkup Proyek -->
+            <div class="backlog-metric-card">
+              <div class="backlog-metric-card__header">
+                <span class="backlog-metric-card__label">Total Lingkup Proyek</span>
+                <span class="backlog-metric-icon-box backlog-metric-icon-box--indigo" title="Total Seluruh Tiket Proyek">
+                  <i class="fi fi-rr-apps"></i>
                 </span>
+              </div>
+              <div class="backlog-metric-card__body">
+                <div class="backlog-metric-card__value-row">
+                  <span class="backlog-metric-card__value" style="color: #4f46e5;">${allTotalTasks}</span>
+                  <span class="backlog-metric-unit">Tiket</span>
+                  <span class="backlog-metric-chip backlog-metric-chip--indigo">${allTotalHours} Jam</span>
+                </div>
+              </div>
+              <div class="backlog-metric-info-row">
+                <span class="backlog-metric-info-item"><i class="fi fi-rr-play-alt" style="color:#2563eb; font-size:10px;"></i> <strong>${activeSprintTasks.length}</strong> di Sprint</span>
+                <span class="backlog-metric-info-dot">·</span>
+                <span class="backlog-metric-info-item" style="color:#64748b;"><i class="fi fi-rr-inbox" style="color:#64748b; font-size:10px;"></i> <strong>${backlogPoolTasks.length}</strong> di Pool</span>
               </div>
             </div>
 
-            ${
-              criticalBugs.length > 0
-                ? `
-              <div style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: var(--radius-full); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: var(--red-500); font-size: 11px; font-weight: 700;">
-                ${Icons.flame("", 12)}
-                <span>${criticalBugs.length} Tiket Bug Kritis / Hotfix</span>
+            <!-- Card 2: Sprint Aktif -->
+            <div class="backlog-metric-card">
+              <div class="backlog-metric-card__header">
+                <span class="backlog-metric-card__label">Sprint Aktif</span>
+                <span class="backlog-metric-icon-box backlog-metric-icon-box--blue" title="Tiket dalam Siklus Sprint Berjalan">
+                  <i class="fi fi-rr-bolt"></i>
+                </span>
               </div>
-            `
-                : ""
-            }
+              <div class="backlog-metric-card__body">
+                <div class="backlog-metric-card__value-row">
+                  <span class="backlog-metric-card__value" style="color: #2563eb;">${activeSprintTasks.length}</span>
+                  <span class="backlog-metric-unit">Tiket</span>
+                  <span class="backlog-metric-chip backlog-metric-chip--blue">${totalSprintHours} Jam</span>
+                </div>
+              </div>
+              <div class="backlog-metric-info-row">
+                <span class="backlog-metric-info-item" title="Tahap Pengerjaan & QA"><span class="backlog-metric-status-dot" style="background:#f59e0b;"></span> <strong>${sprintPoints.inprog}h</strong> In Dev</span>
+                <span class="backlog-metric-info-dot">·</span>
+                <span class="backlog-metric-info-item" title="Siap Dikerjakan"><span class="backlog-metric-status-dot" style="background:#3b82f6;"></span> <strong>${sprintPoints.todo}h</strong> To Do</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Backlog Pool -->
+            <div class="backlog-metric-card">
+              <div class="backlog-metric-card__header">
+                <span class="backlog-metric-card__label">Backlog Pool</span>
+                <span class="backlog-metric-icon-box backlog-metric-icon-box--amber" title="Antrean Tiket Belum Terjadwal ke Sprint">
+                  <i class="fi fi-rr-inbox"></i>
+                </span>
+              </div>
+              <div class="backlog-metric-card__body">
+                <div class="backlog-metric-card__value-row">
+                  <span class="backlog-metric-card__value" style="color: #d97706;">${backlogPoolTasks.length}</span>
+                  <span class="backlog-metric-unit">Tiket</span>
+                  <span class="backlog-metric-chip backlog-metric-chip--amber">${totalBacklogHours} Jam</span>
+                </div>
+              </div>
+              <div class="backlog-metric-info-row">
+                <span class="backlog-metric-info-item" style="color:#64748b;"><i class="fi fi-rr-time-forward" style="color:#d97706; font-size:10px;"></i> Siap dialokasikan ke sprint baru</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Selesai di Sprint -->
+            <div class="backlog-metric-card">
+              <div class="backlog-metric-card__header">
+                <span class="backlog-metric-card__label">Selesai di Sprint</span>
+                <span class="backlog-metric-icon-box backlog-metric-icon-box--emerald" title="Progress Penyelesaian Sprint Berjalan">
+                  <i class="fi fi-rr-check-circle"></i>
+                </span>
+              </div>
+              <div class="backlog-metric-card__body">
+                <div class="backlog-metric-card__value-row">
+                  <span class="backlog-metric-card__value" style="color: #059669;">${activeSprintCompletedTasks.length}</span>
+                  <span class="backlog-metric-unit">Tiket</span>
+                  <span class="backlog-metric-chip backlog-metric-chip--emerald">${sprintPercentDone}%</span>
+                </div>
+                <div class="backlog-metric-card__progress-track">
+                  <div class="backlog-metric-card__progress-bar" style="width: ${sprintPercentDone}%; background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
+                </div>
+              </div>
+              <div class="backlog-metric-info-row">
+                <span class="backlog-metric-info-item"><i class="fi fi-rr-check" style="color:#059669; font-size:11px;"></i> <strong>${sprintPoints.done}h</strong> Selesai</span>
+                <span class="backlog-metric-info-dot">·</span>
+                <span class="backlog-metric-info-item" style="color:#64748b;"><strong>${activeSprintTasks.length - activeSprintCompletedTasks.length}</strong> Berjalan</span>
+              </div>
+            </div>
           </div>
 
           <!-- Baris 3: Controls Bar (Epics Toggle, Search Input & Quick Filters) -->
@@ -367,8 +420,20 @@ export class BacklogView {
               }
             </div>
 
-            <div class="backlog-controls-right">
-              Menampilkan <strong>${displayedTaskCount}</strong> dari <strong>${allTotalTasks}</strong> tiket
+            <div class="backlog-controls-right" style="display: flex; align-items: center; gap: 8px;">
+              ${
+                criticalBugs.length > 0
+                  ? `
+                <span class="backlog-bug-pill" title="${criticalBugs.length} tiket bug dengan prioritas Hotfix atau Tertinggi butuh penanganan">
+                  <i class="fi fi-rr-flame" style="font-size: 11px;"></i>
+                  <span>${criticalBugs.length} Bug Kritis / Hotfix</span>
+                </span>
+              `
+                  : ""
+              }
+              <span style="font-size: 11.5px; color: var(--text-secondary, #64748b);">
+                Menampilkan <strong>${displayedTaskCount}</strong> dari <strong>${allTotalTasks}</strong> tiket
+              </span>
             </div>
           </div>
 
@@ -466,11 +531,11 @@ export class BacklogView {
               <div class="workload-matrix-header">
                 <div class="workload-matrix-title-wrap">
                   <div class="workload-matrix-title">
-                    ${Icons.users("text-indigo-600", 15)}
-                    <span>Matriks Kapasitas Tim Developer (5 Roles Allocation)</span>
+                    <i class="fi fi-rr-users-alt" style="color: var(--indigo-600); font-size: 14px;"></i>
+                    <span>Matriks Kapasitas Tim Developer (${teamMembers.length} Roles Allocation)</span>
                   </div>
                   <span class="workload-matrix-sub">
-                    Beban mingguan maks 40h/role. Klik profil untuk filter tiket.
+                    Alokasi Sprint 1 (Kapasitas sprint 2 minggu: 80h/role). Klik profil untuk filter tiket.
                   </span>
                 </div>
 
@@ -478,14 +543,14 @@ export class BacklogView {
                   ${
                     this.filterAssignee !== "all"
                       ? `
-                    <button id="resetRoleFilterBtn2" class="btn btn-secondary btn-sm" style="font-size: 10.5px; font-weight: 700; padding: 3px 8px;">
-                      Reset Filter Role
+                    <button id="resetRoleFilterBtn2" class="btn btn-secondary btn-sm" style="font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-md);">
+                      ✕ Reset Filter (${this.escapeHtml(selectedMemberObj?.name?.split(" ")[0] || "PIC")})
                     </button>
                   `
                       : ""
                   }
 
-                  <button id="toggleWorkloadBtn" class="btn btn-secondary btn-sm" style="font-size: 10.5px; font-weight: 600; padding: 3px 8px;" title="Buka/Tutup Ringkasan Matriks Kapasitas">
+                  <button id="toggleWorkloadBtn" class="btn btn-secondary btn-sm" style="font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: var(--radius-md);" title="Buka/Tutup Ringkasan Matriks Kapasitas">
                     ${this.isWorkloadCollapsed ? "+ Buka Matriks" : "– Sembunyikan"}
                   </button>
                 </div>
@@ -497,16 +562,21 @@ export class BacklogView {
                 <div class="workload-grid">
                   ${teamMembers
                     .map((m) => {
-                      const mTasks = projectTasks.filter((t) => t.assigneeId === m.id);
-                      const mHours = mTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
-                      const capLimit = m.capacity || 40;
-                      const capPercent = Math.min(Math.round((mHours / capLimit) * 100), 100);
+                      const mSprintTasks = activeSprintTasks.filter((t) => t.assigneeId === m.id);
+                      const mSprintHours = mSprintTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+                      const mTotalTasks = projectTasks.filter((t) => t.assigneeId === m.id);
+                      const mTotalHours = mTotalTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+
+                      // Sprint 2 minggu (14 hari) = 80h kapasitas per developer (40h/minggu)
+                      const sprintWeeks = 2;
+                      const capLimit = (m.capacityHoursPerWeek || m.capacity || 40) * sprintWeeks;
+                      const capPercent = Math.min(Math.round((mSprintHours / capLimit) * 100), 100);
                       const roleBadge = this.getRoleBadge(m.role);
                       const isSelected = this.filterAssignee === m.id;
-                      const isOverloaded = mHours > capLimit;
+                      const isOverloaded = mSprintHours > capLimit;
 
                       return `
-                      <div class="workload-dev-card ${isSelected ? "active" : ""}" data-member-id="${m.id}" title="Klik untuk memfilter tiket milik ${this.escapeHtml(m.name)}">
+                      <div class="workload-dev-card ${isSelected ? "active" : ""}" data-member-id="${m.id}" title="Klik untuk memfilter tiket milik ${this.escapeHtml(m.name)}. Sprint 1: ${mSprintHours}h/${capLimit}h (${mSprintTasks.length} tiket). Total Proyek: ${mTotalHours}h (${mTotalTasks.length} tiket).">
                         <div class="workload-dev-card__top">
                           <div class="workload-dev-card__user">
                             <img src="${m.avatar}" alt="${this.escapeHtml(m.name)}" class="workload-dev-card__avatar" />
@@ -518,16 +588,16 @@ export class BacklogView {
                         </div>
 
                         <div class="workload-dev-card__meta">
-                          <span class="workload-dev-card__tasks">${mTasks.length} Tiket</span>
-                          <span class="workload-dev-card__hours" style="color: ${isOverloaded ? "#ef4444" : "var(--text-primary)"};">
-                            ${mHours}h / ${capLimit}h
+                          <span class="workload-dev-card__tasks">${mSprintTasks.length} Tiket Sprint</span>
+                          <span class="workload-dev-card__hours" style="color: ${isOverloaded ? "#ef4444" : capPercent > 75 ? "#d97706" : "#059669"};">
+                            ${mSprintHours}h / ${capLimit}h
                           </span>
                         </div>
 
                         <div class="workload-dev-card__bar">
                           <div
                             class="workload-dev-card__bar-fill"
-                            style="width: ${capPercent}%; background: ${isOverloaded ? "linear-gradient(90deg, #ef4444, #dc2626)" : capPercent > 75 ? "linear-gradient(90deg, #f59e0b, #d97706)" : "linear-gradient(90deg, #3b82f6, #10b981)"};"
+                            style="width: ${capPercent}%; background: ${isOverloaded ? "linear-gradient(90deg, #ef4444, #dc2626)" : capPercent > 75 ? "linear-gradient(90deg, #f59e0b, #d97706)" : "linear-gradient(90deg, #10b981, #059669)"};"
                           ></div>
                         </div>
                       </div>
@@ -592,11 +662,20 @@ export class BacklogView {
           </div>
 
           <div class="sprint-card-header__right">
-            <!-- Tri-Color Story Points Lozenge -->
-            <div class="points-tri-color" title="To Do: ${sprintPoints.todo}h, In Progress: ${sprintPoints.inprog}h, Done: ${sprintPoints.done}h">
-              <span class="points-tri-color__item points-tri-color__todo" title="To Do: ${sprintPoints.todo} Jam">${sprintPoints.todo}</span>
-              <span class="points-tri-color__item points-tri-color__inprogress" title="In Progress: ${sprintPoints.inprog} Jam">${sprintPoints.inprog}</span>
-              <span class="points-tri-color__item points-tri-color__done" title="Selesai: ${sprintPoints.done} Jam">${sprintPoints.done}</span>
+            <!-- Labeled Story Points Chips (Modern Jira / Linear Standard) -->
+            <div class="sprint-points-group" title="Breakdown Beban Sprint: To Do (${sprintPoints.todo}h), In Progress (${sprintPoints.inprog}h), Selesai (${sprintPoints.done}h)">
+              <span class="sprint-point-chip sprint-point-chip--todo" title="To Do: ${sprintPoints.todo} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${sprintPoints.todo}h</strong> To Do
+              </span>
+              <span class="sprint-point-chip sprint-point-chip--inprog" title="In Development & Review: ${sprintPoints.inprog} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${sprintPoints.inprog}h</strong> In Dev
+              </span>
+              <span class="sprint-point-chip sprint-point-chip--done" title="Selesai: ${sprintPoints.done} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${sprintPoints.done}h</strong> Selesai
+              </span>
             </div>
 
             ${
@@ -669,11 +748,20 @@ export class BacklogView {
           </div>
 
           <div class="sprint-card-header__right">
-            <!-- Tri-Color Story Points Lozenge -->
-            <div class="points-tri-color" title="To Do: ${backlogPoints.todo}h, In Progress: ${backlogPoints.inprog}h, Done: ${backlogPoints.done}h">
-              <span class="points-tri-color__item points-tri-color__todo" title="To Do: ${backlogPoints.todo} Jam">${backlogPoints.todo}</span>
-              <span class="points-tri-color__item points-tri-color__inprogress" title="In Progress: ${backlogPoints.inprog} Jam">${backlogPoints.inprog}</span>
-              <span class="points-tri-color__item points-tri-color__done" title="Selesai: ${backlogPoints.done} Jam">${backlogPoints.done}</span>
+            <!-- Labeled Story Points Chips for Backlog Pool -->
+            <div class="sprint-points-group" title="Breakdown Beban Backlog Pool: To Do (${backlogPoints.todo}h), In Progress (${backlogPoints.inprog}h), Selesai (${backlogPoints.done}h)">
+              <span class="sprint-point-chip sprint-point-chip--todo" title="Estimasi Backlog To Do: ${backlogPoints.todo} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${backlogPoints.todo}h</strong> To Do
+              </span>
+              <span class="sprint-point-chip sprint-point-chip--inprog" title="Sedang Disiapkan: ${backlogPoints.inprog} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${backlogPoints.inprog}h</strong> In Dev
+              </span>
+              <span class="sprint-point-chip sprint-point-chip--done" title="Selesai: ${backlogPoints.done} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${backlogPoints.done}h</strong> Selesai
+              </span>
             </div>
 
             <button id="createSprintHeaderBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-md); display:inline-flex; align-items:center; gap:4px;">
@@ -1242,7 +1330,7 @@ export class BacklogView {
 
         <!-- Sisi Kanan: Status Lozenge, Avatar Assignee, Estimasi Jam, & Tombol Aksi -->
         <div class="issue-row-right">
-          <span class="issue-status-lozenge" style="background-color: ${statusBadge.bg}; color: ${statusBadge.color};">
+          <span class="issue-status-lozenge" style="background-color: ${statusBadge.bg}; color: ${statusBadge.color}; border: 1px solid ${statusBadge.border || 'transparent'};">
             ${statusBadge.label}
           </span>
 
@@ -1265,14 +1353,16 @@ export class BacklogView {
           ${
             isInSprint
               ? `
-            <button class="btn btn-secondary btn-sm move-task-btn" data-task-id="${task.id}" data-target-sprint="" style="font-size: 11px; padding: 3px 9px; border-radius: var(--radius-md);" title="Keluarkan tiket ke Backlog Pool">
-              Keluarkan
+            <button class="btn-sprint-action btn-sprint-action--out move-task-btn" data-task-id="${task.id}" data-target-sprint="" title="Pindahkan tiket kembali ke Backlog Pool">
+              <i class="fi fi-rr-arrow-down" style="font-size: 10px;"></i>
+              <span>Ke Backlog</span>
             </button>
           `
               : `
             <div style="display:inline-flex; align-items:center; gap:5px;">
-              <button class="btn btn-primary btn-sm move-task-btn" data-task-id="${task.id}" data-target-sprint="${activeSprintId}" style="font-size: 11px; padding: 3px 10px; border-radius: var(--radius-md); font-weight:700;" title="Masukkan tiket ke ${this.escapeHtml(activeSprintObj?.name || 'Sprint Aktif')}">
-                + Ke ${this.escapeHtml(activeSprintLabel)}
+              <button class="btn-sprint-action btn-sprint-action--in move-task-btn" data-task-id="${task.id}" data-target-sprint="${activeSprintId}" title="Masukkan tiket ke ${this.escapeHtml(activeSprintObj?.name || 'Sprint Aktif')}">
+                <i class="fi fi-rr-arrow-up" style="font-size: 10px;"></i>
+                <span>+ Ke Sprint</span>
               </button>
               ${allSprints && allSprints.length > 1 ? `
                 <select class="form-select move-task-select" data-task-id="${task.id}" style="font-size: 10.5px; padding: 2px 6px; border-radius: var(--radius-md); height: 24px; border: 1px solid var(--border, #cbd5e1); color: var(--text-secondary); background: var(--bg-card, #fff); cursor: pointer;" title="Pilih sprint tujuan">
@@ -1640,6 +1730,13 @@ export class BacklogView {
         const tId = moveBtn.dataset.taskId;
         const targetSprint = moveBtn.dataset.targetSprint || undefined;
         store.moveTaskToSprint(tId, targetSprint);
+        const task = (store.getState().tasks || []).find((t) => t.id === tId);
+        const sprint = targetSprint ? (store.getState().sprints || []).find((s) => s.id === targetSprint) : null;
+        if (targetSprint && sprint) {
+          swalSuccess("Tiket Dialokasikan", `Tiket <strong>${task?.key || tId}</strong> berhasil dimasukkan ke <strong>${this.escapeHtml(sprint.name.split(":")[0])}</strong>.`, 1300);
+        } else {
+          swalSuccess("Tiket Dikeluarkan", `Tiket <strong>${task?.key || tId}</strong> dipindahkan kembali ke <strong>Backlog Pool</strong>.`, 1300);
+        }
         this.render();
         return;
       }

@@ -1,87 +1,128 @@
 /**
- * TopBar.js — Unified Header Component for Management Proyek
- * Modeled 100% after ASTACODE CRM Header (crm/js/components/layout/Header.js):
- * - Normal View: Hamburger, Breadcrumbs with Live Dot & Project Pill, Quick Search (Ctrl+K),
- *                View Mode Switcher (Kanban | Table | Workflow), Theme Toggle, + Tiket Baru
- * - Detail View: < Kembali ke Kanban, Key Badge, Task Title, Status Badge, Quick Status Action
+ * TopBar.js — Unified Clean Header Component for Management Proyek (ASTACODE ERP)
+ *
+ * Clean & Minimalist Header Layout:
+ * - Left side: Mobile Hamburger menu toggle + Breadcrumbs & Status ("ASTACODE PM / Page Title • Live")
+ *              or Detail View ("Kembali / KEY / Status Badge")
+ * - Right side: Notification Bell & Logged-in User Profile with interactive Popover (User Details + Logout)
  */
 
-import { store } from '../state/store.js';
+import { store } from "../state/store.js";
+import { swalConfirm } from "../utils/swal.js";
 
 const ICONS = {
   menu: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>`,
   arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
   chevronRight: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
-  search: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
-  kanban: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>`,
-  table: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>`,
-  layers: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>`,
-  sun: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`,
-  moon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
-  plus: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`,
   bell: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`,
-  chevronDown: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`
+  chevronDown: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`,
+  logout: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>`,
+  shield: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  check: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
 };
 
 const VIEW_TITLES = {
-  project: 'Modul Proyek',
-  ringkasan: 'Ringkasan Proyek',
-  kanban: 'Daftar Pekerjaan',
-  backlog: 'Backlog & Sprints',
-  timeline: 'Roadmap & Gantt',
-  list: 'Issue List',
-  qa: 'QA & Testing',
-  docs: 'Docs & Wiki',
-  finance: 'Finance',
-  finance_budget: 'Finance',
-  ai_hub: 'Otomasi Fix Bug AI',
-  github: 'GitHub & Cabang',
-  client: 'Service Desk / Klien',
-  team: 'Tim HR & Workload',
-  crm: 'CRM Deals Won',
-  task_detail: 'Detail Tiket Pekerjaan'
+  project: "Modul Proyek",
+  ringkasan: "Ringkasan Proyek",
+  kanban: "Daftar Pekerjaan",
+  backlog: "Backlog & Sprints",
+  timeline: "Roadmap & Gantt",
+  list: "Issue List",
+  qa: "QA & Testing",
+  docs: "Docs & Wiki",
+  finance: "Finance",
+  finance_budget: "Finance",
+  ai_hub: "Otomasi Fix Bug AI",
+  github: "GitHub & Cabang",
+  client: "Service Desk / Klien",
+  team: "Tim HR & Workload",
+  crm: "CRM Deals Won",
+  task_detail: "Detail Tiket Pekerjaan",
 };
 
 export class TopBar {
   constructor(options = {}) {
-    this.container = document.createElement('div');
-    this.container.id = 'header-container';
-    this.isDarkMode = false;
+    this.container = document.createElement("div");
+    this.container.id = "header-container";
+    this.isProfileOpen = false;
     this.onToggleNotif = options.onToggleNotif || (() => {});
     this.unsubscribe = null;
+    this.hasDocClickListener = false;
     this.init();
   }
 
-  init() {
-    // Global keyboard shortcut Ctrl+K registered once
-    window.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
-        e.preventDefault();
-        const input = document.getElementById('header-quick-search-input');
-        if (input) {
-          input.focus();
-          input.select();
-        }
-      }
-    });
+  getSessionUser() {
+    let sessionUser = {
+      name: "Aldyana (Admin)",
+      role: "Super Admin",
+      email: "aldyana.admin@astacode.com",
+      avatar: "AL",
+    };
 
+    if (typeof window !== "undefined" && window.AstaAuth && typeof window.AstaAuth.getUser === "function") {
+      const u = window.AstaAuth.getUser();
+      if (u) {
+        sessionUser = {
+          name: u.name || sessionUser.name,
+          role: u.role || sessionUser.role,
+          email: u.email || sessionUser.email,
+          avatar: u.avatar || sessionUser.avatar,
+        };
+      }
+    } else {
+      try {
+        const raw = localStorage.getItem("asta_auth_user");
+        if (raw) {
+          const u = JSON.parse(raw);
+          if (u) {
+            sessionUser = {
+              name: u.name || sessionUser.name,
+              role: u.role || sessionUser.role,
+              email: u.email || sessionUser.email,
+              avatar: u.avatar || sessionUser.avatar,
+            };
+          }
+        }
+      } catch (e) {
+        console.warn("Error reading auth session:", e);
+      }
+    }
+    return sessionUser;
+  }
+
+  init() {
     this.render();
     this.unsubscribe = store.subscribe(() => {
       this.render();
     });
+
+    // Close profile dropdown on outside click or Escape
+    if (!this.hasDocClickListener) {
+      this.hasDocClickListener = true;
+      document.addEventListener("click", (e) => {
+        if (this.isProfileOpen && !e.target.closest("#headerUserProfileWrap")) {
+          this.isProfileOpen = false;
+          this.render();
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && this.isProfileOpen) {
+          this.isProfileOpen = false;
+          this.render();
+        }
+      });
+    }
   }
 
   render() {
     const state = store.getState();
     const { activeTab, selectedTask } = state;
     const unreadNotifsCount = (state.notifications || []).filter((n) => !n.isRead).length;
-    const wasSearchFocused = document.activeElement && document.activeElement.id === 'header-quick-search-input';
-    const selStart = wasSearchFocused ? document.activeElement.selectionStart : null;
-    const selEnd = wasSearchFocused ? document.activeElement.selectionEnd : null;
+    const sessionUser = this.getSessionUser();
 
-    let leftContent = '';
+    let leftContent = "";
 
-    if (activeTab === 'task_detail' && selectedTask) {
+    if (activeTab === "task_detail" && selectedTask) {
       leftContent = `
         <div class="header-breadcrumb">
           <button id="header-back-kanban" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;flex-shrink:0;">
@@ -90,13 +131,13 @@ export class TopBar {
           </button>
           <span class="header-crumb-sep">${ICONS.chevronRight}</span>
           <span class="badge badge-purple" style="font-family:var(--font-mono);font-weight:800;flex-shrink:0;">${selectedTask.key}</span>
-          <span class=" badge badge-${selectedTask.status === 'Selesai' ? 'emerald' : selectedTask.status === 'In Progress' ? 'blue' : 'amber'}" style="font-size:10px;flex-shrink:0;">
+          <span class="badge badge-${selectedTask.status === "Selesai" ? "emerald" : selectedTask.status === "In Progress" ? "blue" : "amber"}" style="font-size:10px;flex-shrink:0;">
             ${selectedTask.status}
           </span>
         </div>
       `;
     } else {
-      const pageTitle = VIEW_TITLES[activeTab] || 'Modul Proyek';
+      const pageTitle = VIEW_TITLES[activeTab] || "Modul Proyek";
       leftContent = `
         <div class="header-breadcrumb">
           <span class="header-module-tag">ASTACODE PM</span>
@@ -112,36 +153,6 @@ export class TopBar {
       `;
     }
 
-    // View mode switcher (Kanban | Table | Workflow)
-    const viewModeSwitcher = `
-      <div class="view-mode-toggle">
-        <button
-          class="btn-view-mode ${activeTab === 'kanban' ? 'active' : ''}"
-          data-tab="kanban"
-          title="Tampilan Kanban Board"
-        >
-          ${ICONS.kanban}
-          <span>Kanban</span>
-        </button>
-        <button
-          class="btn-view-mode ${activeTab === 'list' ? 'active' : ''}"
-          data-tab="list"
-          title="Tampilan Tabel Detail JQL"
-        >
-          ${ICONS.table}
-          <span>Tabel (JQL)</span>
-        </button>
-        <button
-          class="btn-view-mode ${activeTab === 'timeline' ? 'active' : ''}"
-          data-tab="timeline"
-          title="Roadmap & Timeline Sprints"
-        >
-          ${ICONS.layers}
-          <span>Roadmap</span>
-        </button>
-      </div>
-    `;
-
     this.container.innerHTML = `
       <header class="header" id="app-header">
         <!-- Left side: Hamburger + Breadcrumbs / Title -->
@@ -152,126 +163,141 @@ export class TopBar {
           ${leftContent}
         </div>
 
-        <!-- Right side: Quick Search, View Mode, Theme Toggle, + Tiket Baru -->
+        <!-- Right side: Notifications & User Profile (Clean Top Bar) -->
         <div class="header-actions">
-          <!-- Search trigger -->
-          <div id="header-search-box" class="header-search-btn" title="Cari cepat (Ctrl+K)">
-            <div class="header-search-inner">
-              <span class="header-search-icon">${ICONS.search}</span>
-              <input
-                id="header-quick-search-input"
-                type="text"
-                placeholder="Cari tiket, kode, PIC..."
-                value="${state.searchQuery || ''}"
-                class="header-search-input"
-              />
-            </div>
-            <kbd class="header-search-kbd">Ctrl+K</kbd>
-          </div>
-
-          <!-- View Mode Switcher -->
-          ${viewModeSwitcher}
-
           <!-- Notification Bell Button -->
           <button id="header-notif-btn" class="btn-icon header-action-icon-btn" title="Pusat Notifikasi Terpadu (${unreadNotifsCount} baru)">
             ${ICONS.bell}
-            ${unreadNotifsCount > 0 ? `<span class="header-notif-dot"></span>` : ''}
+            ${unreadNotifsCount > 0 ? `<span class="header-notif-dot"></span>` : ""}
           </button>
 
-          <!-- Theme Toggle Button -->
-          <button id="header-theme-toggle" class="btn-icon header-action-icon-btn" title="${this.isDarkMode ? 'Beralih ke Light Mode' : 'Beralih ke Dark Mode'}">
-            ${this.isDarkMode ? ICONS.sun : ICONS.moon}
-          </button>
+          <!-- User Profile Dropdown Component -->
+          <div class="header-user-profile-wrap" id="headerUserProfileWrap">
+            <button
+              id="header-profile-btn"
+              class="header-profile-btn ${this.isProfileOpen ? "active" : ""}"
+              type="button"
+              aria-expanded="${this.isProfileOpen ? "true" : "false"}"
+              title="Profil Pengguna: ${sessionUser.name} (${sessionUser.role})"
+            >
+              <div class="header-profile-avatar">${sessionUser.avatar || "AL"}</div>
+              <div class="header-profile-info">
+                <span class="header-profile-name">${sessionUser.name}</span>
+                <span class="header-profile-role">${sessionUser.role}</span>
+              </div>
+              <span class="header-profile-chevron">${ICONS.chevronDown}</span>
+            </button>
 
-          <!-- + Tiket Baru Button -->
-          <button id="header-new-task-btn" class="btn btn-primary header-create-btn">
-            ${ICONS.plus}
-            <span>Tiket Baru</span>
-          </button>
+            <!-- Profile Popover / Dropdown Menu -->
+            <div class="header-profile-dropdown" id="headerProfileDropdown" style="display: ${this.isProfileOpen ? "block" : "none"};">
+              <div class="profile-dropdown-header">
+                <div class="profile-dropdown-avatar-lg">${sessionUser.avatar || "AL"}</div>
+                <div class="profile-dropdown-user-details">
+                  <div class="profile-dropdown-name">${sessionUser.name}</div>
+                  <div class="profile-dropdown-email">${sessionUser.email || "aldyana.admin@astacode.com"}</div>
+                  <div class="profile-dropdown-badge-row">
+                    <span class="profile-dropdown-role-badge">${sessionUser.role}</span>
+                    <span class="profile-dropdown-online-dot"><span class="live-dot"></span> Online</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="profile-dropdown-divider"></div>
+
+              <div class="profile-dropdown-menu">
+                <div class="profile-dropdown-item profile-dropdown-info-item">
+                  <span class="profile-dropdown-icon-box" style="color:var(--indigo-600);">${ICONS.shield}</span>
+                  <span>Akses: <strong>Full Admin Control</strong></span>
+                </div>
+                <div class="profile-dropdown-item profile-dropdown-info-item">
+                  <span class="profile-dropdown-icon-box" style="color:#059669;">${ICONS.check}</span>
+                  <span>Sesi: <strong>Aktif (Login)</strong></span>
+                </div>
+              </div>
+
+              <div class="profile-dropdown-divider"></div>
+
+              <div class="profile-dropdown-footer">
+                <button type="button" id="header-logout-btn" class="profile-dropdown-logout-btn" title="Keluar dari akun">
+                  ${ICONS.logout}
+                  <span>Keluar / Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
     `;
 
-    this.attachEvents();
-
-    if (wasSearchFocused) {
-      const nextInput = this.container.querySelector('#header-quick-search-input');
-      if (nextInput) {
-        nextInput.focus();
-        if (typeof selStart === 'number' && typeof selEnd === 'number') {
-          nextInput.setSelectionRange(selStart, selEnd);
-        }
-      }
-    }
+    this.attachEvents(sessionUser);
   }
 
-  attachEvents() {
+  attachEvents(sessionUser) {
     // Mobile menu toggle
-    const mobileBtn = this.container.querySelector('#header-mobile-toggle');
+    const mobileBtn = this.container.querySelector("#header-mobile-toggle");
     if (mobileBtn) {
-      mobileBtn.addEventListener('click', () => {
-        const sb = document.getElementById('sidebar');
-        const ov = document.getElementById('sidebarOverlay');
-        if (sb) sb.classList.toggle('open');
-        if (ov && sb) ov.classList.toggle('open', sb.classList.contains('open'));
+      mobileBtn.addEventListener("click", () => {
+        const sb = document.getElementById("sidebar");
+        const ov = document.getElementById("sidebarOverlay");
+        if (sb) sb.classList.toggle("open");
+        if (ov && sb) ov.classList.toggle("open", sb.classList.contains("open"));
       });
     }
 
     // Back to Kanban button
-    const backBtn = this.container.querySelector('#header-back-kanban');
+    const backBtn = this.container.querySelector("#header-back-kanban");
     if (backBtn) {
-      backBtn.addEventListener('click', () => {
+      backBtn.addEventListener("click", () => {
         store.closeTaskDetail();
       });
     }
 
-    // View mode switchers
-    this.container.querySelectorAll('.btn-view-mode[data-tab]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const targetTab = btn.dataset.tab;
-        if (targetTab) {
-          store.setActiveTab(targetTab);
-        }
-      });
-    });
-
-    // Quick search input
-    const searchInput = this.container.querySelector('#header-quick-search-input');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        store.setSearchQuery(e.target.value);
-      });
-      searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          store.setActiveTab('kanban');
-        }
-      });
-    }
-
     // Notification bell toggle
-    const notifBtn = this.container.querySelector('#header-notif-btn');
+    const notifBtn = this.container.querySelector("#header-notif-btn");
     if (notifBtn) {
-      notifBtn.addEventListener('click', (e) => {
+      notifBtn.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (this.isProfileOpen) {
+          this.isProfileOpen = false;
+          this.render();
+        }
         this.onToggleNotif();
       });
     }
 
-    // Theme toggle
-    const themeToggle = this.container.querySelector('#header-theme-toggle');
-    if (themeToggle) {
-      themeToggle.addEventListener('click', () => {
-        this.isDarkMode = !this.isDarkMode;
-        document.documentElement.classList.toggle('dark', this.isDarkMode);
+    // Profile button toggle
+    const profileBtn = this.container.querySelector("#header-profile-btn");
+    if (profileBtn) {
+      profileBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.isProfileOpen = !this.isProfileOpen;
         this.render();
       });
     }
 
-    // + Tiket Baru button
-    const newTaskBtn = this.container.querySelector('#header-new-task-btn');
-    if (newTaskBtn) {
-      newTaskBtn.addEventListener('click', () => {
-        store.openCreateTaskModal();
+    // Logout button click with confirmation
+    const logoutBtn = this.container.querySelector("#header-logout-btn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const confirmed = await swalConfirm({
+          title: "Konfirmasi Logout",
+          html: `Apakah Anda yakin ingin keluar dari sesi <strong>${sessionUser.name}</strong>?`,
+          icon: "warning",
+          confirmText: "Ya, Logout",
+          cancelText: "Batal",
+          confirmColor: "#dc2626",
+          cancelColor: "#64748b",
+        });
+
+        if (confirmed) {
+          if (typeof window !== "undefined" && window.AstaAuth && typeof window.AstaAuth.logout === "function") {
+            window.AstaAuth.logout();
+          } else {
+            localStorage.removeItem("asta_auth_user");
+            window.location.href = "../../login.html";
+          }
+        }
       });
     }
   }
@@ -281,7 +307,7 @@ export class TopBar {
   }
 
   destroy() {
-    if (typeof this.unsubscribe === 'function') {
+    if (typeof this.unsubscribe === "function") {
       this.unsubscribe();
     }
   }
