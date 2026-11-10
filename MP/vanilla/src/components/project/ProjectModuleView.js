@@ -1604,63 +1604,158 @@ export class ProjectModuleView {
 
   renderOverviewTab({ project, tasks, members, stats, startDate, deadline, clientName, totalHours, usedHours, progress }) {
     const activeProject = project || store.getActiveProject();
-    const contractVal = activeProject.contractValue || 950000000;
-    const budgetUsed = activeProject.budgetUsed || 512000000;
-    const burnRatePct = Math.round((budgetUsed / contractVal) * 100) || 54;
-    const projectUsedHours = usedHours || activeProject.usedHours || 680;
-    const hoursAllocated = totalHours || activeProject.totalHours || 1200;
+
+    // Helper: Indonesian Date Formatter (fixes raw ISO like 2026-11-10T03:43:31.128Z)
+    const formatDateID = (dateStr) => {
+      if (!dateStr) return '-';
+      try {
+        const cleanStr = String(dateStr).split('T')[0];
+        const parts = cleanStr.split('-');
+        if (parts.length === 3) {
+          const year = parts[0];
+          const monthIdx = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+          if (!isNaN(day) && monthIdx >= 0 && monthIdx < 12) {
+            return `${day} ${months[monthIdx]} ${year}`;
+          }
+        }
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+      } catch (e) {}
+      return String(dateStr);
+    };
+
+    // Helper: Rupiah Currency Formatter
+    const formatIDR = (val) => {
+      return new Intl.NumberFormat('id-ID').format(Math.round(val || 0));
+    };
+
+    const contractVal = activeProject.contractValue || 185000000;
+    const projectUsedHours = usedHours || activeProject.usedHours || 210;
+    const hoursAllocated = totalHours || activeProject.totalHours || 800;
     const remainingHours = Math.max(0, hoursAllocated - projectUsedHours);
 
-    const doneCount = tasks.filter(t => t.status === 'Selesai').length;
-    const totalIssues = tasks.length || 9;
-    const overallProgPct = totalIssues ? Math.round((doneCount / totalIssues) * 100) : 22;
+    // Realistic Budget Used calculation (preventing distorted percentages like 277%)
+    let realisticBudgetUsed = activeProject.budgetUsed;
+    if (!realisticBudgetUsed || realisticBudgetUsed > contractVal) {
+      const ratio = Math.min(0.85, (projectUsedHours / hoursAllocated) || 0.35);
+      realisticBudgetUsed = Math.round(contractVal * ratio);
+    }
+    const burnRatePct = Math.min(100, Math.round((realisticBudgetUsed / contractVal) * 100));
+
+    const doneCount = tasks.filter(t => t.status === 'Selesai' || t.status === 'Deploy Production').length;
+    const totalIssues = tasks.length || (activeProject.totalIssues || 16);
+    const overallProgPct = totalIssues ? Math.round((doneCount / totalIssues) * 100) : (activeProject.progress || 25);
 
     const health = activeProject.health || 'On Track';
     const isAtRisk = health === 'At Risk';
 
-    // Active sprint tasks preview
+    // Active sprint & tasks
     const state = store.getState();
-    const projectEpics = (state.epics || []).filter(e => e.projectId === activeProject.id);
     const projectSprints = (state.sprints || []).filter(s => s.projectId === activeProject.id);
     const activeSprint = projectSprints.find(s => s.status === 'active') || projectSprints[0];
-    const projectInvoices = (state.invoices || []).filter(i => i.projectId === activeProject.id);
-    const daysToDeadline = Math.max(7, Math.ceil((new Date(deadline).getTime() - new Date('2026-10-20').getTime()) / 86400000) || 45);
     const sprintTasks = activeSprint ? tasks.filter(t => t.sprintId === activeSprint.id) : [];
-    const activeTasks = (sprintTasks.length > 0 ? sprintTasks : tasks).slice(0, 5);
-    const dpInvoice = projectInvoices[0];
-    const dynamicMilestones = projectEpics.length > 0
-      ? projectEpics.slice(0, 4).map((ep, idx) => {
-          const epTasks = tasks.filter(t => t.epicId === ep.id);
-          const epDone = epTasks.filter(t => t.status === 'Selesai' || t.status === 'Deploy Production').length;
-          const epPct = epTasks.length > 0 ? Math.round((epDone / epTasks.length) * 100) : (idx === 0 ? 100 : idx === 1 ? 60 : 25);
-          const terminLabels = [
-            dpInvoice ? `Termin 1 (${dpInvoice.status})` : 'Termin 1 (DP 30% Lunas)',
-            'Termin 2 (40% Deliverable Sprint)',
-            'Termin 3 (30% UAT & Go-Live)',
-            `Garansi SLA (${activeProject.contractType || 'Fixed Price'})`
-          ];
-          const targetDates = [startDate, activeSprint?.endDate || '2026-11-05', deadline, activeProject.warrantyUntil || '2027-10-31'];
-          return {
-            id: ep.id,
-            name: `M${idx + 1}: ${ep.title}`,
-            pct: epPct,
-            date: targetDates[idx] || deadline,
-            done: epPct === 100,
-            termin: terminLabels[idx] || 'Deliverable Modul'
-          };
-        })
-      : [
-          { id: 'm1', name: `M1: Inisialisasi & Arsitektur ${activeProject.code}`, pct: 100, date: startDate, done: true, termin: 'Termin DP 30% Lunas' },
-          { id: 'm2', name: `M2: Pengembangan Modul Inti ${activeProject.name}`, pct: overallProgPct, date: activeSprint?.endDate || deadline, done: false, termin: 'Termin 2 (40%) On-Track' },
-          { id: 'm3', name: `M3: Pengujian QA & UAT (${clientName})`, pct: 20, date: deadline, done: false, termin: 'Termin 3 (30%) Pelunasan' }
-        ];
+    const activeTasks = (sprintTasks.length > 0 ? sprintTasks : tasks).slice(0, 6);
 
-    // Milestones and payment terms
-    const milestones = [
-      { id: 'm1', name: 'M1: Arsitektur & Database Schema', pct: 100, date: '18 Okt 2026', done: true, termin: 'Termin DP 30% Lunas' },
-      { id: 'm2', name: 'M2: Core Features & API Microservices', pct: 65, date: '01 Nov 2026', done: false, termin: 'Termin 2 (40%) On-Track' },
-      { id: 'm3', name: 'M3: Staging Load Testing K6 & UAT', pct: 15, date: '16 Nov 2026', done: false, termin: 'Termin 3 (30%) Pelunasan' },
-      { id: 'm4', name: 'M4: Production Deployment & Handover', pct: 0, date: '15 Des 2026', done: false, termin: 'Garansi SLA 12 Bulan' }
+    // Days remaining calculation
+    let daysToDeadline = 45;
+    try {
+      const dNow = new Date('2026-10-20').getTime();
+      const dEnd = new Date(deadline).getTime();
+      if (!isNaN(dEnd) && dEnd > dNow) {
+        daysToDeadline = Math.ceil((dEnd - dNow) / 86400000);
+      }
+    } catch (e) {}
+
+    // Match accurate description per project
+    const projectDesc = (activeProject.description && activeProject.description.trim().length > 0)
+      ? activeProject.description
+      : 'Sistem automasi katalog buku OPAC, sirkulasi peminjaman, denda terintegrasi, dan arsitektur microservices Laravel React.';
+
+    // 5 Termin Release Milestones Model (PRD & Business Standard)
+    const terminReleaseMilestones = [
+      {
+        no: 1,
+        title: 'Termin 1 (25%): Down Payment (DP) / Sprint 0',
+        porsi: '25%',
+        amount: Math.round(contractVal * 0.25),
+        deliverable: 'Project kickoff, Backlog grooming awal, arsitektur microservices & Docker environment setup.',
+        date: formatDateID(startDate),
+        pct: 100,
+        done: true,
+        statusBadge: 'Lunas (Paid)',
+        icon: 'fi-rr-badge-check',
+        iconColor: '#059669',
+        bgColor: '#ecfdf5'
+      },
+      {
+        no: 2,
+        title: 'Termin 2 (25%): Release 1 (Core Engine / MVP Awal)',
+        porsi: '25%',
+        amount: Math.round(contractVal * 0.25),
+        deliverable: 'Modul katalog buku OPAC, skema DB PostgreSQL, autentikasi & REST API microservices.',
+        date: formatDateID(activeSprint?.endDate || '2026-11-20'),
+        pct: Math.max(35, overallProgPct || 45),
+        done: false,
+        statusBadge: 'In Progress (Active Sprint)',
+        icon: 'fi-rr-cube',
+        iconColor: '#4f46e5',
+        bgColor: '#eef2ff'
+      },
+      {
+        no: 3,
+        title: 'Termin 3 (20%): Release 2 (Fitur Transaksional & Integrasi)',
+        porsi: '20%',
+        amount: Math.round(contractVal * 0.20),
+        deliverable: 'Engine transaksi sirkulasi peminjaman, perhitungan denda otomatis Rp 2.000/hari & bot reminder WhatsApp.',
+        date: '10 Des 2026',
+        pct: 0,
+        done: false,
+        statusBadge: 'Terjadwal (Sprint 2)',
+        icon: 'fi-rr-exchange',
+        iconColor: '#0284c7',
+        bgColor: '#f0f9ff'
+      },
+      {
+        no: 4,
+        title: 'Termin 4 (20%): UAT & User Sign-off',
+        porsi: '20%',
+        amount: Math.round(contractVal * 0.20),
+        deliverable: 'Load testing K6 2.000 RPS, uji penerimaan (UAT) bersama pihak kampus, & live production deployment.',
+        date: formatDateID(deadline),
+        pct: 0,
+        done: false,
+        statusBadge: 'Terjadwal (Sprint 3)',
+        icon: 'fi-rr-rocket-lunch',
+        iconColor: '#d97706',
+        bgColor: '#fffbeb'
+      },
+      {
+        no: 5,
+        title: 'Termin 5 (10%): Retensi & Handover Final',
+        porsi: '10%',
+        amount: Math.round(contractVal * 0.10),
+        deliverable: 'Serah terima full source code, dokumentasi API teknis, training admin/petugas, & masa pemeliharaan SLA.',
+        date: formatDateID(activeProject.warrantyUntil || '2027-01-15'),
+        pct: 0,
+        done: false,
+        statusBadge: 'Masa Garansi SLA',
+        icon: 'fi-rr-shield-check',
+        iconColor: '#64748b',
+        bgColor: '#f8fafc'
+      }
+    ];
+
+    // Team members list
+    const activeMembers = members && members.length > 0 ? members.slice(0, 5) : [
+      { id: 'user-pm', name: 'Asisyah Sarah Azzahra', role: 'Project Manager', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80' },
+      { id: 'user-fullstack', name: 'Azi', role: 'Fullstack Developer', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
+      { id: 'user-frontend', name: 'Aldyana', role: 'Frontend Developer', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80' },
+      { id: 'user-backend', name: 'Jaka', role: 'Backend Developer', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
+      { id: 'user-qa', name: 'Farhan', role: 'QA Engineer', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' }
     ];
 
     return `
@@ -1668,27 +1763,48 @@ export class ProjectModuleView {
         <!-- 1. HERO BANNER CARD -->
         <div class="pm-ws-hero-card">
           <div class="pm-ws-hero-pill-row">
-            <span class="pm-ws-hero-dot" style="background: ${activeProject.color || '#4f46e5'};"></span>
-            <span>${activeProject.code} • ${clientName}</span>
-            <span class="pm-ws-hero-badge">${health.toUpperCase()}</span>
+            <span class="pm-ws-meta-tag pm-ws-meta-tag--code">
+              <i class="fi fi-rr-folder"></i>
+              ${activeProject.code}
+            </span>
+            <span class="pm-ws-meta-tag">
+              <i class="fi fi-rr-building"></i>
+              ${clientName}
+            </span>
+            <span class="pm-ws-meta-tag ${isAtRisk ? 'pm-ws-meta-tag--risk' : 'pm-ws-meta-tag--health'}">
+              <i class="fi ${isAtRisk ? 'fi-rr-exclamation' : 'fi-rr-check-circle'}"></i>
+              ${health.toUpperCase()}
+            </span>
+            <span class="pm-ws-meta-tag pm-ws-meta-tag--scheme">
+              <i class="fi fi-rr-document-signed"></i>
+              ${activeProject.contractType || 'Fixed Price'}
+            </span>
+            <span class="pm-ws-meta-tag">
+              <i class="fi fi-rr-user"></i>
+              PM: Asisyah Sarah Azzahra
+            </span>
+            <span class="pm-ws-meta-tag">
+              <i class="fi fi-rr-receipt"></i>
+              5 Termin Release
+            </span>
           </div>
+
           <h2 class="pm-ws-hero-title">${activeProject.name}</h2>
           <p class="pm-ws-hero-desc">
-            ${activeProject.description || 'Transformasi arsitektur mobile banking native dengan fitur Biometric Login, QRIS Cross-Border, dan High-Concurrency Transaction Engine.'}
+            ${projectDesc}
           </p>
+
           <div class="pm-ws-hero-btns">
             <div class="pm-ws-hero-btns-left">
-              <button class="pm-ws-hero-btn-primary" data-switch-ws-tab="kanban">Buka Papan Kanban</button>
-              <button class="pm-ws-hero-btn-secondary" data-nav-to-client="true">Lihat Portal Klien</button>
+              <button class="pm-ws-hero-btn-primary" data-switch-ws-tab="kanban">
+                <i class="fi fi-rr-chart-kanban"></i>
+                <span>Buka Papan Kanban</span>
+              </button>
             </div>
             <div class="pm-ws-hero-btns-right">
               <button id="pmWsEditProjBtn" class="pm-ws-btn pm-ws-btn--outline" title="Edit konfigurasi proyek">
                 <i class="fi fi-rr-pencil"></i>
                 <span>Edit Proyek</span>
-              </button>
-              <button id="pmWsAiCopilotBtn" class="pm-ws-btn pm-ws-btn--outline pm-ws-btn--copilot" title="Buka AI Copilot Proyek">
-                <i class="fi fi-rr-magic-wand"></i>
-                <span>AI Copilot</span>
               </button>
               <button id="pmWsCreateIssueBtn" class="pm-ws-btn pm-ws-btn--primary" title="Tambah issue / task baru">
                 <i class="fi fi-rr-plus"></i>
@@ -1700,114 +1816,343 @@ export class ProjectModuleView {
 
         <!-- 2. 4 TOP KPI CARDS -->
         <div class="pm-ws-kpi-grid">
-          <!-- Card 1: Overall Progress -->
+          <!-- Card 1: Progress Proyek -->
           <div class="pm-ws-kpi-card">
             <div class="pm-ws-kpi-top">
-              <span>Overall Progress</span>
-              <i class="fi fi-rr-check-circle" style="color: #059669; font-size: 16px;"></i>
+              <span class="pm-ws-kpi-label">Progress Proyek</span>
+              <div class="pm-kpi-icon-pill" style="background: #ecfdf5; color: #059669;">
+                <i class="fi fi-rr-chart-pie-alt"></i>
+              </div>
             </div>
             <div class="pm-ws-kpi-val">${overallProgPct}%</div>
             <div class="pm-ws-kpi-bar">
-              <div class="pm-ws-kpi-bar-fill" style="width: ${overallProgPct}%; background: #059669;"></div>
+              <div class="pm-ws-kpi-bar-fill" style="width: ${overallProgPct}%; background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
             </div>
-            <div class="pm-ws-kpi-sub">${doneCount} dari ${totalIssues} issues selesai</div>
+            <div class="pm-ws-kpi-footer">
+              <span class="pm-ws-kpi-sub">
+                <i class="fi fi-rr-check-circle" style="color: #059669;"></i>
+                ${doneCount} dari ${totalIssues} tiket tuntas
+              </span>
+              <span class="pm-kpi-tag" style="background: #ecfdf5; color: #047857;">
+                ${totalIssues - doneCount} Tiket Aktif
+              </span>
+            </div>
           </div>
 
           <!-- Card 2: Budget Burn Rate -->
           <div class="pm-ws-kpi-card">
             <div class="pm-ws-kpi-top">
-              <span>Budget Burn Rate (Super Admin) $</span>
-              <i class="fi fi-rr-dollar" style="color: #4f46e5; font-size: 16px;"></i>
+              <span class="pm-ws-kpi-label">Budget Burn Rate</span>
+              <div class="pm-kpi-icon-pill" style="background: #eef2ff; color: #4f46e5;">
+                <i class="fi fi-rr-dollar"></i>
+              </div>
             </div>
             <div class="pm-ws-kpi-val" style="color: #4f46e5;">${burnRatePct}%</div>
             <div class="pm-ws-kpi-bar">
-              <div class="pm-ws-kpi-bar-fill" style="width: ${burnRatePct}%; background: #4f46e5;"></div>
+              <div class="pm-ws-kpi-bar-fill" style="width: ${burnRatePct}%; background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);"></div>
             </div>
-            <div class="pm-ws-kpi-sub">Rp ${new Intl.NumberFormat('id-ID').format(budgetUsed)} / Rp ${new Intl.NumberFormat('id-ID').format(contractVal)}</div>
+            <div class="pm-ws-kpi-footer">
+              <span class="pm-ws-kpi-sub">
+                <i class="fi fi-rr-receipt" style="color: #4f46e5;"></i>
+                Rp ${formatIDR(realisticBudgetUsed)} / Rp ${formatIDR(contractVal)}
+              </span>
+              <span class="pm-kpi-tag" style="background: #eff6ff; color: #1d4ed8;">
+                On Budget
+              </span>
+            </div>
           </div>
 
           <!-- Card 3: Jam Alokasi Tim -->
           <div class="pm-ws-kpi-card">
             <div class="pm-ws-kpi-top">
-              <span>Jam Alokasi Tim</span>
-              <i class="fi fi-rr-clock" style="color: #0284c7; font-size: 16px;"></i>
+              <span class="pm-ws-kpi-label">Jam Alokasi Tim</span>
+              <div class="pm-kpi-icon-pill" style="background: #f0f9ff; color: #0284c7;">
+                <i class="fi fi-rr-clock"></i>
+              </div>
             </div>
-            <div class="pm-ws-kpi-val">${projectUsedHours} <span style="font-size: 15px; font-weight: 500; color: #64748b;">/ ${hoursAllocated} Jam</span></div>
+            <div class="pm-ws-kpi-val">
+              ${projectUsedHours} <span style="font-size: 14px; font-weight: 600; color: #64748b;">/ ${hoursAllocated} Jam</span>
+            </div>
             <div class="pm-ws-kpi-bar">
-              <div class="pm-ws-kpi-bar-fill" style="width: ${Math.min(100, Math.round((projectUsedHours / hoursAllocated) * 100))}%; background: #0284c7;"></div>
+              <div class="pm-ws-kpi-bar-fill" style="width: ${Math.min(100, Math.round((projectUsedHours / hoursAllocated) * 100))}%; background: linear-gradient(90deg, #38bdf8 0%, #0284c7 100%);"></div>
             </div>
-            <div class="pm-ws-kpi-sub">${remainingHours} jam tersisa dalam alokasi</div>
+            <div class="pm-ws-kpi-footer">
+              <span class="pm-ws-kpi-sub">
+                <i class="fi fi-rr-hourglass-end" style="color: #0284c7;"></i>
+                ${remainingHours} jam tersisa alokasi
+              </span>
+              <span class="pm-kpi-tag" style="background: #f0fdf4; color: #15803d;">
+                ${Math.round((projectUsedHours / hoursAllocated) * 100)}% Terpakai
+              </span>
+            </div>
           </div>
 
-          <!-- Card 4: Target Deadline -->
+          <!-- Card 4: Target Deadline & UAT -->
           <div class="pm-ws-kpi-card">
             <div class="pm-ws-kpi-top">
-              <span>Target Deadline</span>
-              <i class="fi fi-rr-calendar" style="color: #d97706; font-size: 16px;"></i>
+              <span class="pm-ws-kpi-label">Target Go-Live &amp; UAT</span>
+              <div class="pm-kpi-icon-pill" style="background: #fffbeb; color: #d97706;">
+                <i class="fi fi-rr-calendar"></i>
+              </div>
             </div>
-            <div class="pm-ws-kpi-val">${deadline}</div>
-            <div class="pm-ws-kpi-sub" style="color: #059669; font-weight: 700; margin-bottom: 2px;">
-              Sisa ${daysToDeadline} hari menuju Go-Live
+            <div class="pm-ws-kpi-val" style="font-size: 21px; color: #0f172a;">
+              ${formatDateID(deadline)}
             </div>
-            <div class="pm-ws-kpi-sub" style="font-size: 11px;">Mulai: ${startDate}</div>
+            <div class="pm-ws-kpi-bar">
+              <div class="pm-ws-kpi-bar-fill" style="width: ${Math.min(100, Math.max(15, 100 - daysToDeadline))}%; background: linear-gradient(90deg, #fbbf24 0%, #d97706 100%);"></div>
+            </div>
+            <div class="pm-ws-kpi-footer">
+              <span class="pm-ws-kpi-sub">
+                <i class="fi fi-rr-calendar-check" style="color: #d97706;"></i>
+                Mulai: ${formatDateID(startDate)}
+              </span>
+              <span class="pm-kpi-tag" style="background: #fef3c7; color: #b45309;">
+                Sisa ${daysToDeadline} Hari
+              </span>
+            </div>
           </div>
         </div>
 
-        <!-- 3. SPLIT TWO-COLUMN ROW -->
+        <!-- 3. QUICK STATUS INFORMATIVE STRIP -->
+        <div class="pm-ws-status-strip">
+          <div class="pm-ws-strip-item">
+            <div class="pm-strip-icon-circle" style="background: #ecfdf5; color: #059669;">
+              <i class="fi fi-rr-shield-check"></i>
+            </div>
+            <div>
+              <span class="pm-strip-label">Kesehatan Proyek</span>
+              <div class="pm-strip-val" style="color: #047857;">${health} (Risiko Terkendali)</div>
+            </div>
+          </div>
+
+          <div class="pm-ws-strip-divider"></div>
+
+          <div class="pm-ws-strip-item">
+            <div class="pm-strip-icon-circle" style="background: #eef2ff; color: #4f46e5;">
+              <i class="fi fi-rr-running"></i>
+            </div>
+            <div>
+              <span class="pm-strip-label">Sprint Berjalan</span>
+              <div class="pm-strip-val">${activeSprint ? activeSprint.name.split(':')[0] : 'Sprint 1'} • ${sprintTasks.length || 6} Tiket Aktif</div>
+            </div>
+          </div>
+
+          <div class="pm-ws-strip-divider"></div>
+
+          <div class="pm-ws-strip-item">
+            <div class="pm-strip-icon-circle" style="background: #f0fdf4; color: #16a34a;">
+              <i class="fi fi-rr-file-invoice-dollar"></i>
+            </div>
+            <div>
+              <span class="pm-strip-label">Skema Termin &amp; TOP</span>
+              <div class="pm-strip-val">5 Termin Release • DP 25% Lunas</div>
+            </div>
+          </div>
+
+          <div class="pm-ws-strip-divider"></div>
+
+          <div class="pm-ws-strip-item">
+            <div class="pm-strip-icon-circle" style="background: #fef3c7; color: #d97706;">
+              <i class="fi fi-rr-users"></i>
+            </div>
+            <div>
+              <span class="pm-strip-label">Alokasi Tim Engineering</span>
+              <div class="pm-strip-val">5 Developer &amp; QA (100% Kapasitas)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. SPLIT TWO-COLUMN ROW -->
         <div class="pm-ws-split-row">
           <!-- Column Left: Sprint Berjalan Saat Ini -->
           <div class="pm-ws-card">
             <div class="pm-ws-card-header">
-              <h3 class="pm-ws-card-title">Sprint Berjalan: ${activeSprint ? activeSprint.name : `Sprint 1 (${activeProject.code})`}</h3>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="pm-card-header-icon" style="background: #eef2ff; color: #4f46e5;">
+                  <i class="fi fi-rr-running"></i>
+                </div>
+                <div>
+                  <h3 class="pm-ws-card-title">${activeSprint ? activeSprint.name : `Sprint 1 (${activeProject.code})`}</h3>
+                  <p class="pm-ws-card-subtitle">Target: ${formatDateID(activeSprint?.startDate || startDate)} s/d ${formatDateID(activeSprint?.endDate || '2026-11-20')}</p>
+                </div>
+              </div>
               <button class="pm-ws-card-link" data-switch-ws-tab="backlog">
-                <span>Lihat Detail Backlog</span>
+                <i class="fi fi-rr-list-check"></i>
+                <span>Detail Backlog</span>
                 <i class="fi fi-rr-arrow-up-right"></i>
               </button>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              ${activeTasks.map(t => `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px;">
-                  <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                    <span style="font-size: 11px; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">${t.key}</span>
-                    <span style="font-size: 13px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.title}</span>
+            <div style="display: flex; flex-direction: column; gap: 9px;">
+              ${activeTasks.map(t => {
+                const isDone = t.status === 'Selesai' || t.status === 'Deploy Production';
+                const isInDev = t.status === 'In Development' || t.status === 'In Progress' || t.status === 'Dianalisis';
+                const isQA = t.status === 'Review & Testing' || t.status === 'QA Review';
+
+                let typeIcon = 'fi-rr-code-branch';
+                let typeColor = '#4f46e5';
+                if (t.type === 'Bug') {
+                  typeIcon = 'fi-rr-bug';
+                  typeColor = '#ef4444';
+                } else if (t.type === 'Story' || t.type === 'Epic') {
+                  typeIcon = 'fi-rr-star';
+                  typeColor = '#8b5cf6';
+                }
+
+                let prioBg = '#f1f5f9';
+                let prioColor = '#475569';
+                let prioIcon = 'fi-rr-minus';
+                if (t.priority === 'Hotfix' || t.priority === 'Kritis') {
+                  prioBg = '#fef2f2';
+                  prioColor = '#dc2626';
+                  prioIcon = 'fi-rr-flame';
+                } else if (t.priority === 'Tinggi') {
+                  prioBg = '#fff7ed';
+                  prioColor = '#ea580c';
+                  prioIcon = 'fi-rr-angle-small-up';
+                } else if (t.priority === 'Sedang') {
+                  prioBg = '#eff6ff';
+                  prioColor = '#2563eb';
+                  prioIcon = 'fi-rr-menu-dots';
+                }
+
+                return `
+                  <div class="pm-overview-task-item">
+                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                      <div style="width: 26px; height: 26px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: ${typeColor}; flex-shrink: 0;">
+                        <i class="fi ${typeIcon}"></i>
+                      </div>
+                      <span style="font-size: 11px; font-weight: 700; color: #4338ca; background: #eef2ff; border: 1px solid #c7d2fe; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; font-family: monospace;">${t.key}</span>
+                      <span style="font-size: 13px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${t.title}">${t.title}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                      <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: ${prioBg}; color: ${prioColor}; display: inline-flex; align-items: center; gap: 4px;">
+                        <i class="fi ${prioIcon}" style="font-size: 10px;"></i>
+                        ${t.priority || 'Sedang'}
+                      </span>
+                      <span style="font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: ${isDone ? '#ecfdf5' : isInDev ? '#eff6ff' : isQA ? '#fef3c7' : '#f1f5f9'}; color: ${isDone ? '#059669' : isInDev ? '#2563eb' : isQA ? '#d97706' : '#64748b'}; display: inline-flex; align-items: center; gap: 4px;">
+                        <i class="fi ${isDone ? 'fi-rr-check' : isInDev ? 'fi-rr-time-forward' : isQA ? 'fi-rr-search-alt' : 'fi-rr-circle-small'}" style="font-size: 10px;"></i>
+                        ${t.status}
+                      </span>
+                      <span style="font-size: 11px; font-weight: 700; color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; padding: 2px 7px; border-radius: 5px; display: inline-flex; align-items: center; gap: 4px;">
+                        <i class="fi fi-rr-clock" style="font-size: 10px; color: #94a3b8;"></i>
+                        ${t.estimateHours || 8}h
+                      </span>
+                    </div>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: ${t.status === 'Selesai' ? '#ecfdf5' : '#eff6ff'}; color: ${t.status === 'Selesai' ? '#059669' : '#2563eb'};">
-                      ${t.status}
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Column Right: Milestones & 5 Termin Pembayaran -->
+          <div class="pm-ws-card">
+            <div class="pm-ws-card-header">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="pm-card-header-icon" style="background: #f0fdf4; color: #16a34a;">
+                  <i class="fi fi-rr-flag-alt"></i>
+                </div>
+                <div>
+                  <h3 class="pm-ws-card-title">Milestones &amp; 5 Termin Pembayaran</h3>
+                  <p class="pm-ws-card-subtitle">Skema TOP Kontrak Berbasis Iterasi Deliverable Release</p>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="pm-ws-card-link" data-switch-ws-tab="timeline">
+                  <i class="fi fi-rr-chart-timeline"></i>
+                  <span>Gantt</span>
+                  <i class="fi fi-rr-arrow-up-right"></i>
+                </button>
+                <button class="pm-ws-card-link" data-switch-ws-tab="finance" style="background: #ecfdf5; border-color: #a7f3d0; color: #047857;">
+                  <i class="fi fi-rr-dollar"></i>
+                  <span>Finance</span>
+                  <i class="fi fi-rr-arrow-up-right"></i>
+                </button>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              ${terminReleaseMilestones.map(m => `
+                <div class="pm-overview-termin-item ${m.pct > 0 && m.pct < 100 ? 'pm-overview-termin-item--active' : ''}">
+                  <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                      <div style="width: 32px; height: 32px; border-radius: 8px; background: ${m.bgColor}; color: ${m.iconColor}; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;">
+                        <i class="fi ${m.icon}"></i>
+                      </div>
+                      <div style="min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 7px;">
+                          <strong style="font-size: 13px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.title}</strong>
+                        </div>
+                        <div style="font-size: 11.5px; color: #64748b; margin-top: 2px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                          ${m.deliverable}
+                        </div>
+                      </div>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0;">
+                      <div style="font-size: 13px; font-weight: 800; color: #0f172a;">Rp ${formatIDR(m.amount)}</div>
+                      <span style="font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; display: inline-block; margin-top: 3px; background: ${m.done ? '#ecfdf5' : m.pct > 0 ? '#eff6ff' : '#f8fafc'}; color: ${m.done ? '#059669' : m.pct > 0 ? '#2563eb' : '#64748b'}; border: 1px solid ${m.done ? '#a7f3d0' : m.pct > 0 ? '#bfdbfe' : '#e2e8f0'};">
+                        ${m.statusBadge}
+                      </span>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; font-size: 11px; color: #64748b;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">
+                      <i class="fi fi-rr-calendar" style="color: #94a3b8; font-size: 11px;"></i>
+                      Target: <strong>${m.date}</strong>
                     </span>
-                    <span style="font-size: 11px; color: #64748b; font-weight: 600;">${t.estimateHours || 8}h</span>
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; max-width: 140px;">
+                      <div style="height: 5px; flex: 1; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                        <div style="height: 100%; width: ${m.pct}%; background: ${m.done ? '#059669' : '#4f46e5'}; border-radius: 999px;"></div>
+                      </div>
+                      <span style="font-weight: 700; font-size: 10.5px; color: ${m.done ? '#059669' : '#4f46e5'};">${m.pct}%</span>
+                    </div>
                   </div>
                 </div>
               `).join('')}
             </div>
           </div>
+        </div>
 
-          <!-- Column Right: Milestones & Termin Pembayaran -->
-          <div class="pm-ws-card">
-            <div class="pm-ws-card-header">
-              <h3 class="pm-ws-card-title">Milestones &amp; Termin Pembayaran</h3>
-              <button class="pm-ws-card-link" data-switch-ws-tab="timeline">
-                <span>Gantt Roadmap</span>
-                <i class="fi fi-rr-arrow-up-right"></i>
-              </button>
+        <!-- 5. BOTTOM TEAM CAPACITY & ALLOCATION CARD -->
+        <div class="pm-ws-card">
+          <div class="pm-ws-card-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="pm-card-header-icon" style="background: #eef2ff; color: #4f46e5;">
+                <i class="fi fi-rr-users-alt"></i>
+              </div>
+              <div>
+                <h3 class="pm-ws-card-title">Alokasi &amp; Kapasitas Tim Engineering</h3>
+                <p class="pm-ws-card-subtitle">Distribusi beban kerja 5 engineer pada proyek ${activeProject.name}</p>
+              </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-              ${dynamicMilestones.map(m => `
-                <div style="padding: 10px 12px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <i class="fi ${m.done ? 'fi-rr-check-circle' : 'fi-rr-flag'}" style="color: ${m.done ? '#059669' : '#4f46e5'}; font-size: 14px;"></i>
-                      <strong style="font-size: 12.5px; color: #0f172a;">${m.name}</strong>
-                    </div>
-                    <span style="font-size: 12px; font-weight: 700; color: ${m.done ? '#059669' : '#4f46e5'};">${m.pct}%</span>
+            <button class="pm-ws-card-link" data-switch-ws-tab="backlog">
+              <i class="fi fi-rr-user-gear"></i>
+              <span>Kelola Tim di Backlog</span>
+              <i class="fi fi-rr-arrow-up-right"></i>
+            </button>
+          </div>
+          <div class="pm-team-grid">
+            ${activeMembers.map(m => {
+              const assignedTasks = tasks.filter(t => t.assigneeId === m.id || (t.assignee && (t.assignee.name === m.name || t.assignee.id === m.id)));
+              const taskCount = assignedTasks.length || (m.role === 'Project Manager' ? 2 : m.role === 'QA Engineer' ? 2 : 3);
+              return `
+                <div class="pm-team-card">
+                  <div style="position: relative;">
+                    <img src="${m.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}" alt="${m.name}" style="width: 40px; height: 40px; border-radius: 999px; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" />
+                    <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: #10b981; border: 2px solid #ffffff; border-radius: 999px;"></span>
                   </div>
-                  <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #64748b;">
-                    <span>Target: ${m.date}</span>
-                    <span style="font-weight: 600; color: #334155;">${m.termin}</span>
+                  <div style="min-width: 0; flex: 1;">
+                    <div style="font-size: 13px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.name}</div>
+                    <div style="font-size: 11px; color: #64748b; font-weight: 500; display: flex; align-items: center; gap: 4px; margin-top: 1px;">
+                      <i class="fi fi-rr-briefcase" style="font-size: 10px; color: #94a3b8;"></i>
+                      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.role || 'Developer'}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 10.5px; font-weight: 700;">
+                      <span style="color: #4f46e5; background: #eef2ff; padding: 1px 6px; border-radius: 4px;">${taskCount} Tiket</span>
+                      <span style="color: #059669;">Kapasitas Optimal</span>
+                    </div>
                   </div>
                 </div>
-              `).join('')}
-            </div>
+              `;
+            }).join('')}
           </div>
         </div>
       </div>
@@ -2794,7 +3139,7 @@ export class ProjectModuleView {
                   Jadwal Termin Pembayaran Kontrak ${contractNumber}
                 </h3>
                 <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
-                  🔒 Model Termin per Milestone / Iterasi Release (5 Termin). Invoice dapat diajukan ke Departemen Finance saat deliverable terpenuhi.
+                   Model Termin per Milestone / Iterasi Release (5 Termin). Invoice dapat diajukan ke Departemen Finance saat deliverable terpenuhi.
                 </p>
               </div>
               <div style="font-size: 11.5px; color: #4338ca; background: #eef2ff; border: 1px solid #c7d2fe; padding: 4px 10px; border-radius: 6px; font-weight: 600;">
