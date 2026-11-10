@@ -40,6 +40,12 @@ export class CrmDealsView {
     // Initially false: show catalog (cards or table) only, hide detail view
     this.isProjectOpened = false;
 
+    // Track which module detail cards are expanded
+    this.expandedModules = new Set();
+
+    // Sub-navigation tab in Step 1: 'modules' | 'docs' | 'progress'
+    this.activeIntakeSubtab = "modules";
+
     // Predefined 5 Architecture Templates
     this.TEMPLATES = {
       perpustakaan_microservices: {
@@ -386,6 +392,62 @@ export class CrmDealsView {
     return this.applications.find((a) => a.id === this.selectedProjectId) || this.applications[0];
   }
 
+  getProjectShortTitle(project) {
+    if (!project) return "Sistem Informasi Perpustakaan Digital";
+    if (project.code === "LIB-DIG") return "Sistem Informasi Perpustakaan Digital";
+    if (project.shortTitle) return project.shortTitle;
+    let t = project.title || "";
+    t = t.split("(")[0].replace("Kampus", "").trim();
+    return t || project.title;
+  }
+
+  getModuleShortTitle(mod) {
+    if (!mod) return "Modul Aplikasi";
+    if (mod.shortTitle) return mod.shortTitle;
+    const t = mod.title || "";
+    if (t.includes("Katalog Buku")) return "Microservice Katalog Buku";
+    if (t.includes("Pencarian OPAC")) return "Portal Katalog Pencarian OPAC";
+    if (t.includes("Sirkulasi Peminjaman") || t.includes("Engine Sirkulasi")) return "Microservice Sirkulasi";
+    if (t.includes("Meja Sirkulasi")) return "Meja Sirkulasi";
+    if (t.includes("API Gateway")) return "API Gateway & Reminder";
+    if (t.includes("Matrix Test Case")) return "Matrix Test Case & Staging";
+    if (t.includes("Sprint Backlog")) return "Sprint Backlog & UAT";
+
+    let clean = t.split("(")[0].trim();
+    if (clean.includes(",")) {
+      clean = clean.split(",")[0].trim();
+    }
+    return clean || t;
+  }
+
+  getModuleRoleOnly(mod) {
+    // IMPORTANT: The user explicitly requested "jangan ada dulu nama developer nya"
+    const cat = (mod.category || "").toLowerCase();
+    const role = (mod.roleName || "").toLowerCase();
+
+    if (cat.includes("backend") || role.includes("backend")) return "Backend";
+    if (cat.includes("frontend") || role.includes("frontend")) return "Frontend";
+    if (cat.includes("devops") || cat.includes("gateway") || role.includes("fullstack") || cat.includes("fullstack")) return "Fullstack";
+    if (cat.includes("qa") || cat.includes("test") || role.includes("qa")) return "QA";
+    if (cat.includes("pm") || cat.includes("governance") || role.includes("pm")) return "PM";
+    if (cat.includes("mobile") || role.includes("mobile")) return "Mobile";
+    if (cat.includes("iot") || cat.includes("streaming")) return "IoT";
+    return "Developer";
+  }
+
+  getEpicTheme(idx) {
+    const themes = [
+      { bg: "#eff6ff", color: "#2563eb", border: "#dbeafe", icon: "fi-rr-box-alt" },
+      { bg: "#f3e8ff", color: "#9333ea", border: "#f3e8ff", icon: "fi-rr-layers" },
+      { bg: "#ecfdf5", color: "#16a34a", border: "#d1fae5", icon: "fi-rr-cube" },
+      { bg: "#fff7ed", color: "#ea580c", border: "#ffedd5", icon: "fi-rr-desktop" },
+      { bg: "#f0fdfa", color: "#0d9488", border: "#ccfbf1", icon: "fi-rr-cloud-network" },
+      { bg: "#eef2ff", color: "#4f46e5", border: "#e0e7ff", icon: "fi-rr-shield-check" },
+      { bg: "#ecfdf5", color: "#16a34a", border: "#d1fae5", icon: "fi-rr-briefcase" },
+    ];
+    return themes[idx % themes.length];
+  }
+
   openProject(projectId, nextStep = "intake") {
     this.selectedProjectId = projectId;
     this.isProjectOpened = true;
@@ -589,103 +651,99 @@ export class CrmDealsView {
     this.element.innerHTML = `
       <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; max-width: 1440px; margin: 0 auto; width: 100%;">
         
-        <!-- TOP BREADCRUMB & KEMBALI KE DAFTAR PROYEK -->
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background: #ffffff; padding: 12px 20px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+        <!-- 1. TOP BREADCRUMB & NAVIGATION BAR -->
+        <div class="crm-top-nav-bar">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <!-- Tombol Kembali Sesuai Tahapan (Tidak langsung keluar) -->
+            <!-- Tombol Kembali -->
             <button
               type="button"
               id="crmBackBtn"
-              class="crm-nav-back-btn"
+              class="crm-pill-btn"
               title="Kembali ke tahapan sebelumnya"
             >
-              <span>${this.getBackStepLabel()}</span>
+              <i class="fi fi-rr-arrow-left"></i>
+              <span>Kembali ke Daftar Proyek</span>
             </button>
 
-            <!-- Pintasan Langsung ke Katalog Proyek -->
+            <!-- Pintasan Daftar Proyek -->
             <button
               type="button"
               id="crmDirectCatalogBtn"
-              class="crm-nav-catalog-btn"
+              class="crm-pill-btn"
               title="Lihat katalog seluruh proyek"
             >
-              ${Icons.layers("", 13)}
+              <i class="fi fi-rr-apps"></i>
               <span>Daftar Proyek</span>
             </button>
 
-            <div style="height: 18px; width: 1px; background: #e2e8f0; margin: 0 4px;"></div>
-
-            <div style="font-size: 12px; color: #64748b;">
-              Proyek Aktif: <strong style="color: #0f172a;">[${activeProject.code}] ${activeProject.title}</strong>
+            <!-- Proyek Aktif Pill -->
+            <div class="crm-active-proj-pill">
+              <i class="fi fi-rr-folder" style="color: #6366f1;"></i>
+              <span>Proyek Aktif:</span>
+              <strong>${activeProject.code}</strong>
             </div>
           </div>
 
+          <!-- Tombol Aksi Kanan Atas -->
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 11px; font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 4px 12px; border-radius: 8px;">
-              ${this.activeStep === "allocation" ? "Langkah 2: Pembagian Modul" : this.activeStep === "finance_top" ? "Langkah 3: Finance" : "Langkah 1: Penerimaan Aplikasi"}
-            </span>
+            <button
+             
+            </button>
           </div>
         </div>
 
-        <!-- 3. KARTU PROYEK AKTIF TERPILIH (PROPORTIONAL & RICH) -->
-        <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 22px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 16px;">
-          
-          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <!-- 2. KARTU HERO PROYEK (PERSIS SESUAI MOCKUP GAMBAR) -->
+        <div class="crm-hero-card">
+          <div class="crm-hero-left">
+            <div class="crm-hero-avatar-box">
+              <i class="fi fi-rr-graduation-cap"></i>
+            </div>
+            
+            <div class="crm-hero-info">
+              <h2 class="crm-hero-title">${this.getProjectShortTitle(activeProject)}</h2>
+              <p class="crm-hero-client">${activeProject.customer_name}</p>
+              
+              <div class="crm-hero-stats-row">
+                <div class="crm-hero-stat-item">
+                  <span style="color: #059669; font-weight: 700;">$</span>
+                  <span class="crm-hero-stat-label">Nilai Kontrak</span>
+                  <strong class="crm-hero-stat-value" style="color: #059669;">Rp ${this.formatIDR(activeProject.contract_value)}</strong>
+                </div>
+
+                <span class="crm-hero-divider"></span>
+
+                <div class="crm-hero-stat-item">
+                  <i class="fi fi-rr-calendar" style="color: #2563eb; font-size: 11px;"></i>
+                  <span class="crm-hero-stat-label">Durasi</span>
+                  <strong class="crm-hero-stat-value" style="color: #2563eb;">${activeProject.actual_mandays || activeProject.budget_mandays} / ${activeProject.budget_mandays} MD</strong>
+                </div>
+
+                <span class="crm-hero-divider"></span>
+
+                <div class="crm-hero-stat-item">
+                  <i class="fi fi-rr-calendar-clock" style="color: #6366f1; font-size: 11px;"></i>
+                  <span class="crm-hero-stat-label">Sisa Kontrak</span>
+                  <strong class="crm-hero-stat-value">30/06/79</strong>
+                </div>
+
+                <span class="crm-hero-divider"></span>
+
+                <span class="crm-badge-active-dot">
+                  <span class="crm-green-dot"></span> Aktif
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="crm-hero-deal-won-badge">
+            <div class="crm-deal-check-icon">
+              <i class="fi fi-rr-check"></i>
+            </div>
             <div>
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-family: var(--font-mono); font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; background: rgba(99,102,241,.1); color: #4338ca; border: 1px solid rgba(99,102,241,.2);">
-                  ${activeProject.code}
-                </span>
-                <h2 style="font-weight: 800; font-size: 17px; color: #0f172a; margin: 0;">
-                  ${activeProject.title}
-                </h2>
-                <span style="padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; background: rgba(16,185,129,.1); color: #047857; border: 1px solid rgba(16,185,129,.2);">
-                  ACTIVE · DEAL WON
-                </span>
-              </div>
-
-              <p style="font-size: 12px; color: #64748b; margin: 6px 0 0 0;">
-                Klien: <strong style="color: #0f172a;">${activeProject.customer_name}</strong> • Penanggung Jawab PM: <strong>${activeProject.pm_name}</strong>
-              </p>
-            </div>
-
-            <!-- 4 Metrics Proportional Strip -->
-            <div style="display: flex; align-items: center; gap: 20px; font-size: 12px; font-family: var(--font-mono); flex-wrap: wrap;">
-              <div>
-                <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">NILAI KONTRAK</span>
-                <p style="font-weight: 800; color: #059669; margin: 2px 0 0 0; font-size: 14.5px;">
-                  ${this.formatIDR(activeProject.contract_value)}
-                </p>
-              </div>
-
-              <div style="border-left: 1px solid #e2e8f0; padding-left: 18px;">
-                <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">MANDAYS BUDGET</span>
-                <p style="font-weight: 800; color: #4338ca; margin: 2px 0 0 0; font-size: 13.5px;">
-                  ${activeProject.actual_mandays} / ${activeProject.budget_mandays} MD
-                </p>
-              </div>
-
-              <div style="border-left: 1px solid #e2e8f0; padding-left: 18px;">
-                <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">SKEMA TERMIN</span>
-                <p style="font-weight: 800; color: #0f172a; margin: 2px 0 0 0; font-size: 13px;">
-                  ${activeProject.top_scheme.preset_name}
-                </p>
-              </div>
-
-              <div style="border-left: 1px solid #e2e8f0; padding-left: 18px;">
-                <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block;">STATUS KONTRAK</span>
-                <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; display: inline-block; margin-top: 3px;">
-                  AKTIF BERJALAN
-                </span>
-              </div>
+              <div class="crm-deal-badge-text-title">Active</div>
+              <div class="crm-deal-badge-text-sub">Deal Won</div>
             </div>
           </div>
-
-          <!-- Full-width Proportional Progress Bar -->
-          <div style="width: 100%; height: 8px; border-radius: 9999px; background: #f1f5f9; overflow: hidden;">
-            <div style="height: 100%; background: linear-gradient(90deg, #6366f1, #10b981); border-radius: 9999px; width: ${activeProject.progress_pct}%;"></div>
-          </div>
-
         </div>
 
         <!-- 4. KONTEN DARI TAHAP YANG AKTIF -->
@@ -852,85 +910,106 @@ export class CrmDealsView {
   }
 
   // =========================================================================
-  // LANGKAH 1: Penerimaan Aplikasi & List Modul Bawaan
+  // LANGKAH 1: Penerimaan Aplikasi & Spesifikasi Kebutuhan (Clean Card Layout)
   // =========================================================================
   renderStep1Intake(activeProject) {
     const totalHours = (activeProject.modules || []).reduce((acc, m) => acc + (Number(m.estimateHours) || 0), 0);
     const totalMD = Math.round(totalHours / 8);
 
-    return `
-      <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 24px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-        
-        <!-- Section Header -->
-        <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <div>
-            <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
-              <span>📥 Langkah 1: Penerimaan Aplikasi &amp; Spesifikasi Kebutuhan</span>
-            </h3>
-            <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
-              Aplikasi telah disetujui dalam kontrak CRM dan daftar modul bawaan telah siap dieksekusi oleh tim developer.
-            </p>
-          </div>
+    const isModulesActive = !this.activeIntakeSubtab || this.activeIntakeSubtab === "modules";
+    const isDocsActive = this.activeIntakeSubtab === "docs";
+    const isProgressActive = this.activeIntakeSubtab === "progress";
 
-          <span style="font-size: 11px; font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px;">
-            Target Delivery: ${activeProject.end_date}
+    return `
+      <!-- 1. SUB-NAVIGATION TABS BAR (MODUL, DOKUMEN, PROGRESS) -->
+      <div class="crm-subnav-bar">
+        <div class="crm-subnav-tabs">
+          <button type="button" class="crm-subtab-btn ${isModulesActive ? "active" : ""}" data-subtab="modules">
+            <i class="fi fi-rr-box-open"></i>
+            <span>Modul Aplikasi</span>
+          </button>
+          <button type="button" class="crm-subtab-btn ${isDocsActive ? "active" : ""}" data-subtab="docs">
+            <i class="fi fi-rr-document"></i>
+            <span>Dokumen &amp; Spesifikasi</span>
+          </button>
+          <button type="button" class="crm-subtab-btn ${isProgressActive ? "active" : ""}" data-subtab="progress">
+            <i class="fi fi-rr-chart-histogram"></i>
+            <span>Progress Proyek</span>
+          </button>
+        </div>
+
+        <div class="crm-subnav-meta">
+          <span class="crm-subnav-meta-item">
+            <i class="fi fi-rr-calendar" style="color: #64748b;"></i>
+            <span>Target: <strong>${activeProject.end_date || "2026-11-20"}</strong></span>
+          </span>
+          <span class="crm-subnav-meta-sep">|</span>
+          <span class="crm-subnav-meta-item">
+            <i class="fi fi-rr-time-twenty-four" style="color: #64748b;"></i>
+            <span>Garansi: <strong>${activeProject.warranty_period ? activeProject.warranty_period.split(" ")[0] + " Bulan" : "12 Bulan"}</strong></span>
+          </span>
+          <span class="crm-subnav-meta-sep">|</span>
+          <span class="crm-subnav-meta-item">
+            <i class="fi fi-rr-bolt" style="color: #6366f1;"></i>
+            <span>SLA: <strong>${activeProject.sla_level ? activeProject.sla_level.split(" ")[0] : "99.8%"}</strong></span>
           </span>
         </div>
+      </div>
 
-        <!-- Scope & Arsitektur Box -->
-        <div style="padding: 14px 18px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 12px; color: #334155; line-height: 1.5;">
-          <strong style="color: #0f172a;">Arsitektur Teknis Sistem:</strong> ${activeProject.architecture || "-"}. <br/>
-          <span style="color: #64748b; margin-top: 4px; display: block;">${activeProject.scope || ""}</span>
-        </div>
-
-        <!-- DAFTAR MODUL TERSEDIA (LIST MODUL APLIKASI SUDAH ADA) -->
-        <div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <h4 style="font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
-                DAFTAR MODUL TERSEDIA DALAM APLIKASI (${(activeProject.modules || []).length} Modul Epics):
-              </h4>
-              <span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: #e0e7ff; color: #4338ca;">
-                Total: ${totalHours} Jam (~${totalMD} Mandays)
-              </span>
+      ${
+        isDocsActive
+          ? `
+        <!-- SUBTAB 2: DOKUMEN & SPESIFIKASI TEKNIS -->
+        <div class="crm-section-box">
+          <div class="crm-section-header">
+            <div class="crm-section-title-wrap">
+              <div class="crm-section-layers-icon" style="background: #fdf4ff; color: #a855f7;">
+                <i class="fi fi-rr-document"></i>
+              </div>
+              <div>
+                <h3 class="crm-section-title">Dokumen &amp; Spesifikasi Teknis Proyek</h3>
+                <p class="crm-section-desc">Ringkasan arsitektur sistem dan ruang lingkup kontrak yang disetujui klien</p>
+              </div>
             </div>
-            <span style="font-size: 11px; color: #64748b;">
-              Modul siap dibagikan ke 5 role developer pada Langkah 2
-            </span>
           </div>
 
-          <!-- Grid of Modules -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
-            ${(activeProject.modules || [])
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; font-size: 12.5px;">
+            <div style="display: flex; gap: 16px; align-items: baseline;">
+              <strong style="width: 110px; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;">Arsitektur</strong>
+              <span style="color: #0f172a; font-weight: 700; line-height: 1.5;">${activeProject.architecture || "-"}</span>
+            </div>
+            <div style="display: flex; gap: 16px; align-items: baseline;">
+              <strong style="width: 110px; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;">Ruang Lingkup</strong>
+              <span style="color: #334155; line-height: 1.55;">${activeProject.scope || "-"}</span>
+            </div>
+          </div>
+        </div>
+      `
+          : isProgressActive
+            ? `
+        <!-- SUBTAB 3: PROGRESS PROYEK & MILESTONES -->
+        <div class="crm-section-box">
+          <div class="crm-section-header">
+            <div class="crm-section-title-wrap">
+              <div class="crm-section-layers-icon" style="background: #ecfdf5; color: #059669;">
+                <i class="fi fi-rr-chart-histogram"></i>
+              </div>
+              <div>
+                <h3 class="crm-section-title">Progress Proyek &amp; Milestones</h3>
+                <p class="crm-section-desc">Monitoring pencapaian sprint dan deliverables kontrak</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+            ${(activeProject.milestones || [])
               .map(
-                (mod) => `
-              <div style="padding: 14px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 6px; justify-content: space-between;">
-                <div>
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 800; color: #4338ca; background: rgba(99,102,241,.1); padding: 2px 6px; border-radius: 4px;">
-                      ${activeProject.code}-${mod.keySuffix}
-                    </span>
-                    <span style="font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #ecfdf5; color: #047857;">
-                      ${mod.category}
-                    </span>
-                  </div>
-
-                  <strong style="font-size: 12px; color: #0f172a; line-height: 1.35; display: block;">
-                    ${mod.title}
-                  </strong>
-                  <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0; line-height: 1.4;">
-                    ${mod.description}
-                  </p>
-                </div>
-
-                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0;">
-                  <span style="font-family: var(--font-mono); font-weight: 700; color: #059669;">
-                    ${mod.estimateHours}h (~${Math.round(mod.estimateHours / 8)} MD)
-                  </span>
-                  <span style="font-size: 10.5px; color: #64748b; font-weight: 600; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px;">
-                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #94a3b8; display: inline-block;"></span>
-                    <span>Belum Dibagikan</span>
-                  </span>
+                (m) => `
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px;">
+                <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 6px;">${m.name}</strong>
+                <div style="font-size: 11.5px; color: #64748b; display: flex; justify-content: space-between; align-items: center;">
+                  <span>Target: ${m.target_date}</span>
+                  <span style="color: #059669; font-weight: 700; background: #ecfdf5; padding: 2px 8px; border-radius: 4px;">${m.status || "Planned"}</span>
                 </div>
               </div>
             `,
@@ -938,28 +1017,123 @@ export class CrmDealsView {
               .join("")}
           </div>
         </div>
+      `
+            : `
+        <!-- SUBTAB 1: DAFTAR MODUL APLIKASI (PERSIS SESUAI GAMBAR) -->
+        <div class="crm-section-box">
+          
+          <!-- Section Header Bar -->
+          <div class="crm-section-header">
+            <div class="crm-section-title-wrap">
+              <div class="crm-section-layers-icon">
+                <i class="fi fi-rr-layers"></i>
+              </div>
+              <div>
+                <h3 class="crm-section-title">Daftar Modul Aplikasi</h3>
+                <p class="crm-section-desc">Pilih modul yang ingin dikembangkan</p>
+              </div>
+            </div>
 
-        <!-- Action Footer -->
-        <div style="padding-top: 16px; border-top: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
-          <div style="font-size: 11.5px; color: #64748b;">
-            Garansi: <strong>${activeProject.warranty_period || "90 Hari"}</strong> • SLA: <strong>${activeProject.sla_level || "99.5%"}</strong>
+            <div class="crm-section-actions">
+              <button type="button" id="crmExpandAllModulesBtn" class="crm-pill-action-btn" title="Buka seluruh detail modul">
+                <i class="fi fi-rr-list"></i>
+                <span>Lihat Semua Detail &gt;</span>
+              </button>
+              <button type="button" id="crmCollapseAllModulesBtn" class="crm-pill-action-btn" title="Tutup seluruh detail modul">
+                <span>Tutup Semua</span>
+                <i class="fi fi-rr-angle-small-up"></i>
+              </button>
+            </div>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <!-- Next Step Button -->
-            <button
-              type="button"
-              class="go-to-step-btn"
-              data-target-step="allocation"
-              style="padding: 8px 18px; border-radius: 10px; font-size: 12px; font-weight: 700; color: #ffffff; background: #059669; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(5,150,105,0.25);"
-            >
-              ${Icons.users("", 14)}
-              <span>Lanjut: Bagikan Modul ke Developer ➔</span>
-            </button>
+          <!-- 4-Column Cards Grid -->
+          <div class="crm-module-cards-grid">
+            ${(activeProject.modules || [])
+              .map((mod, idx) => {
+                const modFullKey = `${activeProject.code}-${mod.keySuffix}`;
+                const isExpanded = this.expandedModules && this.expandedModules.has(modFullKey);
+                const theme = this.getEpicTheme(idx);
+                const shortTitle = this.getModuleShortTitle(mod);
+                const roleOnly = this.getModuleRoleOnly(mod); // PENTING: Tanpa nama developer!
+
+                return `
+                <div class="crm-module-card ${isExpanded ? "is-expanded" : ""}" data-module-key="${modFullKey}">
+                  <!-- Top Row: Badge & More Button -->
+                  <div class="crm-card-header">
+                    <span class="crm-epic-badge" style="background: ${theme.bg}; color: ${theme.color}; border: 1px solid ${theme.border};">
+                      <i class="fi ${theme.icon}"></i>
+                      <span>${modFullKey}</span>
+                    </span>
+                    <button type="button" class="crm-card-more-btn" title="Opsi modul">• • •</button>
+                  </div>
+
+                  <!-- Clean Short Title -->
+                  <h4 class="crm-card-title" title="${mod.title}">
+                    ${shortTitle}
+                  </h4>
+
+                  <!-- Meta Row: Hours & Role ONLY (Tanpa Nama Developer!) -->
+                  <div class="crm-card-meta-row">
+                    <div class="crm-card-meta-item">
+                      <i class="fi fi-rr-time-fast"></i>
+                      <span>${mod.estimateHours}H (~${Math.round(mod.estimateHours / 8)} MD)</span>
+                    </div>
+                    <span class="crm-card-meta-sep"></span>
+                    <div class="crm-card-meta-item">
+                      <i class="fi fi-rr-user"></i>
+                      <span>${roleOnly}</span>
+                    </div>
+                  </div>
+
+                  <!-- Collapsible Detail Drawer (Hidden by default, shown when expanded) -->
+                  <div class="crm-card-detail-drawer" style="display: ${isExpanded ? "block" : "none"};">
+                    <div class="crm-card-detail-desc">
+                      <p style="margin: 0; line-height: 1.45;">${mod.description || "Spesifikasi modul terverifikasi dari kontrak."}</p>
+                    </div>
+                    <div class="crm-card-detail-footer">
+                      <span class="crm-status-ready">
+                        <i class="fi fi-rr-check"></i> Siap dialokasi
+                      </span>
+                      <span style="color: #64748b; font-size: 10.5px;">
+                        Langkah 2: Resource
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Toggle Button (Lihat Detail ->) -->
+                  <button type="button" class="crm-card-toggle-btn" data-module-key="${modFullKey}">
+                    <span class="crm-card-toggle-label">${isExpanded ? "Tutup Detail" : "Lihat Detail"}</span>
+                    <i class="fi ${isExpanded ? "fi-rr-angle-small-up" : "fi-rr-arrow-right"} crm-card-toggle-icon"></i>
+                  </button>
+                </div>
+              `;
+              })
+              .join("")}
           </div>
+
+          <!-- Bottom Sticky / Footer Bar -->
+          <div class="crm-intake-footer">
+            <div style="font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 6px;">
+              <i class="fi fi-rr-info" style="color: #2563eb;"></i>
+              <span>Verifikasi spesifikasi modul sebelum membagi beban kerja ke developer.</span>
+            </div>
+
+            <div>
+              <button
+                type="button"
+                class="crm-footer-next-btn go-to-step-btn"
+                data-target-step="allocation"
+                title="Lanjut membagikan modul ke developer"
+              >
+                <i class="fi fi-rr-rocket-lunch"></i>
+                <span>Lanjut : Bagikan Modul ke Developer ➔</span>
+              </button>
+            </div>
+          </div>
+
         </div>
-
-      </div>
+      `
+      }
     `;
   }
 
@@ -1735,6 +1909,77 @@ export class CrmDealsView {
           this.activeStep = targetStep;
           this.render();
         }
+        return;
+      }
+
+      // 4a. Subtab Switcher in Step 1 (Modul Aplikasi, Dokumen & Spesifikasi, Progress Proyek)
+      const subtabBtn = e.target.closest(".crm-subtab-btn");
+      if (subtabBtn) {
+        const sub = subtabBtn.dataset.subtab;
+        if (sub && sub !== this.activeIntakeSubtab) {
+          this.activeIntakeSubtab = sub;
+          this.render();
+        }
+        return;
+      }
+
+      // 4b. Module Card Detail Toggle (Accordion / Expand-Collapse)
+      const cardToggleBtn = e.target.closest(".crm-card-toggle-btn");
+      if (cardToggleBtn) {
+        const card = cardToggleBtn.closest(".crm-module-card");
+        if (card) {
+          const modKey = card.dataset.moduleKey;
+          const drawer = card.querySelector(".crm-card-detail-drawer");
+          const toggleIcon = card.querySelector(".crm-card-toggle-icon");
+          const toggleLabel = card.querySelector(".crm-card-toggle-label");
+
+          const isExpanded = card.classList.toggle("is-expanded");
+          if (drawer) {
+            drawer.style.display = isExpanded ? "block" : "none";
+          }
+          if (toggleIcon) {
+            toggleIcon.className = `fi ${isExpanded ? "fi-rr-angle-small-up" : "fi-rr-arrow-right"} crm-card-toggle-icon`;
+          }
+          if (toggleLabel) {
+            toggleLabel.textContent = isExpanded ? "Tutup Detail" : "Lihat Detail";
+          }
+          if (modKey) {
+            if (isExpanded) {
+              this.expandedModules.add(modKey);
+            } else {
+              this.expandedModules.delete(modKey);
+            }
+          }
+        }
+        return;
+      }
+
+      // 4c. Expand All / Collapse All Modules
+      if (e.target.closest("#crmExpandAllModulesBtn")) {
+        this.element.querySelectorAll(".crm-module-card").forEach((card) => {
+          card.classList.add("is-expanded");
+          const drawer = card.querySelector(".crm-card-detail-drawer");
+          const toggleIcon = card.querySelector(".crm-card-toggle-icon");
+          const toggleLabel = card.querySelector(".crm-card-toggle-label");
+          if (drawer) drawer.style.display = "block";
+          if (toggleIcon) toggleIcon.className = "fi fi-rr-angle-small-up crm-card-toggle-icon";
+          if (toggleLabel) toggleLabel.textContent = "Tutup Detail";
+          if (card.dataset.moduleKey) this.expandedModules.add(card.dataset.moduleKey);
+        });
+        return;
+      }
+
+      if (e.target.closest("#crmCollapseAllModulesBtn")) {
+        this.element.querySelectorAll(".crm-module-card").forEach((card) => {
+          card.classList.remove("is-expanded");
+          const drawer = card.querySelector(".crm-card-detail-drawer");
+          const toggleIcon = card.querySelector(".crm-card-toggle-icon");
+          const toggleLabel = card.querySelector(".crm-card-toggle-label");
+          if (drawer) drawer.style.display = "none";
+          if (toggleIcon) toggleIcon.className = "fi fi-rr-arrow-right crm-card-toggle-icon";
+          if (toggleLabel) toggleLabel.textContent = "Lihat Detail";
+        });
+        this.expandedModules.clear();
         return;
       }
 

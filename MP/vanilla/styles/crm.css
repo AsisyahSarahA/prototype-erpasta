@@ -1380,3 +1380,587 @@
   color: #0f172a;
   border-color: #cbd5e1;
 }
+
+/* ==========================================================================
+   PIXEL-PERFECT INTAKE & MODULE CARDS (MATCHING EXACT FIGMA/SAAS DESIGN)
+   ========================================================================== */
+
+/* 1. TOP BREADCRUMB & NAVIGATION BAR */
+.crm-top-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #ffffff;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.crm-pill-btn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.crm-pill-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.crm-active-proj-pill {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crm-active-proj-pill strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.crm-nav-primary-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+  transition: all 0.15s ease;
+}
+
+.crm-nav-primary-btn:hover {
+  background: #1d4ed8;
+}
+
+/* 2. HERO PROJECT CARD WITH BANNER & ICON */
+.crm-hero-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 22px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.crm-hero-card::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 320px;
+  background: radial-gradient(circle at 100% 50%, rgba(219, 234, 254, 0.55) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+.crm-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+  min-width: 300px;
+  position: relative;
+  z-index: 1;
+}
+
+.crm-hero-avatar-box {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 26px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+}
+
+.crm-hero-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.crm-hero-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.crm-hero-client {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 8px 0;
+}
+
+.crm-hero-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.crm-hero-stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crm-hero-stat-label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.crm-hero-stat-value {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: var(--font-mono, monospace);
+}
+
+.crm-hero-divider {
+  width: 1px;
+  height: 14px;
+  background: #cbd5e1;
+}
+
+.crm-badge-active-dot {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #047857;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.crm-green-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.crm-hero-deal-won-badge {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 40px;
+  padding: 8px 20px 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.crm-deal-check-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.crm-deal-badge-text-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #065f46;
+  line-height: 1.2;
+}
+
+.crm-deal-badge-text-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+}
+
+/* 3. SUB-NAVIGATION TABS BAR (MODUL, DOKUMEN, PROGRESS) */
+.crm-subnav-bar {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.crm-subnav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crm-subtab-btn {
+  background: none;
+  border: none;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 8px;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.crm-subtab-btn.active {
+  color: #2563eb;
+  font-weight: 700;
+  background: #eff6ff;
+}
+
+.crm-subtab-btn:hover:not(.active) {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.crm-subnav-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11.5px;
+  color: #475569;
+}
+
+.crm-subnav-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.crm-subnav-meta-sep {
+  color: #cbd5e1;
+}
+
+/* 4. SECTION CONTAINER & CARDS GRID */
+.crm-section-box {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.crm-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.crm-section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.crm-section-layers-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.crm-section-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.crm-section-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.crm-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-pill-action-btn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.crm-pill-action-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+/* 4-COLUMN CARDS GRID (RESPONSIVE) */
+.crm-module-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 1240px) {
+  .crm-module-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .crm-module-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .crm-module-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* INDIVIDUAL MODULE CARD */
+.crm-module-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.crm-module-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.crm-module-card.is-expanded {
+  border-color: #2563eb;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.09);
+}
+
+.crm-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.crm-epic-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.crm-card-more-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 2px;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.crm-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 14px 0;
+  line-height: 1.35;
+  min-height: 36px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.crm-card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 11.5px;
+  color: #475569;
+}
+
+.crm-card-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+
+.crm-card-meta-item i {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.crm-card-meta-sep {
+  width: 1px;
+  height: 12px;
+  background: #e2e8f0;
+}
+
+.crm-card-toggle-btn {
+  width: 100%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  margin-top: auto;
+}
+
+.crm-card-toggle-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+/* Detail Drawer inside Card */
+.crm-card-detail-drawer {
+  display: none;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 11.5px;
+  animation: crmFadeSlideDown 0.15s ease;
+}
+
+.crm-card-detail-desc {
+  color: #334155;
+  line-height: 1.45;
+}
+
+.crm-card-detail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 11px;
+}
+
+/* 5. FOOTER STICKY ACTION BAR */
+.crm-intake-footer {
+  padding-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.crm-footer-next-btn {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 22px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+  transition: all 0.15s ease;
+}
+
+.crm-footer-next-btn:hover {
+  background: #047857;
+}
+
+@keyframes crmFadeSlideDown {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
