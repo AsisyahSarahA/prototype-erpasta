@@ -34,6 +34,7 @@ Dashboard
 CRM: Master Data(leads/prospects/clients) · Customer · Pipeline · Quotation(+termin) · Follow-ups · Analytics
 Project: Dashboard · My Tasks · Projects(7 tab) · Clients · Events/Schedule · Notes · Team · Tickets(Bug) · Automation(PR approval) · Reports
 Finance: Dashboard · Invoices(AR) · Expenses/Vendor Bill(AP) · Vendor · Freelancer · Payroll · Opex · Accounts(Kas&Bank) · Internal Transfer · Reconciliation · COA · Journal(GL) · Fixed Asset · Taxation · Budgeting · Report Company/Project/Customer
+HR: Asta HR · Employee master · Attendance/Daily Log · Night Workload · Recruitment · PKL · Draft Payroll · HR-PM-Finance data bridge
 Marketing: Ops · AI Engine · Approval Queue · Calendar · Distribution · Asset Library · Social Listening · Inbox · Content History · Kanban · Analytics · Settings(Brand Kit, Rules, Connections)
 Kanban AI · Analytics · Integrations · RBAC · Settings
 ```
@@ -337,6 +338,11 @@ Test: approval flow, jurnal, recurring opex.
 
 OUTPUT TARGET: seluruh AP/payroll/opex/freelancer endpoint + jurnal otomatis + test hijau.
 Verifikasi: `php artisan test --filter=Payable`.
+```
+
+### T16.5 · [BE] HR dan Integrasi PM-Finance
+```text
+HR menjadi sumber data employee/user, status aktif, availability, kapasitas, cuti, dan payroll draft. PM mengirim approved time_logs dengan project_id/task_id/time_log_id; Finance menerima payroll_run_id dengan source_module=HR, alokasi OPEX/HPP, lalu mengembalikan status REVIEW/APPROVED/PAID. Event wajib: attendance.recorded, daily_log.submitted, night_claim.approved, employee.updated, payroll.approved, payroll.paid.
 ```
 
 ### T17 · [BE] Finance: Cash & Bank, Internal Transfer, Rekonsiliasi

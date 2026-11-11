@@ -80,7 +80,9 @@ export class HrTeamView {
     // Global workload stats
     const totalCapacity = teamMembers.reduce((acc, m) => acc + (m.capacityHoursPerWeek || 40), 0);
     const activeTasks = tasks.filter((t) => t.status !== 'Selesai' && t.status !== 'Deploy Production');
-    const totalAssignedHours = activeTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 4), 0);
+    // Task estimates are lifetime project estimates, not weekly allocation.
+    // Weekly workload must use the HR/PM capacity allocation field.
+    const totalAssignedHours = teamMembers.reduce((acc, m) => acc + (Number(m.assignedHours) || 0), 0);
     const avgUtilization = totalCapacity > 0 ? Math.round((totalAssignedHours / totalCapacity) * 100) : 0;
     const availableCount = teamMembers.filter((m) => !m.onLeave).length;
 
@@ -190,8 +192,10 @@ export class HrTeamView {
             </div>
           ` : filteredMembers.map(member => {
             const assignedTasks = tasks.filter((t) => t.assigneeId === member.id && t.status !== 'Selesai' && t.status !== 'Deploy Production');
-            const memberHours = assignedTasks.reduce((acc, curr) => acc + (Number(curr.estimateHours) || 4), 0);
+            const memberHours = Number(member.assignedHours) || 0;
             const cap = member.capacityHoursPerWeek || 40;
+            const bridge = store.getEmployeeCapacity(member.id) || {};
+            const availableHours = Math.max(0, (bridge.capacityHoursPerWeek || cap) - (bridge.leaveHoursThisWeek || 0) - (bridge.approvedHours || 0));
             const isOverloaded = memberHours > cap;
             const loadPercentage = Math.round((memberHours / cap) * 100);
             const distinctEpicIds = Array.from(new Set(assignedTasks.map((t) => t.epicId).filter(Boolean)));
@@ -214,6 +218,8 @@ export class HrTeamView {
                         </span>
                       </div>
                       <div class="hr-member-contact-line">
+                        <span>${this.escapeHtml(member.employeeId || member.id)}</span>
+                        <span>·</span>
                         <span>${this.escapeHtml(member.email || `${member.name.toLowerCase().replace(/\s+/g, '.')}@softwarehouse.id`)}</span>
                         ${member.githubUsername ? `
                           <span>·</span>
@@ -298,6 +304,7 @@ export class HrTeamView {
                       ></div>
                     </div>
 
+                    <div class="hr-workload-footer"><span>Jam disetujui PM/HR: <strong>${bridge.approvedHours || 0}h</strong> · Sisa kapasitas: <strong>${availableHours}h</strong></span></div>
                     ${isOverloaded ? `
                       <div class="hr-overload-banner">
                         ${Icons.alertTriangle('', 13)}

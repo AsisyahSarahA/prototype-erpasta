@@ -1180,9 +1180,12 @@
               <button class="btn outline-white" onclick="syncPayrollFromHrModule()">
                 <i class="fa-solid fa-arrows-rotate"></i> Sinkron Master HR
               </button>
-              <button class="btn primary" onclick="openFinanceModal('modalCreatePayroll')">
-                <i class="fa-solid fa-plus"></i> Tambah Data Gaji
-              </button>
+              <span class="card-tag" style="background:rgba(255,255,255,.16); color:#fff; font-weight:600; padding:8px 12px; border-radius:8px;">
+                <i class="fa-solid fa-lock"></i> Master payroll read-only dari HR
+              </span>
+              <button class="btn outline-white" onclick="reviewHrPayroll()"><i class="fa-solid fa-eye"></i> Review HR</button>
+              <button class="btn primary" onclick="approveHrPayroll()"><i class="fa-solid fa-check"></i> Approve</button>
+              <button class="btn primary" onclick="payHrPayroll()"><i class="fa-solid fa-money-check-dollar"></i> Tandai Paid</button>
             </div>
           </div>
 

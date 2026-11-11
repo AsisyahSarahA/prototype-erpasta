@@ -3,7 +3,7 @@
  * 100% Mirrors AppContext.tsx with full initial dataset and all application actions.
  */
 
-import { INITIAL_PROJECTS, INITIAL_MEMBERS, INITIAL_EPICS, INITIAL_SPRINTS, INITIAL_TASKS, INITIAL_CRM_DEALS, INITIAL_INVOICES, INITIAL_EVENTS, INITIAL_COMMENTS, INITIAL_RULES } from "../data/mockData.js";
+import { INITIAL_PROJECTS, INITIAL_MEMBERS, INITIAL_EPICS, INITIAL_SPRINTS, INITIAL_TASKS, INITIAL_CRM_DEALS, INITIAL_INVOICES, INITIAL_EVENTS, INITIAL_COMMENTS, INITIAL_RULES, INITIAL_TIME_LOGS } from "../data/mockData.js";
 
 class Store {
   constructor() {
@@ -16,6 +16,7 @@ class Store {
       epics: JSON.parse(JSON.stringify(INITIAL_EPICS)),
       sprints: JSON.parse(JSON.stringify(INITIAL_SPRINTS)),
       teamMembers: JSON.parse(JSON.stringify(INITIAL_MEMBERS)),
+      timeLogs: JSON.parse(JSON.stringify(INITIAL_TIME_LOGS)),
       crmDeals: JSON.parse(JSON.stringify(INITIAL_CRM_DEALS)),
       invoices: JSON.parse(JSON.stringify(INITIAL_INVOICES)),
       events: JSON.parse(JSON.stringify(INITIAL_EVENTS)),
@@ -189,6 +190,44 @@ class Store {
 
   setRole(role) {
     this.setState({ role });
+  }
+
+  // PM is the source of work effort; HR/Finance consume only this normalized record.
+  recordTimeLog({ projectId, taskId = null, userId, hours, workDate, source = "pm_timer" }) {
+    const member = this.state.teamMembers.find((m) => m.id === userId);
+    const normalizedHours = Number(hours);
+    if (!member || !Number.isFinite(normalizedHours) || normalizedHours <= 0) return null;
+
+    const timeLog = {
+      timeLogId: `TL-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Date.now()}`,
+      employeeId: member.employeeId,
+      userId: member.userId || member.id,
+      projectId: projectId || this.state.selectedProjectId,
+      taskId,
+      hours: Number(normalizedHours.toFixed(2)),
+      workDate: workDate || new Date().toISOString().slice(0, 10),
+      approvalStatus: "draft",
+      source
+    };
+    this.setState({ timeLogs: [timeLog, ...(this.state.timeLogs || [])] });
+    return timeLog;
+  }
+
+  getEmployeeCapacity(userId) {
+    const member = this.state.teamMembers.find((m) => m.id === userId);
+    if (!member) return null;
+    const approvedHours = (this.state.timeLogs || [])
+      .filter((log) => log.userId === userId && log.approvalStatus === "approved")
+      .reduce((sum, log) => sum + Number(log.hours || 0), 0);
+    return {
+      employeeId: member.employeeId,
+      userId: member.userId || member.id,
+      capacityHoursPerWeek: member.capacityHoursPerWeek || 40,
+      approvedHours,
+      leaveHoursThisWeek: member.leaveHoursThisWeek || 0,
+      availableHours: Math.max(0, (member.capacityHoursPerWeek || 40) - (member.leaveHoursThisWeek || 0) - approvedHours),
+      availabilityStatus: member.availabilityStatus || (member.onLeave ? "leave" : "available")
+    };
   }
 
   setSearchQuery(q) {

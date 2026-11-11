@@ -28,6 +28,15 @@
     'messages': 'Pusat Pesan',
   };
 
+  const HR_PAYROLL_PAYLOAD = {
+    payroll_run_id: 'PR-2026-10',
+    source_module: 'HR',
+    status: 'DRAFT',
+    currency: 'IDR',
+    journal_entry_id: 'JE-PR-2026-10',
+    allocations: { fixed_salary: 'OPEX', freelancer: 'HPP_PROJECT' }
+  };
+
   // Switch Subpage
   window.switchFinancePage = function(pageId) {
     if (!pageId) pageId = 'dashboard';
@@ -1048,14 +1057,27 @@
 
   // Sinkronkan seluruh data payroll dengan modul HR
   window.syncPayrollFromHrModule = function() {
+    window.financePayrollSync = { ...HR_PAYROLL_PAYLOAD, last_synced_at: new Date().toISOString(), sync_status: 'success' };
     window.showFinanceToast('🔄 Menyinkronkan data master pegawai & grade jabatan dari Modul HR Astacode...', 'info');
     setTimeout(() => {
       window.showFinanceToast('✅ 6 Karyawan Tetap & Struktur Gaji Pokok resmi tersinkronisasi 100% dengan HR!', 'success');
     }, 800);
   };
+  function setHrPayrollStatus(status) {
+    const payload = { ...HR_PAYROLL_PAYLOAD, status, last_synced_at: new Date().toISOString(), sync_status: 'success' };
+    localStorage.setItem('asta.hr.payroll.sync', JSON.stringify(payload));
+    window.financePayrollSync = payload;
+    window.showFinanceToast(`Payroll HR ${status}. Status akan terbaca kembali oleh HR saat modul dibuka ulang.`, 'success');
+  }
+  window.reviewHrPayroll = () => setHrPayrollStatus('REVIEW');
+  window.approveHrPayroll = () => setHrPayrollStatus('APPROVED');
+  window.payHrPayroll = () => setHrPayrollStatus('PAID');
 
   // Submit Payroll Form
   window.submitPayrollHrForm = function() {
+    window.closeFinanceModal('modalCreatePayroll');
+    window.showFinanceToast('Master payroll dikelola HR. Finance hanya melakukan review, approval, pembayaran, dan jurnal.', 'warning');
+    return;
     const name = document.getElementById('pay-name')?.value;
     const jab = document.getElementById('pay-jabatan')?.value;
     const gaji = parseFloat(document.getElementById('pay-gaji')?.value) || 0;

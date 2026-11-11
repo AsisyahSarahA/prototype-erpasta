@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>HR & Manajemen SDM — Astacode ERP</title>
-    <meta name="description" content="Modul HR (Manajemen SDM) Astacode ERP: kelola karyawan tetap, mitra freelance per proyek, rekrutmen talenta, absensi progres, dan program PKL." />
+    <title>HR & People — Astacode ERP</title>
+    <meta name="description" content="Modul HR Astacode ERP: absensi berbasis progres, rekrutmen, manajemen PKL, payroll, dan administrasi karyawan." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <!-- Flaticon UIcons (Regular Rounded) -->
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css" />
     <link rel="stylesheet" href="../sidebar.css" />
@@ -32,11 +32,17 @@
             <label class="sr-only" for="roleSelect">Peran (demo)</label>
             <select class="role-select" id="roleSelect" title="Ganti peran untuk simulasi hak akses">
               <option value="hr">HR Admin</option>
-              <option value="manager">Manajer Tim</option>
-              <option value="employee">Karyawan Tetap</option>
-              <option value="freelance">Freelancer (Per Proyek)</option>
+              <option value="manager">Manajer</option>
+              <option value="pembimbing">Pembimbing PKL</option>
+              <option value="employee">Karyawan</option>
+              <option value="pkl">Peserta PKL</option>
+              <option value="finance">Finance</option>
             </select>
             <button class="icon-btn" id="btnNotif" aria-label="Notifikasi"><i class="fi-rr-bell"></i><span class="badge-dot" id="notifDot"></span></button>
+            <button class="user-profile" id="btnAvatar" aria-label="Profil pengguna">
+              <div class="user-avatar" id="userAvatar">AS</div>
+              <div class="user-info"><strong id="userName">Asisyah Sarah A.</strong><span id="userRole">HR Admin</span></div>
+            </button>
           </div>
         </header>
 
@@ -55,6 +61,9 @@
             <a href="#kalender" class="crm-subnav-item" data-nav="kalender"><i class="fi-rr-calendar"></i> Kalender Kuota</a>
             <a href="#peserta" class="crm-subnav-item" data-nav="peserta"><i class="fi-rr-users"></i> Peserta PKL</a>
             <a href="#evaluasi" class="crm-subnav-item" data-nav="evaluasi"><i class="fi-rr-star"></i> Evaluasi PKL</a>
+            <a href="#sertifikat" class="crm-subnav-item" data-nav="sertifikat"><i class="fi-rr-diploma"></i> Sertifikat PKL</a>
+            <a href="#payroll" class="crm-subnav-item" data-nav="payroll"><i class="fi-rr-coins"></i> Payroll</a>
+            <a href="#dokumen" class="crm-subnav-item" data-nav="dokumen"><i class="fi-rr-document"></i> Dokumen</a>
             <a href="#laporan" class="crm-subnav-item" data-nav="laporan"><i class="fi-rr-document"></i> Laporan HR</a>
             <a href="#pengaturan" class="crm-subnav-item" data-nav="pengaturan"><i class="fi-rr-settings"></i> Pengaturan</a>
           </div>

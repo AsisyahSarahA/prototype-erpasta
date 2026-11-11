@@ -1,4 +1,12 @@
 
+# HR Product Requirements Document (PRD)
+
+> **Dokumen acuan utama backend HR.** Versi prototype yang menjadi baseline: `HR/hr.html` + `HR/hr.js`. Bagian 1-15 mempertahankan kebutuhan produk awal; **Bagian 16-26 adalah spesifikasi implementasi final dan wajib dibaca sebelum backend dibuat**. Jika ada perbedaan, bagian final ini dan kontrak data lintas modul menjadi acuan.
+
+**Versi:** 2.0 — Prototype parity + Backend blueprint  
+**Status:** Ready for backend design, dengan provider eksternal tetap configurable  
+**Pemilik data:** HR untuk employee/attendance/payroll draft/PKL/recruitment; PM untuk task timer; Finance untuk approval/payment/journal
+
 ## 1. Ringkasan Eksekutif
 
 Asta HR adalah platform HR terpadu yang dirancang khusus untuk software house dengan kultur **fleksibel dan kekeluargaan**, berorientasi pada **progress kerja** ("yang penting task selesai"), dan menerapkan sistem kerja **hybrid/WFH**. Sistem mengelola tiga kelompok pekerja sekaligus: **karyawan tetap**, **freelancer**, dan **siswa/mahasiswa PKL**.
@@ -474,20 +482,26 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 
 ---
 
-## 14. Pertanyaan Terbuka (Perlu Keputusan)
+## 14. Keputusan Produk yang Sudah Dikunci
 
-1. Apakah Wifi kantor memiliki **IP publik statis**? Apakah tim siap memakai **mobile app native** untuk BSSID?
-2. Aturan **Workload Malam**: carryover jam (masuk lebih siang) atau insentif uang? Berapa rate dan batas maksimum per bulan?
-3. Apakah klaim malam otomatis disetujui atau butuh approval manajer?
-4. Berapa **kuota PKL maksimal** simultan, apakah per divisi atau global?
-5. Apakah penolakan PKL karena kuota penuh benar-benar **otomatis**, atau HR tetap meninjau?
-6. Tool manajemen task yang dipakai: Jira, Trello, atau ClickUp (menentukan prioritas integrasi)?
-7. Aturan pajak PPh 21: dihitung di sistem atau hanya input manual?
-8. Siapa penandatangan digital surat & sertifikat, dan apakah perlu tanda tangan tersertifikasi (TTE)?
-9. Stack teknologi pilihan (frontend/backend/DB) dan tim pengembang yang tersedia?
-10. Kapan peserta boleh mengajukan evaluasi: apakah ambang default **80% progres periode** sudah sesuai, atau memakai H-minus tertentu sebelum tanggal selesai?
-11. Siapa penyetuju final evaluasi: pembimbing saja, atau perlu persetujuan HR juga?
-12. Apakah ada batas jumlah revisi, atau peserta boleh mengajukan ulang tanpa batas?
+Keputusan berikut sudah tercermin pada prototype dan menjadi default backend. Nilai konfigurasi dapat diubah melalui Pengaturan tanpa mengubah UI.
+
+| Area | Keputusan default |
+|---|---|
+| Presensi onsite | Public IP/provider jaringan kantor; BSSID hanya jika tersedia aplikasi native |
+| Presensi WFH | Geolocation + radius + consent + akurasi GPS; default radius 200 m |
+| Workload malam | Threshold 22:00; tipe kompensasi Carryover atau Insentif; approval manual Manager/HR kecuali policy auto-approve |
+| Payroll tetap | Gaji pokok + tunjangan + insentif malam - potongan absensi |
+| Payroll freelance | Approved PM time log × hourly rate; allocation project disimpan |
+| Payroll ownership | HR membuat Draft; Finance Review/Approved/Paid dan jurnal |
+| PKL quota | Dihitung per hari sepanjang rentang; prototype default maksimal 5 aktif |
+| PKL full/reject | Policy dapat auto-reject atau manual review; harus disimpan pada quota policy |
+| Evaluasi PKL | Self score + refleksi; default gate 80% progres; pembimbing menentukan nilai final; revisi dapat diajukan ulang |
+| Sertifikat | Transcript ON membutuhkan evaluasi Approved; OFF dapat diterbitkan menurut policy |
+| Integrasi PM | Provider adapter; kontrak internal `employee_id`, `user_id`, `project_id`, `task_id`, `time_log_id` |
+| PPh 21 dan pajak | Tidak dihitung otomatis pada prototype; backend menyediakan component/potongan configurable dan ekspor |
+
+Yang masih perlu dipilih saat backend setup, tetapi tidak boleh mengubah kontrak domain: stack backend, provider email/calendar/task, IP kantor final, signer/TTE, dan retention period. Simpan pilihan tersebut sebagai environment/configuration, bukan hardcode UI.
 
 ---
 
@@ -499,7 +513,245 @@ Antarmuka bergaya **enterprise SaaS kelas Jira/Atlassian**: padat informasi teta
 
 ---
 
-## 16. Riwayat Revisi
+## 16. Baseline Prototype yang Wajib Dipertahankan
+
+Bagian ini memetakan seluruh halaman yang sudah tersedia di prototype. Backend harus menyediakan data dan action untuk route berikut tanpa mengubah kontrak UI.
+
+| Route | Nama UI | Fitur prototype | Backend wajib |
+|---|---|---|---|
+| `#beranda` | Dashboard | KPI presensi, progres, workload malam, PKL, payroll, notifikasi | endpoint agregasi berbasis role dan periode |
+| `#presensi` | Presensi Saya | Onsite/WFH, validasi jaringan/lokasi, status hadir, riwayat | attendance, office/WFH location, validation, idempotency |
+| `#dailylog` | Daily Log | ringkasan, task, commit/PR, jam kerja, draft sampai 23:59 | daily logs, PM/Git references, edit window, audit |
+| `#workload` | Workload Malam | klaim malam, Insentif/Carryover, approve/reject | night claims, policy, approval, payroll feed |
+| `#rekap` | Rekap Tim | status presensi, tipe, tim, kapasitas, detail log | team attendance/workload read model |
+| `#karyawan` | Data Karyawan | direktori, tipe Tetap/Freelance/PKL, jabatan, rate, status | employee master, compensation, identity mapping |
+| `#lowongan` | Lowongan | CRUD lowongan, Draft/Published/Closed, skill | requisitions dan publishing |
+| `#pipeline` | Pipeline Pelamar | Applied → Screening → Interview → Technical Test → Offering → Hired/Rejected | applicants, stages, scorecard, hire conversion |
+| `#pengajuan` | Pengajuan PKL | form publik, surat, periode, cek kuota, review | intake, file metadata, quota decision, anti-spam |
+| `#kalender` | Kalender Kuota | 12 bulan, puncak okupansi, warna kapasitas | daily occupancy dan quota policy |
+| `#peserta` | Peserta PKL | peserta, pembimbing, divisi, progres | placements, mentor, progress |
+| `#evaluasi` / `#evaluasi_saya` | Evaluasi PKL | antrean, nilai diri, refleksi, approve/revisi | evaluation state machine dan ownership |
+| `#sertifikat` | Sertifikat PKL | preview, nomor, nilai ON/OFF, QR | certificate issuance, PDF, verification |
+| `#payroll` / `#payslip` | Payroll | Draft/Review/Approved/Paid, rincian slip | payroll run, snapshot, Finance handoff |
+| `#dokumen` | Dokumen & Template | template surat/sertifikat/slip | versioned templates dan private storage |
+| `#laporan` | Laporan HR | laporan presensi, payroll, PKL, rekrutmen, audit | filtered queries dan export jobs |
+| `#pengaturan` / `#profil` | Administrasi | role, lokasi, threshold, kuota, integrasi, profil | settings, RBAC, provider health, user identity |
+
+### 16.1 Batas prototype
+
+Selector role, seed `EMP/PKL/NIGHT/APP/EVALREQ/CERTS/PAYRUN/LOGS`, localStorage, PDF/email/QR, SSO, LinkedIn, Slack/WhatsApp, Jira/Trello/ClickUp, dan GitHub/GitLab pada prototype adalah simulasi. Backend harus menjadikan database sumber kebenaran, memakai adapter provider, dan menyimpan status sinkronisasi.
+
+## 17. Arsitektur Backend Final
+
+Mulai dengan modular monolith agar transaksi HR konsisten. Komponen wajib: REST API versioned (`/api/v1/hr`), PostgreSQL, object storage privat, queue/worker, outbox event, audit log, dan read model untuk dashboard/rekap/kalender. Semua timestamp UTC; UI mengonversi ke timezone tenant. Semua mutasi memakai `Idempotency-Key`; transaksi payroll, approval, audit, dan dokumen tidak boleh dihapus fisik.
+
+### 17.1 Master identity dan organization
+
+```text
+users(id, tenant_id, email, name, status, auth_provider)
+roles(id, tenant_id, code, name)
+permissions(id, code)
+user_roles(user_id, role_id, scope_type, scope_id)
+employees(id, tenant_id, employee_code, user_id, employee_type, legal_name, display_name,
+          email, phone, department_id, manager_employee_id, job_title, status,
+          joined_at, ended_at, hourly_rate, base_salary, allowance, payroll_status)
+employee_skills(employee_id, skill, level)
+employee_projects(employee_id, project_id, role, allocation_percent, starts_at, ends_at, status)
+employee_availability(employee_id, week_start, capacity_hours, leave_hours, allocated_hours,
+                       available_hours, status, source, calculated_at)
+```
+
+`employee_code` adalah `employee_id` lintas modul; `users.id` adalah `user_id`. Nama hanya display field, bukan foreign key.
+
+### 17.2 Attendance, daily log, workload malam
+
+```text
+office_locations(id, name, address, latitude, longitude, radius_meters, allowed_public_ips, active)
+employee_work_locations(id, employee_id, label, latitude, longitude, radius_meters, consent_at, active)
+attendance_records(id, employee_id, work_date, mode, status, recorded_at, validation_method,
+                   latitude, longitude, accuracy_meters, public_ip, validation_status, anomaly_flags)
+daily_logs(id, employee_id, work_date, summary, hours, attendance_id, status, submitted_at,
+           editable_until, source)
+daily_log_links(id, daily_log_id, project_id, task_id, provider, external_url, commit_sha, pull_request_id)
+night_claims(id, employee_id, work_date, submitted_at, work_start_at, work_end_at, hours,
+             reason, compensation_type, status, project_id, task_id, time_log_id,
+             approved_by, approved_at, rejection_reason, policy_snapshot)
+```
+
+Attendance unique `(employee_id, work_date)`. Mode `ONSITE/WFH`; status `PRESENT/ABSENT/NO_PROGRESS/REJECTED`. Daily log dapat diedit sampai 23:59 tenant. Night claim: `PENDING → APPROVED | REJECTED`; approved `INCENTIVE` masuk payroll, `CARRYOVER` masuk recovery balance dan tidak boleh dihitung dua kali.
+
+### 17.3 Recruitment
+
+```text
+job_requisitions(id, code, title, department_id, level, location, description, status,
+                 opened_at, closed_at, headcount, created_by, published_at)
+job_skills(job_id, skill, level, required)
+applicants(id, name, email, phone, source, consent_at, resume_object_key, parsed_data)
+applications(id, applicant_id, job_id, stage, status, owner_user_id, applied_at, hired_employee_id)
+application_stage_history(id, application_id, from_stage, to_stage, actor_user_id, note, created_at)
+interviews(id, application_id, scheduled_at, type, location, status, calendar_event_id)
+interview_scorecards(id, interview_id, interviewer_user_id, criterion, score, note, submitted_at)
+```
+
+Semua perpindahan stage tervalidasi server-side dan menulis history. `Hired` membuat employee dalam transaction tanpa duplikasi.
+
+### 17.4 PKL, evaluasi, sertifikat
+
+```text
+pkl_applications(id, application_code, applicant_name, institution, major, email, phone,
+                 start_date, end_date, division_id, letter_object_key, status, quota_result,
+                 reviewed_by, reviewed_at, rejection_reason)
+pkl_quota_policies(id, year, division_id, max_active, auto_reject, active)
+pkl_placements(id, application_id, participant_code, mentor_employee_id, division_id,
+               start_date, end_date, status, progress_percent)
+pkl_evaluations(id, placement_id, status, self_submitted_at, mentor_decided_at,
+                mentor_employee_id, revision_count, final_score, revision_note)
+pkl_evaluation_scores(id, evaluation_id, criterion, weight, self_score, mentor_score, note)
+document_templates(id, type, version, name, body, variables, active, created_by)
+certificates(id, placement_id, certificate_number, template_version, transcript_enabled,
+             final_score, pdf_object_key, verification_token_hash, issued_by, issued_at, revoked_at)
+```
+
+Quota dihitung per hari dan mengecualikan placement yang sedang diedit. Sertifikat membutuhkan nomor dan verification token unik.
+
+### 17.5 Payroll dan integrasi
+
+```text
+payroll_runs(id, tenant_id, period_start, period_end, status, currency, created_by,
+             reviewed_by, approved_by, paid_by, totals_json, calculation_version, source_snapshot_hash)
+payroll_items(id, payroll_run_id, employee_id, employee_type, gross_amount, deduction_amount, net_amount, status, calculation_snapshot_json)
+payroll_components(id, payroll_item_id, code, label, amount, direction, project_id, cost_class, source_type, source_id)
+payslips(id, payroll_item_id, document_object_key, document_hash, published_at, viewed_at)
+time_logs(id, time_log_id, employee_id, user_id, project_id, task_id, work_date, hours,
+          approval_status, approved_by, approved_at, source, external_id)
+integration_sync_states(id, provider, entity, status, last_synced_at, last_error, retry_count)
+outbox_events(id, event_id, event_type, aggregate_type, aggregate_id, payload_json, occurred_at, published_at, attempts)
+audit_logs(id, actor_user_id, action, entity_type, entity_id, before_json, after_json, ip_address, user_agent, created_at)
+```
+
+## 18. API yang Harus Disediakan
+
+```text
+GET/POST/PATCH /api/v1/hr/employees[/{employeeId}]
+POST /api/v1/hr/attendance/validate
+POST /api/v1/hr/attendance
+GET  /api/v1/hr/attendance?employee_id=&from=&to=
+POST/PATCH /api/v1/hr/daily-logs[/{id}]
+POST /api/v1/hr/night-claims
+POST /api/v1/hr/night-claims/{id}/approve
+POST /api/v1/hr/night-claims/{id}/reject
+GET/POST/PATCH /api/v1/hr/jobs[/{id}]
+GET /api/v1/hr/applications
+POST /api/v1/hr/applications/{id}/transition
+POST /api/v1/hr/applications/{id}/hire
+POST /api/v1/public/pkl/applications
+GET /api/v1/hr/pkl/applications
+POST /api/v1/hr/pkl/applications/{id}/approve|reject
+GET /api/v1/hr/pkl/quota-calendar?year=&division_id=
+GET /api/v1/hr/pkl/placements
+POST /api/v1/hr/pkl/placements/{id}/evaluation/submit
+POST /api/v1/hr/pkl/evaluations/{id}/approve|request-revision
+POST /api/v1/hr/pkl/placements/{id}/certificate/preview|issue
+GET /api/v1/public/certificates/{token}
+POST /api/v1/hr/payroll/runs
+GET /api/v1/hr/payroll/runs[/{id}]
+POST /api/v1/hr/payroll/runs/{id}/calculate
+GET /api/v1/hr/payroll/runs/{id}/payslips/{employeeId}
+POST /api/v1/hr/payroll/runs/{id}/submit-finance
+GET /api/v1/hr/reports/{reportType}
+GET/PATCH /api/v1/hr/settings
+GET /api/v1/hr/integrations/status
+POST /api/v1/hr/integrations/{provider}/sync
+GET /api/v1/hr/audit-logs
+```
+
+Response standar: `{ data, meta: { request_id, timestamp }, error }`. Gunakan 401/403/409/422 sesuai error; quota penuh memakai `409 QUOTA_FULL`.
+
+## 19. Aturan Bisnis Final
+
+1. Onsite memakai public IP/provider jaringan yang terdaftar; WFH memakai koordinat, akurasi, consent, dan radius. Browser tidak dianggap dapat membaca BSSID.
+2. Kehadiran penuh membutuhkan daily log, task link, atau commit/PR link.
+3. Freelancer hanya dihitung dari `time_logs.approval_status=APPROVED`: `hours × hourly_rate`; setiap allocation mempertahankan project/task/time log.
+4. Tetap dihitung dari gaji pokok + tunjangan + insentif malam - potongan absensi; simpan `calculation_version` dan snapshot.
+5. Payroll: HR `DRAFT`; Finance `REVIEW → APPROVED → PAID`; HR tidak dapat menandai Paid.
+6. PKL tersedia hanya jika setiap hari pada rentang memiliki occupancy `< max_active`; hanya `Aktif/Diterima` dihitung.
+7. Evaluasi `Belum Diajukan → Diajukan → Disetujui/Revisi`; nilai final pembimbing, nilai diri tetap tersimpan.
+8. Transcript certificate ON membutuhkan evaluasi Disetujui; OFF mengikuti policy; nomor/QR unik.
+9. Assignment PM dan semua relasi modul memakai ID resmi, bukan nama.
+
+## 20. Kontrak HR–PM–Finance
+
+### HR → PM availability
+
+```json
+{"event_type":"employee.availability.changed","employee_id":"EMP-004","user_id":"USR-004","status":"AVAILABLE","capacity_hours_week":40,"leave_hours_week":0,"skills":[{"name":"Laravel 11","level":"senior"}],"effective_from":"2026-11-11"}
+```
+
+### PM → HR approved time log
+
+```json
+{"time_log_id":"TL-2026-10-001","employee_id":"EMP-004","user_id":"USR-004","project_id":"PROJ-LIB","task_id":"TASK-LIB-102","work_date":"2026-10-21","duration_hours":6.5,"approval_status":"APPROVED","source":"pm_timer"}
+```
+
+HR hanya memakai log approved. Webhook signed, deduplicated berdasarkan `time_log_id`, dan dapat di-replay.
+
+### HR → Finance payroll
+
+```json
+{"payroll_run_id":"PR-2026-10","source_module":"HR","period":{"from":"2026-10-01","to":"2026-10-31"},"status":"DRAFT","items":[{"employee_id":"EMP-004","employee_type":"Freelance","gross":6500000,"deduction":0,"net":6500000,"allocations":[{"project_id":"PROJ-LIB","cost_class":"HPP","amount":6500000}]}]}
+```
+
+Finance mengembalikan `journal_entry_id`, status approval/payment, bank reference, dan timestamp. HR hanya memperbarui read model status.
+
+Event minimum: `employee.created`, `employee.updated`, `employee.availability.changed`, `attendance.recorded`, `daily_log.submitted`, `night_claim.approved`, `pkl.application.created`, `pkl.evaluation.submitted`, `pkl.evaluation.approved`, `certificate.issued`, `payroll.draft.created`, `payroll.submitted_to_finance`, `payroll.approved`, `payroll.paid`.
+
+## 21. RBAC Backend
+
+Gunakan permission dan scope, bukan nama role di frontend. Permission utama: `hr.employee.*`, `hr.attendance.*`, `hr.daily_log.*`, `hr.night_claim.*`, `hr.recruitment.*`, `hr.pkl.*`, `hr.payroll.read/calculate/create_draft/submit_finance/read_payslip`, `finance.payroll.read/review/approve/pay/journal`, `pm.employee_feed.read`, `pm.time_log.write/approve`, `hr.document.*`, `hr.report.read/export`, `hr.settings.*`, `audit.read`.
+
+Scope: employee=self; manager=direct reports; mentor=placement bimbingan; Finance=payroll workflow; HR=tenant HR. Backend wajib memeriksa scope pada setiap endpoint.
+
+## 22. Security dan Operasional
+
+- Jangan simpan token/provider secret di source code, seed, log, atau response.
+- KTP/NPWP, gaji, slip, koordinat rumah, resume, dan surat memakai encrypted storage, private bucket, signed URL berumur pendek, dan audit download.
+- Upload harus allowlist extension/MIME, size limit, checksum, antivirus scan, dan quarantine.
+- Endpoint publik PKL/job memakai rate limit, CAPTCHA/anti-bot, validation, dan idempotency.
+- Gunakan secure cookie/CSRF atau token rotation, CORS allowlist, webhook signature, PII masking, retention, correction, export, dan anonymization policy.
+- Queue job: `attendance.reminder`, `daily_log.lock`, `quota.recalculate`, `resume.parse`, `document.render`, `notification.dispatch`, `pm.time_log.sync`, `payroll.calculate`, `payroll.export.bank`, `report.export`; semua retry exponential + dead-letter.
+
+## 23. Acceptance Test Backend
+
+1. User tanpa permission menerima 403 saat membuat employee/job/payroll.
+2. Attendance invalid IP/radius ditolak; duplicate tanggal ditolak.
+3. Daily log setelah cutoff ditolak kecuali koreksi HR dan audit tercatat.
+4. Night claim approved masuk payroll tepat satu kali; rejected tidak masuk.
+5. Duplicate PM time log tidak menggandakan payroll freelancer.
+6. Quota PKL menolak overlap bila satu hari penuh.
+7. Peserta tanpa evaluasi submit tidak muncul di antrean pembimbing.
+8. Transcript ON ditolak sebelum evaluasi Disetujui.
+9. Payroll yang sudah dikirim Finance tidak dihitung ulang tanpa revision.
+10. Finance approval/payment mengembalikan journal reference dan event terlihat HR.
+11. Semua mutasi sensitif menyimpan actor, before, after, request ID.
+12. Webhook dapat diulang tanpa duplikasi dan signed URL kadaluarsa.
+
+## 24. Urutan Pengerjaan Backend
+
+**Fase 0:** kunci timezone, currency, enum status, permission, retention, provider, dan OpenAPI.  
+**Fase 1:** auth, tenant, RBAC, audit, storage, error format, idempotency, outbox, queue.  
+**Fase 2:** employee master, employment history, compensation, skills, project membership, availability, settings.  
+**Fase 3:** attendance, daily log, task/commit reference, night claim, approval, notification, rekap.  
+**Fase 4:** recruitment, applicant pipeline, scorecard, hire conversion, PKL quota, placement, evaluation, certificate.  
+**Fase 5:** PM time-log adapter, payroll snapshot, payslip, HR→Finance, callback, OPEX/HPP, payment/journal.  
+**Fase 6:** reports, provider adapters, security/load test, backup/restore, migration, UAT.
+
+## 25. Migration dan Definition of Done
+
+Map seed prototype ke master employee sekali dengan audit; map PM `user-*` ke `employee_id`; import PKL/NIGHT/LOGS sebagai `source=prototype_seed`; jangan menganggap nilai dummy sebagai transaksi keuangan; nonaktifkan mutation localStorage setelah API aktif.
+
+Backend HR selesai jika semua route prototype mendapat endpoint produksi, RBAC server-side, audit/idempotency, private documents, payroll snapshot immutable, bridge PM/Finance dua arah, retry event, migration/backup teruji, acceptance test Bagian 23 lulus, dan UI berjalan tanpa seed lokal sebagai sumber transaksi.
+
+## 26. Riwayat Revisi
 
 | Tanggal | Perubahan |
 |---|---|
