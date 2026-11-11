@@ -229,8 +229,11 @@ export class HrTeamView {
           ` : filteredMembers.map(member => {
             // Active tasks for this member
             const memberTasks = tasks.filter((t) => t.assigneeId === member.id && t.status !== 'Selesai' && t.status !== 'Deploy Production');
-            const memberHours = memberTasks.reduce((acc, curr) => acc + (Number(curr.estimateHours) || 4), 0);
+            // Task estimates are project planning data; HR capacity uses the approved HR/PM allocation.
+            const memberHours = Number(member.assignedHours) || 0;
             const cap = member.capacityHoursPerWeek || 40;
+            const bridge = store.getEmployeeCapacity(member.id) || {};
+            const availableHours = Math.max(0, (bridge.capacityHoursPerWeek || cap) - (bridge.leaveHoursThisWeek || 0) - (bridge.approvedHours || 0));
             const isOverloaded = memberHours > cap;
             const loadPercentage = Math.round((memberHours / cap) * 100);
             
@@ -279,6 +282,8 @@ export class HrTeamView {
                       
                       <div class="hr-contact-row">
                         <span class="hr-contact-email">${this.escapeHtml(member.email || `${member.name.toLowerCase().replace(/\s+/g, '.')}@agensi.dev`)}</span>
+                        <span class="hr-contact-dot">&middot;</span>
+                        <span class="hr-employee-id">${this.escapeHtml(member.employeeId || member.id)}</span>
                         ${member.githubUsername ? `
                           <span class="hr-contact-dot">·</span>
                           <span class="hr-github-tag">
@@ -322,6 +327,10 @@ export class HrTeamView {
                   <div class="hr-workload-footer">
                     <span class="hr-status-indicator ${statusBadgeClass}">${statusLabel}</span>
                     <span class="hr-tasks-info">${memberTasks.length} tiket sprint aktif</span>
+                  </div>
+                  <div class="hr-capacity-summary">
+                    <span>Approved PM/HR: <strong>${bridge.approvedHours || 0}h</strong></span>
+                    <span>Sisa kapasitas: <strong>${availableHours}h</strong></span>
                   </div>
                 </div>
 

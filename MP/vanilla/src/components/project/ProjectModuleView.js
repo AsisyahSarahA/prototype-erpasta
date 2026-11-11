@@ -166,6 +166,15 @@ export class ProjectModuleView {
       if (activeProject) {
         activeProject.totalHoursWorked = (activeProject.totalHoursWorked || 0) + hoursLogged;
       }
+      const activeTask = store.getState().selectedTask;
+      const roleToUser = { owner: 'user-pm', pm: 'user-pm', qa: 'user-qa', developer: 'user-dev-1' };
+      const currentUserId = roleToUser[store.getState().role] || 'user-pm';
+      store.recordTimeLog({
+        projectId: activeProject?.id,
+        taskId: activeTask?.projectId === activeProject?.id ? activeTask.id : null,
+        userId: currentUserId,
+        hours: hoursLogged
+      });
       store.addToast('success', 'Timer Disimpan', `${this.formatTimerTime(this.timerSeconds)} (${hoursLogged} Jam) dicatat ke timesheet proyek.`);
       this.timerSeconds = 0;
       this.render();

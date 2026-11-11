@@ -9,7 +9,7 @@
 | **Status** | Approved & Ready for Technical Implementation |
 | **Disusun oleh** | Project Manager & Head of ERP Architecture |
 | **Pemilik Produk** | Astacode |
-| **Modul Terintegrasi** | CRM, Project Management (Forge PM), Finance V3, Marketing & AI Content Engine |
+| **Modul Terintegrasi** | CRM, Project Management (Forge PM), Finance V3, Human Resources (Asta HR), Marketing & AI Content Engine |
 
 ---
 
@@ -25,6 +25,7 @@
    - 6.3 [Modul Project Management & Automation Fix Bug (`project/Forge PM.html`)](#63-modul-project-management--automation-fix-bug)
    - 6.4 [Modul Finance V3 (`finance/index.html`)](#64-modul-finance-v3)
    - 6.5 [Modul Marketing & AI Content Engine (`marketing/marketing.html`)](#65-modul-marketing--ai-content-engine)
+   - 6.6 [Modul Human Resources (`HR/hr.html`)](#66-modul-human-resources)
 7. [Desain Sistem & Standarisasi Tema Warna](#7-desain-sistem--standarisasi-tema-warna)
 8. [Jembatan Data Lintas Modul (Cross-Module Data Bridges)](#8-jembatan-data-lintas-modul-cross-module-data-bridges)
 9. [Role-Based Access Control (RBAC) Matrix](#9-role-based-access-control-rbac-matrix)
@@ -190,6 +191,14 @@ Sesuai kebutuhan Project Manager, markup Master Sidebar dipisahkan ke dalam file
   - Antrean Persetujuan berjenjang dengan evaluasi Quality Score & Brand Voice Safeguard.
   - Kalender Konten Interaktif mingguan/bulanan.
   - Omnichannel Customer Inbox untuk merespons prospek dari media sosial.
+
+### 6.6 Modul Human Resources (`HR/hr.html`)
+- **Fungsi Utama**: sumber kebenaran karyawan, availability, presensi, Daily Log, workload malam, rekrutmen, PKL, dan draft payroll.
+- **Fitur Terintegrasi**:
+  - HR menerbitkan `employee_id`/`user_id`, role, skill, availability, kapasitas, dan status aktif untuk PM.
+  - HR membaca time log PM yang telah disetujui untuk payroll freelancer serta mengaitkan `project_id`/`task_id`.
+  - Finance membaca draft payroll HR, melakukan review/approval/payment, dan membuat jurnal dengan `source_module = HR`.
+  - Event lintas modul: `attendance.recorded`, `daily_log.submitted`, `night_claim.approved`, `payroll.approved`, `payroll.paid`, dan `employee.updated`.
 
 ---
 

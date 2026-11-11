@@ -560,6 +560,49 @@ const INITIAL_MEMBERS = [
     githubUsername: "parhan-qa"
   }
 ];
+
+// Canonical identity contract shared with HR. `id` remains the PM user key;
+// employeeId is the stable HR master key used by attendance, leave and payroll.
+const HR_MEMBER_ID_MAP = {
+  "user-pm": "EMP-001",
+  "user-dev-1": "EMP-002",
+  "user-dev-2": "EMP-003",
+  "user-dev-3": "EMP-004",
+  "user-qa": "EMP-005"
+};
+INITIAL_MEMBERS.forEach((member) => {
+  member.employeeId = HR_MEMBER_ID_MAP[member.id] || `EMP-${member.id.replace(/\\D/g, '').padStart(3, '0')}`;
+  member.userId = member.id;
+  member.availabilityStatus = member.onLeave ? "leave" : "available";
+  member.leaveHoursThisWeek = member.onLeave ? member.capacityHoursPerWeek : 0;
+});
+
+// Prototype bridge: PM consumes this feed from HR, while HR/Finance consume
+// approved time logs. In production this becomes API/event data, not a second master.
+const INITIAL_TIME_LOGS = [
+  {
+    timeLogId: "TL-2026-10-001",
+    employeeId: "EMP-004",
+    userId: "user-dev-3",
+    projectId: "proj-perpustakaan",
+    taskId: "task-lib-102",
+    hours: 6.5,
+    workDate: "2026-10-21",
+    approvalStatus: "approved",
+    source: "pm_timer"
+  },
+  {
+    timeLogId: "TL-2026-10-002",
+    employeeId: "EMP-003",
+    userId: "user-dev-2",
+    projectId: "proj-perpustakaan",
+    taskId: "task-lib-103",
+    hours: 4,
+    workDate: "2026-10-21",
+    approvalStatus: "draft",
+    source: "pm_timer"
+  }
+];
 const INITIAL_TASKS = [
   // --- PROYEK MOBILE BANKING 3.0 REVAMP (proj-mbn) ---
   {
@@ -3398,4 +3441,5 @@ export {
   INITIAL_RULES,
   INITIAL_SPRINTS,
   INITIAL_TASKS
+  ,INITIAL_TIME_LOGS
 };
