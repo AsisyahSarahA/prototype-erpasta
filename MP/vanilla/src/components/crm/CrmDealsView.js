@@ -1,16 +1,3 @@
-/**
- * CrmDealsView.js — Vanilla JS ASTACODE Proyek & Delivery Command Center
- * Sesuai arsitektur crm/js/components/projects/ProjectsList.js
- *
- * Alur Kerja Terpadu & Proporsional:
- * - Memilih 1 Proyek Aktif via Project Pills Bar (TANPA SELECT DROPDOWN)
- * - 3 Langkah Eksekusi Proyek Terpilih:
- *   1. 📥 Penerimaan Aplikasi & List Modul Bawaan
- *   2. 👥 Pembagian Modul ke Developer & Matriks Kapasitas 5 Roles
- *   3. 💰 Pengiriman Invoice & Setting TOP ke Bagian Finance (1:1 Image 3)
- * - Plus Tab 📊 Dashboard Portofolio & SLA (1:1 Image 1)
- */
-
 import { store } from "../../state/store.js";
 import { Icons } from "../../utils/icons.js";
 import { PerpusIntakeModal } from "./PerpusIntakeModal.js";
@@ -437,13 +424,13 @@ export class CrmDealsView {
 
   getEpicTheme(idx) {
     const themes = [
-      { bg: "#eff6ff", color: "#2563eb", border: "#dbeafe", icon: "fi-rr-box-alt" },
-      { bg: "#f3e8ff", color: "#9333ea", border: "#f3e8ff", icon: "fi-rr-layers" },
-      { bg: "#ecfdf5", color: "#16a34a", border: "#d1fae5", icon: "fi-rr-cube" },
-      { bg: "#fff7ed", color: "#ea580c", border: "#ffedd5", icon: "fi-rr-desktop" },
-      { bg: "#f0fdfa", color: "#0d9488", border: "#ccfbf1", icon: "fi-rr-cloud-network" },
-      { bg: "#eef2ff", color: "#4f46e5", border: "#e0e7ff", icon: "fi-rr-shield-check" },
-      { bg: "#ecfdf5", color: "#16a34a", border: "#d1fae5", icon: "fi-rr-briefcase" },
+      { bg: "#eff6ff", color: "#0f2b5c", border: "#bfdbfe", icon: "fi-rr-box-alt" },
+      { bg: "#f1f5f9", color: "#1e3a8a", border: "#cbd5e1", icon: "fi-rr-layers" },
+      { bg: "#ecfdf5", color: "#047857", border: "#a7f3d0", icon: "fi-rr-cube" },
+      { bg: "#eff6ff", color: "#1e40af", border: "#bfdbfe", icon: "fi-rr-desktop" },
+      { bg: "#f8fafc", color: "#0f2b5c", border: "#e2e8f0", icon: "fi-rr-cloud-network" },
+      { bg: "#e0e7ff", color: "#1e3a8a", border: "#c7d2fe", icon: "fi-rr-shield-check" },
+      { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0", icon: "fi-rr-briefcase" },
     ];
     return themes[idx % themes.length];
   }
@@ -458,6 +445,7 @@ export class CrmDealsView {
 
   handleBackStep() {
     switch (this.activeStep) {
+      case "finance":
       case "finance_top":
         // Dari Langkah 3, kembali ke Langkah 2: Pembagian Modul
         this.activeStep = "allocation";
@@ -470,6 +458,7 @@ export class CrmDealsView {
         this.render();
         store.addToast("info", "Tahapan Proyek", "Kembali ke Langkah 1: Penerimaan Aplikasi & Spesifikasi.");
         break;
+      case "portfolio":
       case "portfolio_dashboard":
         // Dari Dashboard Portofolio, kembali ke Langkah 1
         this.activeStep = "intake";
@@ -486,10 +475,12 @@ export class CrmDealsView {
 
   getBackStepLabel() {
     switch (this.activeStep) {
+      case "finance":
       case "finance_top":
         return "← Kembali ke Langkah 2: Pembagian Modul";
       case "allocation":
         return "← Kembali ke Langkah 1: Penerimaan Aplikasi";
+      case "portfolio":
       case "portfolio_dashboard":
         return "← Kembali ke Alur Eksekusi";
       case "intake":
@@ -562,34 +553,28 @@ export class CrmDealsView {
         <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; max-width: 1440px; margin: 0 auto; width: 100%;">
           
           <!-- TOP HEADER BAR (ASTACODE Proyek & Delivery Command Center) -->
-          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; background: #ffffff; padding: 18px 24px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; background: #ffffff; padding: 18px 24px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
             <div style="display: flex; align-items: center; gap: 14px;">
-              <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #6366f1); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 2px 6px rgba(79,70,229,0.25);">
+              <div style="width: 42px; height: 42px; border-radius: 10px; background: #0f2b5c; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 2px 6px rgba(15,43,92,0.22); flex-shrink: 0;">
                 ${Icons.layers("", 20)}
               </div>
               <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                   <h1 style="font-size: 16.5px; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; margin: 0;">
-                    ASTACODE Proyek &amp; Delivery Command Center
+                    Pusat Eksekusi Proyek CRM &amp; Delivery
                   </h1>
-                  <span style="padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; background: rgba(99,102,241,.1); color: #4338ca; border: 1px solid rgba(99,102,241,.2);">
-                    Portal Operasional CRM
+                  <span style="padding: 2px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; background: #eff6ff; color: #0f2b5c; border: 1px solid #bfdbfe;">
+                    Deal Won Terverifikasi
                   </span>
                 </div>
-                <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">
-                  Pusat eksekusi deal won software house: pilih dan klik <strong>Buka Proyek</strong> pada kartu atau tabel untuk memuat alur pembagian modul, tim developer, dan penagihan termin.
+                <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
+                  Pusat eksekusi proyek software house: pilih dan klik <strong>Buka Proyek</strong> untuk mengelola spesifikasi modul, penugasan developer, dan penagihan termin.
                 </p>
               </div>
             </div>
 
             <div style="display: flex; align-items: center; gap: 10px;">
-              <button
-                id="openPerpusIntakeBlueprintBtn"
-                style="display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 10px; background: #f8fafc; color: #4338ca; font-weight: 700; font-size: 12px; border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.15s ease;"
-              >
-                ${Icons.bookOpen("", 13)}
-                <span>Blueprint Intake Proyek</span>
-              </button>
+             
             </div>
           </div>
 
@@ -598,7 +583,7 @@ export class CrmDealsView {
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
               <div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-size: 11px; font-weight: 800; color: #4338ca; background: #e0e7ff; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase;">
+                  <span style="font-size: 11px; font-weight: 800; color: #0f2b5c; background: #eff6ff; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid #bfdbfe;">
                     DAFTAR PROYEK DEAL WON
                   </span>
                   <span style="font-size: 12px; font-weight: 700; color: #0f172a;">
@@ -606,7 +591,7 @@ export class CrmDealsView {
                   </span>
                 </div>
                 <p style="font-size: 11.5px; color: #64748b; margin: 4px 0 0 0;">
-                  Silakan klik tombol <strong>Buka Proyek</strong> pada card atau baris tabel di bawah untuk membuka alur eksekusi proyek tersebut.
+                  Klik tombol <strong>Buka Proyek</strong> pada kartu atau baris tabel untuk membuka alur eksekusi.
                 </p>
               </div>
 
@@ -651,7 +636,7 @@ export class CrmDealsView {
     this.element.innerHTML = `
       <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; max-width: 1440px; margin: 0 auto; width: 100%;">
         
-        <!-- 1. TOP BREADCRUMB & NAVIGATION BAR -->
+        <!-- 1. TOP BREADCRUMB & NAVIGATION BAR WITH FLOW STEPPER -->
         <div class="crm-top-nav-bar">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <!-- Tombol Kembali -->
@@ -659,7 +644,7 @@ export class CrmDealsView {
               type="button"
               id="crmBackBtn"
               class="crm-pill-btn"
-              title="Kembali ke tahapan sebelumnya"
+              title="Kembali ke katalog seluruh proyek"
             >
               <i class="fi fi-rr-arrow-left"></i>
               <span>Kembali ke Daftar Proyek</span>
@@ -678,17 +663,15 @@ export class CrmDealsView {
 
             <!-- Proyek Aktif Pill -->
             <div class="crm-active-proj-pill">
-              <i class="fi fi-rr-folder" style="color: #6366f1;"></i>
-              <span>Proyek Aktif:</span>
+              <i class="fi fi-rr-folder" style="color: #0f2b5c;"></i>
+              <span>Proyek:</span>
               <strong>${activeProject.code}</strong>
             </div>
           </div>
 
-          <!-- Tombol Aksi Kanan Atas -->
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button
-             
-            </button>
+          <!-- Stepper Navigasi Alur 3 Langkah & Portofolio (Mudah Dipahami & Terstruktur) -->
+          <div class="crm-flow-stepper-wrap">
+            
           </div>
         </div>
 
@@ -721,7 +704,7 @@ export class CrmDealsView {
                 <span class="crm-hero-divider"></span>
 
                 <div class="crm-hero-stat-item">
-                  <i class="fi fi-rr-calendar-clock" style="color: #6366f1; font-size: 11px;"></i>
+                  <i class="fi fi-rr-calendar-clock" style="color: #0f2b5c; font-size: 11px;"></i>
                   <span class="crm-hero-stat-label">Sisa Kontrak</span>
                   <strong class="crm-hero-stat-value">30/06/79</strong>
                 </div>
@@ -802,18 +785,19 @@ export class CrmDealsView {
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 11px; font-family: var(--font-mono);">
                   <span style="color: #64748b;">${app.actual_mandays} / ${app.budget_mandays} MD</span>
-                  <span style="font-weight: 700; color: ${isSelected ? "#4338ca" : "#475569"};">${app.progress_pct}% Selesai</span>
+                  <span style="font-weight: 700; color: ${isSelected ? "#0f2b5c" : "#475569"};">${app.progress_pct}% Selesai</span>
                 </div>
 
                 <div class="card-mini-progress">
-                  <div class="card-mini-progress-fill" style="width: ${app.progress_pct}%; background: ${isSelected ? "linear-gradient(90deg, #4f46e5, #10b981)" : "#94a3b8"};"></div>
+                  <div class="card-mini-progress-fill" style="width: ${app.progress_pct}%; background: ${isSelected ? "#0f2b5c" : "#94a3b8"};"></div>
                 </div>
               </div>
 
               <!-- Action Status Footer -->
               <div>
                 <button type="button" class="crm-open-project-btn" data-project-id="${app.id}">
-                  🚀 Buka Proyek ➔
+                  <span>Buka Proyek</span>
+                  <i class="fi fi-rr-arrow-right"></i>
                 </button>
               </div>
             </div>
@@ -849,13 +833,13 @@ export class CrmDealsView {
                   data-project-id="${app.id}"
                 >
                   <td style="text-align: center;">
-                    ${isSelected ? `<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #4f46e5; color: #fff; font-size: 12px; font-weight: 800;">✓</span>` : `<span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #cbd5e1; color: transparent;">•</span>`}
+                    ${isSelected ? `<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #0f2b5c; color: #fff; font-size: 12px; font-weight: 800;">✓</span>` : `<span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #cbd5e1; color: transparent;">•</span>`}
                   </td>
                   <td>
                     <span class="pill-code ${isSelected ? "active" : ""}">${app.code}</span>
                   </td>
                   <td>
-                    <div style="font-weight: 700; color: ${isSelected ? "#312e81" : "#0f172a"}; font-size: 12.5px; line-height: 1.35;">
+                    <div style="font-weight: 700; color: ${isSelected ? "#0f2b5c" : "#0f172a"}; font-size: 12.5px; line-height: 1.35;">
                       ${app.title}
                     </div>
                     <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
@@ -868,10 +852,10 @@ export class CrmDealsView {
                   <td>
                     <div style="display: flex; justify-content: space-between; font-size: 11px; font-family: var(--font-mono); margin-bottom: 3px;">
                       <span>${app.actual_mandays}/${app.budget_mandays} MD</span>
-                      <span style="font-weight: 700; color: ${isSelected ? "#4338ca" : "#475569"};">${app.progress_pct}%</span>
+                      <span style="font-weight: 700; color: ${isSelected ? "#0f2b5c" : "#475569"};">${app.progress_pct}%</span>
                     </div>
                     <div class="card-mini-progress">
-                      <div class="card-mini-progress-fill" style="width: ${app.progress_pct}%; background: ${isSelected ? "linear-gradient(90deg, #4f46e5, #10b981)" : "#94a3b8"};"></div>
+                      <div class="card-mini-progress-fill" style="width: ${app.progress_pct}%; background: ${isSelected ? "#0f2b5c" : "#94a3b8"};"></div>
                     </div>
                   </td>
                   <td>
@@ -881,7 +865,8 @@ export class CrmDealsView {
                   </td>
                   <td style="text-align: center;">
                     <button type="button" class="crm-open-project-btn table-open-btn" data-project-id="${app.id}">
-                      Buka Proyek ➔
+                      <span>Buka Proyek</span>
+                      <i class="fi fi-rr-arrow-right"></i>
                     </button>
                   </td>
                 </tr>
@@ -900,8 +885,10 @@ export class CrmDealsView {
         return this.renderStep1Intake(activeProject);
       case "allocation":
         return this.renderStep2Allocation(activeProject, teamMembers, totalAllocatedHours, totalAllocatedMandays);
+      case "finance":
       case "finance_top":
         return this.renderStep3Finance(activeProject);
+      case "portfolio":
       case "portfolio_dashboard":
         return this.renderPortfolioDashboard();
       default:
@@ -950,7 +937,7 @@ export class CrmDealsView {
           </span>
           <span class="crm-subnav-meta-sep">|</span>
           <span class="crm-subnav-meta-item">
-            <i class="fi fi-rr-bolt" style="color: #6366f1;"></i>
+            <i class="fi fi-rr-bolt" style="color: #0f2b5c;"></i>
             <span>SLA: <strong>${activeProject.sla_level ? activeProject.sla_level.split(" ")[0] : "99.8%"}</strong></span>
           </span>
         </div>
@@ -1157,10 +1144,10 @@ export class CrmDealsView {
           </div>
 
           <div style="display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11.5px; font-weight: 700;">
-            <span style="padding: 6px 12px; border-radius: 8px; background: #e0e7ff; color: #4338ca;">
+            <span style="padding: 6px 12px; border-radius: 8px; background: #eff6ff; color: #0f2b5c; border: 1px solid #bfdbfe;">
               ${this.allocationModules.length} Epics
             </span>
-            <span style="padding: 6px 12px; border-radius: 8px; background: #ecfdf5; color: #059669;">
+            <span style="padding: 6px 12px; border-radius: 8px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
               ${totalAllocatedHours} Jam (~${totalAllocatedMandays} MD)
             </span>
           </div>
@@ -1239,7 +1226,7 @@ export class CrmDealsView {
                 (mod, idx) => `
               <div style="background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-                  <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 800; color: #4338ca; background: #e0e7ff; padding: 2px 8px; border-radius: 4px;">
+                  <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 800; color: #0f2b5c; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 4px;">
                     ${mod.epicKey}
                   </span>
                   <button type="button" class="alloc-delete-mod-btn" data-idx="${idx}" title="Hapus modul ini" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: flex;">
@@ -1298,10 +1285,20 @@ export class CrmDealsView {
           </div>
           
           <div style="display: flex; align-items: center; gap: 10px;">
-           <button type="button" id="executeAllocationBtn" class="finance-btn-primary" style="font-size: 12px; padding: 8px 18px; background-color: #059669; border: 1px solid #059669; color: #ffffff; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
-            ${Icons.sparkles("", 14)}
-            <span style="color: #ffffff;">Lanjutkan ke project</span>
-          </button>
+            <button
+              type="button"
+              class="go-to-step-btn"
+              data-target-step="finance_top"
+              style="font-size: 12px; padding: 8px 16px; background: #ffffff; border: 1px solid #cbd5e1; color: #0f2b5c; border-radius: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;"
+              title="Lanjut ke Langkah 3: Setting Termin & Invoicing"
+            >
+              <span>Lanjut: Setting Termin &amp; Invoicing</span>
+              <i class="fi fi-rr-arrow-right"></i>
+            </button>
+            <button type="button" id="executeAllocationBtn" class="finance-btn-primary" style="font-size: 12px; padding: 8px 18px; background-color: #0f2b5c; border: 1px solid #0f2b5c; color: #ffffff; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(15,43,92,0.22); cursor: pointer;">
+              ${Icons.sparkles("", 14)}
+              <span style="color: #ffffff;">Terapkan &amp; Buka Proyek</span>
+            </button>
           </div>
         </div>
 
@@ -1324,7 +1321,7 @@ export class CrmDealsView {
               <h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.01em;">
                 Modul Kontrak, Invoicing &amp; Setting TOP (Termin Pembayaran)
               </h2>
-              <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(99,102,241,.1); color: #4338ca; border: 1px solid rgba(99,102,241,.2);">
+              <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: #eff6ff; color: #0f2b5c; border: 1px solid #bfdbfe;">
                 PRD Section 8.11.1
               </span>
             </div>
@@ -1335,10 +1332,10 @@ export class CrmDealsView {
 
           <!-- View Switcher (Matches Image 3 Top Right) -->
           <div style="display: flex; align-items: center; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 12px; font-size: 12px; font-weight: 600;">
-            <button type="button" class="finance-top-subtab-btn ${this.financeTopSubTab === "top_setting" ? "active" : ""}" data-subtab="top_setting" style="padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s ease; ${this.financeTopSubTab === "top_setting" ? "background: white; color: #4338ca; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" : "background: none; color: #64748b;"}">
+            <button type="button" class="finance-top-subtab-btn ${this.financeTopSubTab === "top_setting" ? "active" : ""}" data-subtab="top_setting" style="padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s ease; ${this.financeTopSubTab === "top_setting" ? "background: #0f2b5c; color: #ffffff; font-weight: 700; box-shadow: 0 1px 3px rgba(15,43,92,0.18);" : "background: none; color: #64748b;"}">
               Setting TOP Kontrak Ini
             </button>
-            <button type="button" class="finance-top-subtab-btn ${this.financeTopSubTab === "invoices" ? "active" : ""}" data-subtab="invoices" style="padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s ease; ${this.financeTopSubTab === "invoices" ? "background: white; color: #4338ca; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" : "background: none; color: #64748b;"}">
+            <button type="button" class="finance-top-subtab-btn ${this.financeTopSubTab === "invoices" ? "active" : ""}" data-subtab="invoices" style="padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s ease; ${this.financeTopSubTab === "invoices" ? "background: #0f2b5c; color: #ffffff; font-weight: 700; box-shadow: 0 1px 3px rgba(15,43,92,0.18);" : "background: none; color: #64748b;"}">
               Daftar Invoice Terbit (${this.invoicesList.length})
             </button>
           </div>
@@ -1369,7 +1366,7 @@ export class CrmDealsView {
               <div style="display: flex; align-items: center; gap: 24px; font-size: 12px; flex-wrap: wrap;">
                 <div>
                   <span style="color: #64748b; font-size: 11px; display: block;">Nilai Kontrak Total:</span>
-                  <p style="font-family: var(--font-mono); font-weight: 800; font-size: 16px; color: #4338ca; margin: 2px 0 0 0;">
+                  <p style="font-family: var(--font-mono); font-weight: 800; font-size: 16px; color: #0f2b5c; margin: 2px 0 0 0;">
                     ${this.formatIDR(activeProject.contract_value)}
                   </p>
                 </div>
@@ -1462,7 +1459,7 @@ export class CrmDealsView {
                           `
                               : isInvoiced
                                 ? `
-                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;">
+                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #eff6ff; color: #0f2b5c; border: 1px solid #bfdbfe;">
                               🔒 INVOICED
                             </span>
                           `
@@ -1484,12 +1481,12 @@ export class CrmDealsView {
                           `
                               : isInvoiced
                                 ? `
-                            <span style="font-size: 11px; color: #4338ca; font-family: var(--font-mono); font-weight: 700;">
+                            <span style="font-size: 11px; color: #0f2b5c; font-family: var(--font-mono); font-weight: 700;">
                               ${term.invoice_no || "Invoice Terbit"}
                             </span>
                           `
                                 : `
-                            <button type="button" class="issue-invoice-finance-btn" data-contract-id="${activeProject.contractId}" data-term-no="${term.term_no}" style="padding: 6px 14px; border-radius: 8px; background: #4338ca; color: white; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(67, 56, 202, 0.25); transition: background 0.15s ease;">
+                            <button type="button" class="issue-invoice-finance-btn" data-contract-id="${activeProject.contractId}" data-term-no="${term.term_no}" style="padding: 6px 14px; border-radius: 8px; background: #0f2b5c; color: white; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(15, 43, 92, 0.22); transition: all 0.15s ease;">
                               Terbitkan Invoice
                             </button>
                           `
@@ -1537,7 +1534,7 @@ export class CrmDealsView {
                     .map(
                       (inv) => `
                     <tr style="border-bottom: 1px solid #f1f5f9;">
-                      <td style="padding: 12px 14px; font-family: var(--font-mono); font-weight: 700; color: #4338ca;">
+                      <td style="padding: 12px 14px; font-family: var(--font-mono); font-weight: 700; color: #0f2b5c;">
                         ${inv.invoice_number}
                       </td>
                       <td style="padding: 12px 14px;">
@@ -1625,13 +1622,13 @@ export class CrmDealsView {
           <div style="padding: 20px; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; align-items: center; justify-content: space-between; color: #64748b; font-size: 12px;">
               <span>Rata-Rata Progres Fisik</span>
-              <span style="color: #4338ca; display: flex;">${Icons.trendingUp("", 16)}</span>
+              <span style="color: #0f2b5c; display: flex;">${Icons.trendingUp("", 16)}</span>
             </div>
-            <p style="font-size: 20px; font-weight: 900; font-family: var(--font-mono); color: #4338ca; margin: 0;">
+            <p style="font-size: 20px; font-weight: 900; font-family: var(--font-mono); color: #0f2b5c; margin: 0;">
               ${avgProgress}%
             </p>
             <div style="width: 100%; background: #f1f5f9; height: 6px; border-radius: 9999px; overflow: hidden;">
-              <div style="background: #4338ca; height: 100%; border-radius: 9999px; width: ${avgProgress}%;"></div>
+              <div style="background: #0f2b5c; height: 100%; border-radius: 9999px; width: ${avgProgress}%;"></div>
             </div>
             <p style="font-size: 10.5px; color: #64748b; margin: 0;">
               ${this.applications.length} Proyek Aktif
@@ -1674,7 +1671,7 @@ export class CrmDealsView {
                     <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
                       <div>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                          <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #4338ca; background: rgba(99,102,241,.1); padding: 2px 8px; border-radius: 4px;">
+                          <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #0f2b5c; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 4px;">
                             ${proj.code}
                           </span>
                           <h4 style="font-weight: 800; font-size: 13.5px; color: #0f172a; margin: 0;">
@@ -1690,7 +1687,7 @@ export class CrmDealsView {
                         type="button"
                         class="quick-select-project-btn"
                         data-project-id="${proj.id}"
-                        style="padding: 6px 12px; border-radius: 8px; background: #4338ca; color: white; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer;"
+                        style="padding: 6px 12px; border-radius: 8px; background: #0f2b5c; color: white; font-weight: 700; font-size: 11.5px; border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(15,43,92,0.22);"
                       >
                         Pilih Proyek Ini ➔
                       </button>
@@ -1704,7 +1701,7 @@ export class CrmDealsView {
                           <span style="font-weight: 700; color: #0f172a;">${proj.progress_pct}%</span>
                         </div>
                         <div style="width: 100%; background: #e2e8f0; height: 8px; border-radius: 9999px; overflow: hidden;">
-                          <div style="background: linear-gradient(90deg, #6366f1, #10b981); height: 100%; border-radius: 9999px; width: ${proj.progress_pct}%;"></div>
+                          <div style="background: #0f2b5c; height: 100%; border-radius: 9999px; width: ${proj.progress_pct}%;"></div>
                         </div>
                       </div>
 
@@ -1716,7 +1713,7 @@ export class CrmDealsView {
                           </span>
                         </div>
                         <div style="width: 100%; background: #e2e8f0; height: 8px; border-radius: 9999px; overflow: hidden;">
-                          <div style="height: 100%; border-radius: 9999px; width: ${Math.min(burn, 100)}%; background: ${burn > 90 ? "#ef4444" : burn > 70 ? "#f59e0b" : "#6366f1"};"></div>
+                          <div style="height: 100%; border-radius: 9999px; width: ${Math.min(burn, 100)}%; background: ${burn > 90 ? "#ef4444" : burn > 70 ? "#f59e0b" : "#0f2b5c"};"></div>
                         </div>
                       </div>
                     </div>
@@ -1745,13 +1742,13 @@ export class CrmDealsView {
                   <div style="padding: 10px 12px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 4px;">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                       <span style="font-weight: 700; color: #0f172a; font-size: 12px;">${ms.name}</span>
-                      <span style="font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; ${ms.status === "Completed" ? "background: #ecfdf5; color: #047857;" : "background: #eef2ff; color: #4338ca;"}">
+                      <span style="font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; ${ms.status === "Completed" ? "background: #ecfdf5; color: #047857;" : "background: #eff6ff; color: #0f2b5c; border: 1px solid #bfdbfe;"}">
                         ${ms.status}
                       </span>
                     </div>
                     <div style="display: flex; align-items: center; justify-content: space-between; font-size: 10.5px; color: #64748b;">
                       <span>${ms.projectCode}</span>
-                      <span style="font-family: var(--font-mono); font-weight: 600; color: #4338ca;">${ms.mandays_budget || 40} MD</span>
+                      <span style="font-family: var(--font-mono); font-weight: 600; color: #0f2b5c;">${ms.mandays_budget || 40} MD</span>
                     </div>
                   </div>
                 `,
@@ -1775,7 +1772,7 @@ export class CrmDealsView {
                   <span>CI/CD Automated Test</span>
                   <span style="font-weight: 800; font-size: 10px; padding: 2px 8px; border-radius: 4px; background: #ecfdf5; color: #047857;">PASS</span>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: rgba(99,102,241,.08); color: #4338ca;">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: #eff6ff; color: #0f2b5c; border: 1px solid #bfdbfe;">
                   <span>Helpdesk SLA Target</span>
                   <span style="font-weight: 800; font-size: 11px; font-family: var(--font-mono);">99.8%</span>
                 </div>

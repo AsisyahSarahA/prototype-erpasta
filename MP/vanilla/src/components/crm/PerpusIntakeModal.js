@@ -353,7 +353,7 @@ export class PerpusIntakeModal {
         role: 'Full stack',
         badge: 'DevOps, Gateway & Fullstack',
         avatar: 'AZ',
-        avatarBg: 'background: #4f46e5;',
+        avatarBg: 'background: #0f2b5c;',
         allocatedHours: 46,
         assignedEpics: ['LIB-EPIC-5 (API Gateway, Docker & WhatsApp)'],
         focus: 'Mengonfigurasi Traefik reverse proxy, orchestrator Docker Compose multi-service, gateway bot WhatsApp, dan dashboard Grafana.'
@@ -433,7 +433,7 @@ export class PerpusIntakeModal {
         <!-- Header -->
         <div class="modal-header" style="background: #f8fafc;">
           <div style="display: flex; align-items: center; gap: 14px;">
-            <div style="width: 40px; height: 40px; border-radius: 12px; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
+            <div style="width: 40px; height: 40px; border-radius: 12px; background: #0f2b5c; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; box-shadow: 0 2px 6px rgba(15,43,92,0.22);">
               <i class="fi fi-rr-book-alt" style="font-size: 20px;"></i>
             </div>
             <div>
@@ -456,7 +456,7 @@ export class PerpusIntakeModal {
 
           <div style="display: flex; align-items: center; gap: 8px;">
             ${perpusProject ? `
-              <button id="perpusOpenBoardTopBtn" class="finance-btn-primary" style="padding: 6px 12px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px;">
+              <button id="perpusOpenBoardTopBtn" class="finance-btn-primary" style="padding: 6px 12px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; background: #0f2b5c; border-color: #0f2b5c;">
                 <span>Buka Proyek Perpus di Board</span>
                 ${Icons.arrowRight('', 12)}
               </button>
@@ -469,23 +469,23 @@ export class PerpusIntakeModal {
 
         <!-- Linear Navigation Tabs -->
         <div style="display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid #e2e8f0; background: white; overflow-x: auto; font-size: 12px; font-weight: 600;">
-          <button class="perpus-tab-btn ${this.activeTab === 'stages' ? 'active' : ''}" data-tab="stages" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'stages' ? '#0f172a' : 'transparent'}; color: ${this.activeTab === 'stages' ? '#0f172a' : '#64748b'}; display: flex; align-items: center; gap: 6px;">
+          <button class="perpus-tab-btn ${this.activeTab === 'stages' ? 'active' : ''}" data-tab="stages" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'stages' ? '#0f2b5c' : 'transparent'}; color: ${this.activeTab === 'stages' ? '#0f2b5c' : '#64748b'}; font-weight: ${this.activeTab === 'stages' ? '700' : '600'}; display: flex; align-items: center; gap: 6px;">
             ${Icons.workflow('', 14)}
             <span>1. Alur 6 Tahapan Penerimaan</span>
           </button>
-          <button class="perpus-tab-btn ${this.activeTab === 'modules' ? 'active' : ''}" data-tab="modules" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'modules' ? '#0f172a' : 'transparent'}; color: ${this.activeTab === 'modules' ? '#0f172a' : '#64748b'}; display: flex; align-items: center; gap: 6px;">
+          <button class="perpus-tab-btn ${this.activeTab === 'modules' ? 'active' : ''}" data-tab="modules" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'modules' ? '#0f2b5c' : 'transparent'}; color: ${this.activeTab === 'modules' ? '#0f2b5c' : '#64748b'}; font-weight: ${this.activeTab === 'modules' ? '700' : '600'}; display: flex; align-items: center; gap: 6px;">
             ${Icons.layers('', 14)}
             <span>2. Semua 7 Modul &amp; Fitur Rinci (${this.modules.length})</span>
           </button>
-          <button class="perpus-tab-btn ${this.activeTab === 'roles' ? 'active' : ''}" data-tab="roles" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'roles' ? '#0f172a' : 'transparent'}; color: ${this.activeTab === 'roles' ? '#0f172a' : '#64748b'}; display: flex; align-items: center; gap: 6px;">
+          <button class="perpus-tab-btn ${this.activeTab === 'roles' ? 'active' : ''}" data-tab="roles" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'roles' ? '#0f2b5c' : 'transparent'}; color: ${this.activeTab === 'roles' ? '#0f2b5c' : '#64748b'}; font-weight: ${this.activeTab === 'roles' ? '700' : '600'}; display: flex; align-items: center; gap: 6px;">
             ${Icons.users('', 14)}
             <span>3. Pembagian 5 Role Tim (${this.teamRoster.length})</span>
           </button>
-          <button class="perpus-tab-btn ${this.activeTab === 'architecture' ? 'active' : ''}" data-tab="architecture" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'architecture' ? '#0f172a' : 'transparent'}; color: ${this.activeTab === 'architecture' ? '#0f172a' : '#64748b'}; display: flex; align-items: center; gap: 6px;">
+          <button class="perpus-tab-btn ${this.activeTab === 'architecture' ? 'active' : ''}" data-tab="architecture" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'architecture' ? '#0f2b5c' : 'transparent'}; color: ${this.activeTab === 'architecture' ? '#0f2b5c' : '#64748b'}; font-weight: ${this.activeTab === 'architecture' ? '700' : '600'}; display: flex; align-items: center; gap: 6px;">
             ${Icons.server('', 14)}
             <span>4. Arsitektur Microservices</span>
           </button>
-          <button class="perpus-tab-btn ${this.activeTab === 'contract' ? 'active' : ''}" data-tab="contract" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'contract' ? '#0f172a' : 'transparent'}; color: ${this.activeTab === 'contract' ? '#0f172a' : '#64748b'}; display: flex; align-items: center; gap: 6px;">
+          <button class="perpus-tab-btn ${this.activeTab === 'contract' ? 'active' : ''}" data-tab="contract" style="padding: 12px 14px; border: none; background: none; cursor: pointer; border-bottom: 2px solid ${this.activeTab === 'contract' ? '#0f2b5c' : 'transparent'}; color: ${this.activeTab === 'contract' ? '#0f2b5c' : '#64748b'}; font-weight: ${this.activeTab === 'contract' ? '700' : '600'}; display: flex; align-items: center; gap: 6px;">
             ${Icons.dollarSign('', 14)}
             <span>5. Kontrak, Termin &amp; SLA</span>
           </button>
