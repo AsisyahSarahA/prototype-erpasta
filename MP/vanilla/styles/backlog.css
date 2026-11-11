@@ -110,46 +110,235 @@
   flex-wrap: wrap;
 }
 
-/* Row 2: KPI Metrics & Capacity Bar */
-.backlog-kpi-bar {
+/* ── Row 2: Executive KPI Metric Cards (Modern, High-Signal, Flaticon-Powered) ── */
+.backlog-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 6px 0 2px;
+}
+
+@media (max-width: 1200px) {
+  .backlog-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .backlog-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.backlog-metric-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 11px 14px;
+  min-height: 84px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: transform var(--transition-fast, 120ms ease), box-shadow var(--transition-fast, 120ms ease), border-color var(--transition-fast, 120ms ease);
+}
+
+.backlog-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+  border-color: #cbd5e1;
+}
+
+.backlog-metric-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-light, #f1f5f9);
-  font-size: 11.5px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
-.backlog-kpi-group {
+.backlog-metric-card__label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+/* Flaticon Icon Box */
+.backlog-metric-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.backlog-metric-card:hover .backlog-metric-icon-box {
+  transform: scale(1.08);
+}
+
+.backlog-metric-icon-box--indigo {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
+}
+
+.backlog-metric-icon-box--blue {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.backlog-metric-icon-box--amber {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.backlog-metric-icon-box--emerald {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.backlog-metric-icon-box--rose {
+  background-color: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+
+.backlog-metric-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.backlog-metric-card__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.backlog-metric-card__value {
+  font-size: 19px;
+  font-weight: 800;
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.backlog-metric-unit {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.backlog-metric-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1.5px 7px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  margin-left: auto;
+}
+
+.backlog-metric-chip--indigo {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
+}
+
+.backlog-metric-chip--blue {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.backlog-metric-chip--amber {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.backlog-metric-chip--emerald {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.backlog-metric-chip--rose {
+  background-color: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+
+.backlog-metric-card__progress-track {
+  width: 100%;
+  height: 4px;
+  background-color: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.backlog-metric-card__progress-bar {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.backlog-metric-info-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 6px;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  line-height: 1.3;
   flex-wrap: wrap;
 }
 
-.backlog-kpi-item {
-  display: flex;
+.backlog-metric-info-dot {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.backlog-metric-info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.backlog-metric-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Critical Bug Badge / Hotfix Indicator */
+.backlog-bug-pill {
+  display: inline-flex;
   align-items: center;
   gap: 5px;
-}
-
-.backlog-kpi-label {
-  color: var(--text-muted, #94a3b8);
-  font-weight: 500;
-}
-
-.backlog-kpi-val {
-  font-family: var(--font-mono, monospace);
-  font-weight: 800;
-  color: var(--text-primary, #1e293b);
-}
-
-.backlog-kpi-divider {
-  width: 1px;
-  height: 12px;
-  background-color: var(--border, #e2e8f0);
+  padding: 3px 9px;
+  border-radius: var(--radius-full, 9999px);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* Row 3: Modern Search, Filter Chips & Epics Panel Toggle */
@@ -241,6 +430,46 @@
   box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
 }
 
+/* Epics Toggle Button in Controls Row */
+.backlog-epic-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 31px;
+  padding: 0 12px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 11.5px;
+  font-weight: 700;
+  border: 1px solid var(--border, #cbd5e1);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, #1e293b);
+  cursor: pointer;
+  transition: all var(--transition, 150ms ease);
+  flex-shrink: 0;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.backlog-epic-toggle-btn:hover {
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--indigo-600, #4f46e5);
+  border-color: var(--indigo-300, #a5b4fc);
+}
+
+.backlog-epic-toggle-btn.active {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--indigo-600, #4f46e5);
+  border-color: rgba(99, 102, 241, 0.4);
+  font-weight: 800;
+}
+
+.epic-toggle-arrow {
+  font-size: 9.5px;
+  margin-left: 2px;
+  color: inherit;
+  opacity: 0.8;
+}
+
 .backlog-active-filter-tag {
   font-size: 11px;
   font-weight: 700;
@@ -301,10 +530,16 @@
 }
 
 .backlog-epics-drawer.collapsed {
-  width: 0;
-  min-width: 0;
-  margin-left: -260px;
-  border-right: none;
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .epics-drawer-header {
@@ -315,6 +550,27 @@
   border-bottom: 1px solid var(--border, #e2e8f0);
   background: var(--bg-card, #ffffff);
   flex-shrink: 0;
+}
+
+.epics-drawer-hide-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-muted, #64748b);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition, 150ms ease);
+}
+
+.epics-drawer-hide-btn:hover {
+  background: #ffffff;
+  color: var(--indigo-600, #4f46e5);
+  border-color: var(--indigo-300, #a5b4fc);
 }
 
 .epics-drawer-title {
@@ -436,6 +692,13 @@
   width: 100%;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+}
+
+.backlog-scroll-area--full {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 1 1 100% !important;
+  padding: 16px 24px 32px 24px;
 }
 
 .backlog-scroll-area::-webkit-scrollbar {
@@ -710,6 +973,66 @@
   color: var(--emerald-600, #059669);
 }
 
+/* ── Modern Jira / Linear Labeled Story Points Chips ──────────────────────── */
+.sprint-points-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sprint-point-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.sprint-point-val {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+}
+
+.sprint-point-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sprint-point-chip--todo {
+  background-color: #f8fafc;
+  color: #475569;
+  border-color: #e2e8f0;
+}
+.sprint-point-chip--todo .sprint-point-dot {
+  background-color: #94a3b8;
+}
+
+.sprint-point-chip--inprog {
+  background-color: #eef2ff;
+  color: #4338ca;
+  border-color: #c7d2fe;
+}
+.sprint-point-chip--inprog .sprint-point-dot {
+  background-color: #6366f1;
+}
+
+.sprint-point-chip--done {
+  background-color: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+.sprint-point-chip--done .sprint-point-dot {
+  background-color: #10b981;
+}
+
 /* ── 5. Issue Rows & Tables with Clean Internal Scroll ───────────────────── */
 .issue-rows-list {
   display: flex;
@@ -888,6 +1211,47 @@
   border: 1px solid var(--border, #e2e8f0);
   width: 42px;
   text-align: center;
+}
+
+/* ── Modern Sprint Move Action Buttons ────────────────────────────────────── */
+.btn-sprint-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3.5px 10px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast, 120ms ease);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.btn-sprint-action--out {
+  background-color: #f8fafc;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+.btn-sprint-action--out:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+.btn-sprint-action--in {
+  background-color: #eef2ff;
+  color: #4338ca;
+  border-color: #c7d2fe;
+}
+.btn-sprint-action--in:hover {
+  background-color: #4338ca;
+  color: #ffffff;
+  border-color: #3730a3;
+  box-shadow: 0 2px 5px rgba(67, 56, 202, 0.25);
+  transform: translateY(-1px);
 }
 
 /* Quick Create Issue Inline Trigger */

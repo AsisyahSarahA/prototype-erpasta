@@ -14,8 +14,8 @@
 }
 
 .timeline-container {
-  max-width: 1440px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -274,110 +274,214 @@
 }
 
 /* ==========================================================================
-   3. Metric / Summary Cards (Uniform min-height, padding & typography)
+   3. Metric / Summary Cards (Modern, High-Signal, Flaticon-Powered)
    ========================================================================== */
 .timeline-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1200px) {
+  .timeline-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .timeline-metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .timeline-metric-card {
   background-color: #ffffff;
-  border-radius: 8px;
-  padding: 16px;
-  min-height: 112px;
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-height: 110px;
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
-  transition: transform var(--transition-fast, 120ms ease), box-shadow var(--transition-fast, 120ms ease);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: transform var(--transition-fast, 120ms ease), box-shadow var(--transition-fast, 120ms ease), border-color var(--transition-fast, 120ms ease);
 }
 .timeline-metric-card:hover {
-  box-shadow: 0 4px 8px rgba(9, 30, 66, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+  border-color: #cbd5e1;
 }
 
 .timeline-metric-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .timeline-metric-card__label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
   color: #64748b;
   letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+/* Flaticon Icon Box */
+.tl-metric-icon-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.timeline-metric-card:hover .tl-metric-icon-box {
+  transform: scale(1.08);
+}
+
+.tl-metric-icon-box--emerald {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+.tl-metric-icon-box--amber {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+.tl-metric-icon-box--indigo {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
+}
+.tl-metric-icon-box--violet {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
 }
 
 .timeline-metric-card__body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .timeline-metric-card__value-row {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .timeline-metric-card__value {
-  font-size: 26px;
-  font-weight: 700;
-  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
   color: #0f172a;
   line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
-.timeline-metric-card__value--primary {
-  color: #0052cc;
-}
-
-.timeline-metric-card__value--purple {
-  color: #6d28d9;
-}
-
-.timeline-metric-card__subvalue {
-  font-size: 12px;
+.tl-metric-unit {
+  font-size: 13px;
+  font-weight: 600;
   color: #64748b;
+  font-family: var(--font-sans, system-ui);
 }
 
-.timeline-metric-card__badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background-color: #ede9fe;
-  color: #5b21b6;
-}
-
-/* Proportional Visual Progress Bar */
+/* Compact Progress Bar */
 .timeline-metric-card__progress-track {
   width: 100%;
-  background-color: #e2e8f0;
-  height: 8px;
-  border-radius: 4px;
+  background-color: #f1f5f9;
+  height: 6px;
+  border-radius: 9999px;
   overflow: hidden;
-  margin-top: 4px;
+  margin-top: 6px;
+  border: 1px solid #e2e8f0;
 }
 
 .timeline-metric-card__progress-bar {
-  background: linear-gradient(90deg, #36b37e 0%, #059669 100%);
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
 }
 
-.timeline-metric-card__desc {
-  font-size: 12px;
-  font-weight: 400;
-  color: #64748b;
-  line-height: 1.4;
-  margin: 0;
+/* Informative Micro-Stat Footer (No long paragraphs) */
+.tl-metric-info-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #475569;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.tl-metric-info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.tl-metric-info-dot {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.tl-metric-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Informative Metric Chips */
+.tl-metric-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.tl-metric-chip--emerald {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+.tl-metric-chip--amber {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.tl-metric-chip--indigo {
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+.tl-metric-chip--violet {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+.tl-metric-chip--rose {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
 }
 
 /* ==========================================================================
@@ -627,7 +731,8 @@
   height: 38px;
   display: flex;
   align-items: center;
-  min-width: 840px;
+  min-width: 1100px;
+  width: 100%;
 }
 
 .timeline-grid-bg {
@@ -738,3 +843,958 @@
     padding: 16px;
   }
 }
+
+/* ==========================================================================
+   7. Jira Software Cloud Roadmap 1:1 Matching Styles (Epik, Sprints & Gantt)
+   ========================================================================== */
+
+/* Month Header Axis Row */
+.timeline-months-track {
+  display: flex;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  min-width: 1100px;
+  width: 100%;
+}
+.timeline-month-label {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #475569;
+  letter-spacing: 0.05em;
+  border-right: 1px solid #cbd5e1;
+  box-sizing: border-box;
+}
+
+/* Sprints & Releases Track Rows */
+.tl-meta-track-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  min-height: 38px;
+}
+.tl-track-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #334155;
+  background-color: #fafbfc;
+}
+.tl-meta-track-content {
+  flex: 1;
+  position: relative;
+  height: 38px;
+  min-width: 1100px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Sprint Badge Pills on Timeline — Proportional, Compact & Clickable */
+.tl-sprint-marker {
+  position: absolute;
+  top: 5px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  z-index: 5;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 105px;
+  max-width: 260px;
+}
+.tl-sprint-marker:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+  border-color: #94a3b8;
+}
+
+/* Status variants */
+.tl-sprint-marker--active {
+  background: #eef2ff;
+  color: #3730a3;
+  border-color: #818cf8;
+}
+.tl-sprint-marker--active:hover {
+  border-color: #6366f1;
+}
+
+.tl-sprint-marker--completed {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #86efac;
+}
+.tl-sprint-marker--completed:hover {
+  border-color: #22c55e;
+}
+
+.tl-sprint-marker--future {
+  background: #f8fafc;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+/* Selected state (When user clicks/selects a sprint) */
+.tl-sprint-marker--selected {
+  outline: none;
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 2.5px rgba(79, 70, 229, 0.28) !important;
+  background: #e0e7ff !important;
+  color: #312e81 !important;
+  z-index: 10;
+}
+
+/* Sprint Title & Status Tag Inside Pill */
+.tl-sprint-title {
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-sprint-status-tag {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tl-sprint-status-tag--active {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.tl-sprint-status-tag--completed {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.tl-sprint-status-tag--future {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.tl-sprint-check {
+  font-size: 11px;
+  font-weight: 900;
+  color: #4f46e5;
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+
+/* Active Sprint Filter Chip in Toolbar */
+.tl-active-sprint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tl-active-sprint-chip .tl-chip-clear {
+  border: none;
+  background: transparent;
+  color: #6366f1;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.tl-active-sprint-chip .tl-chip-clear:hover {
+  color: #4338ca;
+}
+
+/* Release Milestone Badges on Timeline */
+.tl-release-marker {
+  position: absolute;
+  top: 7px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ffffff;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.12);
+  z-index: 5;
+}
+.tl-release-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #10b981;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+/* Left Column Hierarchy Items (Epic & Tasks) */
+.tl-epic-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px !important;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+.tl-epic-row-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.tl-chevron-toggle {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.15s ease;
+}
+.tl-chevron-toggle:hover {
+  color: #0f172a;
+}
+
+/* Purple Epic Icon (Jira Software Diamond / Lightning Style) */
+.tl-epic-purple-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: #7c3aed;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.tl-epic-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: #4338ca;
+  white-space: nowrap;
+}
+.tl-epic-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Segmented Mini Progress Bar (Green=Done, Blue=In-Progress, Gray=To-Do) */
+.tl-epic-segmented-bar {
+  display: flex;
+  align-items: center;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #f1f5f9;
+  width: 100%;
+  margin-top: 2px;
+  gap: 1.5px;
+}
+.tl-seg-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+.tl-seg-fill.done {
+  background-color: #22c55e;
+}
+.tl-seg-fill.in-progress {
+  background-color: #f59e0b;
+}
+.tl-seg-fill.todo {
+  background-color: #cbd5e1;
+}
+
+/* Child Task Indentation in Left Column */
+.tl-child-task-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px 7px 28px !important;
+  background-color: #fafbfc;
+  border-bottom: 1px solid #f1f5f9;
+}
+.tl-task-checkbox-icon {
+  font-size: 12px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+.tl-status-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.tl-status-badge.in-progress {
+  background: #e0e7ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+.tl-status-badge.selesai {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.tl-status-badge.to-do {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* Create Epic Bottom Row */
+.tl-create-epic-row {
+  padding: 10px 16px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+}
+.tl-create-epic-btn {
+  background: none;
+  border: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4338ca;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.tl-create-epic-btn:hover {
+  background: #eef2ff;
+}
+
+/* Gantt Track Row Alignment */
+.tl-gantt-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+  background-color: #ffffff;
+  min-height: 44px;
+  transition: background-color 0.12s ease;
+}
+.tl-gantt-row:hover {
+  background-color: #f8fafc;
+}
+.tl-gantt-row:hover .timeline-col-ticket {
+  background-color: #f8fafc;
+}
+.tl-child-gantt-row {
+  min-height: 38px;
+  background-color: #fafbfc;
+}
+
+/* Modern Jira Style Gantt Bars */
+.tl-gantt-bar {
+  position: absolute;
+  top: 7px;
+  height: 28px;
+  border-radius: 6px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(9, 30, 66, 0.12);
+  overflow: hidden;
+  z-index: 10;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.tl-gantt-bar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(9, 30, 66, 0.18);
+  filter: brightness(1.04);
+}
+
+/* ==========================================================================
+   ASTACODE PM — GANTT & ROADMAP STATUS COLOR SYSTEM (WAJIB SISTEM WARNA)
+   No Gradients, Enterprise Clean Flat Visuals
+   ========================================================================== */
+
+/* 1. Backlog: Bar Color #94A3B8, Soft Background #F1F5F9 */
+.tl-status--backlog {
+  --status-bar: #94a3b8;
+  --status-soft: #f1f5f9;
+  --status-text: #334155;
+}
+/* 2. To Do: Bar Color #3B82F6, Soft Background #EFF6FF */
+.tl-status--todo {
+  --status-bar: #3b82f6;
+  --status-soft: #eff6ff;
+  --status-text: #1d4ed8;
+}
+/* 2b. In Development: Bar Color #6366F1, Soft Background #EEF2FF */
+.tl-status--in-dev {
+  --status-bar: #6366f1;
+  --status-soft: #eef2ff;
+  --status-text: #4338ca;
+}
+/* 3. In Progress: Bar Color #6366F1, Soft Background #EEF2FF */
+.tl-status--in-progress {
+  --status-bar: #6366f1;
+  --status-soft: #eef2ff;
+  --status-text: #4338ca;
+}
+/* 3b. Review & Testing: Bar Color #F59E0B, Soft Background #FFFBEB */
+.tl-status--review-testing {
+  --status-bar: #f59e0b;
+  --status-soft: #fffbeb;
+  --status-text: #b45309;
+}
+/* 4. In Review: Bar Color #F59E0B, Soft Background #FFFBEB */
+.tl-status--in-review {
+  --status-bar: #f59e0b;
+  --status-soft: #fffbeb;
+  --status-text: #b45309;
+}
+/* 5. Testing / QA: Bar Color #F59E0B, Soft Background #FFFBEB */
+.tl-status--testing-qa {
+  --status-bar: #f59e0b;
+  --status-soft: #fffbeb;
+  --status-text: #b45309;
+}
+/* 5b. Rejected: Bar Color #EF4444, Soft Background #FEF2F2 */
+.tl-status--rejected {
+  --status-bar: #ef4444;
+  --status-soft: #fef2f2;
+  --status-text: #b91c1c;
+}
+/* 6. Blocked: Bar Color #EF4444, Soft Background #FEF2F2 */
+.tl-status--blocked {
+  --status-bar: #ef4444;
+  --status-soft: #fef2f2;
+  --status-text: #b91c1c;
+}
+/* 7. On Hold: Bar Color #64748B, Soft Background #F1F5F9 */
+.tl-status--on-hold {
+  --status-bar: #64748b;
+  --status-soft: #f1f5f9;
+  --status-text: #334155;
+}
+/* 8. Reopened: Bar Color #F97316, Soft Background #FFF7ED */
+.tl-status--reopened {
+  --status-bar: #f97316;
+  --status-soft: #fff7ed;
+  --status-text: #c2410c;
+}
+/* 9. Done: Bar Color #22C55E, Soft Background #F0FDF4 */
+.tl-status--done {
+  --status-bar: #22c55e;
+  --status-soft: #f0fdf4;
+  --status-text: #15803d;
+}
+/* 10. Cancelled: Bar Color #6B7280, Soft Background #F3F4F6 */
+.tl-status--cancelled {
+  --status-bar: #6b7280;
+  --status-soft: #f3f4f6;
+  --status-text: #374151;
+}
+
+/* Status Badges on Left Panel */
+.tl-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  background-color: var(--status-soft, #f1f5f9);
+  color: var(--status-text, #334155);
+  border: 1px solid var(--status-bar, #cbd5e1);
+}
+
+/* Gantt Bar using Primary Status Color with 5-6px radius and ZERO gradient */
+.tl-gantt-bar {
+  position: absolute;
+  top: 7px;
+  height: 28px;
+  border-radius: 5px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  z-index: 10;
+  background-color: var(--status-bar, #3b82f6);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.tl-gantt-bar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(15, 23, 42, 0.15);
+  filter: brightness(1.05);
+}
+
+/* Progress Fill using Status Color with different intensity (Zero Gradient) */
+.tl-gantt-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.22);
+  border-radius: 4px 0 0 4px;
+  pointer-events: none;
+  z-index: 1;
+  transition: width 0.35s ease;
+}
+
+/* Bar Inner Overlay Content */
+.tl-bar-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  pointer-events: none;
+}
+.tl-bar-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+}
+.tl-bar-running-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.tl-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.tl-bar-icons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.tl-bar-link-icon {
+  font-size: 11px;
+  opacity: 0.9;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.tl-bar-warn-icon {
+  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Today Indicator Line & Pill */
+.tl-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #ef4444;
+  z-index: 12;
+  pointer-events: none;
+}
+.tl-today-pill {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.35);
+}
+
+/* SVG Dependency Lines (Bezier Connectors) */
+.tl-dependency-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9;
+}
+.tl-dep-path {
+  stroke: #94a3b8;
+  stroke-width: 1.8px;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+  transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
+}
+.tl-dep-path.highlighted {
+  stroke: #4f46e5 !important;
+  stroke-width: 2.5px !important;
+  opacity: 1 !important;
+}
+.tl-dep-path.dimmed {
+  opacity: 0.15 !important;
+}
+
+/* Releases Milestone Markers */
+.tl-release-marker {
+  position: absolute;
+  top: 6px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  z-index: 11;
+  transition: all 0.15s ease;
+}
+.tl-release-marker:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  border-color: #4f46e5;
+}
+.tl-release-marker--done {
+  border-color: #86efac;
+  background-color: #f0fdf4;
+  color: #15803d;
+}
+.tl-release-marker--in-progress {
+  border-color: #fde68a;
+  background-color: #fffbeb;
+  color: #b45309;
+}
+.tl-release-marker--todo {
+  border-color: #bfdbfe;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+/* Left Panel Actions (Edit / Delete) */
+.tl-epic-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  margin-left: auto;
+}
+.tl-gantt-row:hover .tl-epic-actions {
+  opacity: 1;
+}
+.tl-epic-action-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+.tl-epic-action-btn:hover {
+  color: #0f172a;
+  background-color: #e2e8f0;
+}
+.tl-epic-action-btn--delete:hover {
+  color: #ef4444;
+  background-color: #fee2e2;
+}
+
+/* Floating Bottom-Right Controls Toolbar */
+.gantt-floating-toolbar {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 35;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.gantt-tool-btn {
+  background: none;
+  border: none;
+  padding: 5px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.gantt-tool-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.gantt-zoom-group {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 2px;
+  border-radius: 6px;
+  gap: 2px;
+  margin: 0 4px;
+}
+.gantt-zoom-btn {
+  background: none;
+  border: none;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.gantt-zoom-btn.active {
+  background: #ffffff;
+  color: #4f46e5;
+  font-weight: 800;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Modals Overlay (Create Epic, Edit Epic, Release Detail) */
+.tl-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: tlFadeIn 0.15s ease-out;
+}
+@keyframes tlFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.tl-modal-box {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: tlScaleUp 0.15s ease-out;
+}
+@keyframes tlScaleUp {
+  from { transform: scale(0.97); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.tl-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tl-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.tl-modal-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tl-modal-close:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+.tl-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+.tl-modal-footer {
+  padding: 14px 20px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.tl-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tl-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+.tl-form-input, .tl-form-select, .tl-form-textarea {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+.tl-form-input:focus, .tl-form-select:focus, .tl-form-textarea:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+.tl-btn-primary {
+  background-color: #4f46e5;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.tl-btn-primary:hover {
+  background-color: #4338ca;
+}
+.tl-btn-secondary {
+  background-color: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.tl-btn-secondary:hover {
+  background-color: #f1f5f9;
+}
+.tl-btn-danger {
+  background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tl-btn-danger:hover {
+  background-color: #dc2626;
+}
+

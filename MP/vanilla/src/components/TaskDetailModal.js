@@ -16,6 +16,8 @@
 
 import { store } from '../state/store.js';
 import { Icons } from '../utils/icons.js';
+import { getCanonicalStatus } from '../utils/workflow.js';
+import { swalValidation, swalInfo, swalConfirm, swalPrompt, swalSuccess } from '../utils/swal.js';
 
 export class TaskDetailModal {
   constructor() {
@@ -100,25 +102,19 @@ export class TaskDetailModal {
   }
 
   getStatusStyle(status) {
-    switch (status) {
-      case 'Selesai':
+    const canonical = getCanonicalStatus(status);
+    switch (canonical) {
+      case 'Done':
         return 'background-color: #e3fcef; color: #006644; border-color: #abf5d1;';
-      case 'In Progress':
-      case 'Diperbaiki Agen':
+      case 'In Development':
         return 'background-color: #deebff; color: #0747a6; border-color: #b3d4ff;';
-      case 'In Review':
-      case 'Menunggu Persetujuan':
-        return 'background-color: #fff0b3; color: #172b4d; border-color: #ffe380;';
-      case 'QA/Testing':
-      case 'Deploy Staging':
-      case 'Disetujui':
-        return 'background-color: #eae6ff; color: #403294; border-color: #c0b6f2;';
-      case 'Perlu Manual':
-      case 'Ditolak':
+      case 'Review & Testing':
+        return 'background-color: #fff0b3; color: #b45309; border-color: #fde68a;';
+      case 'To Do':
+        return 'background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;';
+      case 'Rejected':
         return 'background-color: #ffebe6; color: #bf2600; border-color: #ffbdad;';
-      case 'Dipantau':
-      case 'Deploy Production':
-        return 'background-color: #eae6ff; color: #5243aa; border-color: #d3adf7;';
+      case 'Backlog':
       default:
         return 'background-color: #dfe1e6; color: #42526e; border-color: #c1c7d0;';
     }
@@ -253,19 +249,12 @@ export class TaskDetailModal {
           <div style="display: flex; align-items: center; gap: 12px;">
             <!-- Atlassian Jira Status Dropdown Lozenge -->
             <select id="detailStatusSelect" style="padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; border: 1px solid; cursor: pointer; outline: none; text-transform: uppercase; letter-spacing: 0.02em; ${this.getStatusStyle(currentTask.status)}">
-              <option value="Backlog" ${currentTask.status === 'Backlog' ? 'selected' : ''}>Backlog</option>
-              <option value="To Do" ${currentTask.status === 'To Do' ? 'selected' : ''}>To Do</option>
-              <option value="In Progress" ${currentTask.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-              <option value="Baru" ${currentTask.status === 'Baru' ? 'selected' : ''}>Baru (Laporan Masuk)</option>
-              <option value="Dianalisis" ${currentTask.status === 'Dianalisis' ? 'selected' : ''}>Dianalisis (AI Triage)</option>
-              <option value="Menunggu Persetujuan" ${currentTask.status === 'Menunggu Persetujuan' ? 'selected' : ''}>Menunggu Persetujuan PR</option>
-              <option value="Disetujui" ${currentTask.status === 'Disetujui' ? 'selected' : ''}>Disetujui</option>
-              <option value="Perlu Manual" ${currentTask.status === 'Perlu Manual' ? 'selected' : ''}>Perlu Manual</option>
-              <option value="Deploy Staging" ${currentTask.status === 'Deploy Staging' ? 'selected' : ''}>Deploy Staging</option>
-              <option value="Deploy Production" ${currentTask.status === 'Deploy Production' ? 'selected' : ''}>Deploy Production</option>
-              <option value="Dipantau" ${currentTask.status === 'Dipantau' ? 'selected' : ''}>Dipantau (Post-Deploy)</option>
-              <option value="Selesai" ${currentTask.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
-              <option value="Ditolak" ${currentTask.status === 'Ditolak' ? 'selected' : ''}>Ditolak</option>
+              <option value="Backlog" ${getCanonicalStatus(currentTask.status) === 'Backlog' ? 'selected' : ''}>1. Backlog</option>
+              <option value="To Do" ${getCanonicalStatus(currentTask.status) === 'To Do' ? 'selected' : ''}>2. To Do</option>
+              <option value="In Development" ${getCanonicalStatus(currentTask.status) === 'In Development' ? 'selected' : ''}>3. In Development</option>
+              <option value="Review & Testing" ${getCanonicalStatus(currentTask.status) === 'Review & Testing' ? 'selected' : ''}>4. Review & Testing</option>
+              <option value="Done" ${getCanonicalStatus(currentTask.status) === 'Done' ? 'selected' : ''}>5. Done</option>
+              <option value="Rejected" ${getCanonicalStatus(currentTask.status) === 'Rejected' ? 'selected' : ''}>6. Rejected</option>
             </select>
 
             <!-- Close Dialog Button -->
@@ -871,25 +860,33 @@ ${currentTask.prDiff.split('\n').map(line => {
                 </div>
               ` : `
                 <div style="display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto;">
-                  ${taskEvents.map(ev => `
+                  ${taskEvents.map(ev => {
+                    const isLegacyDefault = !ev.actor && (!ev.actorName || (ev.actorName === 'Azi' && assignee && assignee.name !== 'Azi'));
+                    const actorDisplay = isLegacyDefault
+                      ? (assignee ? `${assignee.name} (${assignee.role})` : 'PIC Developer')
+                      : (ev.actor || (ev.actorName ? `${ev.actorName} (${ev.actorRole || 'Tim'})` : (assignee ? `${assignee.name} (${assignee.role})` : 'Tim')));
+                    
+                    const actionDisplay = ev.action || (ev.eventType === 'status_change'
+                      ? `Mengubah status: <strong style="color: #172b4d;">${ev.fromValue}</strong> → <strong style="color: #0052cc;">${ev.toValue}</strong>`
+                      : ev.payload || '');
+
+                    return `
                     <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #ebecf0;">
                       <div style="width: 6px; height: 6px; border-radius: 50%; background: #0052cc; margin-top: 6px;"></div>
                       <div style="flex: 1;">
                         <div style="display: flex; justify-content: space-between;">
-                          <strong style="color: #172b4d;">${ev.actor}</strong>
+                          <strong style="color: #172b4d;">${actorDisplay}</strong>
                           <span style="font-size: 10px; font-family: var(--font-mono); color: #6b778c;">
                             ${new Date(ev.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <div style="color: #42526e; font-size: 11px; margin-top: 2px;">
-                          ${ev.eventType === 'status_change'
-                            ? `Mengubah status: <strong style="color: #172b4d;">${ev.fromValue}</strong> → <strong style="color: #0052cc;">${ev.toValue}</strong>`
-                            : ev.payload || ''
-                          }
+                          ${actionDisplay}
                         </div>
                       </div>
                     </div>
-                  `).join('')}
+                  `;
+                  }).join('')}
                 </div>
               `}
             </div>
@@ -1285,7 +1282,10 @@ ${currentTask.prDiff.split('\n').map(line => {
     const statusSelect = this.container.querySelector('#detailStatusSelect');
     if (statusSelect) {
       statusSelect.addEventListener('change', (e) => {
-        store.updateTaskStatus(currentTask.id, e.target.value);
+        const success = store.updateTaskStatus(currentTask.id, e.target.value, `Status diubah via dropdown`, false, true);
+        if (!success) {
+          e.target.value = getCanonicalStatus(currentTask.status);
+        }
       });
     }
 
@@ -1294,14 +1294,13 @@ ${currentTask.prDiff.split('\n').map(line => {
       btn.addEventListener('click', () => {
         const targetStatus = btn.dataset.status;
         const phaseLabel = btn.dataset.label;
-        if (targetStatus && targetStatus !== currentTask.status) {
-          store.updateTaskStatus(currentTask.id, targetStatus, `Dipindahkan ke tahapan: ${phaseLabel}`);
-          store.addToast('success', 'Fase Berpindah!', `Tugas berhasil dipindahkan ke: ${phaseLabel}`);
+        if (targetStatus && getCanonicalStatus(targetStatus) !== getCanonicalStatus(currentTask.status)) {
+          store.updateTaskStatus(currentTask.id, targetStatus, `Dipindahkan ke tahapan: ${phaseLabel}`, false, true);
         }
       });
     });
 
-    // Subtask toggle with auto-advance logic
+    // Subtask toggle with strict forward-only auto-advance logic
     this.container.querySelectorAll('.subtask-row').forEach(row => {
       row.addEventListener('click', (e) => {
         // If clicked on delete button, do not toggle
@@ -1311,6 +1310,7 @@ ${currentTask.prDiff.split('\n').map(line => {
         const targetSubtask = (currentTask.subtasks || []).find(s => s.id === subtaskId);
         if (!targetSubtask) return;
 
+        const canonicalCur = getCanonicalStatus(currentTask.status);
         const willBeCompleted = !targetSubtask.completed;
         const updatedSubtasks = currentTask.subtasks.map(s => s.id === subtaskId ? { ...s, completed: willBeCompleted } : s);
         const newCompletedCount = updatedSubtasks.filter(s => s.completed).length;
@@ -1319,30 +1319,18 @@ ${currentTask.prDiff.split('\n').map(line => {
 
         store.toggleSubtask(currentTask.id, subtaskId);
 
-        // Auto-advance logic
-        if (willBeCompleted && ['Baru', 'Backlog', 'To Do'].includes(currentTask.status)) {
-          store.updateTaskStatus(currentTask.id, 'In Progress', `Subtask "${targetSubtask.title}" mulai dicentang. Pengerjaan dimulai.`);
-          store.addToast('info', 'Fase Berpindah: In Progress', 'Tugas otomatis masuk ke kolom "In Progress" karena subtask mulai dikerjakan.');
+        // Forward-only auto-advance
+        if (willBeCompleted && canonicalCur === 'To Do') {
+          store.updateTaskStatus(currentTask.id, 'In Development', `Subtask "${targetSubtask.title}" mulai dicentang. Pengerjaan dimulai.`);
           return;
         }
 
         if (isNowAllDone) {
-          if (['In Progress', 'Perlu Manual', 'Diperbaiki Agen', 'Dianalisis'].includes(currentTask.status)) {
-            store.updateTaskStatus(currentTask.id, 'Menunggu Persetujuan', 'Seluruh checklist subtask tuntas 100%. Diajukan untuk Code Review PR.');
-            store.addToast('success', 'Checklist 100% Tuntas!', 'Semua subtask selesai! Tugas otomatis berpindah ke tahap "Review PR / Persetujuan".');
-          } else if (currentTask.status === 'Menunggu Persetujuan') {
-            store.updateTaskStatus(currentTask.id, 'QA/Testing', 'PR telah lolos verifikasi subtask, masuk ke QA Staging.');
-            store.addToast('success', 'Masuk Pengujian QA', 'Tugas otomatis beralih ke tahap QA/Testing.');
-          } else if (['QA/Testing', 'Deploy Staging', 'Disetujui'].includes(currentTask.status)) {
-            store.updateTaskStatus(currentTask.id, 'Selesai', 'Seluruh pengujian subtask QA selesai.');
-            store.addToast('success', 'Tugas Selesai & Terverifikasi!', 'Tugas otomatis berpindah ke kolom Selesai.');
+          if (canonicalCur === 'In Development') {
+            store.updateTaskStatus(currentTask.id, 'Review & Testing', 'Seluruh checklist subtask tuntas 100%. Diajukan ke Review & Testing.');
+          } else if (canonicalCur === 'Review & Testing') {
+            store.updateTaskStatus(currentTask.id, 'Done', 'Seluruh pengujian subtask QA selesai.');
           }
-          return;
-        }
-
-        if (!willBeCompleted && currentTask.status === 'Selesai') {
-          store.updateTaskStatus(currentTask.id, 'In Progress', `Subtask "${targetSubtask.title}" batal dicentang. Tugas dibuka kembali.`);
-          store.addToast('warning', 'Tugas Dibuka Kembali', 'Subtask belum tuntas, tugas kembali ke In Progress.');
           return;
         }
 
@@ -1354,10 +1342,19 @@ ${currentTask.prDiff.split('\n').map(line => {
 
     // Subtask delete handler
     this.container.querySelectorAll('.subtask-delete-btn').forEach(delBtn => {
-      delBtn.addEventListener('click', (e) => {
+      delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const subtaskId = delBtn.dataset.subtaskId;
-        if (subtaskId) {
+        if (!subtaskId) return;
+        const confirmed = await swalConfirm({
+          title: 'Hapus Subtask?',
+          text: 'Subtask ini akan dihapus dari daftar rincian tiket.',
+          icon: 'warning',
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           store.deleteSubtask(currentTask.id, subtaskId);
         }
       });
@@ -1370,10 +1367,12 @@ ${currentTask.prDiff.split('\n').map(line => {
         e.preventDefault();
         const input = this.container.querySelector('#newSubtaskInput');
         const val = input ? input.value.trim() : '';
-        if (val) {
-          store.addSubtask(currentTask.id, val);
-          this.subModalData.newSubtaskTitle = '';
+        if (!val) {
+          swalValidation('Judul Subtask Wajib Diisi', 'Silakan masukkan judul subtask terlebih dahulu.');
+          return;
         }
+        store.addSubtask(currentTask.id, val);
+        this.subModalData.newSubtaskTitle = '';
       });
     }
 
@@ -1393,17 +1392,23 @@ ${currentTask.prDiff.split('\n').map(line => {
     const attachBtn = this.container.querySelector('#attachFileBtn');
     if (attachBtn) {
       attachBtn.addEventListener('click', () => {
-        alert('Fitur Lampiran Jira: Anda dapat melampirkan screenshot bug, log Sentry, atau file spesifikasi PRD.');
+        swalInfo('Lampiran Berkas Tiket', 'Anda dapat melampirkan screenshot bug, log Sentry, atau berkas spesifikasi PRD pada tiket ini.');
       });
     }
 
     // Link Issue Button
     const linkBtn = this.container.querySelector('#linkIssueBtn');
     if (linkBtn) {
-      linkBtn.addEventListener('click', () => {
-        const key = prompt('Masukkan Kode Tiket yang ingin ditautkan (contoh: LIB-102):');
-        if (key && key.trim()) {
-          store.addToast('success', 'Masalah Ditautkan', `Tiket ${currentTask.key} berhasil ditautkan dengan ${key.toUpperCase()}.`);
+      linkBtn.addEventListener('click', async () => {
+        const key = await swalPrompt({
+          title: 'Tautkan Tiket Terkait',
+          text: 'Masukkan kode tiket yang ingin ditautkan dengan tiket ini:',
+          inputPlaceholder: 'Contoh: LIB-102',
+          confirmText: 'Tautkan',
+          requiredMessage: 'Kode tiket wajib diisi!'
+        });
+        if (key) {
+          swalSuccess('Tiket Berhasil Ditautkan', `Tiket <b>${currentTask.key}</b> ditautkan dengan <b>${key.toUpperCase()}</b>.`);
         }
       });
     }
@@ -1668,10 +1673,19 @@ ${currentTask.prDiff.split('\n').map(line => {
     // Delete task button
     const deleteBtn = this.container.querySelector('#deleteTaskBtn');
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => {
-        if (confirm(`Yakin ingin menghapus task ${currentTask.key}?`)) {
+      deleteBtn.addEventListener('click', async () => {
+        const confirmed = await swalConfirm({
+          title: 'Hapus Task Ini?',
+          html: `Apakah Anda yakin ingin menghapus task <b>${currentTask.key}</b>?`,
+          icon: 'warning',
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           store.deleteTask(currentTask.id);
           store.closeTaskDetail();
+          swalSuccess('Task Dihapus', `Task <b>${currentTask.key}</b> berhasil dihapus.`);
         }
       });
     }
@@ -1730,6 +1744,10 @@ ${currentTask.prDiff.split('\n').map(line => {
       confirmRcaBtn.addEventListener('click', () => {
         const rca = this.container.querySelector('#rcaTextInput')?.value || '';
         const prev = this.container.querySelector('#preventiveTextInput')?.value || '';
+        if (!rca.trim()) {
+          swalValidation('Analisis Akar Masalah Wajib Diisi', 'Silakan lengkapi penjelasan Root Cause Analysis (RCA) terlebih dahulu.');
+          return;
+        }
         store.recordBugRca(currentTask.id, rca.trim(), prev.trim());
         this.activeSubModal = null;
         this.render();
@@ -1741,11 +1759,15 @@ ${currentTask.prDiff.split('\n').map(line => {
       confirmManualPrBtn.addEventListener('click', () => {
         const title = this.container.querySelector('#manualPrTitleInput')?.value || '';
         const diff = this.container.querySelector('#manualPrDiffInput')?.value || '';
+        if (!title.trim()) {
+          swalValidation('Judul Pull Request Wajib Diisi', 'Silakan masukkan judul Pull Request terlebih dahulu.');
+          return;
+        }
         const prNum = `PR #${Math.floor(Math.random() * 80) + 20}`;
         const branch = currentTask.branchName || `fix/${currentTask.key.toLowerCase()}-hotfix`;
 
         store.updateTask(currentTask.id, {
-          status: 'Menunggu Persetujuan',
+          status: 'Review & Testing',
           prNumber: prNum,
           branchName: branch,
           prDiff: diff.trim(),
@@ -1773,6 +1795,10 @@ ${currentTask.prDiff.split('\n').map(line => {
     if (confirmRevBtn) {
       confirmRevBtn.addEventListener('click', () => {
         const notes = this.container.querySelector('#revisionNotesInput')?.value || '';
+        if (!notes.trim()) {
+          swalValidation('Catatan Revisi Wajib Diisi', 'Silakan tuliskan rincian catatan revisi terlebih dahulu.');
+          return;
+        }
         store.requestAiRevision(currentTask.id, notes.trim());
         this.activeSubModal = null;
         this.render();
@@ -1783,6 +1809,10 @@ ${currentTask.prDiff.split('\n').map(line => {
     if (confirmRejBtn) {
       confirmRejBtn.addEventListener('click', () => {
         const reason = this.container.querySelector('#rejectReasonInput')?.value || '';
+        if (!reason.trim()) {
+          swalValidation('Alasan Penolakan Wajib Diisi', 'Silakan masukkan alasan penolakan Pull Request terlebih dahulu.');
+          return;
+        }
         store.rejectAiPr(currentTask.id, reason.trim());
         this.activeSubModal = null;
         this.render();

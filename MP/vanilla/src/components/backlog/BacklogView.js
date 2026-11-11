@@ -12,6 +12,7 @@
 
 import { store } from "../../state/store.js";
 import { Icons } from "../../utils/icons.js";
+import { swalValidation, swalSuccess, swalConfirm, swalInfo } from "../../utils/swal.js";
 
 export class BacklogView {
   constructor(options = {}) {
@@ -25,6 +26,8 @@ export class BacklogView {
     this.filterEpic = "all";
     this.filterType = "all";
     this.searchQuery = "";
+    this.selectedSprintFilter = "all";
+    this.collapsedSprintIds = new Set();
     this.isEpicsPanelOpen = true;
     this.isSprintCollapsed = false;
     this.isBacklogCollapsed = false;
@@ -82,26 +85,47 @@ export class BacklogView {
       case "Selesai":
       case "Deploy Production":
       case "Dipantau":
-        return { label: "SELESAI", bg: "rgba(16, 185, 129, 0.12)", color: "#059669" };
+      case "Done":
+        return { label: "SELESAI", bg: "#ecfdf5", color: "#059669", border: "#a7f3d0" };
       case "In Progress":
+      case "In Development":
       case "Diperbaiki Agen":
-        return { label: "IN PROGRESS", bg: "rgba(99, 102, 241, 0.12)", color: "#4f46e5" };
+        return { label: "IN PROGRESS", bg: "#eef2ff", color: "#4f46e5", border: "#c7d2fe" };
       case "In Review":
+      case "Review & Testing":
       case "Menunggu Persetujuan":
-        return { label: "IN REVIEW", bg: "rgba(245, 158, 11, 0.12)", color: "#d97706" };
+        return { label: "IN REVIEW", bg: "#fffbeb", color: "#d97706", border: "#fde68a" };
       case "QA/Testing":
       case "Deploy Staging":
-        return { label: "QA STAGING", bg: "rgba(139, 92, 246, 0.12)", color: "#7c3aed" };
+        return { label: "QA STAGING", bg: "#f5f3ff", color: "#7c3aed", border: "#ddd6fe" };
       case "Perlu Manual":
       case "Ditolak":
-        return { label: "PERLU MANUAL", bg: "rgba(239, 68, 68, 0.12)", color: "#dc2626" };
+        return { label: "PERLU MANUAL", bg: "#fef2f2", color: "#dc2626", border: "#fecaca" };
       default:
-        return { label: "TO DO", bg: "var(--bg-secondary, #f1f5f9)", color: "var(--text-secondary, #64748b)" };
+        return { label: "TO DO", bg: "#f8fafc", color: "#475569", border: "#e2e8f0" };
     }
   }
 
   escapeHtml(text = "") {
     return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  calcBreakdown(taskList = []) {
+    let todo = 0,
+      inprog = 0,
+      done = 0;
+    taskList.forEach((t) => {
+      const h = Number(t.estimateHours) || 1;
+      const st = t.status || "";
+      if (st === "Done" || st === "Selesai" || st === "Deploy Production" || st === "Dipantau") {
+        done += h;
+      } else if (["In Progress", "In Development", "In Review", "Review & Testing", "QA/Testing", "Deploy Staging", "Diperbaiki Agen"].includes(st)) {
+        inprog += h;
+      } else {
+        todo += h;
+      }
+    });
+    return { todo, inprog, done, total: todo + inprog + done };
   }
 
   render() {
@@ -118,6 +142,7 @@ export class BacklogView {
         name: `${activeProject?.code || "PRJ"} Sprint 1 (Aktif)`,
         startDate: "12 Okt 2026",
         endDate: "26 Okt 2026",
+        status: "active",
       };
 
     const matchesFilters = (t) => {
@@ -142,29 +167,29 @@ export class BacklogView {
       return true;
     };
 
+    const allProjectSprintIds = new Set(projectSprints.map((s) => s.id));
     const activeSprintTasks = projectTasks.filter((t) => t.sprintId === activeSprint?.id && matchesFilters(t));
-    const backlogPoolTasks = projectTasks.filter((t) => (!t.sprintId || t.sprintId !== activeSprint?.id) && matchesFilters(t));
+    const backlogPoolTasks = projectTasks.filter((t) => (!t.sprintId || !allProjectSprintIds.has(t.sprintId)) && matchesFilters(t));
 
-    // Calculate story points / hours breakdown
-    const calcBreakdown = (taskList) => {
-      let todo = 0,
-        inprog = 0,
-        done = 0;
-      taskList.forEach((t) => {
-        const h = Number(t.estimateHours) || 1;
-        if (t.status === "Selesai" || t.status === "Deploy Production" || t.status === "Dipantau") {
-          done += h;
-        } else if (["In Progress", "In Review", "QA/Testing", "Deploy Staging", "Diperbaiki Agen"].includes(t.status)) {
-          inprog += h;
-        } else {
-          todo += h;
-        }
+    const sprintPoints = this.calcBreakdown(activeSprintTasks);
+    const backlogPoints = this.calcBreakdown(backlogPoolTasks);
+
+    // Sprints to render based on selectedSprintFilter
+    let sprintsToRender = [];
+    if (this.selectedSprintFilter === "all") {
+      sprintsToRender = [...projectSprints].sort((a, b) => {
+        if (a.status === "active") return -1;
+        if (b.status === "active") return 1;
+        if (a.status === "future" && b.status === "completed") return -1;
+        if (a.status === "completed" && b.status === "future") return 1;
+        return 0;
       });
-      return { todo, inprog, done, total: todo + inprog + done };
-    };
-
-    const sprintPoints = calcBreakdown(activeSprintTasks);
-    const backlogPoints = calcBreakdown(backlogPoolTasks);
+    } else if (this.selectedSprintFilter === "backlog_pool") {
+      sprintsToRender = [];
+    } else {
+      const chosen = projectSprints.filter((s) => s.id === this.selectedSprintFilter);
+      sprintsToRender = chosen.length > 0 ? chosen : projectSprints;
+    }
 
     // KPI summary metrics
     const totalSprintHours = sprintPoints.total;
@@ -174,6 +199,9 @@ export class BacklogView {
     const criticalBugs = projectTasks.filter((t) => t.type === "Bug" && (t.priority === "Hotfix" || t.priority === "Tertinggi"));
     const selectedEpicObj = projectEpics.find((e) => e.id === this.filterEpic);
     const selectedMemberObj = teamMembers.find((m) => m.id === this.filterAssignee);
+    const displayedTaskCount = sprintsToRender.reduce((acc, s) => acc + projectTasks.filter((t) => t.sprintId === s.id && matchesFilters(t)).length, 0) + ((this.selectedSprintFilter === "all" || this.selectedSprintFilter === "backlog_pool" || sprintsToRender.length === 0) ? backlogPoolTasks.length : 0);
+    const activeSprintCompletedTasks = activeSprintTasks.filter((t) => ["Selesai", "Deploy Production", "Dipantau", "Done"].includes(t.status));
+    const sprintPercentDone = activeSprintTasks.length > 0 ? Math.round((activeSprintCompletedTasks.length / activeSprintTasks.length) * 100) : 0;
 
     this.element.innerHTML = `
       <div class="backlog-root">
@@ -218,60 +246,141 @@ export class BacklogView {
             </div>
           </div>
 
-          <!-- Baris 2: KPI Metrics Summary Bar (Matching CRM & Kanban) -->
-          <div class="backlog-kpi-bar">
-            <div class="backlog-kpi-group">
-              <div class="backlog-kpi-item">
-                <span class="backlog-kpi-label">Total Tiket:</span>
-                <span class="backlog-kpi-val">${allTotalTasks} Tiket (${allTotalHours} Jam)</span>
-              </div>
-
-              <div class="backlog-kpi-divider"></div>
-
-              <div class="backlog-kpi-item">
-                <span class="backlog-kpi-label">Sprint Aktif:</span>
-                <span class="backlog-kpi-val" style="color: var(--indigo-600);">${activeSprintTasks.length} Tiket (${totalSprintHours}h)</span>
-              </div>
-
-              <div class="backlog-kpi-divider"></div>
-
-              <div class="backlog-kpi-item">
-                <span class="backlog-kpi-label">Backlog Pool:</span>
-                <span class="backlog-kpi-val" style="color: var(--text-secondary);">${backlogPoolTasks.length} Tiket (${totalBacklogHours}h)</span>
-              </div>
-
-              <div class="backlog-kpi-divider"></div>
-
-              <div class="backlog-kpi-item">
-                <span class="backlog-kpi-label">Selesai di Sprint:</span>
-                <span class="backlog-kpi-val" style="color: var(--emerald-600);">
-                  ${activeSprintTasks.filter((t) => t.status === "Selesai" || t.status === "Deploy Production").length} Tiket (${sprintPoints.done}h)
+          <!-- Baris 2: KPI Metrics Summary Cards (4 Executive Flaticon Cards) -->
+          <div class="backlog-metrics-grid">
+            <!-- Card 1: Total Lingkup Proyek -->
+            <div class="backlog-metric-card">
+              <div class="backlog-metric-card__header">
+                <span class="backlog-metric-card__label">Total Lingkup Proyek</span>
+                <span class="backlog-metric-icon-box backlog-metric-icon-box--indigo" title="Total Seluruh Tiket Proyek">
+                  <i class="fi fi-rr-apps"></i>
                 </span>
+              </div>
+              <div class="backlog-metric-card__body">
+                <div class="backlog-metric-card__value-row">
+                  <span class="backlog-metric-card__value" style="color: #4f46e5;">${allTotalTasks}</span>
+                  <span class="backlog-metric-unit">Tiket</span>
+                  <span class="backlog-metric-chip backlog-metric-chip--indigo">${allTotalHours} Jam</span>
+                </div>
+              </div>
+              <div class="backlog-metric-info-row">
+                <span class="backlog-metric-info-item"><i class="fi fi-rr-play-alt" style="color:#2563eb; font-size:10px;"></i> <strong>${activeSprintTasks.length}</strong> di Sprint</span>
+                <span class="backlog-metric-info-dot">·</span>
+                <span class="backlog-metric-info-item" style="color:#64748b;"><i class="fi fi-rr-inbox" style="color:#64748b; font-size:10px;"></i> <strong>${backlogPoolTasks.length}</strong> di Pool</span>
               </div>
             </div>
 
-            ${
-              criticalBugs.length > 0
-                ? `
-              <div style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: var(--radius-full); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: var(--red-500); font-size: 11px; font-weight: 700;">
-                ${Icons.flame("", 12)}
-                <span>${criticalBugs.length} Tiket Bug Kritis / Hotfix</span>
+            <!-- Card 2: Sprint Aktif -->
+            <div class="backlog-metric-card">
+              <div class="backlog-metric-card__header">
+                <span class="backlog-metric-card__label">Sprint Aktif</span>
+                <span class="backlog-metric-icon-box backlog-metric-icon-box--blue" title="Tiket dalam Siklus Sprint Berjalan">
+                  <i class="fi fi-rr-bolt"></i>
+                </span>
               </div>
-            `
-                : ""
-            }
+              <div class="backlog-metric-card__body">
+                <div class="backlog-metric-card__value-row">
+                  <span class="backlog-metric-card__value" style="color: #2563eb;">${activeSprintTasks.length}</span>
+                  <span class="backlog-metric-unit">Tiket</span>
+                  <span class="backlog-metric-chip backlog-metric-chip--blue">${totalSprintHours} Jam</span>
+                </div>
+              </div>
+              <div class="backlog-metric-info-row">
+                <span class="backlog-metric-info-item" title="Tahap Pengerjaan & QA"><span class="backlog-metric-status-dot" style="background:#f59e0b;"></span> <strong>${sprintPoints.inprog}h</strong> In Dev</span>
+                <span class="backlog-metric-info-dot">·</span>
+                <span class="backlog-metric-info-item" title="Siap Dikerjakan"><span class="backlog-metric-status-dot" style="background:#3b82f6;"></span> <strong>${sprintPoints.todo}h</strong> To Do</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Backlog Pool -->
+            <div class="backlog-metric-card">
+              <div class="backlog-metric-card__header">
+                <span class="backlog-metric-card__label">Backlog Pool</span>
+                <span class="backlog-metric-icon-box backlog-metric-icon-box--amber" title="Antrean Tiket Belum Terjadwal ke Sprint">
+                  <i class="fi fi-rr-inbox"></i>
+                </span>
+              </div>
+              <div class="backlog-metric-card__body">
+                <div class="backlog-metric-card__value-row">
+                  <span class="backlog-metric-card__value" style="color: #d97706;">${backlogPoolTasks.length}</span>
+                  <span class="backlog-metric-unit">Tiket</span>
+                  <span class="backlog-metric-chip backlog-metric-chip--amber">${totalBacklogHours} Jam</span>
+                </div>
+              </div>
+              <div class="backlog-metric-info-row">
+                <span class="backlog-metric-info-item" style="color:#64748b;"><i class="fi fi-rr-time-forward" style="color:#d97706; font-size:10px;"></i> Siap dialokasikan ke sprint baru</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Selesai di Sprint -->
+            <div class="backlog-metric-card">
+              <div class="backlog-metric-card__header">
+                <span class="backlog-metric-card__label">Selesai di Sprint</span>
+                <span class="backlog-metric-icon-box backlog-metric-icon-box--emerald" title="Progress Penyelesaian Sprint Berjalan">
+                  <i class="fi fi-rr-check-circle"></i>
+                </span>
+              </div>
+              <div class="backlog-metric-card__body">
+                <div class="backlog-metric-card__value-row">
+                  <span class="backlog-metric-card__value" style="color: #059669;">${activeSprintCompletedTasks.length}</span>
+                  <span class="backlog-metric-unit">Tiket</span>
+                  <span class="backlog-metric-chip backlog-metric-chip--emerald">${sprintPercentDone}%</span>
+                </div>
+                <div class="backlog-metric-card__progress-track">
+                  <div class="backlog-metric-card__progress-bar" style="width: ${sprintPercentDone}%; background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
+                </div>
+              </div>
+              <div class="backlog-metric-info-row">
+                <span class="backlog-metric-info-item"><i class="fi fi-rr-check" style="color:#059669; font-size:11px;"></i> <strong>${sprintPoints.done}h</strong> Selesai</span>
+                <span class="backlog-metric-info-dot">·</span>
+                <span class="backlog-metric-info-item" style="color:#64748b;"><strong>${activeSprintTasks.length - activeSprintCompletedTasks.length}</strong> Berjalan</span>
+              </div>
+            </div>
           </div>
 
           <!-- Baris 3: Controls Bar (Epics Toggle, Search Input & Quick Filters) -->
           <div class="backlog-controls-row">
             <div class="backlog-controls-left">
+              <!-- Tombol Toggle Epik Proyek (Hide / Show & Full-Width Sprint) -->
+              <button
+                id="toggleEpicsDrawerBtn"
+                type="button"
+                class="backlog-epic-toggle-btn ${this.isEpicsPanelOpen ? "active" : ""}"
+                title="${this.isEpicsPanelOpen ? "Sembunyikan Panel Epik Proyek (Lebarkan Tampilan Sprint Jadi Full)" : "Tampilkan Panel Epik Proyek"}"
+              >
+                ${Icons.layers("", 13)}
+                <span>${this.isEpicsPanelOpen ? `Epik Proyek (${projectEpics.length})` : `Tampilkan Epik (${projectEpics.length})`}</span>
+                <span class="epic-toggle-arrow">${this.isEpicsPanelOpen ? "◀" : "▶"}</span>
+              </button>
+
+              <!-- Sprint Selector Dropdown (Pilih Sprint yang Ingin Dikelola / Ditampilkan) -->
+              <div class="backlog-sprint-select-badge" style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-card,#fff);border:1px solid var(--border,#cbd5e1);border-radius:var(--radius-lg,8px);padding:4px 10px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+                <span style="font-size:11px;font-weight:800;color:var(--text-secondary,#475569);text-transform:uppercase;letter-spacing:0.04em;display:flex;align-items:center;gap:4px;">
+                  ${Icons.calendar("", 12)}
+                  <span>Sprint:</span>
+                </span>
+                <select id="backlogSprintFilterSelect" style="border:none;background:transparent;font-size:12px;font-weight:700;color:var(--text-primary,#0f172a);outline:none;cursor:pointer;max-width:240px;appearance:none;-webkit-appearance:none;padding-right:16px;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right center;">
+                  <option value="all" ${this.selectedSprintFilter === "all" ? "selected" : ""}>Semua Sprint &amp; Backlog</option>
+                  ${projectSprints.map((s) => {
+                    const shortName = s.name.split(':')[0].trim();
+                    const statusText = s.status === "active" ? "Aktif" : s.status === "completed" ? "Selesai" : "Rencana";
+                    return `
+                      <option value="${s.id}" title="${this.escapeHtml(s.name)}" ${this.selectedSprintFilter === s.id ? "selected" : ""}>
+                        ${this.escapeHtml(shortName)} (${statusText})
+                      </option>
+                    `;
+                  }).join("")}
+                  <option value="backlog_pool" ${this.selectedSprintFilter === "backlog_pool" ? "selected" : ""}>Backlog Pool</option>
+                </select>
+              </div>
+
               <div class="backlog-search-box">
                 <span class="backlog-search-icon">${Icons.search("", 13)}</span>
                 <input
                   id="backlogSearchInput"
                   class="backlog-search-input"
                   type="text"
-                  placeholder="Cari berdasarkan judul atau ID (${(activeProject?.code || 'PRJ').split('-')[0]}-xxx)..."
+                  placeholder="Cari berdasarkan judul atau ID (${(activeProject?.code || "PRJ").split("-")[0]}-xxx)..."
                   value="${this.escapeHtml(this.searchQuery)}"
                 />
               </div>
@@ -311,8 +420,20 @@ export class BacklogView {
               }
             </div>
 
-            <div class="backlog-controls-right">
-              Menampilkan <strong>${activeSprintTasks.length + backlogPoolTasks.length}</strong> dari <strong>${allTotalTasks}</strong> tiket
+            <div class="backlog-controls-right" style="display: flex; align-items: center; gap: 8px;">
+              ${
+                criticalBugs.length > 0
+                  ? `
+                <span class="backlog-bug-pill" title="${criticalBugs.length} tiket bug dengan prioritas Hotfix atau Tertinggi butuh penanganan">
+                  <i class="fi fi-rr-flame" style="font-size: 11px;"></i>
+                  <span>${criticalBugs.length} Bug Kritis / Hotfix</span>
+                </span>
+              `
+                  : ""
+              }
+              <span style="font-size: 11.5px; color: var(--text-secondary, #64748b);">
+                Menampilkan <strong>${displayedTaskCount}</strong> dari <strong>${allTotalTasks}</strong> tiket
+              </span>
             </div>
           </div>
 
@@ -328,6 +449,15 @@ export class BacklogView {
                 ${Icons.layers("", 13)}
                 <span>EPIK PROYEK (${projectEpics.length})</span>
               </span>
+              <button
+                id="closeEpicsPanelBtn"
+                type="button"
+                class="epics-drawer-hide-btn"
+                title="Sembunyikan Panel Epik Proyek (Lebarkan Tampilan Sprint Jadi Full)"
+              >
+                ${Icons.chevronLeft("", 12)}
+                <span>Sembunyikan</span>
+              </button>
             </div>
 
             <div class="epics-drawer-list">
@@ -394,18 +524,18 @@ export class BacklogView {
           </aside>
 
           <!-- Sisi Kanan: Area Scrollable Workspace -->
-          <main class="backlog-scroll-area" id="backlogScrollArea">
+          <main class="backlog-scroll-area ${!this.isEpicsPanelOpen ? "backlog-scroll-area--full" : ""}" id="backlogScrollArea">
             
             <!-- 1. Matriks Kapasitas 5 Role Developer (Jira/CRM Resource Allocation) -->
             <section class="workload-matrix-card">
               <div class="workload-matrix-header">
                 <div class="workload-matrix-title-wrap">
                   <div class="workload-matrix-title">
-                    ${Icons.users("text-indigo-600", 15)}
-                    <span>Matriks Kapasitas Tim Developer (5 Roles Allocation)</span>
+                    <i class="fi fi-rr-users-alt" style="color: var(--indigo-600); font-size: 14px;"></i>
+                    <span>Matriks Kapasitas Tim Developer (${teamMembers.length} Roles Allocation)</span>
                   </div>
                   <span class="workload-matrix-sub">
-                    Beban mingguan maks 40h/role. Klik profil untuk filter tiket.
+                    Alokasi Sprint 1 (Kapasitas sprint 2 minggu: 80h/role). Klik profil untuk filter tiket.
                   </span>
                 </div>
 
@@ -413,14 +543,14 @@ export class BacklogView {
                   ${
                     this.filterAssignee !== "all"
                       ? `
-                    <button id="resetRoleFilterBtn2" class="btn btn-secondary btn-sm" style="font-size: 10.5px; font-weight: 700; padding: 3px 8px;">
-                      Reset Filter Role
+                    <button id="resetRoleFilterBtn2" class="btn btn-secondary btn-sm" style="font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-md);">
+                      ✕ Reset Filter (${this.escapeHtml(selectedMemberObj?.name?.split(" ")[0] || "PIC")})
                     </button>
                   `
                       : ""
                   }
 
-                  <button id="toggleWorkloadBtn" class="btn btn-secondary btn-sm" style="font-size: 10.5px; font-weight: 600; padding: 3px 8px;" title="Buka/Tutup Ringkasan Matriks Kapasitas">
+                  <button id="toggleWorkloadBtn" class="btn btn-secondary btn-sm" style="font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: var(--radius-md);" title="Buka/Tutup Ringkasan Matriks Kapasitas">
                     ${this.isWorkloadCollapsed ? "+ Buka Matriks" : "– Sembunyikan"}
                   </button>
                 </div>
@@ -432,16 +562,21 @@ export class BacklogView {
                 <div class="workload-grid">
                   ${teamMembers
                     .map((m) => {
-                      const mTasks = projectTasks.filter((t) => t.assigneeId === m.id);
-                      const mHours = mTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
-                      const capLimit = m.capacity || 40;
-                      const capPercent = Math.min(Math.round((mHours / capLimit) * 100), 100);
+                      const mSprintTasks = activeSprintTasks.filter((t) => t.assigneeId === m.id);
+                      const mSprintHours = mSprintTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+                      const mTotalTasks = projectTasks.filter((t) => t.assigneeId === m.id);
+                      const mTotalHours = mTotalTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 0), 0);
+
+                      // Sprint 2 minggu (14 hari) = 80h kapasitas per developer (40h/minggu)
+                      const sprintWeeks = 2;
+                      const capLimit = (m.capacityHoursPerWeek || m.capacity || 40) * sprintWeeks;
+                      const capPercent = Math.min(Math.round((mSprintHours / capLimit) * 100), 100);
                       const roleBadge = this.getRoleBadge(m.role);
                       const isSelected = this.filterAssignee === m.id;
-                      const isOverloaded = mHours > capLimit;
+                      const isOverloaded = mSprintHours > capLimit;
 
                       return `
-                      <div class="workload-dev-card ${isSelected ? "active" : ""}" data-member-id="${m.id}" title="Klik untuk memfilter tiket milik ${this.escapeHtml(m.name)}">
+                      <div class="workload-dev-card ${isSelected ? "active" : ""}" data-member-id="${m.id}" title="Klik untuk memfilter tiket milik ${this.escapeHtml(m.name)}. Sprint 1: ${mSprintHours}h/${capLimit}h (${mSprintTasks.length} tiket). Total Proyek: ${mTotalHours}h (${mTotalTasks.length} tiket).">
                         <div class="workload-dev-card__top">
                           <div class="workload-dev-card__user">
                             <img src="${m.avatar}" alt="${this.escapeHtml(m.name)}" class="workload-dev-card__avatar" />
@@ -453,16 +588,16 @@ export class BacklogView {
                         </div>
 
                         <div class="workload-dev-card__meta">
-                          <span class="workload-dev-card__tasks">${mTasks.length} Tiket</span>
-                          <span class="workload-dev-card__hours" style="color: ${isOverloaded ? "#ef4444" : "var(--text-primary)"};">
-                            ${mHours}h / ${capLimit}h
+                          <span class="workload-dev-card__tasks">${mSprintTasks.length} Tiket Sprint</span>
+                          <span class="workload-dev-card__hours" style="color: ${isOverloaded ? "#ef4444" : capPercent > 75 ? "#d97706" : "#059669"};">
+                            ${mSprintHours}h / ${capLimit}h
                           </span>
                         </div>
 
                         <div class="workload-dev-card__bar">
                           <div
                             class="workload-dev-card__bar-fill"
-                            style="width: ${capPercent}%; background: ${isOverloaded ? "linear-gradient(90deg, #ef4444, #dc2626)" : capPercent > 75 ? "linear-gradient(90deg, #f59e0b, #d97706)" : "linear-gradient(90deg, #3b82f6, #10b981)"};"
+                            style="width: ${capPercent}%; background: ${isOverloaded ? "linear-gradient(90deg, #ef4444, #dc2626)" : capPercent > 75 ? "linear-gradient(90deg, #f59e0b, #d97706)" : "linear-gradient(90deg, #10b981, #059669)"};"
                           ></div>
                         </div>
                       </div>
@@ -475,125 +610,190 @@ export class BacklogView {
               }
             </section>
 
-            <!-- 2. Active Sprint Container -->
-            <section class="sprint-panel-card" id="activeSprintCard">
-              <div class="sprint-card-header" data-toggle="sprint" title="Klik untuk expand / collapse Sprint Aktif">
-                <div class="sprint-card-header__left">
-                  <button id="toggleSprintBtn" class="sprint-toggle-btn" title="Buka/Tutup Sprint Aktif">
-                    ${this.isSprintCollapsed ? Icons.chevronRight("", 16) : Icons.chevronDown("", 16)}
-                  </button>
-                  <div class="sprint-card-title">
-                    <span>${this.escapeHtml(activeSprint?.name || "LIB Sprint 1 (Aktif)")}</span>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); font-family: var(--font-mono);">
-                      (${activeSprintTasks.length} Tiket • ${totalSprintHours}h)
-                    </span>
-                    <span class="backlog-active-pill" style="font-size: 10px; padding: 2px 7px;">
-                      ● AKTIF
-                    </span>
-                  </div>
-                  <span class="sprint-dates-text">
-                    ${Icons.calendar("", 12)}
-                    <span>${activeSprint?.startDate || "12 Okt 2026"} – ${activeSprint?.endDate || "26 Okt 2026"} (14 Hari)</span>
-                  </span>
-                </div>
+            <!-- Sprints Rendering (Active, Future/Planned, & Completed Sprints) -->
+            ${sprintsToRender.map((sprint) => this.renderSprintCard(sprint, projectTasks, teamMembers, projectEpics, projectSprints, matchesFilters)).join("")}
 
-                <div class="sprint-card-header__right">
-                  <!-- Tri-Color Story Points Lozenge -->
-                  <div class="points-tri-color" title="To Do: ${sprintPoints.todo}h, In Progress: ${sprintPoints.inprog}h, Done: ${sprintPoints.done}h">
-                    <span class="points-tri-color__item points-tri-color__todo" title="To Do">${sprintPoints.todo}</span>
-                    <span class="points-tri-color__item points-tri-color__inprogress" title="In Progress">${sprintPoints.inprog}</span>
-                    <span class="points-tri-color__item points-tri-color__done" title="Selesai">${sprintPoints.done}</span>
-                  </div>
-
-                  <button id="completeSprintHeaderBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-md);">
-                    Selesaikan Sprint
-                  </button>
-                </div>
-              </div>
-
-              ${
-                !this.isSprintCollapsed
-                  ? `
-                <div class="issue-rows-list">
-                  ${
-                    activeSprintTasks.length === 0
-                      ? `
-                    <div style="padding: 28px 20px; text-align: center; color: var(--text-muted); font-size: 12.5px; font-style: italic;">
-                      Tidak ada masalah pada sprint ini. Tarik atau pindahkan tiket dari backlog pool di bawah dengan tombol [+ Ke Sprint].
-                    </div>
-                  `
-                      : activeSprintTasks.map((t) => this.renderIssueRow(t, teamMembers, projectEpics, true)).join("")
-                  }
-                </div>
-
-                <div class="quick-create-inline inline-create-trigger" data-sprint-id="${activeSprint?.id}">
-                  ${Icons.plus("text-indigo-600", 13)}
-                  <span>+ Tambah tiket masalah di sprint aktif ini</span>
-                </div>
-              `
-                  : ""
-              }
-            </section>
-
-            <!-- 3. Backlog Pool Container -->
-            <section class="sprint-panel-card" id="backlogPoolCard">
-              <div class="sprint-card-header" data-toggle="backlog" title="Klik untuk expand / collapse Backlog Pool">
-                <div class="sprint-card-header__left">
-                  <button id="toggleBacklogBtn" class="sprint-toggle-btn" title="Buka/Tutup Backlog Pool">
-                    ${this.isBacklogCollapsed ? Icons.chevronRight("", 16) : Icons.chevronDown("", 16)}
-                  </button>
-                  <div class="sprint-card-title">
-                    <span>Backlog Pool</span>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); font-family: var(--font-mono);">
-                      (${backlogPoolTasks.length} Tiket • ${totalBacklogHours}h)
-                    </span>
-                  </div>
-                </div>
-
-                <div class="sprint-card-header__right">
-                  <!-- Tri-Color Story Points Lozenge -->
-                  <div class="points-tri-color" title="To Do: ${backlogPoints.todo}h, In Progress: ${backlogPoints.inprog}h, Done: ${backlogPoints.done}h">
-                    <span class="points-tri-color__item points-tri-color__todo" title="To Do">${backlogPoints.todo}</span>
-                    <span class="points-tri-color__item points-tri-color__inprogress" title="In Progress">${backlogPoints.inprog}</span>
-                    <span class="points-tri-color__item points-tri-color__done" title="Selesai">${backlogPoints.done}</span>
-                  </div>
-
-                  <button id="createSprintHeaderBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-md);">
-                    + Buat Sprint Baru
-                  </button>
-                </div>
-              </div>
-
-              ${
-                !this.isBacklogCollapsed
-                  ? `
-                <div class="issue-rows-list">
-                  ${
-                    backlogPoolTasks.length === 0
-                      ? `
-                    <div style="padding: 28px 20px; text-align: center; color: var(--text-muted); font-size: 12.5px; font-style: italic;">
-                      Seluruh tiket telah dialokasikan ke sprint aktif atau tidak sesuai filter pencarian.
-                    </div>
-                  `
-                      : backlogPoolTasks.map((t) => this.renderIssueRow(t, teamMembers, projectEpics, false, activeSprint?.id)).join("")
-                  }
-                </div>
-
-                <div class="quick-create-inline inline-create-trigger" data-sprint-id="">
-                  ${Icons.plus("text-indigo-600", 13)}
-                  <span>+ Tambah tiket baru di backlog pool</span>
-                </div>
-              `
-                  : ""
-              }
-            </section>
-
+            <!-- Backlog Pool Container -->
+            ${(this.selectedSprintFilter === "all" || this.selectedSprintFilter === "backlog_pool" || sprintsToRender.length === 0)
+              ? this.renderBacklogPoolCard(backlogPoolTasks, backlogPoints, totalBacklogHours, teamMembers, projectEpics, activeSprint, projectSprints)
+              : ""
+            }
           </main>
         ${this.renderCreateSprintModal(activeProject, projectSprints, backlogPoolTasks, totalBacklogHours)}
         ${this.renderCreateEpicModal(activeProject, projectEpics, teamMembers)}
         </div>
 
       </div>
+    `;
+  }
+
+  renderSprintCard(sprint, projectTasks, teamMembers, projectEpics, allSprints, matchesFilters) {
+    const isCollapsed = this.collapsedSprintIds.has(sprint.id);
+    const sprintTasks = projectTasks.filter((t) => t.sprintId === sprint.id && matchesFilters(t));
+    const sprintPoints = this.calcBreakdown(sprintTasks);
+    const totalHours = sprintPoints.total;
+    const isActive = sprint.status === "active";
+    const isCompleted = sprint.status === "completed";
+
+    return `
+      <section class="sprint-panel-card" id="sprintCard_${sprint.id}" style="${isActive ? 'border-left: 4px solid var(--indigo-600, #4f46e5);' : isCompleted ? 'border-left: 4px solid #94a3b8; opacity: 0.88;' : 'border-left: 4px solid #3b82f6;'} margin-bottom: 20px;">
+        <div class="sprint-card-header" data-toggle="sprint-toggle" data-sprint-id="${sprint.id}" title="Klik untuk buka / tutup rincian sprint" style="cursor: pointer;">
+          <div class="sprint-card-header__left">
+            <button class="sprint-toggle-btn toggle-sprint-item-btn" data-sprint-id="${sprint.id}" title="Buka/Tutup Sprint">
+              ${isCollapsed ? Icons.chevronRight("", 16) : Icons.chevronDown("", 16)}
+            </button>
+            <div class="sprint-card-title">
+              <span style="font-weight: 700; color: var(--text-primary); font-size: 13.5px;">${this.escapeHtml(sprint.name)}</span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); font-family: var(--font-mono);">
+                (${sprintTasks.length} Tiket • ${totalHours}h)
+              </span>
+              ${
+                isActive
+                  ? `<span class="backlog-active-pill" style="font-size: 10px; padding: 2px 8px; font-weight: 700;">● AKTIF</span>`
+                  : isCompleted
+                  ? `<span style="font-size: 10px; padding: 2px 8px; border-radius: 999px; background: rgba(100,116,139,0.1); color: #64748b; font-weight: 700; border: 1px solid rgba(100,116,139,0.25);">✓ SELESAI</span>`
+                  : `<span style="font-size: 10px; padding: 2px 8px; border-radius: 999px; background: rgba(59,130,246,0.1); color: #2563eb; font-weight: 700; border: 1px solid rgba(59,130,246,0.25);">📅 RENCANA</span>`
+              }
+            </div>
+            <span class="sprint-dates-text">
+              ${Icons.calendar("", 12)}
+              <span>${sprint.startDate || "TBD"} – ${sprint.endDate || "TBD"} (${sprint.capacityHours || 160} Jam)</span>
+            </span>
+          </div>
+
+          <div class="sprint-card-header__right">
+            <!-- Labeled Story Points Chips (Modern Jira / Linear Standard) -->
+            <div class="sprint-points-group" title="Breakdown Beban Sprint: To Do (${sprintPoints.todo}h), In Progress (${sprintPoints.inprog}h), Selesai (${sprintPoints.done}h)">
+              <span class="sprint-point-chip sprint-point-chip--todo" title="To Do: ${sprintPoints.todo} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${sprintPoints.todo}h</strong> To Do
+              </span>
+              <span class="sprint-point-chip sprint-point-chip--inprog" title="In Development & Review: ${sprintPoints.inprog} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${sprintPoints.inprog}h</strong> In Dev
+              </span>
+              <span class="sprint-point-chip sprint-point-chip--done" title="Selesai: ${sprintPoints.done} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${sprintPoints.done}h</strong> Selesai
+              </span>
+            </div>
+
+            ${
+              isActive
+                ? `
+              <button class="btn btn-secondary btn-sm btn-complete-sprint" data-sprint-id="${sprint.id}" style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-md); display:inline-flex; align-items:center; gap:4px;">
+                ${Icons.checkCircle("", 12)}
+                <span>Selesaikan Sprint</span>
+              </button>
+            `
+                : !isCompleted
+                ? `
+              <button class="btn btn-primary btn-sm btn-start-sprint" data-sprint-id="${sprint.id}" style="font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: var(--radius-md); display:inline-flex; align-items:center; gap:5px;">
+                ${Icons.play("", 11)}
+                <span>Mulai Sprint</span>
+              </button>
+            `
+                : ""
+            }
+          </div>
+        </div>
+
+        ${sprint.goal ? `
+          <div style="padding: 4px 16px 8px 44px; font-size: 11.5px; color: var(--text-muted); display:flex; align-items:center; gap:6px;">
+            <span style="font-weight: 700; text-transform: uppercase; font-size: 10px; color: var(--indigo-600); letter-spacing: 0.05em;">🎯 Goal:</span>
+            <span>${this.escapeHtml(sprint.goal)}</span>
+          </div>
+        ` : ""}
+
+        ${
+          !isCollapsed
+            ? `
+          <div class="issue-rows-list">
+            ${
+              sprintTasks.length === 0
+                ? `
+              <div style="padding: 24px 20px; text-align: center; color: var(--text-muted); font-size: 12.5px; font-style: italic;">
+                Belum ada tiket pada sprint ini. Alokasikan tiket dari Backlog Pool di bawah dengan memilih tombol [+ Ke Sprint].
+              </div>
+            `
+                : sprintTasks.map((t) => this.renderIssueRow(t, teamMembers, projectEpics, true, sprint.id, allSprints)).join("")
+            }
+          </div>
+
+          <div class="quick-create-inline inline-create-trigger" data-sprint-id="${sprint.id}">
+            ${Icons.plus("text-indigo-600", 13)}
+            <span>+ Tambah tiket di ${this.escapeHtml(sprint.name)}</span>
+          </div>
+        `
+            : ""
+        }
+      </section>
+    `;
+  }
+
+  renderBacklogPoolCard(backlogPoolTasks, backlogPoints, totalBacklogHours, teamMembers, projectEpics, activeSprint, allSprints) {
+    return `
+      <section class="sprint-panel-card" id="backlogPoolCard" style="border-left: 4px solid var(--border, #cbd5e1); margin-bottom: 20px;">
+        <div class="sprint-card-header" data-toggle="backlog" title="Klik untuk expand / collapse Backlog Pool" style="cursor: pointer;">
+          <div class="sprint-card-header__left">
+            <button id="toggleBacklogBtn" class="sprint-toggle-btn" title="Buka/Tutup Backlog Pool">
+              ${this.isBacklogCollapsed ? Icons.chevronRight("", 16) : Icons.chevronDown("", 16)}
+            </button>
+            <div class="sprint-card-title">
+              <span style="font-weight: 700; color: var(--text-primary); font-size: 13.5px;">Backlog Pool</span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); font-family: var(--font-mono);">
+                (${backlogPoolTasks.length} Tiket • ${totalBacklogHours}h)
+              </span>
+            </div>
+          </div>
+
+          <div class="sprint-card-header__right">
+            <!-- Labeled Story Points Chips for Backlog Pool -->
+            <div class="sprint-points-group" title="Breakdown Beban Backlog Pool: To Do (${backlogPoints.todo}h), In Progress (${backlogPoints.inprog}h), Selesai (${backlogPoints.done}h)">
+              <span class="sprint-point-chip sprint-point-chip--todo" title="Estimasi Backlog To Do: ${backlogPoints.todo} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${backlogPoints.todo}h</strong> To Do
+              </span>
+              <span class="sprint-point-chip sprint-point-chip--inprog" title="Sedang Disiapkan: ${backlogPoints.inprog} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${backlogPoints.inprog}h</strong> In Dev
+              </span>
+              <span class="sprint-point-chip sprint-point-chip--done" title="Selesai: ${backlogPoints.done} Jam">
+                <span class="sprint-point-dot"></span>
+                <strong class="sprint-point-val">${backlogPoints.done}h</strong> Selesai
+              </span>
+            </div>
+
+            <button id="createSprintHeaderBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-md); display:inline-flex; align-items:center; gap:4px;">
+              ${Icons.plus("", 12)}
+              <span>+ Buat Sprint Baru</span>
+            </button>
+          </div>
+        </div>
+
+        ${
+          !this.isBacklogCollapsed
+            ? `
+          <div class="issue-rows-list">
+            ${
+              backlogPoolTasks.length === 0
+                ? `
+              <div style="padding: 24px 20px; text-align: center; color: var(--text-muted); font-size: 12.5px; font-style: italic;">
+                Seluruh tiket telah dialokasikan ke sprint atau tidak ada tiket yang cocok dengan filter pencarian.
+              </div>
+            `
+                : backlogPoolTasks.map((t) => this.renderIssueRow(t, teamMembers, projectEpics, false, null, allSprints)).join("")
+            }
+          </div>
+
+          <div class="quick-create-inline inline-create-trigger" data-sprint-id="">
+            ${Icons.plus("text-indigo-600", 13)}
+            <span>+ Tambah tiket baru di Backlog Pool</span>
+          </div>
+        `
+            : ""
+        }
+      </section>
     `;
   }
 
@@ -697,15 +897,11 @@ export class BacklogView {
                       type="button"
                       class="sprint-duration-btn"
                       data-days="${d.days}"
-                      style="padding:8px 6px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid ${
-                        this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--border, #cbd5e1)"
-                      };background:${
-                        this.sprintDurationDays === d.days ? "rgba(79,70,229,0.1)" : "var(--bg-secondary, #f8fafc)"
-                      };color:${this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--text-secondary, #475569)"};"
+                      style="padding:8px 6px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid ${this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--border, #cbd5e1)"};background:${this.sprintDurationDays === d.days ? "rgba(79,70,229,0.1)" : "var(--bg-secondary, #f8fafc)"};color:${this.sprintDurationDays === d.days ? "var(--indigo-600, #4f46e5)" : "var(--text-secondary, #475569)"};"
                     >
                       ${d.label}
                     </button>
-                  `
+                  `,
                     )
                     .join("")}
                 </div>
@@ -810,7 +1006,7 @@ export class BacklogView {
                       </div>
                       <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0;">${t.estimateHours || 4}h</span>
                     </label>
-                  `
+                  `,
                     )
                     .join("")}
                 </div>
@@ -979,7 +1175,7 @@ export class BacklogView {
                     .map(
                       (m) => `
                     <option value="${m.id}">${this.escapeHtml(m.name)} (${this.escapeHtml(m.role)})</option>
-                  `
+                  `,
                     )
                     .join("")}
                 </select>
@@ -1014,14 +1210,12 @@ export class BacklogView {
                     type="button"
                     class="epic-color-swatch"
                     data-color="${c.hex}"
-                    style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;cursor:pointer;font-size:11.5px;font-weight:700;border:2px solid ${
-                      this.selectedEpicColor === c.hex ? c.hex : "var(--border, #e2e8f0)"
-                    };background:${this.selectedEpicColor === c.hex ? `${c.hex}15` : "var(--bg-secondary, #f8fafc)"};color:var(--text-primary);"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;cursor:pointer;font-size:11.5px;font-weight:700;border:2px solid ${this.selectedEpicColor === c.hex ? c.hex : "var(--border, #e2e8f0)"};background:${this.selectedEpicColor === c.hex ? `${c.hex}15` : "var(--bg-secondary, #f8fafc)"};color:var(--text-primary);"
                   >
                     <span style="width:12px;height:12px;border-radius:50%;background:${c.hex};display:inline-block;"></span>
                     <span>${c.name}</span>
                   </button>
-                `
+                `,
                   )
                   .join("")}
               </div>
@@ -1075,7 +1269,7 @@ export class BacklogView {
     `;
   }
 
-  renderIssueRow(task, teamMembers, epics, isInSprint, activeSprintId) {
+  renderIssueRow(task, teamMembers, epics, isInSprint = false, currentSprintId = "", allSprints = []) {
     const assignee = teamMembers.find((m) => m.id === task.assigneeId);
     const epic = epics.find((e) => e.id === task.epicId);
     const roleBadge = this.getRoleBadge(assignee?.role || "");
@@ -1093,6 +1287,10 @@ export class BacklogView {
     } else {
       typeIconHtml = Icons.checkSquare("text-slate-400", 14);
     }
+
+    const activeSprintObj = allSprints.find((s) => s.status === "active") || allSprints[0];
+    const activeSprintId = activeSprintObj ? activeSprintObj.id : "";
+    const activeSprintLabel = activeSprintObj ? activeSprintObj.name.split(":")[0] : "Sprint 1";
 
     return `
       <div class="issue-row" data-task-id="${task.id}">
@@ -1132,7 +1330,7 @@ export class BacklogView {
 
         <!-- Sisi Kanan: Status Lozenge, Avatar Assignee, Estimasi Jam, & Tombol Aksi -->
         <div class="issue-row-right">
-          <span class="issue-status-lozenge" style="background-color: ${statusBadge.bg}; color: ${statusBadge.color};">
+          <span class="issue-status-lozenge" style="background-color: ${statusBadge.bg}; color: ${statusBadge.color}; border: 1px solid ${statusBadge.border || 'transparent'};">
             ${statusBadge.label}
           </span>
 
@@ -1155,14 +1353,26 @@ export class BacklogView {
           ${
             isInSprint
               ? `
-            <button class="btn btn-secondary btn-sm move-task-btn" data-task-id="${task.id}" data-target-sprint="" style="font-size: 11px; padding: 3px 9px; border-radius: var(--radius-md);" title="Keluarkan task ke Backlog Pool">
-              Keluarkan
+            <button class="btn-sprint-action btn-sprint-action--out move-task-btn" data-task-id="${task.id}" data-target-sprint="" title="Pindahkan tiket kembali ke Backlog Pool">
+              <i class="fi fi-rr-arrow-down" style="font-size: 10px;"></i>
+              <span>Ke Backlog</span>
             </button>
           `
               : `
-            <button class="btn btn-primary btn-sm move-task-btn" data-task-id="${task.id}" data-target-sprint="${activeSprintId}" style="font-size: 11px; padding: 3px 11px; border-radius: var(--radius-md);" title="Masukkan tiket ke Sprint Aktif">
-              + Ke Sprint
-            </button>
+            <div style="display:inline-flex; align-items:center; gap:5px;">
+              <button class="btn-sprint-action btn-sprint-action--in move-task-btn" data-task-id="${task.id}" data-target-sprint="${activeSprintId}" title="Masukkan tiket ke ${this.escapeHtml(activeSprintObj?.name || 'Sprint Aktif')}">
+                <i class="fi fi-rr-arrow-up" style="font-size: 10px;"></i>
+                <span>+ Ke Sprint</span>
+              </button>
+              ${allSprints && allSprints.length > 1 ? `
+                <select class="form-select move-task-select" data-task-id="${task.id}" style="font-size: 10.5px; padding: 2px 6px; border-radius: var(--radius-md); height: 24px; border: 1px solid var(--border, #cbd5e1); color: var(--text-secondary); background: var(--bg-card, #fff); cursor: pointer;" title="Pilih sprint tujuan">
+                  <option value="" disabled selected>Pilih Sprint...</option>
+                  ${allSprints.map((s) => `
+                    <option value="${s.id}">${this.escapeHtml(s.name.split(':')[0])} (${s.status === 'active' ? 'Aktif' : 'Rencana'})</option>
+                  `).join('')}
+                </select>
+              ` : ''}
+            </div>
           `
           }
         </div>
@@ -1172,7 +1382,7 @@ export class BacklogView {
   }
 
   attachEvents() {
-    this.element.addEventListener("click", (e) => {
+    this.element.addEventListener("click", async (e) => {
       // Toggle epics drawer button
       if (e.target.closest("#toggleEpicsDrawerBtn")) {
         this.isEpicsPanelOpen = !this.isEpicsPanelOpen;
@@ -1194,12 +1404,19 @@ export class BacklogView {
         return;
       }
 
-      // Toggle sprint collapsible (either button or clicking the sprint header bar)
-      const sprintToggleTrigger = e.target.closest("#toggleSprintBtn") || e.target.closest('.sprint-card-header[data-toggle="sprint"]');
-      if (sprintToggleTrigger && !e.target.closest("#completeSprintHeaderBtn")) {
-        this.isSprintCollapsed = !this.isSprintCollapsed;
-        this.render();
-        return;
+      // Toggle sprint collapsible
+      const sprintToggleTrigger = e.target.closest('[data-toggle="sprint-toggle"]') || e.target.closest(".toggle-sprint-item-btn") || e.target.closest("#toggleSprintBtn");
+      if (sprintToggleTrigger && !e.target.closest(".btn-complete-sprint") && !e.target.closest(".btn-start-sprint")) {
+        const sId = sprintToggleTrigger.dataset.sprintId;
+        if (sId) {
+          if (this.collapsedSprintIds.has(sId)) {
+            this.collapsedSprintIds.delete(sId);
+          } else {
+            this.collapsedSprintIds.add(sId);
+          }
+          this.render();
+          return;
+        }
       }
 
       // Toggle backlog collapsible (either button or clicking the backlog header bar)
@@ -1229,11 +1446,7 @@ export class BacklogView {
       }
 
       // Close Create Epic Modal
-      if (
-        e.target.closest("#closeCreateEpicModalBtn") ||
-        e.target.closest("#cancelCreateEpicModalBtn") ||
-        e.target.id === "backlogCreateEpicBackdrop"
-      ) {
+      if (e.target.closest("#closeCreateEpicModalBtn") || e.target.closest("#cancelCreateEpicModalBtn") || e.target.id === "backlogCreateEpicBackdrop") {
         this.isCreateEpicModalOpen = false;
         this.render();
         return;
@@ -1295,11 +1508,7 @@ export class BacklogView {
       }
 
       // Close Create Sprint Modal
-      if (
-        e.target.closest("#closeCreateSprintModalBtn") ||
-        e.target.closest("#cancelCreateSprintModalBtn") ||
-        e.target.id === "backlogCreateSprintBackdrop"
-      ) {
+      if (e.target.closest("#closeCreateSprintModalBtn") || e.target.closest("#cancelCreateSprintModalBtn") || e.target.id === "backlogCreateSprintBackdrop") {
         this.isCreateSprintModalOpen = false;
         this.render();
         return;
@@ -1371,9 +1580,84 @@ export class BacklogView {
         return;
       }
 
-      // Complete Sprint
-      if (e.target.closest("#completeSprintBtn") || e.target.closest("#completeSprintHeaderBtn")) {
-        store.addToast("success", "Sprint Dituntaskan!", "Pekerjaan yang belum tuntas otomatis dialihkan ke sprint berikutnya.");
+      // Mulai Sprint Button (Jadikan sprint aktif)
+      const startSprintBtn = e.target.closest(".btn-start-sprint");
+      if (startSprintBtn) {
+        const sId = startSprintBtn.dataset.sprintId;
+        const state = store.getState();
+        const targetSprint = (state.sprints || []).find((s) => s.id === sId);
+        if (!targetSprint) return;
+
+        const currentActive = (state.sprints || []).find((s) => s.projectId === state.selectedProjectId && s.status === "active");
+
+        const confirmed = await swalConfirm({
+          title: "Mulai Sprint Ini?",
+          html: `
+            <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
+              <p>Aktifkan sprint <strong>${this.escapeHtml(targetSprint.name)}</strong> sebagai Sprint Aktif saat ini?</p>
+              ${currentActive ? `
+                <p style="margin-top: 8px; color: var(--text-muted); font-size: 12px;">
+                  Catatan: Sprint aktif sebelumnya (<em>${this.escapeHtml(currentActive.name)}</em>) akan ditutup/diselesaikan.
+                </p>
+              ` : ""}
+            </div>
+          `,
+          icon: "question",
+          confirmText: "Ya, Mulai Sprint",
+          cancelText: "Batal",
+          confirmColor: "#10b981",
+        });
+
+        if (confirmed) {
+          store.startSprint(sId);
+          this.selectedSprintFilter = sId;
+          this.render();
+          swalSuccess("Sprint Dimulai!", `Sprint <strong>${this.escapeHtml(targetSprint.name)}</strong> kini menjadi Sprint Aktif.`);
+        }
+        return;
+      }
+
+      // Selesaikan Sprint Button (Dengan Konfirmasi SweetAlert2)
+      const completeSprintBtn = e.target.closest("#completeSprintBtn") || e.target.closest(".btn-complete-sprint") || e.target.closest("#completeSprintHeaderBtn");
+      if (completeSprintBtn) {
+        const state = store.getState();
+        const targetSprintId = completeSprintBtn.dataset.sprintId || (state.sprints || []).find((s) => s.projectId === state.selectedProjectId && s.status === "active")?.id;
+        const targetSprint = (state.sprints || []).find((s) => s.id === targetSprintId);
+        if (!targetSprint) {
+          swalValidation("Tidak Ada Sprint Aktif", "Pilih sprint aktif yang ingin diselesaikan.");
+          return;
+        }
+
+        const uncompleted = (state.tasks || []).filter((t) => t.sprintId === targetSprintId && t.status !== "Done" && t.status !== "Selesai");
+        const nextSprint = (state.sprints || []).find((s) => s.projectId === targetSprint.projectId && s.id !== targetSprintId && s.status === "future");
+
+        const confirmed = await swalConfirm({
+          title: "Selesaikan Sprint?",
+          html: `
+            <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
+              <p>Anda akan menyelesaikan sprint <strong>${this.escapeHtml(targetSprint.name)}</strong>.</p>
+              ${uncompleted.length > 0 ? `
+                <div style="padding: 10px 14px; background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; border-radius: 6px; margin: 10px 0;">
+                  <strong>Perhatian:</strong> Terdapat <strong>${uncompleted.length} tiket</strong> yang belum selesai. Tiket tersebut akan otomatis dialihkan ke <strong>${nextSprint ? this.escapeHtml(nextSprint.name) : "Backlog Pool"}</strong>.
+                </div>
+              ` : `
+                <div style="padding: 10px 14px; background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; border-radius: 6px; margin: 10px 0;">
+                  Luar biasa! Seluruh deliverable pada sprint ini telah berstatus Selesai (Done).
+                </div>
+              `}
+            </div>
+          `,
+          icon: "question",
+          confirmText: "Ya, Selesaikan Sprint",
+          cancelText: "Batal",
+          confirmColor: "#4f46e5",
+        });
+
+        if (confirmed) {
+          store.completeSprint(targetSprintId);
+          this.render();
+          swalSuccess("Sprint Diselesaikan", `Sprint <strong>${this.escapeHtml(targetSprint.name)}</strong> telah berhasil diselesaikan.`);
+        }
         return;
       }
 
@@ -1445,68 +1729,76 @@ export class BacklogView {
       if (moveBtn) {
         const tId = moveBtn.dataset.taskId;
         const targetSprint = moveBtn.dataset.targetSprint || undefined;
-        store.updateTask(tId, { sprintId: targetSprint });
-        store.addToast("info", "Status Alokasi Tiket", targetSprint ? "Tiket berhasil dimasukkan ke sprint aktif." : "Tiket dikembalikan ke backlog pool.");
+        store.moveTaskToSprint(tId, targetSprint);
+        const task = (store.getState().tasks || []).find((t) => t.id === tId);
+        const sprint = targetSprint ? (store.getState().sprints || []).find((s) => s.id === targetSprint) : null;
+        if (targetSprint && sprint) {
+          swalSuccess("Tiket Dialokasikan", `Tiket <strong>${task?.key || tId}</strong> berhasil dimasukkan ke <strong>${this.escapeHtml(sprint.name.split(":")[0])}</strong>.`, 1300);
+        } else {
+          swalSuccess("Tiket Dikeluarkan", `Tiket <strong>${task?.key || tId}</strong> dipindahkan kembali ke <strong>Backlog Pool</strong>.`, 1300);
+        }
+        this.render();
         return;
       }
     });
 
-    // Search input event
+    // Change event for Sprint Selector and Quick Move Dropdowns
+    this.element.addEventListener("change", (e) => {
+      // Sprint Selector filter dropdown
+      if (e.target.id === "backlogSprintFilterSelect") {
+        this.selectedSprintFilter = e.target.value;
+        store.setState({ filterSprint: e.target.value, selectedSprintId: e.target.value });
+        this.render();
+        return;
+      }
+
+      // Quick move task to chosen sprint dropdown
+      const moveSelect = e.target.closest(".move-task-select");
+      if (moveSelect && moveSelect.value) {
+        const tId = moveSelect.dataset.taskId;
+        const targetSprintId = moveSelect.value;
+        store.moveTaskToSprint(tId, targetSprintId);
+        const targetSprint = (store.getState().sprints || []).find((s) => s.id === targetSprintId);
+        swalSuccess("Tiket Dipindahkan", `Tiket berhasil dialokasikan ke <strong>${this.escapeHtml(targetSprint?.name || "Sprint")}</strong>.`, 1500);
+        this.render();
+        return;
+      }
+    });
+
+    // Search input event & Form submit events
     this.element.addEventListener("submit", (e) => {
       if (e.target.id === "createSprintModalForm") {
         e.preventDefault();
         const state = store.getState();
         const nameVal = this.element.querySelector("#modalSprintNameInput")?.value.trim();
         const statusVal = this.element.querySelector("#modalSprintStatusSelect")?.value || "future";
-        const startVal = this.element.querySelector("#modalSprintStartInput")?.value || "2026-11-01";
-        const endVal = this.element.querySelector("#modalSprintEndInput")?.value || "2026-11-14";
+        const startVal = this.element.querySelector("#modalSprintStartInput")?.value || new Date().toISOString().split("T")[0];
+        const endVal = this.element.querySelector("#modalSprintEndInput")?.value || new Date(Date.now() + (this.sprintDurationDays || 14) * 86400000).toISOString().split("T")[0];
         const capVal = Number(this.element.querySelector("#modalSprintCapacityInput")?.value) || 160;
         const goalVal = this.element.querySelector("#modalSprintGoalInput")?.value.trim() || "";
 
-        if (!nameVal) return;
+        if (!nameVal) {
+          swalValidation("Nama Sprint Wajib Diisi", "Silakan masukkan nama sprint (contoh: Sprint 2: Integrasi Pembayaran).");
+          return;
+        }
 
-        const newSprintId = `sprint-${Date.now()}`;
-        const newSprint = {
-          id: newSprintId,
+        const selectedTaskIds = Array.from(this.element.querySelectorAll(".sprint-backlog-task-chk:checked")).map((chk) => chk.value);
+
+        const newSprint = store.createSprint({
           projectId: state.selectedProjectId,
           name: nameVal,
+          status: statusVal,
           startDate: startVal,
           endDate: endVal,
           capacityHours: capVal,
           goal: goalVal,
-          status: statusVal,
-        };
-
-        const updatedSprints = (state.sprints || []).map((s) => {
-          if (statusVal === "active" && s.projectId === state.selectedProjectId && s.status === "active") {
-            return { ...s, status: "future" };
-          }
-          return s;
-        });
-
-        const selectedTaskIds = Array.from(this.element.querySelectorAll(".sprint-backlog-task-chk:checked")).map(
-          (chk) => chk.value
-        );
-
-        const updatedTasks = (state.tasks || []).map((t) => {
-          if (selectedTaskIds.includes(t.id)) {
-            return { ...t, sprintId: newSprintId };
-          }
-          return t;
+          taskIds: selectedTaskIds,
         });
 
         this.isCreateSprintModalOpen = false;
-        store.setState({
-          sprints: [...updatedSprints, newSprint],
-          tasks: updatedTasks,
-        });
-        store.addToast(
-          "success",
-          "Sprint Berhasil Dibuat",
-          `Sprint "${nameVal}" (${startVal} s/d ${endVal})${
-            selectedTaskIds.length > 0 ? ` beserta ${selectedTaskIds.length} tiket` : ""
-          } berhasil ditambahkan.`
-        );
+        this.selectedSprintFilter = newSprint.id; // Otomatis tampilkan sprint yang baru dibuat
+        this.render();
+        swalSuccess("Sprint Berhasil Dibuat", `Sprint <strong>${this.escapeHtml(nameVal)}</strong> (${startVal} s/d ${endVal})${selectedTaskIds.length > 0 ? ` beserta ${selectedTaskIds.length} tiket` : ""} berhasil ditambahkan.`);
         return;
       }
 
@@ -1522,7 +1814,10 @@ export class BacklogView {
         const descVal = this.element.querySelector("#modalEpicDescInput")?.value.trim() || "";
         const autoCreateTask = this.element.querySelector("#modalEpicAutoTaskChk")?.checked;
 
-        if (!titleVal) return;
+        if (!titleVal) {
+          swalValidation("Judul Epik Wajib Diisi", "Silakan masukkan nama modul/epik pekerjaan baru.");
+          return;
+        }
 
         const newEpicId = `epic-${Date.now()}`;
         const newEpic = {

@@ -7,6 +7,8 @@
  */
 
 import { store } from '../state/store.js';
+import { getCanonicalStatus, KANBAN_STAGES, validateStatusTransition } from '../utils/workflow.js';
+import { swalValidation, swalConfirm, swalSuccess, swalPrompt } from '../utils/swal.js';
 
 const ICONS = {
   arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
@@ -26,14 +28,14 @@ const ICONS = {
   activity: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`
 };
 
-// 6 Fase Siklus Standar Software House
+// 6 Fase Alur Kerja Standar ASTACODE PM
 const SOFTWARE_HOUSE_STAGES = [
-  { id: 'Backlog', label: '1. Backlog & Spec', shortName: 'Backlog', pct: 16, gateRule: 'Verifikasi kelengkapan KAK, user stories, dan kriteria penerimaan (DoD).' },
-  { id: 'To Do', label: '2. Scope & Arsitektur', shortName: 'Arsitektur', pct: 33, gateRule: 'Penyusunan arsitektur DB/API, pembagian subtasks, dan estimasi jam selesai.' },
-  { id: 'In Progress', label: '3. Coding Sprint', shortName: 'Coding', pct: 50, gateRule: 'Pengerjaan fitur di branch git, implementasi middleware, dan commit berkala.' },
-  { id: 'In Review', label: '4. Code Review PR', shortName: 'Review PR', pct: 67, gateRule: 'PR diajukan ke GitHub, CI/CD automated test lulus, dan peer review disetujui.' },
-  { id: 'QA/Testing', label: '5. QA & Staging UAT', shortName: 'QA Staging', pct: 83, gateRule: 'Deployment otomatis ke server Staging, pengujian regresi, dan sign-off QA.' },
-  { id: 'Selesai', label: '6. Production Live', shortName: 'Production', pct: 100, gateRule: 'Merge ke branch main, deploy ke Production, dan monitoring real-time aktif.' }
+  { id: 'Backlog', label: '1. Backlog & Spec', shortName: 'Backlog', pct: 16, gateRule: 'Titik Awal: Analisis PM/Lead Dev sebelum disetujui ke To Do atau dibatalkan ke Rejected.' },
+  { id: 'To Do', label: '2. To Do (Siap Dikerjakan)', shortName: 'To Do', pct: 33, gateRule: 'Spesifikasi jelas, task siap diambil developer untuk mulai koding.' },
+  { id: 'In Development', label: '3. In Development (Coding)', shortName: 'In Dev', pct: 50, gateRule: 'Pengerjaan fitur di branch git, implementasi logic, dan commit berkala.' },
+  { id: 'Review & Testing', label: '4. Review & Testing (PR & QA)', shortName: 'Review & QA', pct: 67, gateRule: 'PR diajukan ke GitHub, deploy ke Staging, dan pengujian menyeluruh QA.' },
+  { id: 'Done', label: '5. Done (Production Live)', shortName: 'Done', pct: 85, gateRule: 'Merge ke branch main, deploy ke Production, dan disetujui penuh oleh klien.' },
+  { id: 'Rejected', label: '6. Rejected (Dibatalkan)', shortName: 'Rejected', pct: 100, gateRule: 'Fitur dibatalkan klien, out-of-scope, atau task duplikat.' }
 ];
 
 function getRoleBadgeStyle(role) {
@@ -100,12 +102,9 @@ export class TaskDetailView {
   }
 
   getStageIndex(status) {
-    const idx = SOFTWARE_HOUSE_STAGES.findIndex(s => s.id === status);
-    if (idx !== -1) return idx;
-    if (status === 'Diperbaiki Agen' || status === 'Perlu Manual') return 2;
-    if (status === 'Deploy Staging' || status === 'Disetujui') return 4;
-    if (status === 'Deploy Production' || status === 'Dipantau') return 5;
-    return 0;
+    const canonical = getCanonicalStatus(status);
+    const idx = SOFTWARE_HOUSE_STAGES.findIndex(s => s.id === canonical);
+    return idx !== -1 ? idx : 0;
   }
 
   render() {
@@ -482,12 +481,12 @@ export class TaskDetailView {
                   STATUS WORKFLOW
                 </label>
                 <select id="meta-task-status" class="form-select" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12.5px;font-weight:700;color:var(--text-primary);outline:none;">
-                  <option value="Backlog" ${currentTask.status === 'Backlog' ? 'selected' : ''}>Backlog</option>
-                  <option value="To Do" ${currentTask.status === 'To Do' ? 'selected' : ''}>To Do</option>
-                  <option value="In Progress" ${currentTask.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                  <option value="In Review" ${currentTask.status === 'In Review' ? 'selected' : ''}>In Review (PR)</option>
-                  <option value="QA/Testing" ${currentTask.status === 'QA/Testing' ? 'selected' : ''}>QA / Staging</option>
-                  <option value="Selesai" ${currentTask.status === 'Selesai' ? 'selected' : ''}>Selesai (Done)</option>
+                  ${KANBAN_STAGES.map((stg, idx) => {
+                    const isCurrent = getCanonicalStatus(currentTask.status) === stg.primaryStatus;
+                    const check = validateStatusTransition(currentTask.status, stg.primaryStatus);
+                    const lockPrefix = (!isCurrent && !check.allowed) ? '🔒 ' : '';
+                    return `<option value="${stg.primaryStatus}" ${isCurrent ? 'selected' : ''}>${lockPrefix}${idx + 1}. ${stg.name}</option>`;
+                  }).join('')}
                 </select>
               </div>
 
@@ -675,19 +674,24 @@ export class TaskDetailView {
               </div>
             </div>
 
-            <!-- Metrik 3: Jejak Audit Aktivitas -->
+            <!-- Metrik 3: Jejak Audit & Beban Kerja -->
             <div class="card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;">
               <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
                 <span style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">
-                  3. JEJAK AUDIT AKTIVITAS
+                  3. JEJAK AUDIT & BEBAN KERJA
                 </span>
                 <div style="display:flex;align-items:baseline;gap:8px;">
                   <strong style="font-size:20px;font-weight:800;font-family:var(--font-mono);color:var(--text-primary);">
                     ${eventsList.length} Log
                   </strong>
-                  <span style="font-size:12px;font-weight:700;color:var(--text-secondary);">Status: ${currentTask.status}</span>
+                  <span style="font-size:12px;font-weight:700;color:var(--indigo-600);font-family:var(--font-mono);">
+                    Beban: ${loggedHours}h / ${estHours}h
+                  </span>
                 </div>
-                <span style="font-size:11px;color:var(--text-secondary);font-weight:500;">PIC Aktif: ${assigneeMember.name}</span>
+                <span style="font-size:11px;color:var(--text-secondary);font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#10b981;"></span>
+                  PIC Aktif: ${assigneeMember.name} (${assigneeMember.role})
+                </span>
               </div>
               <div style="width:42px;height:42px;border-radius:12px;background:rgba(16,185,129,0.1);color:#059669;display:grid;place-items:center;flex-shrink:0;">
                 ${ICONS.activity}
@@ -846,7 +850,7 @@ export class TaskDetailView {
 
             </div>
 
-            <!-- Kolom Kanan: 3. JEJAK AUDIT AKTIVITAS (Sticky Rail Proporsional) -->
+            <!-- Kolom Kanan: 3. JEJAK AUDIT & BEBAN KERJA (Sticky Rail Proporsional) -->
             <div class="overview-sidebar" style="width:370px;">
               <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:12px;">
@@ -856,9 +860,9 @@ export class TaskDetailView {
                     </div>
                     <div>
                       <h3 style="font-size:13.5px;font-weight:800;color:var(--text-primary);margin:0;">
-                        3. Jejak Audit Aktivitas
+                        3. Jejak Beban & Audit
                       </h3>
-                      <span style="font-size:11px;color:var(--text-muted);">Riwayat perubahan status & tindakan tim</span>
+                      <span style="font-size:11px;color:var(--text-muted);">Aktivitas dinamis PIC & beban kerja</span>
                     </div>
                   </div>
                   <span style="font-size:10.5px;font-family:var(--font-mono);font-weight:700;padding:2px 8px;border-radius:999px;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);">
@@ -866,13 +870,66 @@ export class TaskDetailView {
                   </span>
                 </div>
 
-                <!-- Timeline Jejak Audit -->
+                <!-- Panel Ringkasan Beban & Kontrol PIC Dinamis -->
+                <div style="padding:14px;border-radius:10px;background:var(--bg-secondary);border:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:10.5px;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;">
+                      PENANGGUNG JAWAB (PIC)
+                    </span>
+                    <span style="font-size:11.5px;font-family:var(--font-mono);font-weight:800;color:var(--indigo-600);">
+                      ${loggedHours}h / ${estHours}h (${Math.round((loggedHours / (estHours || 1)) * 100)}%)
+                    </span>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0;box-shadow:0 2px 6px rgba(99,102,241,0.25);">
+                      ${(assigneeMember.name || 'D').charAt(0).toUpperCase()}
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                      <select id="rail-task-assignee" class="form-select" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);font-size:12px;font-weight:700;color:var(--text-primary);outline:none;" title="Ganti PIC tiket ini">
+                        ${state.teamMembers.map(m => `
+                          <option value="${m.id}" ${currentTask.assigneeId === m.id ? 'selected' : ''}>
+                            ${m.name} (${m.role})
+                          </option>
+                        `).join('')}
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Progres Beban Kerja & Tombol Catat Jam Kerja -->
+                  <div style="display:flex;flex-direction:column;gap:6px;padding-top:6px;border-top:1px dashed var(--border);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+                      <span>Beban Jam Terpakai:</span>
+                      <strong style="color:var(--text-primary);font-family:var(--font-mono);">${loggedHours} Jam (${Math.max(0, estHours - loggedHours)} jam sisa)</strong>
+                    </div>
+                    <div style="width:100%;height:6px;border-radius:9999px;background:var(--border);overflow:hidden;">
+                      <div style="width:${Math.min(100, Math.round((loggedHours / (estHours || 1)) * 100))}%;height:100%;background:linear-gradient(90deg, #3b82f6, #10b981);transition:width 0.3s ease;"></div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:2px;">
+                      <button id="btn-rail-log-hours" type="button" class="btn btn-secondary btn-sm" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+                        ${ICONS.plus}
+                        <span>+ Catat Jam Beban</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Timeline Jejak Audit Dinamis -->
                 <div style="display:flex;flex-direction:column;gap:12px;position:relative;">
-                  ${eventsList.map((e, idx) => `
+                  ${eventsList.map((e, idx) => {
+                    // Dinamis: sesuaikan dengan PIC / Developer tiket jika log status umum
+                    const isLegacyDefault = !e.actorName || (e.actorName === 'Azi' && assigneeMember.name !== 'Azi');
+                    const actorName = isLegacyDefault ? assigneeMember.name : (e.actorName || e.actor || assigneeMember.name);
+                    const actorRole = isLegacyDefault ? assigneeMember.role : (e.actorRole || assigneeMember.role);
+                    
+                    const isWorkloadEvent = (e.action || '').toLowerCase().includes('beban') || (e.action || '').toLowerCase().includes('jam');
+                    const dotBg = idx === 0 ? 'var(--indigo-600)' : isWorkloadEvent ? '#f59e0b' : '#10b981';
+
+                    return `
                     <div style="padding:12px 14px;border-radius:10px;background:var(--bg-secondary);border:1px solid var(--border);display:flex;flex-direction:column;gap:6px;position:relative;">
                       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
                         <div style="display:flex;align-items:center;gap:7px;">
-                          <span style="width:8px;height:8px;border-radius:50%;background:${idx === 0 ? 'var(--indigo-600)' : '#10b981'};flex-shrink:0;"></span>
+                          <span style="width:8px;height:8px;border-radius:50%;background:${dotBg};flex-shrink:0;"></span>
                           <strong style="font-size:12.5px;color:var(--text-primary);line-height:1.35;">${e.action}</strong>
                         </div>
                         <span style="font-size:10.5px;font-family:var(--font-mono);color:var(--text-muted);white-space:nowrap;">
@@ -880,11 +937,12 @@ export class TaskDetailView {
                         </span>
                       </div>
                       <div style="display:flex;align-items:center;justify-content:space-between;padding-left:15px;font-size:11px;color:var(--text-muted);">
-                        <span>Oleh: <strong style="color:var(--text-secondary);">${e.actorName || 'User'}</strong> (${e.actorRole || 'Tim'})</span>
+                        <span>Oleh: <strong style="color:var(--text-secondary);">${actorName}</strong> (${actorRole})</span>
                         <span style="font-family:var(--font-mono);font-size:10px;">#${eventsList.length - idx}</span>
                       </div>
                     </div>
-                  `).join('')}
+                  `;
+                  }).join('')}
 
                   <!-- Baseline Audit Entry: Tiket Dibuat -->
                   <div style="padding:12px 14px;border-radius:10px;background:var(--bg-secondary);border:1px dashed var(--border);display:flex;flex-direction:column;gap:6px;opacity:0.85;">
@@ -897,8 +955,9 @@ export class TaskDetailView {
                         ${new Date(currentTask.createdAt || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     </div>
-                    <div style="padding-left:15px;font-size:11px;color:var(--text-muted);">
-                      Pelapor: <strong style="color:var(--text-secondary);">${reporter.name}</strong>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding-left:15px;font-size:11px;color:var(--text-muted);">
+                      <span>Pelapor: <strong style="color:var(--text-secondary);">${reporter.name}</strong></span>
+                      <span>PIC: <strong style="color:var(--text-secondary);">${assigneeMember.name}</strong></span>
                     </div>
                   </div>
                 </div>
@@ -1172,8 +1231,8 @@ export class TaskDetailView {
       store.addToast('info', 'AI Dev Assistant', `Memulai analisis dan auto-fix patch untuk ${task.key}...`);
       setTimeout(() => {
         this.isAiProcessing = false;
-        store.updateTaskStatus(task.id, 'In Review', 'Auto-Fix patch AI berhasil dipublish ke PR Staging');
-        store.addToast('success', 'Auto-Fix AI Berhasil', `Patch fix untuk ${task.key} telah diajukan ke Review PR.`);
+        store.updateTaskStatus(task.id, 'Review & Testing', 'Auto-Fix patch AI berhasil dipublish ke PR Staging', true);
+        store.addToast('success', 'Auto-Fix AI Berhasil', `Patch fix untuk ${task.key} telah diajukan ke Review & Testing.`);
       }, 1500);
     };
 
@@ -1196,10 +1255,19 @@ export class TaskDetailView {
     // Delete task button
     const deleteBtn = this.container.querySelector('#btn-action-delete');
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => {
-        if (confirm(`Apakah Anda yakin ingin menghapus tiket ${task.key}?`)) {
+      deleteBtn.addEventListener('click', async () => {
+        const confirmed = await swalConfirm({
+          title: 'Hapus Tiket Pekerjaan?',
+          html: `Apakah Anda yakin ingin menghapus tiket <b>[${task.key}] ${task.title}</b> secara permanen?`,
+          icon: 'warning',
+          confirmText: 'Ya, Hapus Tiket',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           store.deleteTask(task.id);
           store.closeTaskDetail();
+          swalSuccess('Tiket Dihapus', `Tiket <b>${task.key}</b> berhasil dihapus dari sistem.`);
         }
       });
     }
@@ -1216,10 +1284,19 @@ export class TaskDetailView {
 
     // Delete subtask buttons
     this.container.querySelectorAll('.btn-delete-subtask[data-subtask-id]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.preventDefault();
         const subId = btn.dataset.subtaskId;
-        if (subId && confirm('Hapus subtask ini?')) {
+        if (!subId) return;
+        const confirmed = await swalConfirm({
+          title: 'Hapus Subtask?',
+          text: 'Subtask ini akan dihapus dari daftar rincian tiket.',
+          icon: 'warning',
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           const updatedSubtasks = (task.subtasks || []).filter(s => s.id !== subId);
           store.updateTask(task.id, { subtasks: updatedSubtasks });
           store.addToast('info', 'Subtask Dihapus', 'Subtask berhasil dihapus.');
@@ -1233,10 +1310,12 @@ export class TaskDetailView {
       subtaskForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const input = this.container.querySelector('#input-quick-subtask');
-        if (input && input.value.trim()) {
-          store.addSubtask(task.id, input.value.trim());
-          input.value = '';
+        if (!input || !input.value.trim()) {
+          swalValidation('Judul Subtask Wajib Diisi', 'Silakan masukkan rincian subtask sebelum menambahkan.');
+          return;
         }
+        store.addSubtask(task.id, input.value.trim());
+        input.value = '';
       });
     }
 
@@ -1261,6 +1340,11 @@ export class TaskDetailView {
       const selAuthor = this.container.querySelector(selectId);
       const currentState = store.getState();
       
+      if (!input || !input.value.trim()) {
+        swalValidation('Komentar Kosong', 'Silakan tulis isi komentar atau catatan diskusi terlebih dahulu.');
+        return;
+      }
+
       if (input && input.value.trim()) {
         const authorId = (selAuthor ? selAuthor.value : this.selectedCommentAuthorId) || 'user-pm';
         const member = (currentState.teamMembers || []).find(m => m.id === authorId) || (currentState.teamMembers || [])[0] || {
@@ -1327,10 +1411,19 @@ export class TaskDetailView {
 
     // Delete comment buttons (Interactive per comment)
     this.container.querySelectorAll('.btn-delete-comment[data-comment-id]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.preventDefault();
         const commentId = btn.dataset.commentId;
-        if (commentId) {
+        if (!commentId) return;
+        const confirmed = await swalConfirm({
+          title: 'Hapus Komentar?',
+          text: 'Komentar ini akan dihapus dari diskusi tiket.',
+          icon: 'warning',
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal',
+          confirmColor: '#dc2626'
+        });
+        if (confirmed) {
           store.deleteComment(commentId);
         }
       });
@@ -1340,7 +1433,10 @@ export class TaskDetailView {
     const statusSelect = this.container.querySelector('#meta-task-status');
     if (statusSelect) {
       statusSelect.addEventListener('change', (e) => {
-        store.updateTaskStatus(task.id, e.target.value, `Status diubah ke ${e.target.value}`);
+        const success = store.updateTaskStatus(task.id, e.target.value, `Status diubah ke ${e.target.value}`, false, true);
+        if (!success) {
+          e.target.value = getCanonicalStatus(task.status);
+        }
       });
     }
 
@@ -1353,12 +1449,52 @@ export class TaskDetailView {
       });
     }
 
-    // Metadata inputs: Assignee
+    // Metadata inputs: Assignee (Overview Sidebar)
     const assigneeSelect = this.container.querySelector('#meta-task-assignee');
     if (assigneeSelect) {
       assigneeSelect.addEventListener('change', (e) => {
-        store.updateTask(task.id, { assigneeId: e.target.value });
-        store.addToast('info', 'Assignee Diperbarui', 'Pekerjaan ditugaskan ke anggota tim terpilih.');
+        const newAssigneeId = e.target.value;
+        const newMember = (state.teamMembers || []).find(m => m.id === newAssigneeId);
+        store.updateTask(task.id, { assigneeId: newAssigneeId });
+        swalSuccess('PIC Diperbarui', `Penanggung jawab tiket dialihkan ke <strong>${newMember?.name || 'Anggota Tim'}</strong> (${newMember?.role || ''}).`, 1800);
+      });
+    }
+
+    // Assignee selector (Jejak Beban & Audit Rail on Tab 2)
+    const railAssigneeSelect = this.container.querySelector('#rail-task-assignee');
+    if (railAssigneeSelect) {
+      railAssigneeSelect.addEventListener('change', (e) => {
+        const newAssigneeId = e.target.value;
+        const newMember = (state.teamMembers || []).find(m => m.id === newAssigneeId);
+        store.updateTask(task.id, { assigneeId: newAssigneeId });
+        swalSuccess('PIC Diperbarui', `Penanggung jawab tiket dialihkan ke <strong>${newMember?.name || 'Anggota Tim'}</strong> (${newMember?.role || ''}).`, 1800);
+      });
+    }
+
+    // Tombol Catat Jam Beban di Jejak Audit Rail
+    const btnRailLogHours = this.container.querySelector('#btn-rail-log-hours');
+    if (btnRailLogHours) {
+      btnRailLogHours.addEventListener('click', async () => {
+        const pic = (state.teamMembers || []).find(m => m.id === (task.assigneeId || 'user-pm')) || { name: 'Developer', role: 'Dev' };
+        const result = await swalPrompt({
+          title: 'Catat Beban Jam Kerja',
+          html: `<p style="font-size:13px;color:var(--text-secondary);margin:0 0 10px 0;">Masukkan jam kerja riil yang dicatat oleh <strong>${pic.name}</strong> (${pic.role}):</p>`,
+          inputPlaceholder: 'Contoh: 4 (jam)',
+          inputValue: String(task.timeLoggedHours || ''),
+          confirmText: 'Simpan Beban Kerja',
+          cancelText: 'Batal',
+          required: true,
+          requiredMessage: 'Jam kerja harus diisi dengan angka!'
+        });
+        if (result !== null) {
+          const val = Number(result);
+          if (isNaN(val) || val < 0) {
+            swalValidation('Format Salah', 'Harap masukkan format angka jam yang benar (contoh: 3 atau 5.5).');
+            return;
+          }
+          store.updateTask(task.id, { timeLoggedHours: val });
+          swalSuccess('Beban Kerja Dicatat', `Beban kerja <strong>${val} jam</strong> oleh <strong>${pic.name}</strong> berhasil disimpan ke jejak audit.`, 2000);
+        }
       });
     }
 
@@ -1367,7 +1503,7 @@ export class TaskDetailView {
     if (assignToMeBtn) {
       assignToMeBtn.addEventListener('click', () => {
         store.updateTask(task.id, { assigneeId: 'user-pm' });
-        store.addToast('success', 'Ditugaskan', 'Tiket berhasil ditugaskan ke profil Anda.');
+        swalSuccess('Ditugaskan', 'Tiket berhasil dialihkan dan ditugaskan ke profil Anda.', 1800);
       });
     }
 
@@ -1394,7 +1530,7 @@ export class TaskDetailView {
       logInput.addEventListener('change', (e) => {
         const val = Number(e.target.value) || 0;
         store.updateTask(task.id, { timeLoggedHours: val });
-        store.addToast('info', 'Jam Kerja Dicatat', `${val} jam kerja telah tercatat.`);
+        swalSuccess('Beban Kerja Dicatat', `${val} jam kerja telah tercatat pada jejak audit.`, 1800);
       });
     }
 
@@ -1469,7 +1605,10 @@ export class TaskDetailView {
         const notesInput = this.container.querySelector('#modalSubtaskNotes');
 
         const titleVal = titleInput ? titleInput.value.trim() : '';
-        if (!titleVal) return;
+        if (!titleVal) {
+          swalValidation('Judul Subtask Wajib Diisi', 'Silakan masukkan nama atau rincian pekerjaan subtask terlebih dahulu.');
+          return;
+        }
 
         const newSubtask = {
           id: `sub-${Date.now()}-${Math.floor(Math.random() * 1000)}`,

@@ -23,9 +23,10 @@ Modul Finance Astacode ERP dirancang spesifik untuk model bisnis Software House 
    - Grafik Batang Arus Kas Masuk vs Keluar dengan **Toggle Periode Interaktif** (3 Bulan, 6 Bulan, 1 Tahun).
    - Diagram Donut **Alokasi Distribusi Pengeluaran** (Gaji, Freelancer, Server Cloud, Sewa Kantor, Utilitas).
    - Widget Peringatan Piutang/Utang Jatuh Tempo Minggu Ini & Quick Saldo Kas.
-2. **📥 Pemasukan (Accounts Receivable / Invoicing)**
-   - Daftar Penagihan Termin Proyek (CRM Deals Integration).
-   - Kalkulator Pajak Terintegrasi (DPP, PPN 11%, PPh 23 Jasa 2%).
+2. **📥 Pemasukan (Accounts Receivable / Invoicing) & Pusat Pesan (Customer Chat)**
+   - **Simulasi & Detail Penerimaan Termin dari CRM**: Panel & Modal detail pengiriman Deal Won / MoU dari Account Executive CRM (mencakup nomor MoU/Quotation, waktu transmisi, data PIC & NPWP klien, serta rincian pemecahan jadwal termin TOP yang siap diimpor ke AR).
+   - **Simulasi & Detail Penerimaan Invoice dari Manajemen Proyek (MP)**: Panel & Modal detail pengiriman bukti milestone selesai dari Project Manager (Forge PM), lengkap dengan progress sprint, checklist deliverable, lampiran BAST/UAT PDF, dan persetujuan (Approve) per proyek.
+   - **Pratinjau Invoice Resmi & Simulasi Chat WhatsApp Konsumen**: Pratinjau faktur komersial (DPP, PPN 11%, PPh 23 2%), template pesan pengantar, ruang simulasi chat interaktif dengan konsumen (balasan otomatis, diskusi PPh 23, kirim bukti transfer & verifikasi lunas langsung dari chat), serta log riwayat di menu **Pusat Pesan**.
    - Modal Edit Jadwal & Persentase Termin (DP, Termin-1, Termin-2, BAST, Lunas).
 3. **📤 Pengeluaran (Accounts Payable & Expense Management)**
    - **Klaim Struk (AI OCR)**: Upload struk belanja/transport via drag-and-drop dengan auto-ekstraksi data OCR.
@@ -48,12 +49,14 @@ Modul Finance Astacode ERP dirancang spesifik untuk model bisnis Software House 
 
 ## 3. AGILE PRODUCT BACKLOG (EPIC & USER STORIES)
 
-### 🔵 EPIC 1: Manajemen Penagihan & Termin (Invoicing & AR)
-- **Story 1.1:** Pemecahan Nilai Kontrak ke Jadwal Termin
-  - *As a Finance,* I want to memecah deal proyek menjadi beberapa termin pembayaran (misal DP 30%, Termin-1 40%, Lunas 30%), *So that* penagihan dapat dilakukan bertahap sesuai milestone deliverable PM.
-  - **AC:** Form modal edit termin mendukung kustomisasi persentase, tanggal jatuh tempo, dan kalkulasi otomatis nilai rupiah.
-- **Story 1.2:** Perhitungan Pajak Transaksi
-  - *As a Finance,* I want to menghitung PPN 11% dan bukti potong PPh 23 (2%) langsung pada draft invoice termin, *So that* nilai tagihan bersih dan faktur pajak tersinkronisasi akurat.
+### 🔵 EPIC 1: Manajemen Penagihan, Integrasi CRM/MP & Simulasi Chat Konsumen (Invoicing & AR)
+- **Story 1.1:** Penerimaan & Pemecahan Nilai Kontrak ke Jadwal Termin dari CRM
+  - *As a Finance,* I want to melihat detail pengiriman Deal Won/MoU dari modul CRM (pengirim AE, dokumen kontrak, kontak PIC, dan rincian pemecahan termin DP/Progress/BAST) serta mengimpornya ke daftar AR, *So that* jadwal penagihan proyek tercatat akurat sesuai kesepakatan penjualan.
+  - **AC:** Modal simulasi pengiriman CRM menampilkan metadata MoU, rincian pajak per termin, dan fitur impor proyek baru secara dinamis.
+- **Story 1.2:** Penerimaan & Verifikasi Draft Invoice dari Manajemen Proyek (MP)
+  - *As a Finance,* I want to menerima notifikasi dan melihat detail pengiriman penyelesaian milestone dari Project Manager (progress sprint, checklist deliverable, dan dokumen BAST/UAT) sebelum melakukan *Approve* invoice, *So that* penagihan ke klien memiliki dasar penyelesaian pekerjaan yang sah.
+- **Story 1.3:** Perhitungan Pajak Transaksi & Simulasi Chat Pengiriman ke Konsumen
+  - *As a Finance,* I want to meninjau pratinjau invoice resmi (DPP, PPN 11%, PPh 23 2%) dan mensimulasikan pengiriman serta percakapan WhatsApp interaktif dengan PIC Klien (termasuk pengingat jatuh tempo, konfirmasi potongan pajak, dan penerimaan bukti transfer), *So that* siklus penagihan hingga pelunasan terdokumentasi di Pusat Pesan.
 
 ### 🔵 EPIC 2: Pengeluaran Fleksibel (HPP Proyek vs OPEX Kantor)
 - **Story 2.1:** Klaim Struk AI OCR & Beban Operasional
@@ -108,6 +111,11 @@ Modul Finance Astacode ERP dirancang spesifik untuk model bisnis Software House 
 | **5** | **Report Customer**: Tambah customer + avatar + summary card | Low | 🟡 Medium | **DONE** | Ditambahkan Samudera Logistik Nusantara, avatar gradasi, tabel rekapitulasi, dan 3 Summary Insight Cards (Top Paying, DSO, Upcoming Inflow). |
 | **6** | **Dashboard**: Tambah toggle periode chart + donut distribusi | Medium | 🟡 Medium | **DONE** | Toggle periode 3m, 6m, 1y dinamis pada Chart Arus Kas, dan Donut Chart distribusi alokasi pengeluaran dengan tooltip persentase. |
 | **7** | **Missing Modals**: Buat COA modal + polish interaksi lain | Low | 🟡 Medium | **DONE** | Modal Edit COA dibuat, event backdrop click & ESC key handler, feedback toast notifikasi di setiap aksi. |
+| **8** | **Integrasi CRM & MP + Simulasi Chat Konsumen**: Detail pengiriman termin CRM, detail pengiriman invoice MP, & chat WA interaktif | Medium | 🔴 High | **DONE** | Ditambahkan Hub Transmisi CRM & MP, Modal Detail Pengiriman CRM (impor deal baru), Modal Detail Pengiriman MP (bukti BAST/UAT), Pratinjau Faktur Resmi, & Simulasi Chat WA Klien dua arah + Pusat Pesan. |
+| **9** | **Penyelarasan Warna CRM & Template Chat Humanis**: Harmonisasi warna Indigo `#4F46E5`, gradient CRM, dan copywriting WhatsApp yang santun, hangat, dan profesional | Low | 🔴 High | **DONE** | Warna diselaraskan dengan ASTACODE CRM Design System (`#4F46E5`, `#3730A3`, `#EEF2FF`). Template chat ditulis ulang dengan sapaan sopan, tanpa format kaku robotik/AI. |
+| **10** | **Universal Pagination, CRUD Pengeluaran & Transfer Bank + Jurnal Umum Sederhana**: Pagination di semua tabel, CRUD Operasional/Vendor/Freelancer, transfer bank terpilih + resi bukti transfer resmi, & penyederhanaan Jurnal Umum | High | 🔴 High | **DONE** | Pagination client-side di seluruh tabel modul Finance. Fitur CRUD penuh untuk Biaya Operasional (OPEX), Tagihan Vendor (AP), dan Kontrak SPK Freelancer. Transfer kas/bank interaktif dengan pilihan rekening sumber bank ASTACODE (BCA, Mandiri, Kas Kecil, Wise) yang mengurangi saldo real-time, menerbitkan Resi Bukti Transfer digital resmi, dan Jurnal Umum disederhanakan ke format tabel standar akuntansi. |
+| **11** | **Eksekusi 3 Saran Strategis**: Unduh/Kirim Bukti Resi WA, Auto-Sync AI OCR ke OPEX, & Filter Tanggal + Live KPI Jurnal | Medium | 🔴 High | **DONE** | Kop Surat resmi PT Astacode Digital Nusantara & tombol kirim WA bukti transfer ke penerima; Auto-sync klaim struk OCR ke daftar OPEX & Jurnal Kas Kecil; Filter Rentang Tanggal kustom (Date Range) dengan auto-recalculation KPI Debit/Kredit real-time. |
+| **12** | **Penyelarasan Payroll Setara Konsep Freelancer (Full Interactive CRUD, Bank Transfer & Official Slip)**: Transformasi menu Penggajian Karyawan (`#view-payroll`) mengadopsi standardisasi menu Freelancer: State-driven data model (`payrollList`), CRUD lengkap (Create, Read, Update, Delete, Detail Slip Resmi), workflow approval HR (`APPROVED HR` vs `MENUNGGU HR`), pencairan gaji via Bank Mandiri Payroll ASTACODE (`132-00-19283-91`) yang memotong saldo kas riil dan auto-posting jurnal beban gaji (`6101`), tombol Payroll Run Massal, serta Slip Gaji digital resmi ber-Kop Surat dengan tombol Cetak & Kirim WhatsApp ke Karyawan. | High | 🔴 High | **DONE** | Model data `payrollList` dinamis terhubung grade HR, perhitungan otomatis Gaji Pokok, Tunjangan, BPJS, PPh 21, dan Take Home Pay (THP). Universal transfer bank terintegrasi, Resi Bukti Transfer digital, Slip Gaji resmi ber-Kop Surat dengan tanda tangan direksi/HR, WhatsApp share humanis, serta paginasi tabel dinamis 5 baris per halaman. |
 
 ---
 

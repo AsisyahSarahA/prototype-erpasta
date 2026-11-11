@@ -1,7 +1,7 @@
 /**
  * HrTeamView.js
- * Manajemen Tim HR & Distribusi Workload Resource (Enterprise People View)
- * 100% Native Vanilla JS ES Module, Layout Proporsional Bebas Teks Bertumpuk.
+ * Manajemen Tim HR & Distribusi Workload Engineering (Astacode ERP)
+ * Mematuhi prinsip antislop: layout proporsional, bebas teks bertumpuk, informatif & berbobot tinggi.
  */
 
 import { store } from '../../state/store.js';
@@ -23,7 +23,6 @@ export class HrTeamView {
     this.bindEvents();
 
     store.subscribe(() => {
-      // Re-render only if current tab is team
       if (store.getState().activeTab === 'team') {
         this.render();
       }
@@ -37,18 +36,18 @@ export class HrTeamView {
   getRoleBadge(role = '') {
     const r = role.toLowerCase();
     if (r.includes('backend')) {
-      return { label: 'Backend Dev', bg: 'rgba(99, 102, 241, 0.1)', color: '#4f46e5' };
+      return { label: 'Backend Dev', tagClass: 'hr-tag-backend' };
     }
     if (r.includes('frontend')) {
-      return { label: 'Frontend Dev', bg: 'rgba(6, 182, 212, 0.1)', color: '#0891b2' };
+      return { label: 'Frontend Dev', tagClass: 'hr-tag-frontend' };
     }
     if (r.includes('qa') || r.includes('test')) {
-      return { label: 'QA Engineer', bg: 'rgba(16, 185, 129, 0.1)', color: '#059669' };
+      return { label: 'QA Engineer', tagClass: 'hr-tag-qa' };
     }
     if (r.includes('manajer') || r.includes('manager') || r.includes('pm')) {
-      return { label: 'Project Manajer', bg: 'rgba(245, 158, 11, 0.1)', color: '#d97706' };
+      return { label: 'Project Manajer', tagClass: 'hr-tag-pm' };
     }
-    return { label: 'Full stack', bg: 'rgba(139, 92, 246, 0.1)', color: '#7c3aed' };
+    return { label: 'Fullstack Dev', tagClass: 'hr-tag-fullstack' };
   }
 
   escapeHtml(text = '') {
@@ -60,7 +59,7 @@ export class HrTeamView {
     const activeProject = store.getActiveProject();
     const { teamMembers, tasks, epics } = state;
 
-    // Filter members
+    // Filter members based on search and role
     const filteredMembers = teamMembers.filter((m) => {
       if (this.roleFilter !== 'all') {
         const roleLower = m.role.toLowerCase();
@@ -77,154 +76,218 @@ export class HrTeamView {
       return true;
     });
 
-    // Global workload stats
+    // Global workload metrics calculation
     const totalCapacity = teamMembers.reduce((acc, m) => acc + (m.capacityHoursPerWeek || 40), 0);
     const activeTasks = tasks.filter((t) => t.status !== 'Selesai' && t.status !== 'Deploy Production');
-    // Task estimates are lifetime project estimates, not weekly allocation.
-    // Weekly workload must use the HR/PM capacity allocation field.
-    const totalAssignedHours = teamMembers.reduce((acc, m) => acc + (Number(m.assignedHours) || 0), 0);
+    const totalAssignedHours = activeTasks.reduce((acc, t) => acc + (Number(t.estimateHours) || 4), 0);
     const avgUtilization = totalCapacity > 0 ? Math.round((totalAssignedHours / totalCapacity) * 100) : 0;
     const availableCount = teamMembers.filter((m) => !m.onLeave).length;
+    const leaveCount = teamMembers.length - availableCount;
+
+    // Roles count for filter chips
+    const roleCounts = {
+      all: teamMembers.length,
+      pm: teamMembers.filter((m) => m.role.toLowerCase().includes('manajer') || m.role.toLowerCase().includes('pm')).length,
+      backend: teamMembers.filter((m) => m.role.toLowerCase().includes('backend')).length,
+      frontend: teamMembers.filter((m) => m.role.toLowerCase().includes('frontend')).length,
+      fullstack: teamMembers.filter((m) => m.role.toLowerCase().includes('full stack') || m.role.toLowerCase().includes('fullstack')).length,
+      qa: teamMembers.filter((m) => m.role.toLowerCase().includes('qa') || m.role.toLowerCase().includes('test')).length,
+    };
 
     this.element.innerHTML = `
       <div class="hr-root-container">
         
-        <!-- 1. Top Header Banner Card -->
-        <section class="hr-top-card">
-          <div class="hr-header-main-row">
-            <div class="hr-header-left">
-              <div class="hr-breadcrumbs">
-                <span>Modul Proyek</span>
-                <span>/</span>
-                <span>${this.escapeHtml(activeProject?.name || 'Sistem Perpustakaan Digital Kampus')}</span>
-                <span>/</span>
-                <span class="crumb-current">Tim HR &amp; Workload</span>
-              </div>
-              <div class="hr-title-wrap">
-                <h1 class="hr-page-title">Manajemen Tim HR &amp; Distribusi Workload</h1>
-                <span class="hr-status-pill">
-                  <span style="font-size: 8px;">●</span>
-                  <span>Resource Terhubung</span>
-                </span>
-              </div>
+        <!-- 1. Header Ringkas & Berbobot: Konteks Proyek & Aksi Cepat -->
+        <header class="hr-header-panel">
+          <div class="hr-header-main">
+            <div class="hr-header-copy">
+              <h1 class="hr-heading">Tim &amp; Workload Engineering</h1>
+              <p class="hr-subheading">
+                Distribusi kapasitas dan alokasi sprint untuk proyek
+                <strong>${this.escapeHtml(activeProject?.name || 'Sistem Booking & Manajemen')}</strong>.
+              </p>
             </div>
 
             <div class="hr-header-actions">
-              <button id="hrManageAccessBtn" class="btn btn-secondary" style="font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: var(--radius-lg);">
+              <button id="hrManageAccessBtn" class="btn btn-secondary btn-sm hr-action-btn">
                 ${Icons.folderGit('', 14)}
-                <span>Akses GitHub &amp; Tim</span>
+                <span>Akses GitHub</span>
               </button>
-              <button id="hrViewBacklogBtn" class="btn btn-primary" style="font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: var(--radius-lg);">
+              <button id="hrViewBacklogBtn" class="btn btn-primary btn-sm hr-action-btn">
                 ${Icons.layers('', 14)}
-                <span>Alokasi Sprint Backlog</span>
+                <span>Alokasi Backlog</span>
               </button>
             </div>
           </div>
 
-          <!-- KPI Summary Strip -->
-          <div class="hr-kpi-grid">
+          <!-- KPI Summary Strip: Rapi, proporsional, bebas teks bertumpuk -->
+          <div class="hr-kpi-strip">
             <div class="hr-kpi-card">
-              <span class="hr-kpi-label">Total Personel Tim</span>
-              <span class="hr-kpi-value">${teamMembers.length} Orang</span>
-              <span class="hr-kpi-sub">${availableCount} aktif tersedia · ${teamMembers.length - availableCount} cuti</span>
+              <span class="hr-kpi-label">Total Engineer</span>
+              <div class="hr-kpi-value-row">
+                <span class="hr-kpi-num">${teamMembers.length}</span>
+                <span class="hr-kpi-unit">Orang</span>
+              </div>
+              <span class="hr-kpi-subtext">${availableCount} aktif${leaveCount > 0 ? ` · ${leaveCount} cuti` : ''}</span>
             </div>
 
             <div class="hr-kpi-card">
               <span class="hr-kpi-label">Kapasitas Mingguan</span>
-              <span class="hr-kpi-value">${totalCapacity} Jam</span>
-              <span class="hr-kpi-sub">Standar 40 jam kerja/minggu per engineer</span>
+              <div class="hr-kpi-value-row">
+                <span class="hr-kpi-num">${totalCapacity}</span>
+                <span class="hr-kpi-unit">Jam</span>
+              </div>
+              <span class="hr-kpi-subtext">Standar 40 jam per engineer</span>
             </div>
 
             <div class="hr-kpi-card">
-              <span class="hr-kpi-label">Beban Tugas Berjalan</span>
-              <span class="hr-kpi-value" style="color: var(--indigo-600);">${totalAssignedHours} Jam</span>
-              <span class="hr-kpi-sub">Tersebar pada ${activeTasks.length} tiket yang sedang dikerjakan</span>
+              <span class="hr-kpi-label">Beban Sprint Berjalan</span>
+              <div class="hr-kpi-value-row">
+                <span class="hr-kpi-num hr-num-assigned">${totalAssignedHours}</span>
+                <span class="hr-kpi-unit">Jam</span>
+              </div>
+              <span class="hr-kpi-subtext">${activeTasks.length} tiket sprint aktif</span>
             </div>
 
             <div class="hr-kpi-card">
-              <span class="hr-kpi-label">Rata-Rata Utilisasi</span>
-              <span class="hr-kpi-value" style="color: ${avgUtilization > 90 ? 'var(--red-500)' : 'var(--emerald-600)'};">${avgUtilization}%</span>
-              <span class="hr-kpi-sub">${avgUtilization > 90 ? 'Perlu redistribusi beban tugas' : 'Distribusi beban kerja proporsional'}</span>
+              <span class="hr-kpi-label">Utilisasi Tim</span>
+              <div class="hr-kpi-value-row">
+                <span class="hr-kpi-num ${avgUtilization > 90 ? 'hr-num-alert' : 'hr-num-good'}">${avgUtilization}%</span>
+              </div>
+              <span class="hr-kpi-subtext">${avgUtilization > 90 ? 'Perlu redistribusi beban' : 'Kapasitas kerja optimal'}</span>
             </div>
           </div>
-        </section>
+        </header>
 
-        <!-- 2. Filter & Search Toolbar Card -->
-        <section class="hr-filter-card">
-          <div class="hr-filter-left">
-            <div class="hr-search-wrap">
+        <!-- 2. Toolbar Navigasi: Pencarian & Segmented Filter Role -->
+        <section class="hr-toolbar-panel">
+          <div class="hr-toolbar-left">
+            <div class="hr-search-box">
               <span class="hr-search-icon">${Icons.search('', 14)}</span>
               <input
                 type="text"
                 id="hrSearchInput"
                 class="hr-search-input"
-                placeholder="Cari nama engineer, role, atau keahlian..."
+                placeholder="Cari nama, role, atau keahlian..."
                 value="${this.escapeHtml(this.searchQuery)}"
+                aria-label="Cari engineer"
               />
+              ${this.searchQuery ? `
+                <button id="hrClearSearchBtn" class="hr-search-clear" title="Bersihkan pencarian">
+                  ${Icons.x('', 12)}
+                </button>
+              ` : ''}
             </div>
 
-            <div class="hr-role-chips">
-              ${[
-                { id: 'all', label: 'Semua Role' },
-                { id: 'Project Manajer', label: 'Project Manajer' },
-                { id: 'Backend', label: 'Backend Dev' },
-                { id: 'Frontend', label: 'Frontend Dev' },
-                { id: 'Full stack', label: 'Fullstack Dev' },
-                { id: 'QA', label: 'QA Engineer' }
-              ].map(r => `
-                <button class="hr-chip-btn ${this.roleFilter === r.id ? 'active' : ''}" data-role="${r.id}">
-                  ${r.label}
-                </button>
-              `).join('')}
+            <div class="hr-role-filters" role="tablist">
+              <button class="hr-filter-tab ${this.roleFilter === 'all' ? 'active' : ''}" data-role="all">
+                <span>Semua</span>
+                <span class="hr-tab-badge">${roleCounts.all}</span>
+              </button>
+              <button class="hr-filter-tab ${this.roleFilter === 'pm' ? 'active' : ''}" data-role="pm">
+                <span>PM</span>
+                <span class="hr-tab-badge">${roleCounts.pm}</span>
+              </button>
+              <button class="hr-filter-tab ${this.roleFilter === 'backend' ? 'active' : ''}" data-role="backend">
+                <span>Backend</span>
+                <span class="hr-tab-badge">${roleCounts.backend}</span>
+              </button>
+              <button class="hr-filter-tab ${this.roleFilter === 'frontend' ? 'active' : ''}" data-role="frontend">
+                <span>Frontend</span>
+                <span class="hr-tab-badge">${roleCounts.frontend}</span>
+              </button>
+              <button class="hr-filter-tab ${this.roleFilter === 'fullstack' ? 'active' : ''}" data-role="fullstack">
+                <span>Fullstack</span>
+                <span class="hr-tab-badge">${roleCounts.fullstack}</span>
+              </button>
+              <button class="hr-filter-tab ${this.roleFilter === 'qa' ? 'active' : ''}" data-role="qa">
+                <span>QA</span>
+                <span class="hr-tab-badge">${roleCounts.qa}</span>
+              </button>
             </div>
           </div>
 
-          <div class="hr-filter-right">
-            Menampilkan <strong>${filteredMembers.length}</strong> dari <strong>${teamMembers.length}</strong> anggota tim
+          <div class="hr-toolbar-right">
+            <span class="hr-count-text">Menampilkan <strong>${filteredMembers.length}</strong> dari <strong>${teamMembers.length}</strong> engineer</span>
           </div>
         </section>
 
-        <!-- 3. Members Workload List Container -->
-        <section class="hr-members-card-list">
+        <!-- 3. Grid Kartu Personil Tim: Proporsional, Lapang, Bebas Teks Bertumpuk -->
+        <main class="hr-cards-grid">
           ${filteredMembers.length === 0 ? `
-            <div class="hr-member-card" style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px; font-style: italic;">
-              Tidak ada anggota tim yang cocok dengan kriteria pencarian "${this.escapeHtml(this.searchQuery)}".
+            <div class="hr-empty-container">
+              <div class="hr-empty-icon">${Icons.users('', 32)}</div>
+              <h3 class="hr-empty-title">Tidak Ditemukan Anggota Tim</h3>
+              <p class="hr-empty-desc">
+                Tidak ada engineer yang cocok dengan filter pencarian <em>"${this.escapeHtml(this.searchQuery)}"</em>.
+              </p>
+              <button id="hrResetFilterBtn" class="btn btn-secondary btn-sm hr-reset-btn">
+                ${Icons.refresh('', 13)}
+                <span>Reset Pencarian &amp; Filter</span>
+              </button>
             </div>
           ` : filteredMembers.map(member => {
-            const assignedTasks = tasks.filter((t) => t.assigneeId === member.id && t.status !== 'Selesai' && t.status !== 'Deploy Production');
+            // Active tasks for this member
+            const memberTasks = tasks.filter((t) => t.assigneeId === member.id && t.status !== 'Selesai' && t.status !== 'Deploy Production');
+            // Task estimates are project planning data; HR capacity uses the approved HR/PM allocation.
             const memberHours = Number(member.assignedHours) || 0;
             const cap = member.capacityHoursPerWeek || 40;
             const bridge = store.getEmployeeCapacity(member.id) || {};
             const availableHours = Math.max(0, (bridge.capacityHoursPerWeek || cap) - (bridge.leaveHoursThisWeek || 0) - (bridge.approvedHours || 0));
             const isOverloaded = memberHours > cap;
             const loadPercentage = Math.round((memberHours / cap) * 100);
-            const distinctEpicIds = Array.from(new Set(assignedTasks.map((t) => t.epicId).filter(Boolean)));
+            
+            // Active epics
+            const distinctEpicIds = Array.from(new Set(memberTasks.map((t) => t.epicId).filter(Boolean)));
             const assignedEpics = epics.filter((e) => distinctEpicIds.includes(e.id));
-            const isMultiModule = assignedEpics.length > 1;
             const roleBadge = this.getRoleBadge(member.role);
 
+            // Workload status
+            let statusLabel = 'Kapasitas Normal';
+            let statusBadgeClass = 'badge-normal';
+            let barColorClass = 'bar-normal';
+
+            if (isOverloaded) {
+              statusLabel = `Overload (+${memberHours - cap}h)`;
+              statusBadgeClass = 'badge-overload';
+              barColorClass = 'bar-overload';
+            } else if (loadPercentage >= 85) {
+              statusLabel = 'Mendekati Kapasitas';
+              statusBadgeClass = 'badge-warning';
+              barColorClass = 'bar-warning';
+            }
+
             return `
-              <div class="hr-member-card">
+              <article class="hr-person-card ${isOverloaded ? 'card-has-overload' : ''}">
                 
-                <!-- Baris 1: Profil, Identitas & Lencana Status Rapi (Bebas Tumpuk) -->
-                <div class="hr-member-header">
-                  <div class="hr-member-profile-left">
-                    <img src="${member.avatar}" alt="${this.escapeHtml(member.name)}" class="hr-member-avatar" />
-                    <div class="hr-member-identity">
-                      <div class="hr-member-name-wrap">
-                        <h3 class="hr-member-name">${this.escapeHtml(member.name)}</h3>
-                        <span class="issue-role-pill" style="background: ${roleBadge.bg}; color: ${roleBadge.color}; font-size: 10px;">
-                          ${roleBadge.label}
-                        </span>
+                <!-- A. Header Kartu: Profil, Role, Status, dan Tombol Kanban -->
+                <div class="hr-card-top-row">
+                  <div class="hr-profile-area">
+                    <img
+                      src="${member.avatar}"
+                      alt="${this.escapeHtml(member.name)}"
+                      class="hr-avatar"
+                      loading="lazy"
+                    />
+                    <div class="hr-profile-info">
+                      <div class="hr-name-row">
+                        <h2 class="hr-name">${this.escapeHtml(member.name)}</h2>
+                        <span class="hr-role-pill ${roleBadge.tagClass}">${roleBadge.label}</span>
+                        ${member.onLeave ? `
+                          <span class="hr-leave-pill">Cuti</span>
+                        ` : `
+                          <span class="hr-active-pill">Tersedia</span>
+                        `}
                       </div>
-                      <div class="hr-member-contact-line">
-                        <span>${this.escapeHtml(member.employeeId || member.id)}</span>
-                        <span>·</span>
-                        <span>${this.escapeHtml(member.email || `${member.name.toLowerCase().replace(/\s+/g, '.')}@softwarehouse.id`)}</span>
+                      
+                      <div class="hr-contact-row">
+                        <span class="hr-contact-email">${this.escapeHtml(member.email || `${member.name.toLowerCase().replace(/\s+/g, '.')}@agensi.dev`)}</span>
+                        <span class="hr-contact-dot">&middot;</span>
+                        <span class="hr-employee-id">${this.escapeHtml(member.employeeId || member.id)}</span>
                         ${member.githubUsername ? `
-                          <span>·</span>
-                          <span class="hr-github-badge">
-                            ${Icons.folderGit('', 11)}
+                          <span class="hr-contact-dot">·</span>
+                          <span class="hr-github-tag">
+                            ${Icons.folderGit('', 12)}
                             <span>@${this.escapeHtml(member.githubUsername)}</span>
                           </span>
                         ` : ''}
@@ -232,106 +295,123 @@ export class HrTeamView {
                     </div>
                   </div>
 
-                  <div class="hr-member-header-badges">
-                    ${isMultiModule ? `
-                      <span class="badge badge-purple" style="font-size: 10.5px;">
-                        ${Icons.layers('', 11)}
-                        <span>Multi-Modul (${assignedEpics.length})</span>
-                      </span>
-                    ` : ''}
-                    
-                    ${member.onLeave ? `
-                      <span class="badge badge-amber" style="font-size: 10.5px;">
-                        ● Sedang Cuti
-                      </span>
-                    ` : `
-                      <span class="badge badge-emerald" style="font-size: 10.5px;">
-                        ● Aktif Tersedia
-                      </span>
+                  <div class="hr-action-area">
+                    <button class="btn btn-secondary btn-sm hr-filter-board-btn" data-member-id="${member.id}" title="Lihat tiket pekerjaan ${this.escapeHtml(member.name)} di Kanban">
+                      ${Icons.kanban('', 13)}
+                      <span>Buka di Kanban</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- B. Gauge Kapasitas & Beban Kerja (Solid Hues, Jelas, Bebas Gradasi Silau) -->
+                <div class="hr-workload-box">
+                  <div class="hr-workload-header">
+                    <span class="hr-workload-label">Utilisasi Sprint</span>
+                    <div class="hr-workload-stats">
+                      <strong class="hr-stat-hours">${memberHours} Jam</strong>
+                      <span class="hr-stat-cap">/ ${cap} Jam (${loadPercentage}%)</span>
+                    </div>
+                  </div>
+
+                  <div class="hr-progress-container">
+                    <div
+                      class="hr-progress-fill ${barColorClass}"
+                      style="width: ${Math.min(100, loadPercentage)}%;"
+                      role="progressbar"
+                      aria-valuenow="${loadPercentage}"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                    ></div>
+                  </div>
+
+                  <div class="hr-workload-footer">
+                    <span class="hr-status-indicator ${statusBadgeClass}">${statusLabel}</span>
+                    <span class="hr-tasks-info">${memberTasks.length} tiket sprint aktif</span>
+                  </div>
+                  <div class="hr-capacity-summary">
+                    <span>Approved PM/HR: <strong>${bridge.approvedHours || 0}h</strong></span>
+                    <span>Sisa kapasitas: <strong>${availableHours}h</strong></span>
+                  </div>
+                </div>
+
+                <!-- C. Modul Epik & Daftar Tiket Berjalan (Tampilan Terbuka, Teks Terbaca Jelas) -->
+                <div class="hr-section-block">
+                  <div class="hr-section-title">
+                    ${Icons.layers('', 12)}
+                    <span>Modul Epik Aktif (${assignedEpics.length})</span>
+                  </div>
+                  
+                  <div class="hr-epics-wrapper">
+                    ${assignedEpics.length > 0 ? assignedEpics.map(ep => `
+                      <div class="hr-epic-chip" title="${this.escapeHtml(ep.title)}">
+                        <span class="hr-epic-badge" style="background-color: ${ep.color || '#4f46e5'};"></span>
+                        <span class="hr-epic-code">${this.escapeHtml(ep.key)}</span>
+                        <span class="hr-epic-name">${this.escapeHtml(ep.title)}</span>
+                      </div>
+                    `).join('') : `
+                      <span class="hr-empty-note">Belum ada modul epik yang ditugaskan</span>
                     `}
                   </div>
                 </div>
 
-                <!-- Baris 2: Detail 2 Kolom (Kiri: Keahlian & Modul; Kanan: Workload & Progress) -->
-                <div class="hr-member-body">
-                  
-                  <!-- Kolom Kiri: Keahlian & Alokasi Modul Epik -->
-                  <div class="hr-member-body-left">
-                    
-                    <!-- Keahlian -->
-                    <div class="hr-skills-block">
-                      <span class="hr-skills-label">Keahlian:</span>
-                      ${(member.skills || ['Software Engineering', 'Agile Scrum']).map(s => `
-                        <span class="hr-skill-tag">${this.escapeHtml(s)}</span>
-                      `).join('')}
-                    </div>
+                <!-- D. Fokus Pekerjaan Sprint Saat Ini -->
+                <div class="hr-section-block">
+                  <div class="hr-section-title">
+                    ${Icons.listTodo('', 12)}
+                    <span>Pekerjaan Sprint (${memberTasks.length})</span>
+                  </div>
 
-                    <!-- Modul Epik Aktif -->
-                    ${assignedEpics.length > 0 ? `
-                      <div class="hr-modules-block">
-                        <span class="hr-modules-label">
-                          ${Icons.layers('', 12)}
-                          <span>Modul Aktif (${assignedEpics.length}):</span>
-                        </span>
-                        ${assignedEpics.map(ep => `
-                          <span class="hr-module-pill" style="border: 1px solid ${ep.color}35; background: ${ep.color}15; color: ${ep.color};" title="Epik: ${this.escapeHtml(ep.title)}">
-                            <span class="hr-module-dot" style="background-color: ${ep.color};"></span>
-                            <span style="font-weight: 700; font-family: var(--font-mono);">${ep.key}</span>
-                            <span style="overflow: hidden; text-overflow: ellipsis; max-width: 140px;">· ${this.escapeHtml(ep.title)}</span>
-                          </span>
+                  <div class="hr-tasks-wrapper">
+                    ${memberTasks.length > 0 ? `
+                      <div class="hr-task-items">
+                        ${memberTasks.slice(0, 2).map(task => `
+                          <div class="hr-task-card" title="${this.escapeHtml(task.title)}">
+                            <span class="hr-task-code">${this.escapeHtml(task.key)}</span>
+                            <span class="hr-task-text">${this.escapeHtml(task.title)}</span>
+                            <span class="hr-task-duration">${task.estimateHours || 4}h</span>
+                          </div>
                         `).join('')}
                       </div>
+                      ${memberTasks.length > 2 ? `
+                        <div class="hr-task-more-info">
+                          +${memberTasks.length - 2} tiket lainnya sedang berjalan
+                        </div>
+                      ` : ''}
                     ` : `
-                      <div style="font-size: 11px; color: var(--text-muted); font-style: italic;">
-                        Belum ada modul epik khusus yang ditugaskan saat ini.
-                      </div>
+                      <span class="hr-empty-note">Tidak ada tiket aktif yang sedang berjalan</span>
                     `}
                   </div>
-
-                  <!-- Kolom Kanan: Kotak Khusus Workload, Kapasitas & Aksi -->
-                  <div class="hr-member-body-right">
-                    <div class="hr-workload-stats-row">
-                      <span class="hr-workload-title">Beban Kerja Mingguan</span>
-                      <span class="hr-workload-numbers" style="color: ${isOverloaded ? 'var(--red-500)' : 'var(--text-primary)'};">
-                        ${memberHours}h / ${cap}h (${loadPercentage}%)
-                      </span>
-                    </div>
-
-                    <div class="hr-progress-track">
-                      <div
-                        class="hr-progress-bar-fill"
-                        style="width: ${Math.min(100, loadPercentage)}%; background: ${isOverloaded ? 'linear-gradient(90deg, #ef4444, #dc2626)' : loadPercentage > 80 ? 'linear-gradient(90deg, #f59e0b, #d97706)' : 'linear-gradient(90deg, #3b82f6, #10b981)'};"
-                      ></div>
-                    </div>
-
-                    <div class="hr-workload-footer"><span>Jam disetujui PM/HR: <strong>${bridge.approvedHours || 0}h</strong> · Sisa kapasitas: <strong>${availableHours}h</strong></span></div>
-                    ${isOverloaded ? `
-                      <div class="hr-overload-banner">
-                        ${Icons.alertTriangle('', 13)}
-                        <span>Overload: Melebihi kapasitas mingguan (+${memberHours - cap}h)</span>
-                      </div>
-                    ` : ''}
-
-                    <div class="hr-workload-footer">
-                      <span>Mengerjakan <strong>${assignedTasks.length}</strong> tiket aktif</span>
-                      <button class="btn btn-secondary btn-sm hr-filter-board-btn" data-member-id="${member.id}" style="font-size: 11px; padding: 3px 9px;">
-                        Lihat di Kanban &rarr;
-                      </button>
-                    </div>
-                  </div>
-
                 </div>
 
-              </div>
+                <!-- E. Keahlian Teknis (Tech Stack) -->
+                <div class="hr-section-block hr-skills-section">
+                  <div class="hr-section-title">
+                    ${Icons.code('', 12)}
+                    <span>Keahlian Teknis</span>
+                  </div>
+                  <div class="hr-skills-list">
+                    ${(member.skills || ['Software Engineering']).slice(0, 4).map(skill => `
+                      <span class="hr-skill-pill">${this.escapeHtml(skill)}</span>
+                    `).join('')}
+                    ${(member.skills || []).length > 4 ? `
+                      <span class="hr-skill-overflow" title="${(member.skills || []).slice(4).join(', ')}">
+                        +${member.skills.length - 4}
+                      </span>
+                    ` : ''}
+                  </div>
+                </div>
+
+              </article>
             `;
           }).join('')}
-        </section>
+        </main>
 
       </div>
     `;
   }
 
   bindEvents() {
+    // Search input handling with preserved cursor position
     this.element.addEventListener('input', (e) => {
       if (e.target.id === 'hrSearchInput') {
         this.searchQuery = e.target.value;
@@ -344,14 +424,32 @@ export class HrTeamView {
       }
     });
 
+    // Delegated click handling
     this.element.addEventListener('click', (e) => {
-      const rolePill = e.target.closest('.hr-chip-btn');
-      if (rolePill) {
-        this.roleFilter = rolePill.dataset.role;
+      // Clear search button
+      if (e.target.closest('#hrClearSearchBtn')) {
+        this.searchQuery = '';
         this.render();
         return;
       }
 
+      // Reset filter button on empty state
+      if (e.target.closest('#hrResetFilterBtn')) {
+        this.searchQuery = '';
+        this.roleFilter = 'all';
+        this.render();
+        return;
+      }
+
+      // Role filter tab click
+      const filterTab = e.target.closest('.hr-filter-tab');
+      if (filterTab) {
+        this.roleFilter = filterTab.dataset.role;
+        this.render();
+        return;
+      }
+
+      // Header actions
       if (e.target.closest('#hrManageAccessBtn')) {
         store.setActiveTab('github');
         return;
@@ -362,6 +460,7 @@ export class HrTeamView {
         return;
       }
 
+      // View on Kanban button
       const filterBoardBtn = e.target.closest('.hr-filter-board-btn');
       if (filterBoardBtn) {
         const memberId = filterBoardBtn.dataset.memberId;
